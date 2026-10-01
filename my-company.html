@@ -1334,8 +1334,8 @@ body { transition: background-color .9s ease; }
   }
   // Arriving on the empty company (?page): the page settles, then ALMA's step comes up
   // over it as an overlay. Skip, or Escape, leaves the empty page.
-  // Straight from sign-up (?page&welcome): the founding-member thank-you on off-white
-  // first, then the empty page, then ALMA over it.
+  // Straight from sign-up (?page&welcome): the founding-member thank-you on off-white,
+  // then it fades straight into ALMA. The empty page shows only if she is skipped.
   const arrive = new URLSearchParams(location.search);
   const overlay = () => setTimeout(() => { if (intake.hidden) { intake.classList.add('over-page'); open(); } }, reducedMotion ? 0 : 650);
   if (arrive.has('welcome')) {
@@ -1344,7 +1344,10 @@ body { transition: background-color .9s ease; }
     try { const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); if (p && p.name) first = p.name.split(/\s+/)[0]; } catch (e) {}
     const name = first.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     // deferred: welcome() is defined further down this script
-    setTimeout(() => welcome(() => { reveal(); overlay(); }, `<b>${name}</b>, your founding seat is saved. Next, ALMA sets up your company with you.`), 0);
+    setTimeout(() => welcome(() => {
+      open();
+      setTimeout(() => { if (!intake.hidden && !cueRetired) cueWrap.classList.add('is-in'); }, reducedMotion ? 0 : 1900);
+    }, `<b>${name}</b>, your founding seat is saved. Next, ALMA sets up your company with you.`), 0);
   } else if (root.classList.contains('intake-first')) open(); else reveal();
   if (!arrive.has('welcome') && arrive.has('page')) overlay();
   document.getElementById('skip').addEventListener('click', close);
@@ -1380,9 +1383,10 @@ body { transition: background-color .9s ease; }
     } catch (e) { console.error(e); }
     requestAnimationFrame(() => requestAnimationFrame(() => w.classList.add('is-in')));
     // the ALMA screen is gone behind it by now
-    setTimeout(() => { intake.hidden = true; }, 900);
+    const hideBehind = setTimeout(() => { intake.hidden = true; }, 900); // ALMA's screen is gone behind it by now
     let left = false;
     const leave = () => {
+      clearTimeout(hideBehind);
       if (left) return; left = true;
       w.classList.remove('is-in');
       next();
