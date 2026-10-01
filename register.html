@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Get early access · C-MORE</title>
+<meta name="robots" content="noindex">
+<style>
+/* Figtree, the brand face — same self-hosted files as the landing. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300; font-display: swap; src: url("fonts/figtree-300.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/figtree-400.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/figtree-500.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/figtree-600.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/figtree-700.woff2") format('woff2'); }
+
+/* The design system's tokens, the subset this page uses. */
+:root {
+  --color-graphite: #343434;
+  --color-coral: #f46d4f;
+  --color-coral-deep: #f44e29;
+  --color-coral-tint: #f9e7e3;
+  --color-blue: #4e638b;
+  --color-mid-blue: #909db6;
+  --color-off-white: #fafafa;
+  --color-light-beige: #f2f1ed;
+  --color-mid-beige: #e9e7e2;
+  --color-dark-beige: #e0ded7;
+  --color-sand-400: #c3c0b8;
+  --color-sand-500: #96958e;
+  --color-sand-600: #6e6e6a;
+  --color-positive: #3f7d2e;
+  --color-critical: #b3261e;
+
+  --color-ground: var(--color-light-beige);
+  --color-surface: #ffffff;
+  --color-surface-sunken: var(--color-mid-beige);
+  --color-ink: var(--color-graphite);
+  --color-ink-muted: var(--color-blue);
+  --color-ink-subtle: var(--color-sand-600);
+  --color-line: var(--color-dark-beige);
+  --color-activation: var(--color-coral);
+  --color-activation-hover: var(--color-coral-deep);
+  --color-activation-foreground: var(--color-graphite);
+
+  --font-sans: 'Figtree', Arial, ui-sans-serif, system-ui, sans-serif;
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-md: 0.75rem;
+  --radius-pill: 9999px;
+  --shadow-activate: 0 8px 28px -10px rgba(244, 109, 79, 0.55);
+  --shadow-raised: 0 1px 2px rgba(52, 52, 52, 0.05), 0 4px 12px -6px rgba(52, 52, 52, 0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; background: var(--color-ground); color: var(--color-ink);
+  font-family: var(--font-sans); font-size: 1rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-synthesis-weight: none;
+}
+h1, h2, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+a { color: var(--color-ink); text-decoration-color: var(--color-activation); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; border-radius: 0.5rem; }
+::selection { background: var(--color-coral); color: var(--color-graphite); }
+
+/* ---- Page frame --------------------------------------------------------- */
+.reg { min-height: 100vh; display: flex; flex-direction: column; }
+.reg-top { height: 4.5rem; border-bottom: 1px solid var(--color-line); }
+/* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
+.hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
+
+/* the logo file, at the landing header's size; the link carries the accessible name */
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
+.brand img { display: block; width: 6.8rem; height: 1.25rem; }
+.hdr-right { display: flex; align-items: center; gap: 0.75rem; }
+.top-link { font-size: 0.875rem; color: var(--color-ink-subtle); text-decoration: none; }
+.top-link:hover { color: var(--color-ink); }
+.top-link b { font-weight: 500; color: var(--color-ink); }
+
+/* Every step starts on the same line, whatever its height, so the eyebrow, title and
+   stepper stay put while the fields under them change. */
+.reg-main { flex: 1; display: grid; justify-items: center; align-content: start; padding: clamp(1.5rem, 4vh, 4rem) 1.25rem 4rem; }
+/* the landing's "Know more" cue, turned round: same eyebrow, same coral rule, pointing home */
+.home-cue { display: flex; justify-content: center; padding-top: 1.75rem; }
+.home-cue a { position: relative; display: inline-block; padding-bottom: 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; text-decoration: none; color: var(--color-ink-subtle); transition: color .14s var(--ease-brand); }
+.home-cue a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--color-coral);
+  transform: scaleX(.55); transition: transform .3s var(--ease-brand); }
+.home-cue a:hover { color: var(--color-ink); }
+.home-cue a:hover::after { transform: scaleX(1); }
+.back-row { display: flex; justify-content: center; }
+.stage { width: 100%; max-width: 30rem; }
+
+/* one step visible at a time; the next rises in the way the page itself arrived */
+.step { display: none; }
+.step.is-on { display: block; animation: step-in .55s var(--ease-brand) both; }
+@keyframes step-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.eyebrow::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.title { margin-top: 1rem; font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.title .soft { font-weight: 300; }
+.lead { margin-top: 1rem; font-size: 1.125rem; line-height: 1.55; font-weight: 300; color: var(--color-ink-muted); }
+
+/* ---- Controls: the design system's input and primary button ----------- */
+.field { display: flex; flex-direction: column; gap: 0.375rem; }
+.field label { font-size: 0.875rem; font-weight: 500; }
+.input {
+  width: 100%; height: 3rem; padding: 0 1rem; font: inherit; font-size: 1rem; color: var(--color-ink);
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  transition: border-color .14s var(--ease-brand), box-shadow .14s var(--ease-brand);
+}
+.input::placeholder { color: var(--color-sand-500); }
+.input:hover { border-color: var(--color-sand-400); }
+.input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 14%, transparent); }
+.input.is-bad { border-color: var(--color-critical); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-critical) 14%, transparent); }
+.hint { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.err { font-size: 0.8125rem; color: var(--color-critical); min-height: 1.25rem; }
+.err:empty { display: none; } /* no reserved gap under a field until there is something to say */
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3rem; padding-inline: 1.5rem;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; font-size: 1rem;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--color-activation); color: var(--color-activation-foreground); }
+.btn-primary:hover:not(:disabled) { background: var(--color-activation-hover); box-shadow: var(--shadow-activate); color: var(--color-activation-foreground); }
+.btn-block { width: 100%; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 0.875rem; color: var(--color-ink-subtle); cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; }
+.link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
+
+.form { margin-top: 1.5rem; display: grid; gap: 0.875rem; }
+.form > .btn-primary { margin-top: 0.875rem; } /* air between the last field and the button */
+
+/* ---- Stepper: where you are in the three steps -----------------------
+   The landing's square nodes on a track. Behind you: graphite, with a check.
+   Where you are: coral, arriving with the brand's quarter-turn, and the stretch
+   of track that led here draws itself in. Ahead: an outline. The first node sits
+   on the form's left edge and the last on its right, so the track spans the form. */
+.stepper { position: relative; list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stepper li { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+  font-size: 0.8125rem; line-height: 1.3; color: var(--color-ink-subtle); }
+.stepper li:nth-child(2) { align-items: center; text-align: center; }
+.stepper li:last-child { align-items: flex-end; text-align: right; }
+/* The two stretches of track, node edge to node edge, with a little air at each end.
+   Nodes are 2rem: the first on the left edge, the second centred, the third on the right. */
+.stepper::before, .stepper::after { content: ""; position: absolute; top: calc(1rem - 1px); height: 2px; border-radius: 2px;
+  background: linear-gradient(var(--color-graphite), var(--color-graphite)) left / 0% 100% no-repeat, var(--color-line); }
+.stepper::before { left: 2.5rem; right: calc(50% + 1.5rem); }
+.stepper::after { left: calc(50% + 1.5rem); right: 2.5rem; }
+.stepper[data-at="2"]::before, .stepper[data-at="3"]::before, .stepper[data-at="3"]::after { background-size: 100% 100%; }
+/* the stretch that brought you here draws in as the step arrives */
+.stepper[data-at="2"]::before, .stepper[data-at="3"]::after { animation: track-draw .7s var(--ease-brand) .15s both; }
+@keyframes track-draw { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+
+.stepper .node { position: relative; z-index: 1; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 4px;
+  background: var(--color-surface); border: 1.5px solid var(--color-sand-400); color: var(--color-ink-subtle);
+  font-size: 0.8125rem; font-weight: 600; }
+.stepper .node b { font-weight: inherit; }
+.stepper li.is-on { color: var(--color-ink); font-weight: 600; }
+.stepper li.is-on .node { background: var(--color-coral); border-color: var(--color-coral); color: var(--color-graphite);
+  box-shadow: 0 0 0 4px var(--color-coral-tint); animation: node-turn .6s var(--ease-brand) .55s both; }
+@keyframes node-turn { from { transform: rotate(-90deg) scale(.7); box-shadow: 0 0 0 0 var(--color-coral-tint); }
+  to { transform: none; box-shadow: 0 0 0 4px var(--color-coral-tint); } }
+.stepper li.is-done { color: var(--color-ink); }
+.stepper li.is-done .node { background: var(--color-graphite); border-color: var(--color-graphite); }
+.stepper li.is-done .node b { display: none; }
+.stepper li.is-done .node::before { content: ""; width: 0.875rem; height: 0.875rem; background: var(--color-off-white);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center / contain no-repeat; }
+
+.subtitle { margin-top: 0.75rem; font-size: 1.25rem; line-height: 1.45; font-weight: 300; color: var(--color-ink-muted); }
+/* The stepper sits on a fixed line in all three steps: titles are one line, and the
+   subtitle keeps room for two so a long email address cannot push the stepper down. */
+.step .title { white-space: nowrap; }
+.step:has(.stepper) .subtitle { min-height: calc(2 * 1.45em); overflow-wrap: anywhere; }
+@media (min-width: 34rem) { .step:has(.stepper) .subtitle { font-size: 1.125rem; } }
+
+/* ---- Password ---------------------------------------------------------- */
+.pw { position: relative; }
+.pw .input { padding-right: 3rem; }
+.pw .reveal { position: absolute; right: 0.5rem; top: 50%; translate: 0 -50%; width: 2.25rem; height: 2.25rem; display: grid; place-items: center;
+  padding: 0; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink-subtle); cursor: pointer; }
+.pw .reveal svg { width: 1.25rem; height: 1.25rem; }
+.pw .reveal .eye-off, .pw .reveal[aria-pressed="true"] .eye-on { display: none; }
+.pw .reveal[aria-pressed="true"] .eye-off { display: block; }
+.pw .reveal:hover { background: var(--color-surface-sunken); color: var(--color-ink); }
+.rules { list-style: none; margin: 0.375rem 0 0; padding: 0; display: grid; gap: 0.375rem; font-size: 0.9375rem; line-height: 1.4; color: var(--color-ink-muted); }
+.rules li { display: flex; align-items: center; gap: 0.625rem; }
+.rules li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 1px; background: var(--color-sand-400); transition: background-color .2s var(--ease-brand); }
+.rules li.ok { color: var(--color-ink); }
+.rules li.ok::before { background: var(--color-positive); }
+.field-verify { margin-top: 0.75rem; } /* clear air after the list of rules */
+.match { margin-top: 0.125rem; font-size: 0.9375rem; line-height: 1.4; display: flex; align-items: center; gap: 0.625rem; color: var(--color-ink-muted); }
+.match:empty { display: none; }
+.match::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 1px; background: var(--color-sand-400); }
+.match.ok { color: var(--color-ink); }
+.match.ok::before { background: var(--color-positive); }
+
+/* ---- Single sign-on, under the form ----------------------------------- */
+.sso { margin-top: 1rem; display: grid; gap: 0.625rem; }
+.btn-sso { width: 100%; background: var(--color-surface); border-color: var(--color-line); color: var(--color-ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); }
+.btn-sso:hover:not(:disabled) { border-color: var(--color-sand-400); color: var(--color-ink); }
+.btn-sso svg { flex: none; width: 1.125rem; height: 1.125rem; }
+.or { margin-top: 1.25rem; display: flex; align-items: center; gap: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--color-line); }
+
+/* ---- The person, on the welcome screen --------------------------------- */
+.mono { flex: none; width: 3.25rem; height: 3.25rem; display: grid; place-items: center; border-radius: 3px;
+  background: var(--color-graphite); color: var(--color-off-white); font-weight: 700; font-size: 1.125rem; letter-spacing: -0.02em; position: relative; }
+.avatar { flex: none; position: relative; width: 4rem; height: 4rem; }
+.avatar .pic { width: 100%; height: 100%; border-radius: 3px; overflow: hidden; background: var(--color-surface-sunken); }
+.avatar .pic svg, .avatar .pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.avatar .mono { position: absolute; right: -0.5rem; bottom: -0.5rem; width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; border: 2px solid var(--color-surface); }
+.done-pic { width: 3.5rem; height: 3.5rem; margin-bottom: 1.5rem; }
+.done-mark[hidden] { display: none; }
+/* Welcome, three lines: "Welcome to" / "the ecosystem," / the name. "ecosystem" carries the
+   landing's coral highlight, drawn in once the screen has settled. */
+.done-title .ln { display: block; }
+.done-title .ln[hidden] { display: none; }
+.done-title .hl { background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 100% 0.28em; padding-inline: 0.08em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.step.is-on .done-title .hl { animation: hl-draw 1s var(--ease-brand) .45s both; }
+@keyframes hl-draw { from { background-size: 0% 0.28em; } to { background-size: 100% 0.28em; } }
+.actions { margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.875rem; }
+
+/* ---- Code -------------------------------------------------------------- */
+.code { margin-top: 2rem; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.5rem; }
+.code input { width: 100%; aspect-ratio: 0.86; min-width: 0; text-align: center; font: inherit; font-size: 1.5rem; font-weight: 600;
+  color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.5rem;
+  transition: border-color .14s var(--ease-brand), box-shadow .14s var(--ease-brand), transform .3s var(--ease-brand); }
+.code input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 14%, transparent); }
+.code input.ok { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
+.code.checking input { animation: code-pulse .9s var(--ease-brand) infinite alternate; }
+.code.checking input:nth-child(2) { animation-delay: .08s; } .code.checking input:nth-child(3) { animation-delay: .16s; }
+.code.checking input:nth-child(4) { animation-delay: .24s; } .code.checking input:nth-child(5) { animation-delay: .32s; }
+.code.checking input:nth-child(6) { animation-delay: .4s; }
+@keyframes code-pulse { to { background: var(--color-coral); border-color: var(--color-coral); color: var(--color-graphite); } }
+.code-meta { margin-top: 1rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: 0.875rem; color: var(--color-ink-subtle); }
+
+/* ---- Done -------------------------------------------------------------- */
+.done-mark { display: flex; gap: 6px; }
+.done-mark i { width: 14px; height: 14px; border-radius: 2px; background: var(--color-graphite); animation: done-pop .5s var(--ease-brand) both; }
+.done-mark i:nth-child(2) { animation-delay: .08s; } .done-mark i:nth-child(3) { animation-delay: .16s; background: var(--color-coral); }
+@keyframes done-pop { from { opacity: 0; transform: translateY(8px) rotate(-90deg); } to { opacity: 1; transform: none; } }
+.ready { list-style: none; margin: 1.75rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--color-line); display: grid; gap: 0.625rem; }
+.ready li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.25rem 1rem; min-height: 1.75rem; font-size: 0.9375rem; }
+.ready .k { color: var(--color-ink-subtle); }
+.ready .v { display: inline-flex; align-items: center; gap: 0.75rem; margin-left: auto; font-weight: 500; text-align: right; }
+.ready .v[hidden] { display: none; }
+.ready .v .muted { font-weight: 400; color: var(--color-ink-subtle); }
+.ready .v .link-btn { font-weight: 500; color: var(--color-ink); text-decoration-color: var(--color-activation); }
+/* editing a row: the field drops under its label and takes the full width */
+.ready-form { flex-basis: 100%; display: flex; gap: 0.5rem; align-items: center; margin-top: 0.375rem; }
+.ready-form .input { height: 2.5rem; font-size: 0.9375rem; padding: 0 0.75rem; }
+.ready-form select.input { flex: none; width: 6.25rem; appearance: none; cursor: pointer; padding-right: 1.75rem;
+  background: var(--color-surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2396958e' stroke-width='1.5'><path d='M6 8l4 4 4-4'/></svg>") right 0.5rem center / 1rem no-repeat; }
+.ready-form .btn { flex: none; height: 2.5rem; padding-inline: 1rem; font-size: 0.875rem; }
+.ready li.is-field { padding-top: 0.25rem; }
+.ready .opt { color: var(--color-sand-500); }
+.ready-err { flex-basis: 100%; font-size: 0.8125rem; color: var(--color-critical); }
+.ready-err:empty { display: none; }
+
+/* ---- Arriving and leaving --------------------------------------------- */
+/* Direct visits settle in; arrivals from the landing do not, because the landing
+   already slid this exact frame up into place. */
+.reg-main { animation: arrive .6s var(--ease-brand) both; }
+.from-landing .reg-main, .embedded .reg-main { animation: none; }
+@keyframes arrive { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+/* going back runs the landing's move in reverse: this page drops away downwards */
+.leaving .reg { transform: translateY(100vh); transition: transform .7s cubic-bezier(0.7, 0, 0.2, 1); }
+/* Going on to the company: this screen does not slide away, it dissolves.
+   The veil settles on the same off-white the next page paints itself, so the
+   two pages meet on one colour and the navigation underneath is invisible. */
+.to-company { position: fixed; inset: 0; z-index: 999; pointer-events: none;
+  background: var(--color-off-white); opacity: 0; transition: opacity .9s ease; }
+.to-company.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .to-company { transition: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+<div class="reg">
+  <header class="reg-top"><div class="hdr-in">
+    <a class="brand" href="index.html" data-back aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
+    <div class="hdr-right"><span data-lang-switch></span><a class="top-link" href="#" onclick="return false">Already have an account? <b>Log in</b></a></div>
+  </div></header>
+
+  <nav class="home-cue" aria-label="Leave sign-up"><a href="index.html" data-back>Back to home</a></nav>
+
+  <main class="reg-main">
+    <div class="stage">
+
+      <!-- 1. Sign up: a provider, or a name and an email -->
+      <section class="step is-on" data-step="signup" aria-labelledby="t-signup">
+        <p class="eyebrow">Get early access</p>
+        <h1 class="title" id="t-signup">Create your account.</h1>
+        <p class="subtitle">Three quick steps, and you are in.</p>
+        <ol class="stepper" data-at="1" aria-label="Sign-up steps">
+          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Your details</span></li>
+          <li class=""><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Verify email</span></li>
+          <li class=""><span class="node" aria-hidden="true"><b>3</b></span><span class="lbl">Create password</span></li>
+        </ol>
+        <form class="form" id="f-signup" novalidate>
+          <div class="field">
+            <label for="name">Name</label>
+            <input class="input" id="name" name="name" type="text" autocomplete="name" placeholder="Your full name" required>
+            <p class="err" id="name-err" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="email">Work email</label>
+            <input class="input" id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@yourcompany.com" required>
+            <p class="err" id="email-err" role="alert"></p>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="signup-go" disabled>Continue</button>
+        </form>
+        <p class="or">or</p>
+        <div class="sso">
+          <button type="button" class="btn btn-sso" data-sso="Google"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81Z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.88-3.02c-1.07.72-2.45 1.15-4.06 1.15-3.13 0-5.78-2.11-6.72-4.95H1.27v3.11A12 12 0 0 0 12 24Z"/><path fill="#FBBC05" d="M5.28 14.28a7.2 7.2 0 0 1 0-4.56V6.61H1.27a12 12 0 0 0 0 10.78l4.01-3.11Z"/><path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44A11.5 11.5 0 0 0 12 0 12 12 0 0 0 1.27 6.61l4.01 3.11C6.22 6.88 8.87 4.77 12 4.77Z"/></svg>Continue with Google</button>
+          <button type="button" class="btn btn-sso" data-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
+        </div>
+        <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
+        <p class="hint" style="margin-top:0.75rem;text-align:center">Prototype: try <button type="button" class="link-btn" data-try>Miguel Ferreira</button></p>
+      </section>
+
+      <!-- 2. Code: verifies the email -->
+      <section class="step" data-step="code" aria-labelledby="t-code">
+        <p class="eyebrow">Get early access</p>
+        <h1 class="title" id="t-code">Check your inbox.</h1>
+        <p class="subtitle">Enter the six digits we sent to <b id="code-email" style="font-weight:500;color:var(--color-ink)">you</b>.</p>
+        <ol class="stepper" data-at="2" aria-label="Sign-up steps">
+          <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Your details</span></li>
+          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Verify email</span></li>
+          <li class=""><span class="node" aria-hidden="true"><b>3</b></span><span class="lbl">Create password</span></li>
+        </ol>
+        <div class="code" id="code" role="group" aria-label="Six-digit code">
+          <input inputmode="numeric" autocomplete="one-time-code" maxlength="1" aria-label="Digit 1">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 2">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 3">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 4">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 5">
+          <input inputmode="numeric" maxlength="1" aria-label="Digit 6">
+        </div>
+        <div class="code-meta"><span>Prototype: any six digits work.</span><button type="button" class="link-btn" data-resend>Resend code</button></div>
+        <div class="back-row" style="margin-top:1.75rem"><button type="button" class="link-btn" data-to="signup">Back</button></div>
+      </section>
+
+      <!-- 3. Password -->
+      <section class="step" data-step="password" aria-labelledby="t-password">
+        <p class="eyebrow">Get early access</p>
+        <h1 class="title" id="t-password">Create a password.</h1>
+        <p class="subtitle">You will log in with it and <b id="pw-email" style="font-weight:500;color:var(--color-ink)">your email</b>.</p>
+        <ol class="stepper" data-at="3" aria-label="Sign-up steps">
+          <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Your details</span></li>
+          <li class="is-done"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Verify email</span></li>
+          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>3</b></span><span class="lbl">Create password</span></li>
+        </ol>
+        <form class="form" id="f-password" novalidate>
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="pw">
+              <input class="input" id="password" name="password" type="password" autocomplete="new-password" required aria-describedby="pw-rules">
+              <button type="button" class="reveal" aria-controls="password" aria-label="Show password" aria-pressed="false"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3.01 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3.01-9.96-7.18Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.98 8.22A10.48 10.48 0 0 0 1.93 12C3.23 16.34 7.24 19.5 12 19.5c.99 0 1.95-.14 2.86-.39M6.23 6.23A10.45 10.45 0 0 1 12 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 0 1-4.29 5.77M6.23 6.23 3 3m3.23 3.23 3.65 3.65m7.89 7.89L21 21m-3.23-3.23-3.65-3.65m0 0a3 3 0 1 0-4.24-4.24m4.24 4.24L9.88 9.88"/></svg></button>
+            </div>
+            <ul class="rules" id="pw-rules">
+              <li data-rule="len">At least 10 characters</li>
+              <li data-rule="num">A number</li>
+              <li data-rule="mix">Upper and lower case letters</li>
+            </ul>
+            <p class="err" id="pw-err" role="alert"></p>
+          </div>
+          <div class="field field-verify">
+            <label for="password2">Verify password</label>
+            <div class="pw">
+              <input class="input" id="password2" name="password2" type="password" autocomplete="new-password" required aria-describedby="pw-match">
+              <button type="button" class="reveal" aria-controls="password2" aria-label="Show password" aria-pressed="false"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3.01 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3.01-9.96-7.18Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.98 8.22A10.48 10.48 0 0 0 1.93 12C3.23 16.34 7.24 19.5 12 19.5c.99 0 1.95-.14 2.86-.39M6.23 6.23A10.45 10.45 0 0 1 12 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 0 1-4.29 5.77M6.23 6.23 3 3m3.23 3.23 3.65 3.65m7.89 7.89L21 21m-3.23-3.23-3.65-3.65m0 0a3 3 0 1 0-4.24-4.24m4.24 4.24L9.88 9.88"/></svg></button>
+            </div>
+            <p class="match" id="pw-match" aria-live="polite"></p>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="pw-go" disabled>Create account</button>
+          <div class="back-row"><button type="button" class="link-btn" data-to="code">Back</button></div>
+        </form>
+      </section>
+
+      <!-- 4. Done -->
+      <section class="step" data-step="done" aria-labelledby="t-done">
+        <div class="avatar done-pic" aria-hidden="true"><div class="pic" id="d-pic"></div><div class="mono" id="d-mono">FC</div></div>
+        <div class="done-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <h1 class="title done-title" id="t-done"><span class="ln">Welcome to</span><span class="ln">the <span class="hl">ecosystem</span><span id="done-name-wrap">,</span><span id="done-dot" hidden>.</span></span><span class="ln soft" id="done-name-line"><span id="done-name">Miguel</span>.</span></h1>
+        <p class="lead">Your account is ready. Next, your company.</p>
+        <ul class="ready" id="ready"></ul>
+        <div class="actions" style="align-items:stretch">
+          <a class="btn btn-primary" href="my-company.html?page">Continue</a>
+          <a class="link-btn" style="text-align:center" href="index.html" data-back>Back to the landing</a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(() => {
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('embed')) document.documentElement.classList.add('embedded');
+  if (qs.has('from')) document.documentElement.classList.add('from-landing');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+  const $ = (s) => document.querySelector(s);
+
+  // ---- steps ---------------------------------------------------------------
+  const show = (name) => {
+    document.querySelectorAll('.step').forEach((s) => s.classList.toggle('is-on', s.dataset.step === name));
+    const first = document.querySelector(`.step[data-step="${name}"] input, .step[data-step="${name}"] .btn`);
+    if (first && !qs.has('embed')) setTimeout(() => first.focus({ preventScroll: true }), 60);
+    scrollTo(0, 0);
+  };
+
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // Dummy profile pictures: an AI-generated stock portrait for the example CEO (not a real person),
+  // a neutral silhouette for anyone else.
+  const PHOTO = '<img src="images/profile-miguel.webp" alt="" width="256" height="256" decoding="async">';
+  const SILHOUETTE = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    + '<rect width="64" height="64" fill="#e9e7e2"/><circle cx="32" cy="26" r="11" fill="#c3c0b8"/>'
+    + '<path d="M11 64c1-12 9-18 21-18s20 6 21 18z" fill="#c3c0b8"/></svg>';
+  const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt' };
+  const initials = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
+
+  let person = null; // { name, email, via }
+
+  // ---- 1. sign up -------------------------------------------------------------
+  const nameIn = $('#name'), emailIn = $('#email'), nameErr = $('#name-err'), emailErr = $('#email-err');
+  const clear = (inp, err) => { err.textContent = ''; inp.classList.remove('is-bad'); };
+  const bad = (inp, err, msg) => { err.textContent = msg; inp.classList.add('is-bad'); inp.focus(); };
+  // Continue waits until both fields have something in them.
+  const go = $('#signup-go');
+  const ready = () => { go.disabled = !(nameIn.value.trim() && emailIn.value.trim()); };
+  ['input', 'change'].forEach((ev) => {
+    nameIn.addEventListener(ev, () => { clear(nameIn, nameErr); ready(); });
+    emailIn.addEventListener(ev, () => { clear(emailIn, emailErr); ready(); });
+  });
+  addEventListener('pageshow', ready); // a restored page or the browser's autofill can fill them without an input event
+  $('[data-try]').addEventListener('click', () => {
+    nameIn.value = EXAMPLE.name; emailIn.value = EXAMPLE.email;
+    clear(nameIn, nameErr); clear(emailIn, emailErr); ready(); emailIn.focus();
+  });
+  $('#f-signup').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = nameIn.value.trim(), email = emailIn.value.trim();
+    if (!name) return bad(nameIn, nameErr, 'Tell us your name.');
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return bad(emailIn, emailErr, 'That does not look like an email address.');
+    person = { name, email, via: 'Email' };
+    $('#code-email').textContent = email;
+    codes.forEach((c) => { c.value = ''; c.className = ''; });
+    codeBox.classList.remove('checking');
+    show('code');
+  });
+  // A provider already knows who you are and has checked the address, so there is no code
+  // to type. Prototype: no provider is contacted; it signs in as the example account.
+  document.querySelectorAll('[data-sso]').forEach((b) => b.addEventListener('click', async () => {
+    document.querySelectorAll('[data-sso]').forEach((x) => (x.disabled = true));
+    const label = b.lastChild.textContent;
+    b.lastChild.textContent = 'Connecting to ' + b.dataset.sso + '…';
+    await wait(900);
+    person = { ...EXAMPLE, via: b.dataset.sso };
+    b.lastChild.textContent = label;
+    document.querySelectorAll('[data-sso]').forEach((x) => (x.disabled = false));
+    toPayment();
+  }));
+
+  // ---- 2. code ---------------------------------------------------------------
+  const codeBox = $('#code'), codes = [...codeBox.querySelectorAll('input')];
+  const put = (from, digits) => {
+    let i = from;
+    for (const d of digits) { if (i >= codes.length) break; codes[i].value = d; codes[i].classList.add('ok'); i++; }
+    (codes[i] || codes[codes.length - 1]).focus();
+    if (codes.every((c) => /^\d$/.test(c.value))) verify();
+  };
+  codes.forEach((c, i) => {
+    c.addEventListener('input', () => {
+      const d = c.value.replace(/\D/g, '');
+      c.value = ''; c.classList.remove('ok');
+      if (d) put(i, d);
+    });
+    c.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !c.value && i) { codes[i - 1].value = ''; codes[i - 1].classList.remove('ok'); codes[i - 1].focus(); e.preventDefault(); }
+      if (e.key === 'ArrowLeft' && i) codes[i - 1].focus();
+      if (e.key === 'ArrowRight' && i < codes.length - 1) codes[i + 1].focus();
+    });
+    c.addEventListener('paste', (e) => { e.preventDefault(); put(i, (e.clipboardData.getData('text') || '').replace(/\D/g, '')); });
+  });
+  document.querySelectorAll('[data-to]').forEach((b) => b.addEventListener('click', () => show(b.dataset.to)));
+  $('[data-resend]').addEventListener('click', (e) => { e.target.textContent = 'Sent again'; setTimeout(() => (e.target.textContent = 'Resend code'), 2200); });
+  let verifying = false;
+  async function verify() {
+    if (verifying) return; verifying = true;
+    codes.forEach((c) => c.blur());
+    codeBox.classList.add('checking');
+    await wait(1100);
+    verifying = false;
+    $('#pw-email').textContent = person.email;
+    pwIn.value = ''; pw2In.value = ''; checkRules(); checkMatch();
+    document.querySelectorAll('.pw .reveal').forEach((b) => { document.getElementById(b.getAttribute('aria-controls')).type = 'password'; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', 'Show password'); });
+    show('password');
+  }
+
+  // ---- 3. password -------------------------------------------------------------
+  const pwIn = $('#password'), pw2In = $('#password2'), pwErr = $('#pw-err'), pwMatch = $('#pw-match'), pwGo = $('#pw-go');
+  const RULES = { len: (v) => v.length >= 10, num: (v) => /\d/.test(v), mix: (v) => /[a-z]/.test(v) && /[A-Z]/.test(v) };
+  const checkRules = () => {
+    let all = true;
+    document.querySelectorAll('#pw-rules li').forEach((li) => { const ok = RULES[li.dataset.rule](pwIn.value); li.classList.toggle('ok', ok); all = all && ok; });
+    return all;
+  };
+  // Create account waits until both fields are filled in and say the same thing.
+  const checkMatch = () => {
+    const a = pwIn.value, b = pw2In.value, same = !!a && a === b;
+    pwMatch.textContent = !b ? '' : same ? 'Passwords match' : 'Passwords do not match yet';
+    pwMatch.classList.toggle('ok', same);
+    pw2In.classList.toggle('is-bad', !!b && !same && b.length >= a.length);
+    pwGo.disabled = !same;
+  };
+  pwIn.addEventListener('input', () => { checkRules(); checkMatch(); pwErr.textContent = ''; pwIn.classList.remove('is-bad'); });
+  pw2In.addEventListener('input', checkMatch);
+  // Each field has its own eye: it shows or hides that field only.
+  document.querySelectorAll('.pw .reveal').forEach((b) => b.addEventListener('click', () => {
+    const inp = document.getElementById(b.getAttribute('aria-controls'));
+    const show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    b.setAttribute('aria-pressed', String(show));
+    b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    inp.focus();
+  }));
+  $('#f-password').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!checkRules()) { pwErr.textContent = 'Your password needs everything on the list.'; pwIn.classList.add('is-bad'); pwIn.focus(); return; }
+    toPayment();
+  });
+
+  // ---- on to payment ------------------------------------------------------------
+  // The account exists; next is how to pay (payment.html, then checkout.html). The
+  // welcome is prepared now and remembered for this tab, so checkout can come back to
+  // it at register.html#done once the payment is through.
+  function toPayment() {
+    done(false);
+    try { sessionStorage.setItem('cm-person', JSON.stringify(person)); } catch (e) {}
+    location.href = 'payment.html';
+  }
+
+  // the welcome title: with a name, "the ecosystem," then the name on its own line; without one, a full stop
+  const nameLine = (has) => { $('#done-name-wrap').hidden = !has; $('#done-name-line').hidden = !has; $('#done-dot').hidden = has; };
+
+  // ---- the welcome's details: name can be edited, phone added (optional) -----------
+  const CODES = [['+351', 'PT'], ['+1', 'US'], ['+44', 'UK'], ['+49', 'DE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT']];
+  const BY_TLD = { pt: '+351', uk: '+44', de: '+49', es: '+34', fr: '+33', it: '+39' };
+  const saveDone = () => {
+    const first = person.name.split(/\s+/)[0];
+    try {
+      sessionStorage.setItem('cm-done', JSON.stringify({ first, pic: $('#d-pic').innerHTML, mono: $('#d-mono').textContent, ready: $('#ready').innerHTML }));
+      sessionStorage.setItem('cm-person', JSON.stringify(person));
+    } catch (e) {}
+  };
+  // The phone is always a field: optional, kept as you type, checked when you leave it.
+  const phoneRow = () => {
+    const tld = person.email.split('.').pop().toLowerCase();
+    const cc = person.cc || BY_TLD[tld] || '+1';
+    return `<li data-row="phone" class="is-field"><label class="k" for="d-phone">Phone <span class="opt">(optional)</span></label>` +
+      `<span class="ready-form"><select class="input" id="d-cc" aria-label="Country code">${CODES.map(([c, k]) => `<option value="${c}"${c === cc ? ' selected' : ''}>${k} ${c}</option>`).join('')}</select>` +
+      `<input class="input" id="d-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Phone number" value="${esc(person.phone || '')}" style="flex:1;min-width:0"></span>` +
+      `<p class="ready-err" id="d-phone-err" role="alert"></p></li>`;
+  };
+  const phoneOk = (val) => { const d = val.replace(/\D/g, ''); return !val || (d.length >= 6 && d.length <= 15 && !/[^\d\s()+.-]/.test(val)); };
+  const checkPhone = () => {
+    const inp = $('#d-phone'); if (!inp) return true;
+    const ok = phoneOk(inp.value.trim());
+    $('#d-phone-err').textContent = ok ? '' : 'That does not look like a phone number.';
+    inp.classList.toggle('is-bad', !ok);
+    return ok;
+  };
+  $('#ready').addEventListener('input', (e) => {
+    if (e.target.id !== 'd-phone') return;
+    $('#d-phone-err').textContent = ''; e.target.classList.remove('is-bad');
+    person.phone = e.target.value.trim(); person.cc = person.phone ? $('#d-cc').value : '';
+    saveDone();
+  });
+  $('#ready').addEventListener('change', (e) => { if (e.target.id === 'd-cc') { person.cc = person.phone ? e.target.value : ''; saveDone(); } });
+  $('#ready').addEventListener('focusout', (e) => { if (e.target.id === 'd-phone') checkPhone(); });
+  function renderReady() {
+    $('#ready').innerHTML =
+      `<li data-row="name"><span class="k">Name</span><span class="v"><span>${esc(person.name)}</span><button type="button" class="link-btn" data-edit="name" aria-label="Edit your name">Edit</button></span></li>` +
+      `<li><span class="k">Email</span><span class="v"><span>${esc(person.email)}</span></span></li>` +
+      phoneRow() +
+      `<li><span class="k">Signed up with</span><span class="v"><span>${esc(person.via)}</span></span></li>`;
+  }
+  const editRow = (which) => {
+    const li = $(`#ready [data-row="${which}"]`);
+    const v = li.querySelector('.v'); v.hidden = true;
+    const f = document.createElement('form'); f.className = 'ready-form'; f.noValidate = true;
+    f.innerHTML = `<input class="input" name="v" type="text" autocomplete="name" aria-label="Your name" value="${esc(person.name)}" style="flex:1;min-width:0">`;
+    f.insertAdjacentHTML('beforeend', '<button class="btn btn-primary" type="submit">Save</button><button class="link-btn" type="button" data-cancel>Cancel</button><p class="ready-err" role="alert"></p>');
+    li.appendChild(f);
+    const inp = f.querySelector('[name="v"]'), err = f.querySelector('.ready-err');
+    inp.focus(); inp.select();
+    const done = () => { renderReady(); saveDone(); $(`#ready [data-row="${which}"] [data-edit]`).focus(); };
+    f.querySelector('[data-cancel]').addEventListener('click', () => { renderReady(); $(`#ready [data-row="${which}"] [data-edit]`).focus(); });
+    f.addEventListener('keydown', (e) => { if (e.key === 'Escape') f.querySelector('[data-cancel]').click(); });
+    inp.addEventListener('input', () => { err.textContent = ''; inp.classList.remove('is-bad'); });
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = inp.value.trim();
+      if (!val) { err.textContent = 'Your name cannot be empty.'; inp.classList.add('is-bad'); inp.focus(); return; }
+      person.name = val;
+      const first = val.split(/\s+/)[0];
+      $('#done-name').textContent = first; nameLine(!!first);
+      $('#d-mono').textContent = initials(val);
+      done();
+    });
+  };
+  $('#ready').addEventListener('click', (e) => { const b = e.target.closest('[data-edit]'); if (b) editRow(b.dataset.edit); });
+
+  // ---- 4. done ---------------------------------------------------------------
+  function done(showIt = true) {
+    const first = person.name.split(/\s+/)[0];
+    $('#done-name').textContent = first; nameLine(!!first);
+    $('#d-pic').innerHTML = person.email.toLowerCase() === EXAMPLE.email ? PHOTO : SILHOUETTE;
+    $('#d-mono').textContent = initials(person.name);
+    document.querySelector('[data-step="done"] .done-mark').hidden = true;
+    renderReady();
+    // remembered for this tab, so Back from the plan page lands here again
+    saveDone();
+    if (showIt) show('done');
+  }
+  // Back from the payment page (register.html#password): the password step again for
+  // the email route; a provider sign-up has no password step, so it lands on the start.
+  if (location.hash === '#password') {
+    try {
+      const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null');
+      if (p && p.via === 'Email') {
+        person = p;
+        nameIn.value = p.name; emailIn.value = p.email; ready();
+        $('#code-email').textContent = p.email; $('#pw-email').textContent = p.email;
+        show('password');
+      } else if (p) { nameIn.value = p.name; emailIn.value = p.email; ready(); }
+    } catch (e) {}
+  }
+  // after checkout (register.html#done): the welcome screen, as it was prepared
+  if (location.hash === '#done') {
+    try {
+      const d = JSON.parse(sessionStorage.getItem('cm-done') || 'null');
+      if (d) {
+        $('#done-name').textContent = d.first; nameLine(!!d.first);
+        $('#d-pic').innerHTML = d.pic; $('#d-mono').textContent = d.mono;
+        try { person = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || person; } catch (e) {}
+        if (person) renderReady(); else $('#ready').innerHTML = d.ready || '';
+        document.querySelector('[data-step="done"] .done-mark').hidden = true;
+        show('done');
+      }
+    } catch (e) {}
+  }
+
+  // ---- on to the company: dissolve to off-white, then go -------------------
+  // The next page paints off-white before anything of its own, so the join is
+  // one continuous colour rather than a flash of a page you were not meant to
+  // see yet.
+  const onward = document.querySelector('a[href^="my-company.html"]'); // the welcome's Continue: to the empty company page
+  if (onward) onward.addEventListener('click', (e) => {
+    if (!checkPhone()) { e.preventDefault(); $('#d-phone').focus(); return; }
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+    e.preventDefault();
+    const veil = document.createElement('div');
+    veil.className = 'to-company';
+    document.body.appendChild(veil);
+    requestAnimationFrame(() => veil.classList.add('on'));
+    setTimeout(() => { location.href = onward.getAttribute('href'); }, reduced ? 0 : 950);
+  });
+
+  // ---- back to the landing: the arrival, reversed ---------------------------
+  document.querySelectorAll('[data-back]').forEach((a) => a.addEventListener('click', (e) => {
+    if (reduced || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    document.documentElement.classList.add('leaving');
+    setTimeout(() => { location.href = a.getAttribute('href'); }, 620);
+  }));
+  addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    document.documentElement.classList.remove('leaving');
+    // Restored from the back/forward cache the veil would still be sitting
+    // there at full opacity, and this page would be a blank off-white field.
+    document.querySelectorAll('.to-company').forEach((v) => v.remove());
+  });
+
+  if (!qs.has('embed')) setTimeout(() => nameIn.focus({ preventScroll: true }), qs.has('from') ? 0 : 350);
+})();
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

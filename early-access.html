@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Early access · C-MORE</title>
+<meta name="robots" content="noindex">
+<style>
+/* Figtree, the brand face — same self-hosted files as the landing. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300; font-display: swap; src: url("fonts/figtree-300.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/figtree-400.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/figtree-500.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/figtree-600.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/figtree-700.woff2") format('woff2'); }
+
+/* The design system's tokens, the subset this page uses. */
+:root {
+  --color-graphite: #343434;
+  --color-coral: #f46d4f;
+  --color-coral-deep: #f44e29;
+  --color-coral-tint: #f9e7e3;
+  --color-blue: #4e638b;
+  --color-mid-blue: #909db6;
+  --color-off-white: #fafafa;
+  --color-light-beige: #f2f1ed;
+  --color-mid-beige: #e9e7e2;
+  --color-dark-beige: #e0ded7;
+  --color-sand-400: #c3c0b8;
+  --color-sand-500: #96958e;
+  --color-sand-600: #6e6e6a;
+  --color-positive: #3f7d2e;
+  --color-critical: #b3261e;
+
+  --color-ground: var(--color-light-beige);
+  --color-surface: #ffffff;
+  --color-surface-sunken: var(--color-mid-beige);
+  --color-ink: var(--color-graphite);
+  --color-ink-muted: var(--color-blue);
+  --color-ink-subtle: var(--color-sand-600);
+  --color-line: var(--color-dark-beige);
+  --color-activation: var(--color-coral);
+  --color-activation-hover: var(--color-coral-deep);
+  --color-activation-foreground: var(--color-graphite);
+
+  --font-sans: 'Figtree', Arial, ui-sans-serif, system-ui, sans-serif;
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-md: 0.75rem;
+  --radius-pill: 9999px;
+  --shadow-activate: 0 8px 28px -10px rgba(244, 109, 79, 0.55);
+  --shadow-raised: 0 1px 2px rgba(52, 52, 52, 0.05), 0 4px 12px -6px rgba(52, 52, 52, 0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; background: var(--color-ground); color: var(--color-ink);
+  font-family: var(--font-sans); font-size: 1rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-synthesis-weight: none;
+}
+h1, h2, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+a { color: var(--color-ink); text-decoration-color: var(--color-activation); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; border-radius: 0.5rem; }
+::selection { background: var(--color-coral); color: var(--color-graphite); }
+
+/* ---- Page frame --------------------------------------------------------- */
+.reg { min-height: 100vh; display: flex; flex-direction: column; }
+.reg-top { height: 4.5rem; border-bottom: 1px solid var(--color-line); }
+/* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
+.hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
+
+/* the logo file, at the landing header's size; the link carries the accessible name */
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
+.brand img { display: block; width: 6.8rem; height: 1.25rem; }
+.top-link { font-size: 0.875rem; color: var(--color-ink-subtle); text-decoration: none; }
+.top-link:hover { color: var(--color-ink); }
+.top-link b { font-weight: 500; color: var(--color-ink); }
+
+.reg-main { flex: 1; display: grid; place-items: center; padding: 3rem 1.25rem 4rem; }
+/* the landing's "Know more" cue, turned round: same eyebrow, same coral rule, pointing home */
+.home-cue { display: flex; justify-content: center; padding-top: 1.75rem; }
+.home-cue a { position: relative; display: inline-block; padding-bottom: 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; text-decoration: none; color: var(--color-ink-subtle); transition: color .14s var(--ease-brand); }
+.home-cue a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--color-coral);
+  transform: scaleX(.55); transition: transform .3s var(--ease-brand); }
+.home-cue a:hover { color: var(--color-ink); }
+.home-cue a:hover::after { transform: scaleX(1); }
+.back-row { display: flex; justify-content: center; }
+.stage { width: 100%; max-width: 30rem; }
+
+/* one step visible at a time; the next rises in the way the page itself arrived */
+.step { display: none; }
+.step.is-on { display: block; animation: step-in .55s var(--ease-brand) both; }
+@keyframes step-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.eyebrow::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.title { margin-top: 1rem; font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.title .soft { font-weight: 300; }
+.title .one-line { display: block; white-space: nowrap; font-size: 0.74em; margin-top: 0.12em; }
+.lead { margin-top: 1rem; font-size: 1.125rem; line-height: 1.55; font-weight: 300; color: var(--color-ink-muted); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3rem; padding-inline: 1.5rem;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; font-size: 1rem;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--color-activation); color: var(--color-activation-foreground); }
+.btn-primary:hover:not(:disabled) { background: var(--color-activation-hover); box-shadow: var(--shadow-activate); color: var(--color-activation-foreground); }
+.btn-block { width: 100%; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 0.875rem; color: var(--color-ink-subtle); cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; }
+.link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
+
+
+/* ---- Perks: variation B3, the expanding deck ------------------------- */
+.stage { max-width: 78rem; }
+.intro { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: 44rem; margin-inline: auto; }
+.intro .lead { max-width: 33rem; }
+/* one line wherever it fits */
+@media (min-width: 50rem) { .intro { max-width: none; } .intro .lead { max-width: none; white-space: nowrap; } }
+.w-mark { white-space: nowrap; }
+/* the company name never breaks at its hyphen */
+.nb { white-space: nowrap; }
+.w-mark { background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 0% 0.28em; padding-inline: 0.06em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  animation: mark-in 1s var(--ease-brand) .5s forwards; }
+@keyframes mark-in { to { background-size: 100% 0.28em; } }
+
+.deck { --tint: #f7b19f; margin-top: 1.75rem; display: flex; flex-direction: column; gap: 22px; }
+.deck .row { height: clamp(340px, 2vh, 800px); display: flex; gap: 12px; }
+.deck .panel { flex: 1 1 0; min-width: 0; height: clamp(340px, 2vh, 800px); padding: 0; border-radius: 18px; border: 1px solid var(--color-line); background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(52,52,52,.04); text-align: left; font-family: inherit; color: var(--color-ink); overflow: hidden; position: relative; cursor: pointer;
+  transition: flex-grow .6s cubic-bezier(.3,.8,.25,1), background-color .45s, border-color .45s, box-shadow .45s, transform .3s; }
+.deck .panel:hover { border-color: var(--color-sand-400); transform: translateY(-3px); }
+.deck .panel.on { flex-grow: 4; background: var(--color-graphite); border-color: var(--color-graphite); color: var(--color-off-white); box-shadow: 0 30px 60px -28px rgba(52,52,52,.55); }
+.deck .panel.on:hover { transform: none; }
+.deck .panel:focus-visible { outline: 3px solid var(--color-coral); outline-offset: 2px; }
+
+.deck .closed { position: absolute; inset: 0; padding: 28px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+.deck .closed .top { display: flex; justify-content: space-between; align-items: center; }
+.deck .sq { width: 10px; height: 10px; background: var(--color-coral); display: inline-block; }
+.deck .num { font-size: 15px; font-weight: 600; letter-spacing: .1em; color: var(--color-sand-500); }
+.deck .closed .ptitle { font-size: 23px; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; }
+.deck .closed .cue { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; color: var(--color-ink-muted); margin-top: 14px; }
+.deck .panel.on .closed { display: none; }
+
+.deck .open { position: absolute; inset: 0; padding: 32px 34px; display: none; gap: 26px; }
+.deck .panel.on .open { display: flex; }
+.deck .open .copy { flex: 0 0 310px; display: flex; flex-direction: column; justify-content: space-between; }
+.deck .open .head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; letter-spacing: .12em; color: rgba(250,250,250,.6); }
+.deck .open h2 { margin: 16px 0 0; font-size: 42px; line-height: 1.12; font-weight: 700; letter-spacing: -.02em; color: var(--color-off-white); }
+.deck .open p { margin: 16px 0 0; font-size: 20px; line-height: 1.5; color: rgba(250,250,250,.78); }
+/* the key fact, set as a note under a hairline rather than a pill, so nothing here reads as a button */
+.deck .chip { display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid rgba(250,250,250,.16); color: var(--color-off-white); font-size: 18px; font-weight: 600; letter-spacing: -0.005em; white-space: nowrap; }
+.deck .chip::before { content: ""; flex: none; width: 8px; height: 8px; background: var(--color-coral); }
+.deck .illo { flex: 1 1 auto; min-width: 0; border-radius: 14px; background: rgba(250,250,250,.06); border: 1px solid rgba(250,250,250,.1); padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { opacity: 0; transform: scale(.5); } 100% { opacity: 1; transform: scale(1); } }
+.deck .panel.on .head, .deck .panel.on h2, .deck .panel.on p, .deck .panel.on .chip, .deck .panel.on .illo { animation: rise .45s cubic-bezier(.2,.7,.2,1) both; }
+.deck .panel.on h2 { animation-delay: .1s; } .deck .panel.on p, .deck .panel.on .illo { animation-delay: .2s; } .deck .panel.on .chip { animation-delay: .3s; }
+
+/* illustrations */
+.deck .seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; max-width: 16rem; }
+.deck .seat { aspect-ratio: 1; border-radius: 999px; border: 2px dashed rgba(244,109,79,.6); }
+.deck .panel.on .seat { animation: pop .3s cubic-bezier(.2,.9,.3,1.3) both; }
+.deck .seat.you { background: var(--color-coral); border: none; color: var(--color-graphite); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.deck .seats .seat:nth-child(n+2) { animation-delay: calc(.03s * (var(--i, 1))); }
+.deck .big { display: flex; align-items: baseline; gap: 10px; margin-top: 16px; }
+.deck .big strong { font-size: 68px; font-weight: 700; letter-spacing: -.03em; color: var(--color-off-white); line-height: 1; }
+.deck .big span { font-size: 18px; color: rgba(250,250,250,.7); }
+
+.deck .dir { display: flex; flex-direction: column; gap: 8px; }
+.deck .dir .r { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; background: rgba(250,250,250,.06); }
+.deck .dir .r.me { background: var(--color-coral); }
+.deck .dir .av { width: 36px; height: 36px; border-radius: 8px; background: rgba(250,250,250,.12); flex: none; }
+.deck .dir .me .av { background: var(--color-off-white); color: var(--color-coral-deep); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.deck .dir .txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.deck .dir .me .txt b { font-size: 19px; font-weight: 600; color: var(--color-graphite); }
+.deck .dir .me .txt small { font-size: 15px; color: rgba(52,52,52,.8); }
+.deck .dir .ph { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+.deck .dir .ph i { max-width: 100%; }
+.deck .dir .ph i { display: block; height: 8px; border-radius: 4px; background: rgba(250,250,250,.18); }
+.deck .dir .ph i + i { height: 6px; background: rgba(250,250,250,.1); }
+
+.deck .weeks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.deck .wk { display: flex; flex-direction: column; gap: 8px; }
+.deck .wk small { font-size: 15px; color: rgba(250,250,250,.55); }
+.deck .wk i { display: block; height: 170px; border-radius: 10px; background: rgba(250,250,250,.08); }
+.deck .wk.hot small { font-weight: 700; color: var(--color-coral); }
+.deck .wk.hot i { background: var(--color-coral); color: var(--color-graphite); display: flex; flex-direction: column; justify-content: space-between; padding: 10px; font-style: normal; font-size: 11px; font-weight: 700; }
+
+.deck .tl { display: flex; flex-direction: column; gap: 16px; }
+.deck .tl .lab { display: flex; justify-content: space-between; font-size: 17px; }
+.deck .tl .lab b { font-weight: 700; color: var(--color-off-white); } .deck .tl .lab span { color: rgba(250,250,250,.5); }
+.deck .track { position: relative; height: 18px; display: flex; align-items: center; }
+.deck .track i { position: absolute; display: block; }
+.deck .track .base { left: 0; right: 0; height: 2px; background: rgba(250,250,250,.15); }
+.deck .track .done { left: 0; width: 58%; height: 2px; background: var(--color-coral); }
+.deck .track .dot { left: 0; width: 18px; height: 18px; border-radius: 999px; background: var(--color-coral); box-shadow: 0 0 0 6px rgba(244,109,79,.25); }
+.deck .track .end { right: 0; width: 12px; height: 12px; border-radius: 999px; border: 2px solid rgba(250,250,250,.35); }
+.deck .new { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(244,109,79,.16); border: 1px solid rgba(244,109,79,.4); font-size: 17px; }
+.deck .new b { font-size: 13px; font-weight: 700; padding: 3px 7px; border-radius: 999px; background: var(--color-coral); color: var(--color-graphite); }
+.deck .new span { font-weight: 600; color: var(--color-off-white); } .deck .new em { margin-left: auto; font-style: normal; font-size: 15px; color: var(--tint); font-weight: 700; }
+
+/* carousel controls */
+.deck .ctl { display: flex; align-items: center; justify-content: center; gap: 22px; }
+.deck .nav { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; }
+.deck .nav:hover { background: var(--color-graphite); color: var(--color-off-white); border-color: var(--color-graphite); }
+.deck .bullets { display: flex; align-items: center; gap: 10px; }
+.deck .bullet { width: 12px; height: 44px; padding: 0; border: none; background: transparent; display: flex; align-items: center; cursor: pointer; transition: width .35s cubic-bezier(.2,.7,.2,1); }
+.deck .bullet i { display: block; width: 100%; height: 8px; border-radius: 4px; background: var(--color-line); overflow: hidden; }
+.deck .bullet i b { display: block; height: 8px; border-radius: 4px; background: var(--color-graphite); width: 0; transition: width .1s linear; }
+.deck .bullet.done i { background: var(--color-graphite); }
+.deck .bullet.on { width: 48px; } .deck .bullet.on i { background: var(--color-dark-beige); }
+
+.actions { margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.625rem; }
+.ea-page .reg-main { padding-top: 1.5rem; }
+/* the week column is too narrow for the word laid flat: it runs up the column instead */
+.deck .wk.hot i { padding: 10px 8px; overflow: hidden; }
+.deck .wk.hot i span { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.04em; }
+.deck .open h2 { text-wrap: wrap; }
+
+/* laptop (the 1024 artboard) */
+@media (max-width: 1200px) {
+  .deck .row, .deck .panel { height: clamp(340px, 2vh, 800px); } .deck .row { gap: 10px; } .deck .panel { border-radius: 16px; }
+  .deck .closed { padding: 22px 20px; } .deck .closed .ptitle { font-size: 19px; }
+  .deck .open { padding: 26px 28px; gap: 22px; } .deck .open .copy { flex-basis: 262px; }
+  .deck .open h2 { font-size: 34px; } .deck .open p { font-size: 18px; } .deck .chip { font-size: 16.5px; }
+  .deck .illo { padding: 16px; } .deck .wk i { height: 140px; } .deck .big strong { font-size: 52px; }
+}
+/* phone (the 390 artboard): the row becomes a vertical accordion */
+@media (max-width: 760px) {
+  .intro { align-items: flex-start; text-align: left; }
+  .deck .row { height: auto; flex-direction: column; gap: 10px; }
+  .deck .panel { flex: none; height: 76px; transition: height .5s cubic-bezier(.3,.8,.25,1), background-color .4s, border-color .4s, box-shadow .4s; }
+  .deck .panel:hover { transform: none; }
+  .deck .panel.on { height: auto; }
+  .deck .closed { position: static; height: 76px; padding: 0 18px; flex-direction: row; align-items: center; gap: 14px; }
+  .deck .closed .top { display: contents; } .deck .closed .sq { display: none; } .deck .closed .num { width: 22px; }
+  .deck .closed > span:last-child { flex: 1; min-width: 0; text-align: left; }
+  .deck .closed .ptitle { font-size: 20px; } .deck .closed .cue, .deck .closed br { display: none; }
+  .deck .closed::after { content: "+"; width: 32px; height: 32px; border-radius: 999px; border: 1px solid var(--color-line); display: flex; align-items: center; justify-content: center; color: var(--color-ink-muted); font-size: 18px; line-height: 1; flex: none; }
+  .deck .open { position: static; flex-direction: column; padding: 20px; gap: 14px; }
+  .deck .open .copy { flex: none; gap: 14px; } .deck .open h2 { font-size: 32px; } .deck .open p { font-size: 18.5px; } .deck .chip { font-size: 17px; }
+  .deck .illo { min-height: 176px; padding: 16px; } .deck .wk i { height: 110px; }
+  .deck .ctl { justify-content: space-between; }
+  .actions { flex-direction: column; align-items: stretch; gap: 0.875rem; text-align: center; }
+  .actions .btn { width: 100%; height: 3.25rem; }
+}
+/* the landing's sphere, turning slowly behind the page */
+.bg-sphere { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.reg { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) { .w-mark { animation: none; background-size: 100% 0.28em; } }
+
+/* ---- Arriving and leaving --------------------------------------------- */
+/* Direct visits settle in; arrivals from the landing do not, because the landing
+   already slid this exact frame up into place. */
+.reg-main { animation: arrive .6s var(--ease-brand) both; }
+.from-landing .reg-main, .embedded .reg-main { animation: none; }
+@keyframes arrive { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+/* going back runs the landing's move in reverse: this page drops away downwards */
+.leaving .reg { transform: translateY(100vh); transition: transform .7s cubic-bezier(0.7, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body class="ea-page">
+<canvas class="bg-sphere" id="bg-sphere" aria-hidden="true"></canvas>
+<div class="reg">
+  <header class="reg-top"><div class="hdr-in">
+    <a class="brand" href="index.html" data-back aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
+    <span data-lang-switch></span>
+  </div></header>
+
+  <main class="reg-main">
+    <div class="stage">
+      <section class="step is-on" aria-labelledby="t-perks">
+        <div class="intro">
+          <p class="eyebrow">Early access</p>
+          <h1 class="title" id="t-perks">Be one of the first 2,500.<br><span class="soft">Become a <span class="w-mark">founding member</span>.</span></h1>
+          <p class="lead">Early access is limited to the first 2,500 companies. Join now to get more than a head start.</p>
+        </div>
+
+        <div class="deck">
+        <div class="row" id="row">
+          <button type="button" class="panel on" data-i="0" aria-pressed="true">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">01</span></span>
+              <span><span class="ptitle">Your first 20 users, free.</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 01 / 04</span><h2>Your first 20 users, free.</h2><p>Invite up to 20 people, from your team or the companies you work with, at no cost.</p></span>
+                <span class="chip">First 20 seats · Free</span>
+              </span>
+              <span class="illo">
+                <span class="seats"><span class="seat you">You</span><span class="seat" style="--i:1"></span><span class="seat" style="--i:2"></span><span class="seat" style="--i:3"></span><span class="seat" style="--i:4"></span><span class="seat" style="--i:5"></span><span class="seat" style="--i:6"></span><span class="seat" style="--i:7"></span><span class="seat" style="--i:8"></span><span class="seat" style="--i:9"></span><span class="seat" style="--i:10"></span><span class="seat" style="--i:11"></span><span class="seat" style="--i:12"></span><span class="seat" style="--i:13"></span><span class="seat" style="--i:14"></span><span class="seat" style="--i:15"></span><span class="seat" style="--i:16"></span><span class="seat" style="--i:17"></span><span class="seat" style="--i:18"></span><span class="seat" style="--i:19"></span></span>
+                <span class="big"><strong>20</strong><span>seats · Free</span></span>
+              </span>
+            </span>
+          </button>
+          <button type="button" class="panel" data-i="1" aria-pressed="false">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">02</span></span>
+              <span><span class="ptitle">Always visible</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 02 / 04</span><h2>Always visible</h2><p>Your company stays visible to everyone in the <span class="nb">C-MORE</span> ecosystem, for good.</p></span>
+                <span class="chip">Permanent listing</span>
+              </span>
+              <span class="illo">
+                <span class="dir">
+                  <span class="r me"><span class="av">Y</span><span class="txt"><b>Your company</b><small>Founding member · always listed</small></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                  <span class="r"><span class="av"></span><span class="ph"><i style="width:110px"></i><i style="width:66px"></i></span></span>
+                  <span class="r"><span class="av"></span><span class="ph"><i style="width:90px"></i><i style="width:56px"></i></span></span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <button type="button" class="panel" data-i="2" aria-pressed="false">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">03</span></span>
+              <span><span class="ptitle">Highlighted in the marketplace</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 03 / 04</span><h2>Highlighted in the marketplace</h2><p>One week every month, your company is featured in the <span class="nb">C-MORE</span> marketplace.</p></span>
+                <span class="chip">1 week every month</span>
+              </span>
+              <span class="illo">
+                <span class="weeks">
+                  <span class="wk"><small>W1</small><i></i></span>
+                  <span class="wk hot"><small>W2</small><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Featured</span></i></span>
+                  <span class="wk"><small>W3</small><i></i></span>
+                  <span class="wk"><small>W4</small><i></i></span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <button type="button" class="panel" data-i="3" aria-pressed="false">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">04</span></span>
+              <span><span class="ptitle">New features first</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 04 / 04</span><h2>New features first</h2><p>Every new feature and functionality reaches founding members before anyone else.</p></span>
+                <span class="chip">Day-one access</span>
+              </span>
+              <span class="illo">
+                <span class="tl">
+                  <span class="lab"><b>Founding members</b><span>Everyone else</span></span>
+                  <span class="track"><i class="base"></i><i class="done"></i><i class="dot"></i><i class="end"></i></span>
+                  <span class="new"><b>NEW</b><span>The next release</span><em>Day one</em></span>
+                </span>
+              </span>
+            </span>
+          </button>
+        </div>
+        <div class="ctl">
+          <button type="button" class="nav" id="prev" aria-label="Previous perk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          <div class="bullets" aria-label="Perks" id="bullets">
+            <button type="button" class="bullet on" data-i="0" aria-label="Perk 01: Your first 20 users, free."><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="1" aria-label="Perk 02: Always visible"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="2" aria-label="Perk 03: Highlighted in the marketplace"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="3" aria-label="Perk 04: New features first"><i><b></b></i></button>
+          </div>
+          <button type="button" class="nav" id="next" aria-label="Next perk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn btn-primary" href="register.html">Get early access</a>
+          <a class="link-btn" href="index.html" data-back>Back</a>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="js/app-3.js"></script>
+<script>
+(() => {
+  try {
+    if (window.__sphere) window.__sphere.mountSphere(document.getElementById('bg-sphere'), {
+      n: 460, ink: '52,52,52', lineAlpha: 0.06, lineBase: 0.015, dotAlpha: 0.18, radius: 0.46,
+      inkOpacityMobile: 0.7, radiusMobile: 0.62, scrollRot: 0.0012, pointer: 0.5, coralPoint: true });
+  } catch (e) { console.error(e); }
+  const qs = new URLSearchParams(location.search);
+  if (qs.has('embed')) document.documentElement.classList.add('embedded');
+  if (qs.has('from')) document.documentElement.classList.add('from-landing');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- the perks deck: one panel open at a time, rotating on its own ---------
+  (() => {
+    const SECONDS = 9;
+    const panels = [...document.querySelectorAll('.deck .panel')];
+    const bullets = [...document.querySelectorAll('.deck .bullet')];
+    const row = document.getElementById('row');
+    // rotation is for the wide layouts; on a phone the accordion waits for a tap
+    const auto = () => !reduced && matchMedia('(min-width: 761px)').matches;
+    let active = 0, progress = 0, paused = false;
+    const render = () => {
+      panels.forEach((p, i) => { p.classList.toggle('on', i === active); p.setAttribute('aria-pressed', i === active ? 'true' : 'false'); });
+      bullets.forEach((b, i) => {
+        b.classList.toggle('on', i === active); b.classList.toggle('done', i < active);
+        b.setAttribute('aria-pressed', i === active ? 'true' : 'false');
+        b.querySelector('b').style.width = i === active ? Math.round(progress * 100) + '%' : '0%';
+      });
+    };
+    const go = (i) => { active = (i + panels.length) % panels.length; progress = 0; paused = false; render(); };
+    panels.forEach((p, i) => {
+      const pick = () => { if (active !== i) go(i); };
+      p.addEventListener('focus', pick);
+      p.addEventListener('click', (e) => { pick(); if (e.detail) paused = true; }); // a mouse click leaves the pointer on the card just opened
+    });
+    bullets.forEach((b, i) => b.addEventListener('click', () => go(i)));
+    document.getElementById('prev').addEventListener('click', () => go(active - 1));
+    document.getElementById('next').addEventListener('click', () => go(active + 1));
+    // Cards open on a click, a tap, the arrows, the dots or the timer, never on hover.
+    // The timer holds only while the pointer is on the open card, so it can be read.
+    panels.forEach((p) => {
+      p.addEventListener('mouseenter', () => { if (p.classList.contains('on')) paused = true; });
+      p.addEventListener('mouseleave', () => { paused = false; });
+    });
+    setInterval(() => {
+      if (!auto() || paused || document.hidden) return;
+      progress += 0.1 / SECONDS;
+      if (progress >= 1) go(active + 1); else render();
+    }, 100);
+    render();
+  })();
+
+  // ---- back to the landing: the arrival, reversed ---------------------------
+  document.querySelectorAll('[data-back]').forEach((a) => a.addEventListener('click', (e) => {
+    if (reduced || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    document.documentElement.classList.add('leaving');
+    setTimeout(() => { location.href = a.getAttribute('href'); }, 620);
+  }));
+  addEventListener('pageshow', (e) => { if (e.persisted) document.documentElement.classList.remove('leaving'); });
+})();
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add a payment method · C-MORE</title>
+<meta name="robots" content="noindex">
+<style>
+/* Figtree, the brand face — same self-hosted files as the landing. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300; font-display: swap; src: url("fonts/figtree-300.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/figtree-400.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/figtree-500.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/figtree-600.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/figtree-700.woff2") format('woff2'); }
+
+/* The design system's tokens, the subset this page uses. */
+:root {
+  --color-graphite: #343434;
+  --color-coral: #f46d4f;
+  --color-coral-deep: #f44e29;
+  --color-coral-tint: #f9e7e3;
+  --color-blue: #4e638b;
+  --color-mid-blue: #909db6;
+  --color-off-white: #fafafa;
+  --color-light-beige: #f2f1ed;
+  --color-mid-beige: #e9e7e2;
+  --color-dark-beige: #e0ded7;
+  --color-sand-400: #c3c0b8;
+  --color-sand-500: #96958e;
+  --color-sand-600: #6e6e6a;
+  --color-positive: #3f7d2e;
+  --color-critical: #b3261e;
+
+  --color-ground: var(--color-light-beige);
+  --color-surface: #ffffff;
+  --color-surface-sunken: var(--color-mid-beige);
+  --color-ink: var(--color-graphite);
+  --color-ink-muted: var(--color-blue);
+  --color-ink-subtle: var(--color-sand-600);
+  --color-line: var(--color-dark-beige);
+  --color-activation: var(--color-coral);
+  --color-activation-hover: var(--color-coral-deep);
+  --color-activation-foreground: var(--color-graphite);
+
+  --font-sans: 'Figtree', Arial, ui-sans-serif, system-ui, sans-serif;
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-md: 0.75rem;
+  --radius-pill: 9999px;
+  --shadow-activate: 0 8px 28px -10px rgba(244, 109, 79, 0.55);
+  --shadow-raised: 0 1px 2px rgba(52, 52, 52, 0.05), 0 4px 12px -6px rgba(52, 52, 52, 0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; background: var(--color-ground); color: var(--color-ink);
+  font-family: var(--font-sans); font-size: 1rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-synthesis-weight: none;
+}
+h1, h2, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+a { color: var(--color-ink); text-decoration-color: var(--color-activation); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; border-radius: 0.5rem; }
+::selection { background: var(--color-coral); color: var(--color-graphite); }
+
+/* ---- Page frame --------------------------------------------------------- */
+.reg { min-height: 100vh; display: flex; flex-direction: column; }
+.reg-top { height: 4.5rem; border-bottom: 1px solid var(--color-line); }
+/* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
+.hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
+
+/* the logo file, at the landing header's size; the link carries the accessible name */
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
+.brand img { display: block; width: 6.8rem; height: 1.25rem; }
+.top-link { font-size: 0.875rem; color: var(--color-ink-subtle); text-decoration: none; }
+.top-link:hover { color: var(--color-ink); }
+.top-link b { font-weight: 500; color: var(--color-ink); }
+
+.reg-main { flex: 1; display: grid; place-items: center; padding: 3rem 1.25rem 4rem; }
+/* the landing's "Know more" cue, turned round: same eyebrow, same coral rule, pointing home */
+.home-cue { display: flex; justify-content: center; padding-top: 1.75rem; }
+.home-cue a { position: relative; display: inline-block; padding-bottom: 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; text-decoration: none; color: var(--color-ink-subtle); transition: color .14s var(--ease-brand); }
+.home-cue a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--color-coral);
+  transform: scaleX(.55); transition: transform .3s var(--ease-brand); }
+.home-cue a:hover { color: var(--color-ink); }
+.home-cue a:hover::after { transform: scaleX(1); }
+.back-row { display: flex; justify-content: center; }
+.stage { width: 100%; max-width: 30rem; }
+
+/* one step visible at a time; the next rises in the way the page itself arrived */
+.step { display: none; }
+.step.is-on { display: block; animation: step-in .55s var(--ease-brand) both; }
+@keyframes step-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.eyebrow::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.title { margin-top: 1rem; font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.title .soft { font-weight: 300; }
+.title .one-line { display: block; white-space: nowrap; font-size: 0.74em; margin-top: 0.12em; }
+.lead { margin-top: 1rem; font-size: 1.125rem; line-height: 1.55; font-weight: 300; color: var(--color-ink-muted); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3rem; padding-inline: 1.5rem;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; font-size: 1rem;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--color-activation); color: var(--color-activation-foreground); }
+.btn-primary:hover:not(:disabled) { background: var(--color-activation-hover); box-shadow: var(--shadow-activate); color: var(--color-activation-foreground); }
+.btn-block { width: 100%; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 0.875rem; color: var(--color-ink-subtle); cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; }
+.link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
+
+
+/* ---- Checkout: the payment-method export, on the site's own tokens ------- */
+/* currency: one switch, shared by the plan picker and checkout */
+.cur { display: inline-flex; padding: .1875rem; gap: .1875rem; background: var(--color-surface-sunken); border-radius: var(--radius-pill); }
+.cur button { border: 0; background: transparent; cursor: pointer; font: inherit; font-size: .8125rem; font-weight: 600; letter-spacing: .02em; color: var(--color-ink-muted);
+  padding: .375rem .875rem; border-radius: var(--radius-pill); transition: background-color .14s var(--ease-brand), color .14s var(--ease-brand), box-shadow .14s; }
+.cur button:hover { color: var(--color-ink); }
+.cur button[aria-checked="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-raised); }
+.cur button:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+/* anchored from the top at the plan page's height, so the headline stays put between the two steps */
+.co-page .reg-main { padding: clamp(2rem, 10vh, 5.5rem) 1.25rem 3rem; place-items: start center; }
+.stage { max-width: 62rem; display: flex; flex-direction: column; gap: 2.25rem; }
+.intro { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; }
+.intro .title { margin-top: 0; }
+.secure { display: flex; align-items: center; gap: .5rem; font-size: .8125rem; color: var(--color-ink-subtle); }
+.w-mark { white-space: nowrap; background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 0% 0.28em; padding-inline: 0.06em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; animation: mark-in 1s var(--ease-brand) .5s forwards; }
+@keyframes mark-in { to { background-size: 100% 0.28em; } }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 2rem; align-items: start; }
+.left { display: flex; flex-direction: column; gap: .875rem; }
+.seg { display: flex; padding: .25rem; gap: .25rem; background: var(--color-surface-sunken); border-radius: var(--radius-pill); }
+.seg button { flex: 1; height: 40px; border: 0; background: transparent; cursor: pointer; font: inherit; font-size: .875rem; font-weight: 500; color: var(--color-ink-muted); border-radius: var(--radius-pill);
+  display: flex; align-items: center; justify-content: center; gap: .5rem; transition: background-color .14s var(--ease-brand), color .14s var(--ease-brand), box-shadow .14s; }
+.seg button[aria-checked="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-raised); }
+.seg button[hidden] { display: none; }
+.card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 16px; padding: 1.25rem 1.375rem; box-shadow: 0 1px 2px rgba(52,52,52,.04); }
+.pane { display: none; flex-direction: column; gap: .75rem; }
+.pane.on { display: flex; animation: pane-in .3s var(--ease-brand) both; }
+@keyframes pane-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.pane-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.pane-head b { font-size: 1rem; font-weight: 600; }
+.pane-head span { font-size: .8125rem; color: var(--color-ink-subtle); }
+.field { display: flex; flex-direction: column; gap: .25rem; }
+.field label { font-size: .875rem; font-weight: 500; display: flex; justify-content: space-between; }
+.field label small { font-weight: 400; color: var(--color-ink-subtle); font-size: .875rem; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.input { width: 100%; height: 42px; padding: 0 1rem; font: inherit; font-size: 1rem; color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .05); transition: border-color .14s var(--ease-brand), box-shadow .14s var(--ease-brand); }
+.input::placeholder { color: var(--color-sand-500); }
+.input:hover { border-color: var(--color-sand-400); }
+.input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 14%, transparent); }
+select.input { appearance: none; padding-right: 2.5rem; cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2396958e' stroke-width='1.5'><path d='M6 8l4 4 4-4'/></svg>");
+  background-repeat: no-repeat; background-position: right .75rem center; background-size: 1.25rem; }
+.with-icon { position: relative; }
+.with-icon .input { padding-right: 3rem; }
+.with-icon svg { position: absolute; right: .875rem; top: 10px; pointer-events: none; }
+.note { padding: .625rem .875rem; border-radius: 10px; background: var(--color-ground); font-size: .75rem; line-height: 1.5; color: var(--color-ink-subtle); }
+
+.aside { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: .75rem; }
+.summary { background: var(--color-graphite); color: var(--color-off-white); border-radius: 16px; padding: 1.5rem 1.625rem; box-shadow: 0 30px 60px -28px rgba(52,52,52,.55); display: flex; flex-direction: column; gap: 1.125rem; }
+.summary .plan { display: flex; align-items: flex-start; justify-content: space-between; gap: .625rem; }
+.summary .plan b { font-size: 1.125rem; font-weight: 600; display: block; }
+.summary .plan small { font-size: 1rem; display: block; margin-top: .125rem; color: var(--color-sand-400); }
+.summary .plan a { font-size: .9375rem; color: var(--color-off-white); text-decoration: underline; text-decoration-color: rgba(250,250,250,.3); text-underline-offset: .2em; white-space: nowrap; }
+.summary .due { display: flex; align-items: baseline; justify-content: space-between; padding-top: 1rem; border-top: 1px solid rgba(250,250,250,.16); }
+.summary .due span { font-size: 1rem; color: var(--color-sand-400); }
+.summary .due strong { font-size: 2.25rem; font-weight: 600; letter-spacing: -.03em; line-height: 1; }
+.consents { display: flex; flex-direction: column; gap: .75rem; }
+.consent { position: relative; display: flex; align-items: flex-start; gap: .625rem; cursor: pointer; font-size: .9375rem; line-height: 1.5; color: var(--color-sand-400); }
+.consent input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.consent .box { width: 22px; height: 22px; margin-top: 1px; flex: none; border-radius: 6px; border: 1.5px solid var(--color-sand-600); display: flex; align-items: center; justify-content: center; transition: background-color .15s, border-color .15s; }
+.consent .box svg { opacity: 0; }
+.consent input:checked + .box { background: var(--color-coral); border-color: var(--color-coral); }
+.consent input:checked + .box svg { opacity: 1; }
+.consent input:focus-visible + .box { outline: 3px solid var(--color-coral); outline-offset: 2px; }
+/* no Terms or Privacy pages yet: the words read as the links they will be, but go nowhere */
+.consent .terms { color: var(--color-off-white); text-decoration: underline; text-decoration-color: rgba(250,250,250,.3); text-underline-offset: .2em; }
+.summary .btn { height: 3.25rem; font-size: 1.0625rem; transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand), opacity .2s; }
+/* until Terms is ticked the button reads as waiting, not as a faded coral */
+.summary .btn[aria-disabled="true"] { opacity: 1; cursor: not-allowed; background: transparent; color: var(--color-sand-400); box-shadow: inset 0 0 0 1px rgba(250,250,250,.22); }
+.summary .btn[aria-disabled="true"]:active { transform: none; }
+/* the reason it is waiting: on hover or focus, and after a tap on a phone */
+.pay-wrap { position: relative; z-index: 3; display: flex; flex-direction: column; }
+.pay-hint { position: absolute; left: 50%; top: calc(100% + 10px); z-index: 2; width: max-content; max-width: 100%; padding: .5rem .75rem; border-radius: 10px;
+  background: var(--color-off-white); color: var(--color-graphite); font-size: .875rem; font-weight: 500; line-height: 1.35; text-align: center;
+  box-shadow: 0 10px 24px -10px rgba(0,0,0,.45); opacity: 0; transform: translate(-50%, -4px); pointer-events: none; transition: opacity .18s var(--ease-brand), transform .18s var(--ease-brand); }
+.pay-hint::after { content: ""; position: absolute; left: 50%; bottom: 100%; margin-left: -6px; border: 6px solid transparent; border-bottom-color: var(--color-off-white); }
+.pay-wrap:has(.btn[aria-disabled="true"]:hover) .pay-hint, .pay-wrap:has(.btn[aria-disabled="true"]:focus-visible) .pay-hint, .pay-wrap.nudge .pay-hint { opacity: 1; transform: translate(-50%, 0); }
+/* and the box it points at answers with a coral ring */
+.consent.nudge .box { border-color: var(--color-coral); box-shadow: 0 0 0 4px rgba(244,109,79,.28); animation: box-nudge .5s var(--ease-brand); }
+@keyframes box-nudge { 0%, 100% { transform: none; } 30% { transform: scale(1.18); } 60% { transform: scale(.94); } }
+.enc { display: flex; align-items: center; justify-content: center; gap: .375rem; font-size: .8125rem; color: var(--color-sand-500); }
+/* express checkout: the wallets people expect, above the forms. Names only: in production the
+   payment provider supplies the official buttons, marks included. */
+.express { display: flex; flex-direction: column; gap: .625rem; }
+.express-label { display: block; font-size: .8125rem; line-height: 1.25rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-ink-muted); }
+/* the summary starts level with the wallet buttons, not with their label */
+.aside { margin-top: calc(1.25rem + .625rem); }
+@media (max-width: 760px) { .aside { margin-top: 0; } }
+.wallets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .625rem; }
+.wallet { height: 48px; border-radius: var(--radius-pill); border: 1px solid transparent; font: inherit; font-size: 1rem; font-weight: 600; letter-spacing: -.01em; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: .375rem; transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), filter .14s; }
+.wallet:hover { box-shadow: 0 8px 20px -10px rgba(52,52,52,.45); transform: translateY(-1px); }
+.wallet:active { transform: translateY(1px); }
+.wallet:focus-visible { outline: 3px solid var(--color-coral); outline-offset: 2px; }
+.wallet-apple { background: #000; color: #fff; }
+.wallet-google { background: #fff; color: #3c4043; border-color: var(--color-line); }
+.wallet-paypal { background: #ffc439; color: #111; }
+.wallet small { font-weight: 500; opacity: .75; }
+.or { display: flex; align-items: center; gap: .875rem; font-size: .8125rem; color: var(--color-ink-subtle); margin-top: .25rem; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--color-line); }
+/* accepted cards, as plain name chips */
+.brands { display: flex; gap: .375rem; flex-wrap: wrap; justify-content: flex-end; }
+.brands span { padding: .125rem .5rem; border-radius: 6px; border: 1px solid var(--color-line); font-size: .75rem; font-weight: 600; color: var(--color-ink-muted); background: var(--color-surface); }
+@media (max-width: 380px) { .wallets { grid-template-columns: 1fr; } }
+/* Back sits under the payment-method column, as a button of its own; on a phone it follows the summary */
+.aside { grid-column: 2; grid-row: 1 / span 2; }
+.co-back { grid-column: 1; grid-row: 2; display: flex; }
+.grid { row-gap: 1.25rem; }
+.co-back .btn { min-width: 8rem; }
+.btn-secondary { background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); box-shadow: 0 1px 2px rgba(52,52,52,.04); }
+.btn-secondary:hover { border-color: var(--color-graphite); color: var(--color-ink); }
+.proto { font-size: .8125rem; line-height: 1.45; color: var(--color-ink-subtle); text-align: center; }
+
+.bg-sphere { position: fixed; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.reg { position: relative; z-index: 1; }
+.to-company { position: fixed; inset: 0; z-index: 999; pointer-events: none; background: var(--color-off-white); opacity: 0; transition: opacity .9s ease; }
+.to-company.on { opacity: 1; }
+
+@media (max-width: 1000px) { .grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 1.5rem; } }
+@media (max-width: 760px) {
+  .co-page .reg-main { padding: 1.75rem 1.25rem 2rem; }
+  .intro { align-items: flex-start; text-align: left; gap: .75rem; }
+  .stage { gap: 1.5rem; }
+  .grid { grid-template-columns: 1fr; gap: 1rem; }
+  .aside, .co-back { grid-column: auto; grid-row: auto; }
+  .aside { position: static; }
+  .co-back .btn { width: 100%; height: 3.25rem; }
+  .seg button { height: 44px; gap: .375rem; }
+  .seg button svg { display: none; }
+  .card { padding: 1.25rem 1.125rem; }
+  .two { grid-template-columns: 1fr; }
+  .two.keep { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .input { height: 48px; }
+  .summary .btn { width: 100%; height: 3.25rem; font-size: 1rem; }
+}
+@media (prefers-reduced-motion: reduce) { .w-mark { animation: none; background-size: 100% 0.28em; } .to-company { transition: none; } }
+
+/* ---- Arriving and leaving --------------------------------------------- */
+/* Direct visits settle in; arrivals from the landing do not, because the landing
+   already slid this exact frame up into place. */
+.reg-main { animation: arrive .6s var(--ease-brand) both; }
+.from-landing .reg-main, .embedded .reg-main { animation: none; }
+@keyframes arrive { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+/* going back runs the landing's move in reverse: this page drops away downwards */
+.leaving .reg { transform: translateY(100vh); transition: transform .7s cubic-bezier(0.7, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+.nb { white-space: nowrap; }
+.hdr-right { display: flex; align-items: center; gap: 0.75rem; }
+</style>
+</head>
+<body class="co-page">
+<canvas class="bg-sphere" id="bg-sphere" aria-hidden="true"></canvas>
+<div class="reg">
+  <header class="reg-top"><div class="hdr-in">
+    <a class="brand" href="index.html" data-back aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
+    <div class="hdr-right"><span data-lang-switch></span><span class="secure"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Secure checkout</span></div>
+  </div></header>
+
+  <main class="reg-main">
+    <!-- Prototype: this form is never submitted. Nothing typed here leaves the page. -->
+    <form class="stage" id="checkout" novalidate autocomplete="off">
+      <div class="intro">
+        <span class="eyebrow">Founding member · Step 3 of 3</span>
+        <h1 class="title">Add a <span class="w-mark">payment method</span>.</h1>
+        <div class="cur" role="radiogroup" aria-label="Currency" id="cur">
+          <button type="button" role="radio" aria-checked="true" data-cur="usd">USD $</button>
+          <button type="button" role="radio" aria-checked="false" data-cur="eur">EUR €</button>
+          <button type="button" role="radio" aria-checked="false" data-cur="cny">CNY ¥</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="left">
+        <div class="express" aria-labelledby="express-label">
+          <span class="express-label" id="express-label">Express checkout</span>
+          <div class="wallets">
+            <button type="button" class="wallet wallet-apple" data-wallet="Apple Pay">Apple Pay</button>
+            <button type="button" class="wallet wallet-google" data-wallet="Google Pay">Google Pay</button>
+            <button type="button" class="wallet wallet-paypal" data-wallet="PayPal">PayPal</button>
+          </div>
+          <p class="or">or pay with</p>
+        </div>
+        <div class="seg" role="radiogroup" aria-label="Payment method" id="methods">
+          <button type="button" role="radio" aria-checked="true" data-method="card"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Card</button>
+          <button type="button" role="radio" aria-checked="false" data-method="sepa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>SEPA debit</button>
+          <button type="button" role="radio" aria-checked="false" data-method="invoice"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2h9l5 5v15H6zM14 2v6h6M9 13h6M9 17h6"/></svg>Invoice</button>
+        </div>
+
+        <div class="card">
+          <!-- Card -->
+          <div class="pane on" data-pane="card">
+            <div class="pane-head"><b>Card details</b><span class="brands" aria-label="Visa, Mastercard, American Express accepted"><span>Visa</span><span>Mastercard</span><span>Amex</span></span></div>
+            <div class="field"><label for="cc-name">Name on card</label><input autocomplete="off" id="cc-name" class="input" type="text" placeholder="As printed on the card"></div>
+            <div class="field"><label for="cc-number">Card number</label>
+              <div class="with-icon"><input autocomplete="off" id="cc-number" class="input" type="text" inputmode="numeric" placeholder="1234 5678 9012 3456"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#96958e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></div>
+            </div>
+            <div class="two keep">
+              <div class="field"><label for="cc-exp">Expiry</label><input autocomplete="off" id="cc-exp" class="input" type="text" inputmode="numeric" placeholder="MM / YY"></div>
+              <div class="field"><label for="cc-cvc">CVC <small>3–4 digits</small></label><input autocomplete="off" id="cc-cvc" class="input" type="text" inputmode="numeric" placeholder="123"></div>
+            </div>
+            <div class="two">
+              <div class="field"><label for="cc-country">Country</label><select id="cc-country" class="input"><option>Portugal</option><option>Spain</option><option>France</option><option>Germany</option><option>United Kingdom</option><option>Other</option></select></div>
+              <div class="field"><label for="cc-vat">VAT number <small>Optional</small></label><input autocomplete="off" id="cc-vat" class="input" type="text" placeholder="PT 123 456 789"></div>
+            </div>
+          </div>
+          <!-- SEPA -->
+          <div class="pane" data-pane="sepa">
+            <div class="pane-head"><b>SEPA direct debit</b><span>EUR accounts, EU/EEA</span></div>
+            <div class="field"><label for="sepa-name">Account holder</label><input autocomplete="off" id="sepa-name" class="input" type="text" placeholder="Company or person named on the account"></div>
+            <div class="field"><label for="sepa-iban">IBAN</label><input autocomplete="off" id="sepa-iban" class="input" type="text" placeholder="PT50 0000 0000 0000 0000 0000 0"></div>
+            <div class="two">
+              <div class="field"><label for="sepa-country">Country</label><select id="sepa-country" class="input"><option>Portugal</option><option>Spain</option><option>France</option><option>Germany</option><option>Other</option></select></div>
+              <div class="field"><label for="sepa-vat">VAT number <small>Optional</small></label><input autocomplete="off" id="sepa-vat" class="input" type="text" placeholder="PT 123 456 789"></div>
+            </div>
+            <p class="note">By providing your IBAN you authorise <span class="nb">C-MORE</span> and its payment provider to send instructions to your bank to debit your account for this plan. Debits usually settle in 3–5 business days.</p>
+          </div>
+          <!-- Invoice -->
+          <div class="pane" data-pane="invoice">
+            <div class="pane-head"><b>Pay by invoice</b><span>Annual plan · net 30</span></div>
+            <div class="field"><label for="inv-company">Legal company name</label><input autocomplete="off" id="inv-company" class="input" type="text" placeholder="Your company, Lda."></div>
+            <div class="two">
+              <div class="field"><label for="inv-vat">VAT number</label><input autocomplete="off" id="inv-vat" class="input" type="text" placeholder="PT 123 456 789"></div>
+              <div class="field"><label for="inv-po">PO number <small>Optional</small></label><input autocomplete="off" id="inv-po" class="input" type="text" placeholder="PO-2026-001"></div>
+            </div>
+            <div class="field"><label for="inv-email">Send the invoice to</label><input autocomplete="off" id="inv-email" class="input" type="email" placeholder="finance@yourcompany.com"></div>
+            <p class="note">Invoicing is available for the annual plan only. Your founding-member access starts once the invoice is paid.</p>
+          </div>
+        </div>
+        </div>
+
+        <aside class="aside">
+          <div class="summary">
+            <div class="plan">
+              <div><b>Founding membership</b><small id="plan-label">Annual · $400 / year</small></div>
+              <a href="payment.html" id="plan-change">Change</a>
+            </div>
+            <div class="due"><span>Due today</span><strong id="total">$400</strong></div>
+            <div class="consents">
+              <label class="consent">
+                <input type="checkbox" id="agree-terms" required>
+                <span class="box" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#343434" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span>I agree to the <span class="terms">Terms &amp; Conditions</span>. <span id="renew-note">Renews yearly at $400 until cancelled.</span></span>
+              </label>
+              <label class="consent">
+                <input type="checkbox" id="agree-privacy" required>
+                <span class="box" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#343434" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span>I have read and accept the <span class="terms">Privacy Policy</span>.</span>
+              </label>
+            </div>
+            <div class="pay-wrap" id="pay-wrap">
+              <span class="pay-hint" id="pay-hint" role="status">Tick both boxes above to accept the Terms &amp; Conditions and the Privacy Policy first.</span>
+              <button type="submit" class="btn btn-primary" id="pay" aria-disabled="true" aria-describedby="pay-hint">Pay $400 now</button>
+            </div>
+            <span class="enc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Encrypted · VAT calculated at payment</span>
+          </div>
+          <p class="proto">Prototype: nothing is charged, and nothing you type leaves this page.</p>
+        </aside>
+
+        <div class="co-back"><a class="btn btn-secondary" href="payment.html" id="co-back" data-back>Back</a></div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script src="js/app-3.js"></script>
+<script>
+(() => {
+  try {
+    if (window.__sphere) window.__sphere.mountSphere(document.getElementById('bg-sphere'), {
+      n: 460, ink: '52,52,52', lineAlpha: 0.06, lineBase: 0.015, dotAlpha: 0.18, radius: 0.46,
+      inkOpacityMobile: 0.7, radiusMobile: 0.62, scrollRot: 0.0012, pointer: 0.5, coralPoint: true });
+  } catch (e) { console.error(e); }
+  const qs = new URLSearchParams(location.search);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---- the plan, from the step before: ?plan=annual|monthly (annual by default) ----
+  const plan = qs.get('plan') === 'monthly' ? 'monthly' : 'annual';
+  const annual = plan === 'annual';
+  // ---- currency: USD, EUR or CNY, carried between the plan picker and checkout ----
+  // Prices per currency. EUR and CNY are placeholders until the real ones are set.
+  const CUR = { usd: { sym: '$', m: 50, y: 400 }, eur: { sym: '€', m: 50, y: 400 }, cny: { sym: '¥', m: 360, y: 2880 } };
+  const money = (c, n) => CUR[c].sym + n.toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+  let cur = (() => { const v = qs.get('cur'); if (CUR[v]) return v; try { const s = sessionStorage.getItem('cm-cur'); if (CUR[s]) return s; } catch (e) {} return 'usd'; })();
+  const curBtns = [...document.querySelectorAll('#cur [role="radio"]')];
+  const onCur = [];
+  const setCur = (c) => {
+    cur = c;
+    try { sessionStorage.setItem('cm-cur', c); } catch (e) {}
+    curBtns.forEach((b) => { const on = b.dataset.cur === c; b.setAttribute('aria-checked', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; });
+    onCur.forEach((f) => f());
+  };
+  curBtns.forEach((b) => {
+    b.addEventListener('click', () => setCur(b.dataset.cur));
+    b.addEventListener('keydown', (e) => {
+      if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) return;
+      e.preventDefault();
+      const i = curBtns.indexOf(b), n = curBtns[(i + (e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1) + curBtns.length) % curBtns.length];
+      setCur(n.dataset.cur); n.focus();
+    });
+  });
+  let total = '';
+  onCur.push(() => {
+    const c = CUR[cur], amt = annual ? c.y : c.m;
+    total = money(cur, amt);
+    document.getElementById('plan-label').textContent = annual ? 'Annual · ' + total + ' / year' : 'Monthly · ' + total + ' / month';
+    document.getElementById('total').textContent = total;
+    document.getElementById('renew-note').textContent = (annual ? 'Renews yearly at ' : 'Renews monthly at ') + total + ' until cancelled.';
+    // Change and Back return to the plan picker with this plan and currency still chosen
+    ['plan-change', 'co-back'].forEach((id) => document.getElementById(id).setAttribute('href', 'payment.html?plan=' + plan + '&cur=' + cur));
+    if (typeof label === 'function') label();
+  });
+
+  // ---- method: a radio group; invoice is annual-only --------------------------
+  const tabs = [...document.querySelectorAll('#methods [role="radio"]')];
+  const panes = [...document.querySelectorAll('.pane')];
+  const pay = document.getElementById('pay');
+  const agrees = [document.getElementById('agree-terms'), document.getElementById('agree-privacy')];
+  let method = 'card';
+  const label = () => { pay.textContent = method === 'invoice' ? 'Request invoice for ' + total : 'Pay ' + total + ' now'; };
+  const select = (m) => {
+    method = m;
+    tabs.forEach((t) => { const on = t.dataset.method === m; t.setAttribute('aria-checked', on ? 'true' : 'false'); t.tabIndex = on ? 0 : -1; });
+    panes.forEach((p) => p.classList.toggle('on', p.dataset.pane === m));
+    label();
+  };
+  if (!annual) tabs[2].hidden = true;
+  const live = () => tabs.filter((t) => !t.hidden);
+  tabs.forEach((t) => {
+    t.addEventListener('click', () => select(t.dataset.method));
+    t.addEventListener('keydown', (e) => {
+      if (!['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'].includes(e.key)) return;
+      e.preventDefault();
+      const l = live(), i = l.indexOf(t), d = (e.key === 'ArrowLeft' || e.key === 'ArrowUp') ? -1 : 1;
+      const n = l[(i + d + l.length) % l.length];
+      select(n.dataset.method); n.focus();
+    });
+  });
+  // the button stays focusable while it waits, so it can say why (hover, focus, or a tap)
+  // Both boxes are needed: Terms & Conditions, and the Privacy Policy. The note names what is missing.
+  const payWrap = document.getElementById('pay-wrap'), hint = document.getElementById('pay-hint');
+  const consents = agrees.map((a) => a.closest('.consent'));
+  const agreed = () => agrees.every((a) => a.checked);
+  let nudgeT = 0;
+  const clearNudge = () => { payWrap.classList.remove('nudge'); consents.forEach((c) => c.classList.remove('nudge')); };
+  const ready = () => {
+    const [t, pv] = agrees.map((a) => a.checked);
+    hint.textContent = !t && !pv ? 'Tick both boxes above to accept the Terms & Conditions and the Privacy Policy first.'
+      : !t ? 'Tick the box above to accept the Terms & Conditions first.'
+      : 'Tick the box above to accept the Privacy Policy first.';
+    pay.setAttribute('aria-disabled', agreed() ? 'false' : 'true');
+    if (agreed()) clearNudge();
+    else consents.forEach((c, i) => { if (agrees[i].checked) c.classList.remove('nudge'); });
+  };
+  agrees.forEach((a) => a.addEventListener('change', ready));
+  const nudge = () => {
+    clearTimeout(nudgeT);
+    clearNudge();
+    void payWrap.offsetWidth; // restart the ring
+    payWrap.classList.add('nudge');
+    consents.forEach((c, i) => { if (!agrees[i].checked) c.classList.add('nudge'); });
+    nudgeT = setTimeout(clearNudge, 2600);
+  };
+  ready();
+  setCur(cur);
+  select('card');
+
+  // ---- pay: prototype, so nothing is sent; the fields are cleared and ALMA takes over ----
+  const proceed = () => {
+    document.querySelectorAll('.card input').forEach((i) => { i.value = ''; });
+    const go = () => { location.href = 'register.html#done'; }; // paid: the welcome, then the empty company page
+    if (reduced) return go();
+    const veil = document.createElement('div');
+    veil.className = 'to-company';
+    document.body.appendChild(veil);
+    requestAnimationFrame(() => veil.classList.add('on'));
+    setTimeout(go, 950);
+  };
+  document.getElementById('checkout').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!agreed()) { nudge(); return; }
+    proceed();
+  });
+  // Express wallets: the same consent first; the provider's own sheet would open here.
+  // When the boxes are off screen (a phone), bring them into view so the nudge is seen.
+  document.querySelectorAll('.wallet').forEach((w) => w.addEventListener('click', () => {
+    if (!agreed()) {
+      const box = document.querySelector('.consents'), r = box.getBoundingClientRect();
+      if (r.top < 0 || r.bottom > innerHeight) box.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+      nudge(); return;
+    }
+    proceed();
+  }));
+
+  document.querySelectorAll('[data-back]').forEach((a) => a.addEventListener('click', (e) => {
+    if (reduced || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    document.documentElement.classList.add('leaving');
+    setTimeout(() => { location.href = a.getAttribute('href'); }, 620);
+  }));
+  addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    document.documentElement.classList.remove('leaving');
+    document.querySelectorAll('.to-company').forEach((v) => v.remove());
+    document.querySelectorAll('.card input').forEach((i) => { i.value = ''; });
+  });
+})();
+</script>
+<script src="js/lang.js"></script>
+</body>
+</html>

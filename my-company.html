@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My company · C-MORE</title>
+<meta name="robots" content="noindex">
+<script>
+  /* Before the first paint: unless ?page asks for the company page itself,
+     this visit starts on ALMA. The class hides the page and paints the
+     off-white the previous screen dissolved into, so the company home is
+     never seen for a frame on the way here. Inline and synchronous on
+     purpose — a deferred script would run after the first paint, which is
+     exactly the flash we are avoiding. */
+  if (!/[?&](page|filled)\b/.test(location.search)) document.documentElement.className += ' intake-first';
+</script>
+<style>
+/* Figtree, the brand face — same self-hosted files as the landing. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300; font-display: swap; src: url("fonts/figtree-300.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/figtree-400.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/figtree-500.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/figtree-600.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/figtree-700.woff2") format('woff2'); }
+
+/* The design system's tokens, the subset this page uses. Same block as the
+   sign-up page, so the two stay in step. */
+:root {
+  --color-graphite: #343434;
+  --color-coral: #f46d4f;
+  --color-coral-deep: #f44e29;
+  --color-coral-tint: #f9e7e3;
+  --color-blue: #4e638b;
+  --color-mid-blue: #909db6;
+  --color-off-white: #fafafa;
+  --color-light-beige: #f2f1ed;
+  --color-mid-beige: #e9e7e2;
+  --color-dark-beige: #e0ded7;
+  --color-sand-400: #c3c0b8;
+  --color-sand-500: #96958e;
+  --color-sand-600: #6e6e6a;
+  --color-positive: #3f7d2e;
+  --color-caution: #a8690a;
+  --color-critical: #b3261e;
+  --color-informative: var(--color-blue);
+  --color-positive-subtle: #e7f2e0;
+  --color-caution-subtle: #fbf0dc;
+  --color-critical-subtle: #fbe9e7;
+  --color-informative-subtle: #eaeef6;
+
+  --color-ground: var(--color-light-beige);
+  --color-surface: #ffffff;
+  --color-surface-sunken: var(--color-mid-beige);
+  --color-ink: var(--color-graphite);
+  --color-ink-muted: var(--color-blue);
+  --color-ink-subtle: var(--color-sand-600);
+  --color-line: var(--color-dark-beige);
+  --color-activation: var(--color-coral);
+  --color-activation-hover: var(--color-coral-deep);
+  --color-activation-foreground: var(--color-graphite);
+
+  --font-sans: 'Figtree', Arial, ui-sans-serif, system-ui, sans-serif;
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-md: 0.75rem;
+  --radius-pill: 9999px;
+  --shadow-activate: 0 8px 28px -10px rgba(244, 109, 79, 0.55);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+/* ALMA's spheres orbit past her box; on a phone that reached the screen edge and made the
+   page scroll sideways. clip, not hidden: it trims without making a scroll container, so the
+   sticky header keeps working. */
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+body { overflow-x: clip; }
+/* The arriving state: off-white, and nothing of the page yet. */
+html.intake-first, html.intake-first body { background: var(--color-off-white); }
+html.intake-first .top, html.intake-first .page { opacity: 0; visibility: hidden; }
+.top, .page { transition: opacity .55s var(--ease-brand); }
+body {
+  margin: 0; min-height: 100vh; background: var(--color-off-white); color: var(--color-ink);
+  font-family: var(--font-sans); font-size: 1rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-synthesis-weight: none;
+}
+h1, h2, h3, p, ul { margin: 0; }
+h1, h2 { text-wrap: balance; }
+ul { list-style: none; padding: 0; }
+a { color: var(--color-ink); text-decoration-color: var(--color-activation); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; border-radius: 0.5rem; }
+::selection { background: var(--color-coral); color: var(--color-graphite); }
+
+/* ---- The web behind the page -------------------------------------------
+   The landing's mesh, the same 620px tile used as a mask over a flat fill.
+   There it is off-white on graphite at 0.07; here it is the other way up, so
+   it runs at 0.045 — dark on light at the same alpha reads far heavier, and
+   this is meant to be felt rather than seen.
+
+   Fixed rather than absolute: the page scrolls past it instead of dragging
+   it along, which is what makes it sit behind the page rather than on it. */
+.mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.mesh__web { position: absolute; inset: 0; background-color: var(--color-ink);
+  -webkit-mask-image: url("images/mesh-tile.svg"); mask-image: url("images/mesh-tile.svg");
+  -webkit-mask-repeat: repeat; mask-repeat: repeat;
+  -webkit-mask-size: 620px 620px; mask-size: 620px 620px;
+  -webkit-mask-position: center top; mask-position: center top;
+  opacity: 0.045; }
+/* Everything real sits over it. */
+.top, .page { position: relative; z-index: 1; }
+
+/* ---- Frame -------------------------------------------------------------- */
+.top { position: sticky; top: 0; z-index: 10; height: 4.5rem; background: color-mix(in oklab, var(--color-off-white) 88%, transparent);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-line); }
+/* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
+.hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
+
+/* the logo file, at the landing header's size; the link carries the accessible name */
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
+.brand img { display: block; width: 6.8rem; height: 1.25rem; }
+.top-right { display: flex; align-items: center; gap: 0.75rem; }
+.who-chip { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+@media (max-width: 30rem) { .who-chip span { display: none; } }
+
+/* the header's column, so the page's left edge sits under the logo */
+.page { max-width: 78rem; margin-inline: auto; padding: 2.5rem 2rem 5rem; }
+@media (min-width: 64rem) { .page { padding: 3.5rem 2.5rem 6rem; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.eyebrow::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.title { margin-top: 1rem; font-size: clamp(2.25rem, 5.5vw, 3.25rem); line-height: 1.04; letter-spacing: -0.028em; font-weight: 600; }
+.title .soft { font-weight: 300; }
+.lead { margin-top: 1.125rem; max-width: 46ch; font-size: 1.125rem; line-height: 1.55; font-weight: 300; color: var(--color-ink-muted); }
+
+/* ---- Buttons, from the sign-up page ------------------------------------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3rem; padding-inline: 1.5rem;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; font-size: 1rem;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap; text-decoration: none; color: var(--color-ink);
+  transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand), border-color .14s var(--ease-brand); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary { background: var(--color-activation); color: var(--color-activation-foreground); }
+.btn-primary:hover { background: var(--color-activation-hover); box-shadow: var(--shadow-activate); color: var(--color-activation-foreground); }
+.btn-quiet { border-color: var(--color-line); background: var(--color-surface); }
+.btn-quiet:hover { border-color: var(--color-sand-400); }
+.btn-sm { height: 2.375rem; padding-inline: 1rem; font-size: 0.875rem; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 0.875rem; color: var(--color-ink-subtle);
+  cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; }
+.link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
+
+/* Nothing on this page can be done until the company exists. The actions are
+   drawn anyway — seeing what is waiting is the point of an empty state — but
+   they are visibly parked rather than quietly broken. */
+.btn[aria-disabled="true"] { opacity: .75; cursor: not-allowed; }
+.btn[aria-disabled="true"]:hover { background: var(--color-surface); box-shadow: none; border-color: var(--color-line); }
+
+/* ---- ALMA, and the ask -------------------------------------------------- */
+/* One shape for "ALMA is asking you something", used by the intake step and
+   by the company page's empty state. It was a two-column bordered card here
+   and a centred column there; there is no reason for two. */
+.alma-ask { display: grid; justify-items: center; text-align: center; }
+.alma-media { display: block; position: relative; width: 100%; max-width: 20rem; aspect-ratio: 0.9598; margin-inline: auto; pointer-events: none; }
+
+/* ---- First step: ALMA takes the screen ----------------------------------
+   Arriving here, the company page behind washes out to off-white and ALMA
+   comes up in its place. She is the only thing on the screen, the way the
+   last page of sign-up is the only thing on its screen.
+
+   The overlay is `hidden` in the markup and shown by script, so a visitor
+   without JavaScript simply gets the page underneath rather than a blank
+   off-white field. */
+/* Her spheres orbit outside their box on purpose, and on a phone that overhang
+   was enough to make the step scroll sideways. `hidden` rather than `clip`:
+   next to `overflow-y: auto` a `clip` computes to `hidden` anyway, so this
+   says what the browser actually does. */
+.intake { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  background: var(--color-off-white); }
+.intake[hidden] { display: none; }
+/* Over the empty company page: the page stays faintly behind her, and she fades in on top. */
+.intake.over-page { background: color-mix(in oklab, var(--color-off-white) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: over-in .5s var(--ease-brand) both; }
+@keyframes over-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .intake.over-page { animation: none; } }
+html.intake-open, html.intake-open body { overflow: hidden; }
+
+.intake-inner { min-height: 100%; display: grid; align-content: start; justify-items: center;
+  gap: 0; max-width: 56rem; margin-inline: auto; padding: 0 1.25rem 4rem; text-align: center; }
+/* A whole viewport to herself, so the list underneath starts below the fold
+   however tall the screen is.
+
+   `safe center` matters: on a short screen this block is taller than the
+   viewport, and a plain `center` would push ALMA off the top of the scroll
+   container where you could never scroll back to her. */
+.intake-screen { width: 100%; min-height: 100svh; display: grid; align-content: safe center;
+  justify-items: center; padding: 3rem 0 5.5rem; }
+@media (min-width: 40rem) { .intake-inner { padding-inline: 2rem; } }
+
+/* Each piece arrives after her, in reading order. */
+.intake .rise { animation: rise .7s var(--ease-brand) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.intake .d1 { animation-delay: .95s; }
+.intake .d2 { animation-delay: 1.10s; }
+.intake .d3 { animation-delay: 1.30s; }
+.intake .d4 { animation-delay: 1.50s; }
+
+/* ALMA, and the target. She is what you drop onto. */
+/* Sized off the viewport height as well as its width, so she never crowds
+   out the words she is saying on a short screen. */
+.drop { position: relative; display: block; width: min(22rem, 74vw, 40svh); border: 0; background: none; padding: 0;
+  cursor: pointer; border-radius: 50%; animation: alma-arrive 1.2s var(--ease-brand) .45s both; }
+@keyframes alma-arrive { from { opacity: 0; transform: scale(.84); } to { opacity: 1; transform: none; } }
+.drop .alma-media { max-width: none; }
+/* The ring is the invitation: dashed and quiet until something is over her. */
+.drop::before { content: ""; position: absolute; inset: 6%; border-radius: 50%;
+  border: 2px dashed color-mix(in oklab, var(--color-graphite) 22%, transparent);
+  transition: border-color .2s var(--ease-brand), transform .3s var(--ease-brand), background-color .2s var(--ease-brand); }
+.drop:hover::before, .drop:focus-visible::before { border-color: color-mix(in oklab, var(--color-graphite) 40%, transparent); }
+.drop.is-over::before { border-color: var(--color-coral); border-style: solid;
+  background: color-mix(in oklab, var(--color-coral) 7%, transparent); transform: scale(1.06); }
+.drop.is-over { transform: scale(1.02); }
+.drop-hint { position: absolute; left: 50%; bottom: 8%; translate: -50% 0; white-space: nowrap; font-size: 0.8125rem;
+  font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-subtle); pointer-events: none; }
+/* You cannot drag a file on a phone, so she asks for a tap there instead. */
+.drop-hint .narrow { display: none; }
+@media (pointer: coarse), (max-width: 34rem) {
+  .drop-hint .wide { display: none; }
+  .drop-hint .narrow { display: inline; }
+}
+.drop.is-over .drop-hint { color: var(--color-coral-deep); }
+
+.alma-ask .says { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.8125rem;
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.alma-ask .says::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.alma-ask :is(h1, h2) { margin-top: 0.875rem; font-size: clamp(1.875rem, 5vw, 2.75rem); line-height: 1.06;
+  letter-spacing: -0.028em; font-weight: 600; }
+.alma-ask :is(h1, h2) .soft { font-weight: 300; }
+/* Full width of the column and tight under the heading: at a 42ch measure it
+   ran to four lines and pushed the button off the first screen. */
+.alma-ask .lead { margin-top: 0.75rem; margin-inline: auto; max-width: none; }
+/* A phone has no width to spend, so the same sentences buy their room back
+   from the type size and from her. */
+@media (max-width: 34rem) {
+  .alma-ask .lead { font-size: 1rem; line-height: 1.5; }
+  .intake-screen { padding: 2rem 0 5rem; }
+  .drop { width: min(22rem, 74vw, 32svh); }
+}
+.alma-ask .actions { margin-top: 1.75rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+
+/* Folding her pitch away: a grid row from 1fr to 0fr collapses to exactly the
+   height of the content, with nothing to measure or hard-code. */
+.say { width: 100%; display: grid; grid-template-rows: 1fr; opacity: 1;
+  transition: grid-template-rows .55s var(--ease-brand), opacity .35s ease; }
+.say > div { overflow: hidden; min-height: 0; }
+.has-files .say { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+/* With the words gone the buttons sit right under her, so they need less air
+   above them than they did under a paragraph. */
+.has-files .actions { margin-top: 1.25rem; }
+
+/* The forward action only exists once there is something to hand over. */
+#hand { display: none; }
+.has-files #hand { display: inline-flex; animation: rise .5s var(--ease-brand) .15s both; }
+/* Stacked, the two read as a pair, so they are cut to one width rather than
+   to their labels. */
+.alma-ask .actions .btn { min-width: 15rem; }
+/* Each button keeps one treatment for the whole step. Adding files is the
+   quiet one throughout — on this screen the thing you are meant to do is drop
+   them on her, and the button is the way round that for anyone who cannot
+   drag. The coral belongs to the action that carries the step forward, and
+   only appears when there is something to carry. */
+
+@media (prefers-reduced-motion: reduce) {
+  .say { transition: none; }
+  .has-files #hand { animation: none; }
+}
+
+/* What matters most. Grouped, because ten loose names is a list to fail at
+   and four groups is something you can recognise your own paperwork in. */
+.cues { margin-top: 1.5rem; width: 100%; text-align: left; border-top: 1px solid var(--color-line); padding-top: 1.75rem; }
+.cues > .k { font-size: 0.875rem; color: var(--color-ink-subtle); text-align: center; }
+.cue-grid { margin-top: 1.5rem; display: grid; gap: 1.25rem 2rem; grid-template-columns: 1fr; }
+@media (min-width: 40rem) { .cue-grid { grid-template-columns: 1fr 1fr; } }
+.cue h2 { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-muted); }
+.cue ul { margin-top: 0.625rem; display: grid; gap: 0.375rem; }
+.cue li { position: relative; padding-left: 1rem; font-size: 0.9375rem; color: var(--color-ink); }
+.cue li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 1px; background: var(--color-coral); }
+.cue li i { font-style: normal; color: var(--color-ink-subtle); }
+.cue.is-optional li::before { background: var(--color-sand-400); }
+
+/* What she took. */
+.took { margin-top: 1.5rem; width: 100%; max-width: 30rem; text-align: left; }
+.took[hidden] { display: none; }
+.took ul { display: grid; gap: 0.375rem; margin-top: 0.75rem; }
+.took li { display: flex; gap: 0.625rem; align-items: baseline; font-size: 0.9375rem; }
+.took li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 1px; background: var(--color-positive); transform: translateY(-1px); }
+.took .more { color: var(--color-ink-subtle); font-size: 0.875rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .intake, .intake .rise, .drop { animation: none; }
+}
+
+/* ---- The cue to what she is asking for ---------------------------------
+   The list of documents is below the fold on purpose — the step is "give me
+   what you have", not "work through a checklist". This floats over the first
+   screen to say the list is there, bobs so it is noticed, and takes itself
+   away once you have reached it.
+
+   Two elements: the wrapper is fixed and handles arriving and leaving, the
+   button inside does the bobbing. One animated property each, so they never
+   fight over `transform`. */
+.faq-cue-wrap { position: fixed; left: 0; right: 0; bottom: 1.5rem; z-index: 60;
+  display: flex; justify-content: center; padding-inline: 1.25rem; pointer-events: none;
+  opacity: 0; visibility: hidden; transform: translateY(10px);
+  transition: opacity .5s var(--ease-brand), transform .5s var(--ease-brand), visibility .5s; }
+.faq-cue-wrap.is-in { opacity: 1; visibility: visible; transform: none; }
+/* The landing's scroll cue, word for word in form: 0.7rem uppercase at
+   ink-subtle with a 2px coral rule the width of the label. No pill, no
+   shadow — the landing does not have one and neither should this. */
+.faq-cue { pointer-events: auto; position: relative; display: inline-block; border: 0; background: none;
+  padding: 0 0 0.5rem; font: inherit; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--color-ink-subtle); cursor: pointer; white-space: nowrap;
+  animation: bob 2.6s ease-in-out infinite; transition: color .14s var(--ease-brand); }
+.faq-cue::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--color-coral); }
+.faq-cue:hover { color: var(--color-ink); }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .faq-cue { animation: none; }
+  .faq-cue-wrap { transition: none; }
+}
+
+/* ---- Handed over: she reads, everything else goes ----------------------
+   The screen empties to the off-white it arrived on and she grows into the
+   middle of it, then says what she is doing, one thing at a time.
+
+   The pitch folds and fades as one piece — a grid row from 1fr to 0fr, so it
+   collapses to exactly its own height over the same three quarters of a
+   second that it fades. Nothing is switched to display:none part-way, which
+   is what made the old version snap. */
+.pitch { width: 100%; display: grid; grid-template-rows: 1fr; opacity: 1;
+  transition: grid-template-rows .75s var(--ease-brand), opacity .6s ease; }
+.pitch-in { overflow: hidden; min-height: 0; display: grid; justify-items: center; }
+.is-working .pitch { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+/* The list below the fold goes with it; nothing above it moves, so this one
+   can simply fade. */
+.intake-screen.is-working ~ .cues { opacity: 0; pointer-events: none; transition: opacity .7s ease; }
+
+.is-working .drop { cursor: default; }
+.is-working .drop::before, .is-working .drop-hint { opacity: 0; transition: opacity .5s ease; }
+/* The scale goes on the composition, not the button: the button carries the
+   arrival animation, and an animation's fill would win over this. */
+.is-working .drop .alma-media { transform: scale(1.35); }
+.drop .alma-media { transition: transform 1.2s var(--ease-brand), opacity .7s var(--ease-brand); }
+
+/* One line at a time, centred, with the mark's own square beside it. The
+   square takes a quarter-turn with every new line — the brand's Turn, a
+   click into place rather than a spin, and proof she is still going. */
+/* Low on the screen, and off the flow entirely. In the flow it sat right
+   under her box — but her spheres orbit well past that box, so the line was
+   printed over them. Fixed near the foot of the viewport it never meets her,
+   whatever size she is.
+
+   The square is inline rather than a flex item: a long filename wraps to two
+   lines on a phone, and as a flex item the square was left stranded at the
+   edge of the row. Inline, it stays against the first word. */
+.working { position: fixed; left: 0; right: 0; bottom: clamp(2.5rem, 12svh, 7rem); z-index: 55;
+  display: block; text-align: center; max-width: 34rem; margin-inline: auto;
+  padding-inline: 1.25rem; min-height: 2rem; font-size: 1.0625rem; color: var(--color-ink);
+  opacity: 0; transition: opacity .6s var(--ease-brand); }
+.working.is-in { opacity: 1; }
+.working[hidden] { display: none; }
+.doing-sq { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 1px;
+  margin-right: 0.625rem; background: var(--color-coral);
+  transition: transform .45s var(--ease-brand); }
+.working.is-done .doing-sq { background: var(--color-positive); }
+/* Each line goes out before the next comes in, at the same pace, so the
+   change reads as one breath rather than a swap. */
+#doing-text { display: inline; transition: opacity .4s var(--ease-brand); }
+#doing-text b { font-weight: 600; }
+.working.is-done { color: var(--color-ink-subtle); font-size: 1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pitch, .drop .alma-media, .doing-sq, #doing-text, .working { transition: none; }
+}
+
+/* ---- The company page once there is a company in it (direction D) -------
+   Full-bleed bands on the landing's light-beige ground, each with its content
+   in the header's column so every left edge sits under the logo. */
+body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: var(--color-light-beige); }
+.page:has(#filled:not([hidden])), .page:has(#empty:not([hidden])) { max-width: none; padding: 0; }
+/* The site's column, the same as the landing header's: 78rem, 2rem in on phones and
+   2.5rem from 64rem. The logo therefore sits in one place on every page. */
+.co-wrap { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; }
+@media (min-width: 64rem) { .co-wrap { padding-inline: 2.5rem; } }
+.co-muted { color: var(--color-ink-muted); }
+.co-subtle { color: var(--color-ink-subtle); }
+:is(#filled, #empty) a:not(.btn) { font-weight: 500; }
+:is(#filled, #empty) a:not(.btn):hover { color: var(--color-coral-deep); }
+
+/* header: founding badge, a round avatar, the menu */
+.co-founder { background: var(--color-graphite); color: var(--color-light-beige); }
+.who-chip { color: var(--color-ink); }
+.who-chip .who-pic { flex: none; display: block; width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; background: var(--color-mid-beige); }
+.top-right { gap: 1.25rem; }
+@media (max-width: 40rem) { .co-founder .co-founder-t { display: none; } .top-right { gap: 0.75rem; } }
+
+/* badges and buttons, the design system's */
+.co-badge { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.75rem; padding: 0.25rem 0.5rem; border-radius: var(--radius-pill);
+  font-size: 0.875rem; font-weight: 600; line-height: 1.25rem; white-space: nowrap; letter-spacing: 0; }
+.b-ok { background: var(--color-positive-subtle); color: var(--color-positive); }
+.b-pend { background: var(--color-caution-subtle); color: var(--color-caution); }
+.b-over { background: var(--color-critical-subtle); color: var(--color-critical); }
+.b-info { background: var(--color-informative-subtle); color: var(--color-informative); }
+.b-neu { background: var(--color-mid-beige); color: var(--color-ink-subtle); }
+.co-btn-sm { height: 2rem; padding-inline: 0.75rem; font-size: 0.875rem; }
+.co-btn-ghost { background: transparent; }
+.co-btn-ghost:hover { background: var(--color-mid-beige); }
+.co-num { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; color: var(--color-coral); }
+
+/* profile completion */
+.co-strip { background: var(--color-surface); border-bottom: 1px solid var(--color-line); font-size: 0.875rem; color: var(--color-ink-muted); }
+.co-strip .co-wrap { min-height: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.5rem; }
+.co-strip-l { display: flex; align-items: center; gap: 0.875rem; min-width: 0; }
+.co-strip b { font-weight: 600; color: var(--color-ink); }
+.co-strip a { flex: none; font-size: 0.875rem; }
+.co-meter { flex: none; display: block; width: 11.25rem; height: 6px; border-radius: 3px; background: var(--color-mid-beige); overflow: hidden; }
+.co-meter i { display: block; height: 100%; background: var(--color-coral); }
+
+/* sections */
+.co-sec { padding: 3.5rem 0; }
+.co-pad-top-0 { padding-top: 0; }
+.co-last-sec { padding-bottom: 4rem; } /* the section just before the graphite band */
+.co-head { padding: 2.5rem 0 3rem; }
+.co-head .co-wrap { display: flex; flex-direction: column; gap: 1.75rem; }
+.co-attn-sec { border-top: 1px solid var(--color-line); }
+.co-h-xl { font-size: clamp(2.5rem, 3.6vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.co-h-l { font-size: 2.5rem; line-height: 1.08; letter-spacing: -0.025em; font-weight: 500; }
+.co-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem 2rem; margin-bottom: 1.5rem; }
+.co-sec-head .co-muted { font-size: 1rem; }
+.co-sec-head .co-link { font-size: 0.875rem; }
+.co-sec-r { display: flex; align-items: center; gap: 1.25rem; }
+
+.co-card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 1rem; padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.875rem; }
+
+/* the company, and its score */
+.co-id { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; }
+.co-id-l { display: flex; flex-direction: column; gap: 0.625rem; }
+.co-name { font-size: 3.25rem; line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.co-score { flex: none; display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem 1.125rem 0.75rem 0.75rem;
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 1rem; }
+.co-ring { width: 3.5rem; height: 3.5rem; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--color-graphite) 0 var(--p), var(--color-mid-beige) var(--p) 100%); }
+.co-ring > div { width: 2.625rem; height: 2.625rem; border-radius: 50%; background: var(--color-surface); display: grid; place-items: center;
+  font-size: 1.125rem; font-weight: 600; letter-spacing: -0.03em; }
+.co-score-t { display: flex; flex-direction: column; gap: 1px; }
+
+/* invitations */
+.co-invites { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.co-invite { gap: 0.375rem; box-shadow: 0 1px 2px rgba(52, 52, 52, .05), 0 4px 12px -6px rgba(52, 52, 52, .12); /* graphite */ }
+.co-card-k { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.co-card-k a { font-size: 0.875rem; }
+.co-big { font-size: 4.25rem; font-weight: 500; letter-spacing: -0.035em; line-height: 0.96; }
+.co-invite .co-muted { font-size: 0.9375rem; line-height: 1.5; }
+.co-invite-btn { align-self: flex-start; margin-top: 0.875rem; height: 3rem; padding-inline: 1.5rem; font-size: 1.0625rem; }
+
+/* needs your attention */
+.co-attn { display: grid; grid-template-columns: minmax(0, 1fr) 27rem; gap: 3.5rem; align-items: center; }
+.co-attn-l { display: flex; flex-direction: column; gap: 1.5rem; }
+.co-steps { display: flex; flex-direction: column; margin-top: 0.5rem; }
+.co-step { display: flex; flex-direction: column; gap: 0.375rem; padding: 1.125rem 0; border-top: 1px solid var(--color-line); }
+.co-step:last-child { border-bottom: 1px solid var(--color-line); }
+.co-step h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 0.625rem; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+.co-step p { font-size: 0.9375rem; line-height: 1.5; color: var(--color-ink-muted); }
+
+/* ALMA, taking the license */
+.co-drop { position: relative; height: 26.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  text-align: center; gap: 0.5rem; padding: 1.75rem; border: 2px dashed var(--color-sand-400); border-radius: 1.5rem; cursor: pointer;
+  transition: border-color .2s var(--ease-brand), background-color .2s var(--ease-brand); }
+.co-drop:hover { border-color: color-mix(in oklab, var(--color-graphite) 40%, transparent); }
+.co-drop.is-over { border-style: solid; border-color: var(--color-coral); background: color-mix(in oklab, var(--color-coral) 6%, transparent); }
+.co-drop .alma-media { position: absolute; left: 50%; top: 1.5rem; translate: -50% 0; width: 15rem; max-width: 60%; }
+#co-browse, #ce-browse { white-space: nowrap; }
+.co-drop-acts { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; margin-top: 0.875rem; }
+.co-drop-acts[hidden] { display: none; }
+.co-drop.has-file, .co-drop.is-reading, .co-drop.is-filed { cursor: default; }
+.co-drop.has-file { border-style: solid; border-color: var(--color-coral); }
+.co-drop.is-filed { border-style: solid; border-color: var(--color-positive); }
+.co-drop .alma-media { transform-origin: 50% 0; transition: transform .5s var(--ease-brand); }
+.co-drop.has-file .alma-media { transform: scale(.74); } /* room for the button under her */
+.co-drop.is-reading .alma-media { animation: alma-read 1.4s var(--ease-brand) infinite alternate; }
+@keyframes alma-read { from { transform: scale(1); } to { transform: scale(1.06); } }
+.co-step.is-done h3 { color: var(--color-ink-subtle); text-decoration: line-through; text-decoration-color: var(--color-sand-400); }
+.co-step.is-done h3 .co-badge { text-decoration: none; }
+.co-drop-t { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
+
+/* consents */
+.co-consents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-items: start; }
+.co-list { padding: 0.5rem 1.5rem; gap: 0; }
+.co-list-k { padding: 1rem 0 0.25rem; }
+.co-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.co-row:last-child { border-bottom: 0; }
+.co-row-t { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.co-row-n { display: block; font-weight: 500; font-size: 1rem; line-height: 1.75rem; }
+.co-row-n .co-num { margin-right: 0.5rem; }
+.co-row-n .co-badge { margin-left: 0.5rem; vertical-align: middle; }
+.co-row .co-subtle { font-size: 0.875rem; line-height: 1.45; }
+.co-acts { flex: none; display: flex; gap: 0.5rem; }
+.co-sw { flex: none; width: 2.75rem; height: 1.5rem; border-radius: 0.75rem; border: 0; padding: 2px; display: flex;
+  background: var(--color-graphite); cursor: pointer; transition: background-color .2s var(--ease-brand); }
+.co-sw i { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--color-surface); margin-left: calc(100% - 1.25rem); transition: margin-left .2s var(--ease-brand); }
+.co-sw[aria-checked="false"] { background: var(--color-sand-400); }
+.co-sw[aria-checked="false"] i { margin-left: 0; }
+/* Required consents cannot be revoked here: the switch stays on, faded, and refuses the pointer. */
+.co-sw:disabled { cursor: not-allowed; opacity: .4; }
+
+/* documents */
+.co-tbl-card { padding: 0.5rem 0.75rem; overflow-x: auto; }
+.co-tbl { width: 100%; min-width: 60rem; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4; }
+.co-tbl th { text-align: left; font-weight: 500; color: var(--color-ink-subtle); padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--color-line); white-space: nowrap; }
+.co-tbl td { padding: 0.875rem 0.75rem; border-bottom: 1px solid var(--color-mid-beige); vertical-align: middle; }
+.co-tbl tr:last-child td { border-bottom: 0; }
+.co-tbl .c { text-align: center; }
+.co-tbl .n { display: block; font-weight: 500; font-size: 0.9375rem; }
+.co-tbl .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.co-exp { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; white-space: nowrap; }
+.co-exp .co-badge { width: 6.5rem; justify-content: center; }
+
+/* the graphite band, with the landing's mesh over it */
+.co-band { position: relative; overflow: hidden; background: var(--color-graphite); color: var(--color-light-beige);
+  border-top: 3px solid var(--color-coral); padding: 4rem 0 4.5rem; }
+.co-band-mesh { position: absolute; inset: 0; pointer-events: none; background-color: var(--color-off-white);
+  -webkit-mask: url("images/mesh-tile.svg") center top / 620px 620px repeat; mask: url("images/mesh-tile.svg") center top / 620px 620px repeat; opacity: 0.07; }
+.co-band-in { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40rem; gap: 4rem; align-items: center; }
+.co-band h2 { color: var(--color-light-beige); }
+.co-on-dark { color: var(--color-sand-400); }
+.co-band-l { display: flex; flex-direction: column; gap: 2rem; }
+.co-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.co-side { display: flex; flex-direction: column; gap: 0.875rem; padding: 1.25rem 0; border-top: 1px solid rgba(242, 241, 237, .18); }
+.co-side > .co-bar { margin-top: auto; } /* the two sides stretch to the taller one, so their bars share a line */
+.co-side-n { display: flex; gap: 1.75rem; }
+.co-side-n > div { display: flex; flex-direction: column; }
+.co-side-n > div > span:last-child { font-size: 0.875rem; color: var(--color-sand-400); }
+.co-stat { font-size: 3.25rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.co-stat small { font-size: 1.5rem; font-weight: 300; color: var(--color-sand-400); }
+.co-bar { display: flex; gap: 2px; border-radius: 4px; overflow: hidden; }
+.co-bar i { display: block; }
+.co-map-btn { align-self: flex-start; height: 2.5rem; padding-inline: 1rem; }
+
+.co-net { width: 100%; display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); gap: 2rem; align-items: center; }
+.co-donut { width: 12.5rem; height: 12.5rem; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--color-light-beige) 0 44.4%, var(--color-sand-400) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-tint) 88.9% 100%); }
+.co-donut > div { width: 8.25rem; height: 8.25rem; border-radius: 50%; background: var(--color-graphite); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px; }
+.co-fc { width: 2.75rem; height: 2.75rem; border-radius: 0.5rem; background: var(--color-light-beige); color: var(--color-graphite);
+  display: grid; place-items: center; font-size: 0.9375rem; font-weight: 700; }
+.co-donut-t { margin-top: 0.375rem; font-size: 0.75rem; color: var(--color-sand-400); }
+.co-net-rows { display: flex; flex-direction: column; gap: 1.375rem; min-width: 0; }
+.co-net-row { display: flex; flex-direction: column; gap: 0.625rem; }
+.co-net-row + .co-net-row { padding-top: 1.375rem; border-top: 1px solid rgba(242, 241, 237, .18); }
+.co-net-k { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.co-net-k > span:first-child { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 500; }
+.co-net-k > span:first-child i { width: 0.75rem; height: 0.75rem; border-radius: 50%; }
+.co-net-k > span:last-child { font-size: 0.8125rem; color: var(--color-sand-400); }
+.co-avs { display: flex; align-items: center; }
+.co-avs span { width: 2.25rem; height: 2.25rem; border-radius: 50%; display: grid; place-items: center; font-size: 0.6875rem; font-weight: 700;
+  background: var(--color-light-beige); color: var(--color-graphite); border: 2px solid var(--color-graphite); }
+.co-avs span + span { margin-left: -0.5rem; }
+.co-avs.is-coral span { background: var(--color-coral); }
+.co-avs span.is-out { background: var(--color-graphite); color: var(--color-light-beige); border-color: var(--color-sand-400); }
+.co-avs.is-coral span.is-out { border-color: var(--color-coral-tint); }
+.page .co-avs a { margin-left: 0.75rem; font-size: 0.8125rem; font-weight: 400; color: var(--color-sand-400); }
+.page .co-avs a:hover { color: var(--color-light-beige); }
+.co-legend { font-size: 0.75rem; color: var(--color-sand-400); }
+
+/* ---- The same page, empty ---------------------------------------------- */
+.co-name-empty, .co-big-empty { color: var(--color-sand-400); }
+.co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
+.co-tbl-empty .d { margin-top: 0.25rem; }
+.co-list-empty { display: flex; flex-direction: column; gap: 0.25rem; padding: 1rem 0 1.5rem; }
+.co-list-empty .co-subtle { font-size: 0.875rem; line-height: 1.45; }
+.co-stat-empty { color: rgba(242, 241, 237, .35); }
+.co-bar-empty { background: rgba(242, 241, 237, .14); }
+.co-donut-empty { background: rgba(242, 241, 237, .14); }
+.co-donut-empty .co-fc { background: transparent; border: 1.5px dashed var(--color-sand-400); color: var(--color-sand-400); }
+.co-avs-empty span { background: transparent; border: 1.5px dashed rgba(242, 241, 237, .35); }
+.co-avs-empty span + span { margin-left: 0.375rem; }
+
+/* narrower screens: the design is drawn at 1440; these keep it whole below that */
+@media (max-width: 76rem) {
+  .co-attn { grid-template-columns: minmax(0, 1fr) 26rem; gap: 3rem; }
+  .co-band-in { grid-template-columns: 1fr; gap: 3rem; }
+  .co-net { max-width: 40rem; }
+}
+@media (max-width: 60rem) {
+  .co-attn { grid-template-columns: 1fr; }
+  .co-consents { grid-template-columns: 1fr; }
+  .co-id { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+  .co-strip-more { display: none; }
+}
+@media (max-width: 52rem) {
+  .co-invites { grid-template-columns: 1fr; }
+  .co-name, .co-h-xl { font-size: 2.5rem; }
+  .co-h-l { font-size: 2rem; }
+  .co-sec-head { flex-direction: column; align-items: flex-start; }
+  .co-sec-r { flex-wrap: wrap; }
+  .co-sides { grid-template-columns: 1fr; }
+  .co-sec { padding: 2.75rem 0; }
+  .co-pad-top-0 { padding-top: 0; }
+}
+@media (max-width: 34rem) {
+  .co-name, .co-h-xl { font-size: 2.125rem; }
+  .co-big { font-size: 3.5rem; }
+  .co-meter { width: 5rem; }
+  .co-strip .eyebrow { display: none; }
+  .co-strip .co-wrap { gap: 1.25rem; }
+  .co-drop { height: 22rem; }
+  .co-net { grid-template-columns: 1fr; justify-items: center; }
+  .co-net-rows { width: 100%; }
+  .co-row.co-req { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .co-list { padding-inline: 1.125rem; }
+  .co-stat { font-size: 2.75rem; }
+}
+
+/* The hand-off: she and her last line go out to the off-white, and the page
+   comes up through it. The body's own colour travels the same way, so the
+   two halves of the change are one movement. */
+/* Her fade goes on the composition, not the button, for the same reason the
+   scale does: the button's arrival animation holds opacity at 1 and would
+   win over a plain declaration here. */
+.is-finishing .drop .alma-media { opacity: 0; }
+.is-finishing .working { opacity: 0; transition: opacity .7s var(--ease-brand); }
+body { transition: background-color .9s ease; }
+
+/* ---- Welcome, between ALMA and the company page -------------------------
+   She fades to the off-white; this comes up through the same colour over the
+   landing's own sphere, holds for a breath, and hands over to the company page
+   the same way. The sphere's one distinct point is coral here and beats: the
+   company, now on the network. */
+.welcome { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; overflow: hidden;
+  background: var(--color-off-white); opacity: 0; transition: opacity .9s var(--ease-brand); }
+.welcome.is-in { opacity: 1; }
+.welcome[hidden] { display: none; }
+.welcome canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.welcome-in { position: relative; z-index: 1; width: 100%; max-width: 46rem; padding: 2rem 1.25rem; text-align: center;
+  transform: translateY(14px); transition: transform 1.1s var(--ease-brand); }
+.welcome.is-in .welcome-in { transform: none; }
+.welcome h1 { font-size: clamp(2.25rem, 6vw, 4.25rem); line-height: 1.02; letter-spacing: -0.032em; font-weight: 600; }
+/* the landing's activation underline, drawn in once the screen has settled */
+.welcome .w-mark { background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 0% 0.28em; padding-inline: 0.08em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  transition: background-size 1s var(--ease-brand) .55s; }
+.welcome.is-in .w-mark { background-size: 100% 0.28em; }
+.welcome .w-lead { margin: 1.25rem auto 0; max-width: 34rem; font-size: clamp(1.125rem, 2.2vw, 1.375rem); line-height: 1.5;
+  font-weight: 300; color: var(--color-ink-muted); }
+.welcome .w-lead b { font-weight: 600; color: var(--color-ink); }
+.welcome .w-go { margin-top: 2.25rem; }
+@media (prefers-reduced-motion: reduce) { .welcome, .welcome-in, .welcome .w-mark { transition: none; } }
+
+/* ---- ALMA's composition, lifted from the landing ------------------------ */
+.alma-comp{position:absolute;inset:0;display:block;overflow:visible}
+.alma-comp img{position:absolute}
+.alma-sphere{position:absolute;display:block;transform-origin:var(--ox,50%) var(--oy,50%);will-change:transform,opacity;animation:alma-orbit var(--orbit,50s) linear infinite,alma-sphere-breathe calc(4.8s + var(--i) * .53s) ease-in-out calc(var(--i) * -1.1s) infinite alternate;animation-delay:calc(var(--i) * -6.1s),calc(var(--i) * -1.1s)}
+@keyframes alma-orbit{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.alma-radial{position:absolute;inset:0;display:block;will-change:transform;animation:alma-radial-swing var(--radial,24s) ease-in-out calc(var(--i) * -3.7s) infinite}
+@keyframes alma-radial-swing{0%{transform:translate(0,0)}30%{transform:translate(calc(var(--rx) * 1),calc(var(--ry) * 1))}55%{transform:translate(calc(var(--rx) * -0.7),calc(var(--ry) * -0.7))}80%{transform:translate(calc(var(--rx) * 0.45),calc(var(--ry) * 0.45))}100%{transform:translate(0,0)}}
+@keyframes alma-sphere-breathe{from{opacity:1}to{opacity:.72}}
+.alma-sphere img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;user-select:none;pointer-events:none}
+.alma-sphere .a{animation:alma-grain-a calc(5.6s + var(--i) * .61s) ease-in-out calc(var(--i) * -1.9s) infinite alternate,alma-counter-orbit var(--orbit,50s) linear calc(var(--i) * -6.1s) infinite}
+.alma-sphere .b{animation:alma-grain-b calc(5.6s + var(--i) * .61s) ease-in-out calc(var(--i) * -1.9s) infinite alternate,alma-counter-orbit var(--orbit,50s) linear calc(var(--i) * -6.1s) infinite}
+@keyframes alma-grain-a{from{opacity:1}to{opacity:.35}}
+@keyframes alma-grain-b{from{opacity:0}to{opacity:.75}}
+@keyframes alma-counter-orbit{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .alma-sphere,.alma-radial,.alma-sphere img,.alma-comp{animation:none !important}
+  .alma-sphere .b{opacity:0}
+}
+</style>
+</head>
+<body>
+
+<!-- The first step. Hidden until the script shows it: without JavaScript the
+     company page underneath is what you get, which is the right fallback.
+     ALMA's composition is cloned in from the page below rather than repeated
+     here, so there is one copy of those eighteen frames in the source. -->
+<div class="intake" id="intake" hidden role="dialog" aria-modal="true" aria-labelledby="intake-title">
+  <div class="intake-inner">
+
+    <!-- One full screen. The list of documents below it must not peek into
+         view here: the step is "give me what you have", not "work through a
+         checklist", and a visible list turns it into the second thing. -->
+    <div class="intake-screen alma-ask">
+      <button class="drop" id="drop" type="button"
+              aria-describedby="intake-title drop-note">
+        <span class="alma-media" id="intake-alma" aria-hidden="true"></span>
+        <span class="drop-hint" id="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add files</span></span>
+      </button>
+
+      <!-- Everything she says before the handover, in one collapsible group:
+           faded and folded together it leaves in one movement instead of
+           winking out and dropping the layout underneath it. -->
+      <div class="pitch" id="pitch"><div class="pitch-in">
+      <p class="says rise d1">ALMA</p>
+      <!-- Her pitch. Once there are files it has been answered, so it folds
+           away and the buttons come up to meet her. -->
+      <div class="say">
+        <div>
+          <h1 class="rise d1" id="intake-title">Let's create your Company profile.</h1>
+          <p class="lead rise d2" id="drop-note">Drag your company's documents onto me, in whatever state they are in.
+            PDF's, scans, a photo of a certificate on your wall. I'll read them and work out what belongs where,
+            while you can go grab a coffee.</p>
+
+        </div>
+      </div>
+
+      <div class="actions rise d3">
+        <button class="btn btn-primary" type="button" id="hand">Hand it to ALMA</button>
+        <button class="btn btn-quiet" type="button" id="pick">Add files</button>
+        <button class="link-btn" type="button" id="skip">Skip</button>
+      </div>
+      <input id="file" type="file" multiple hidden
+             accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.doc,.docx,.xls,.xlsx,.csv,.txt">
+
+      <div class="took" id="took" hidden aria-live="polite"></div>
+      </div></div>
+
+      <p class="working" id="working" hidden aria-live="polite">
+        <i class="doing-sq" id="doing-sq" aria-hidden="true"></i>
+        <span id="doing-text"></span>
+      </p>
+    </div>
+
+    <div class="faq-cue-wrap" id="faq-cue-wrap">
+      <button class="faq-cue" type="button" id="faq-cue">Frequently asked documents</button>
+    </div>
+
+    <section class="cues rise d4" aria-labelledby="cues-k">
+      <p class="k" id="cues-k">Don't go hunting. Whatever you have now is enough.<br>
+        If something is missing I'll let you know.</p>
+      <div class="cue-grid">
+
+        <div class="cue">
+          <h2>Company &amp; legal</h2>
+          <ul>
+            <li>Form W-9 <i>— taxpayer ID</i></li>
+            <li>Certificate of Good Standing</li>
+            <li>Business license or registration</li>
+            <li>EIN letter <i>— CP-575 or 147C</i></li>
+          </ul>
+        </div>
+
+        <div class="cue">
+          <h2>Insurance</h2>
+          <ul>
+            <li>General liability certificate <i>— ACORD 25</i></li>
+            <li>Workers' compensation certificate</li>
+            <li>Commercial auto liability</li>
+          </ul>
+        </div>
+
+        <div class="cue">
+          <h2>Workforce</h2>
+          <ul>
+            <li>E-Verify enrolment or I-9 attestation</li>
+          </ul>
+        </div>
+
+        <div class="cue is-optional">
+          <h2>Worth having</h2>
+          <ul>
+            <li>Code of conduct or anti-corruption acknowledgement</li>
+            <li>MBE / WBE / DBE certification <i>— if you hold one</i></li>
+          </ul>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- Welcome: shown once, between ALMA's reading and the company page. -->
+<div class="welcome" id="welcome" hidden role="status" aria-live="polite">
+  <canvas id="welcome-sphere" aria-hidden="true"></canvas>
+  <div class="welcome-in">
+    <h1>Thank you for being a <span class="w-mark">founding member</span>!</h1>
+    <p class="w-lead"><b id="welcome-co">Your company</b> is now part of the C&#8209;MORE ecosystem.</p>
+    <p class="w-go"><button class="btn btn-primary" type="button" id="welcome-go">Continue to my company</button></p>
+  </div>
+</div>
+
+<div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
+
+<header class="top"><div class="hdr-in">
+  <a class="brand" href="index.html" aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
+  <div class="top-right">
+    <span data-lang-switch></span>
+    <span class="co-badge co-founder"><span aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
+    <span class="who-chip"><img class="who-pic" src="images/profile-miguel.webp" alt="" width="64" height="64" decoding="async"><span>Miguel Ferreira</span></span>
+  </div>
+</div></header>
+
+<main class="page">
+<!-- The company home before there is a company in it: the same page as the filled one,
+     area for area, each showing what it will hold and how it gets there. ALMA's
+     composition lives here once in the source; the intake step and the filled page
+     both clone it from this copy. -->
+<div id="empty">
+
+  <!-- Profile completion: nothing done yet -->
+  <div class="co-strip"><div class="co-wrap">
+    <span class="co-strip-l">
+      <span class="eyebrow" style="font-size:0.75rem">Profile completion</span>
+      <span class="co-meter" role="progressbar" aria-label="Profile completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
+      <span><b>0%</b><span class="co-strip-more"> · give ALMA your documents and she fills in most of it.</span></span>
+    </span>
+    <a href="#ce-drop" data-ce-start>Start profile</a>
+  </div></div>
+
+  <!-- No company name yet, the invitations already open -->
+  <section class="co-sec co-head"><div class="co-wrap">
+    <div class="co-id">
+      <div class="co-id-l">
+        <span class="eyebrow">My company</span>
+        <h1 class="co-name co-name-empty">Your company</h1>
+        <span class="co-subtle" style="font-size:0.9375rem">Name, sector, size, tax number and address will show here once ALMA has read your documents.</span>
+      </div>
+      <div class="co-score">
+        <div class="co-ring" style="--p:0%"><div>—</div></div>
+        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" style="font-size:0.8125rem">Appears once your documents are in</span></div>
+      </div>
+    </div>
+    <div class="co-invites">
+      <div class="co-card co-invite">
+        <div class="co-card-k"><span class="eyebrow">Clients</span><a href="#" onclick="return false">View details</a></div>
+        <span class="co-big co-big-empty">0</span>
+        <span class="co-muted">invited · bring in the companies you supply</span>
+        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite client</a>
+      </div>
+      <div class="co-card co-invite">
+        <div class="co-card-k"><span class="eyebrow">Suppliers</span><a href="#" onclick="return false">View details</a></div>
+        <span class="co-big co-big-empty">0</span>
+        <span class="co-muted">invited · they keep their own data up to date</span>
+        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite supplier</a>
+      </div>
+      <div class="co-card co-invite">
+        <div class="co-card-k"><span class="eyebrow">Users</span><a href="#" onclick="return false">View details</a></div>
+        <span class="co-big">1</span>
+        <span class="co-muted">invited · just you, for now</span>
+        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite users</a>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- Needs your attention: the way in, ALMA on the right -->
+  <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
+    <div class="co-attn-l">
+      <span class="eyebrow">Needs your attention</span>
+      <h2 class="co-h-xl">Nothing needs you yet.<br><span style="font-weight:300">Let's get your company in.</span></h2>
+      <div class="co-steps">
+        <div class="co-step"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-neu">None</span></h3><p>Anything a client asked for by a date that has not arrived yet.</p></div>
+        <div class="co-step"><span class="co-num">2</span><h3>Expired documents <span class="co-badge b-neu">None</span></h3><p>Past its date. Replace it before a client asks to see it.</p></div>
+        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-neu">None</span></h3><p>Due for renewal soon, flagged early enough to renew in time.</p></div>
+        <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-neu">None</span></h3><p>A client has asked to see your data and is waiting for your yes.</p></div>
+      </div>
+    </div>
+    <div class="co-drop" id="ce-drop" role="button" tabindex="0" aria-label="Drop your company documents on ALMA, or press to browse">
+      <span class="alma-media" aria-hidden="true">
+<span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>
+      </span>
+      <span class="eyebrow">ALMA</span>
+      <span class="co-drop-t">Drop your documents on me.</span>
+      <span class="co-muted" style="font-size:0.9375rem">I read them, find your company and fill in your profile. <a href="#" id="ce-browse">Or browse on your device</a></span>
+    </div>
+  </div></section>
+
+  <!-- Documents: an empty table, the columns already there -->
+  <section class="co-sec co-pad-top-0"><div class="co-wrap">
+    <div class="co-sec-head"><h2 class="co-h-l">Documents</h2><div class="co-sec-r"><span class="co-muted">0 on file</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
+    <div class="co-card co-tbl-card">
+      <table class="co-tbl">
+        <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
+        <tbody>
+          <tr><td colspan="8" class="co-tbl-empty">
+            <span class="n">No documents yet</span>
+            <span class="d">Drop them on ALMA and they appear here, sorted, dated and flagged before they expire.</span>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></section>
+
+  <!-- Consents: the switches are yours from day one; nobody has asked yet -->
+  <section class="co-sec co-pad-top-0 co-last-sec"><div class="co-wrap">
+    <div class="co-sec-head"><h2 class="co-h-l">Consents</h2><span class="co-muted">What you allow, and who has asked. Nothing is shared without a yes here.</span></div>
+    <div class="co-consents">
+      <div class="co-card co-list">
+        <div class="co-card-k co-list-k"><span class="eyebrow">What you allow</span><a href="#" onclick="return false">View all</a></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">1</span>Privacy &amp; data processing</span><span class="co-subtle">Required to keep the company on C&#8209;MORE. Given when you signed up.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Privacy and data processing, required" disabled title="Required to keep the company on C-MORE, so it cannot be switched off"><i></i></button></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">2</span>Visible in the C&#8209;MORE ecosystem</span><span class="co-subtle">Buyers looking for what you do can find you.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Visible in the C-MORE ecosystem"><i></i></button></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">3</span>Share renewals with clients automatically</span><span class="co-subtle">When a certificate is renewed, clients who hold it get the new one.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Share renewals with clients automatically"><i></i></button></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">4</span>C&#8209;MORE newsletter</span><span class="co-subtle">Product news and compliance tips, about once a month. Opt out any time.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="C-MORE newsletter"><i></i></button></div>
+      </div>
+      <div class="co-card co-list">
+        <div class="co-card-k co-list-k"><span class="eyebrow">Who has asked</span><a href="#" onclick="return false">View all</a></div>
+        <div class="co-list-empty">
+          <span class="co-row-n">No requests yet</span>
+          <span class="co-subtle">When a client asks to see your documents, it shows up here for a yes or a no.</span>
+        </div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- Graphite band: the ecosystem, with nobody in it yet -->
+  <section class="co-band">
+    <div class="co-band-mesh" aria-hidden="true"></div>
+    <div class="co-wrap co-band-in">
+      <div class="co-band-l">
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <span class="eyebrow co-on-dark">Your ecosystem</span>
+          <h2 class="co-h-xl" style="font-weight:300">0 companies<br><span style="font-weight:600">share data with you.</span></h2>
+        </div>
+        <div class="co-sides">
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a supplier</span>
+            <div class="co-side-n">
+              <div><span class="co-stat co-stat-empty">0</span><span>clients connected</span></div>
+              <div><span class="co-stat co-stat-empty">0</span><span>requests</span></div>
+            </div>
+            <div class="co-bar co-bar-empty" style="height:8px"></div>
+          </div>
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a buyer</span>
+            <div class="co-side-n">
+              <div><span class="co-stat co-stat-empty">0</span><span>suppliers connected</span></div>
+              <div><span class="co-stat co-stat-empty">0</span><span>data in order</span></div>
+            </div>
+            <div class="co-bar co-bar-empty" style="height:8px"></div>
+          </div>
+        </div>
+        <a href="#" onclick="return false" class="btn btn-primary co-map-btn">View my ecosystem</a>
+      </div>
+      <div class="co-net">
+        <div class="co-donut co-donut-empty" role="img" aria-label="No connections yet">
+          <div><span class="co-fc">?</span><span class="co-donut-t">0 connections</span></div>
+        </div>
+        <div class="co-net-rows">
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-light-beige)"></i>Clients · 0</span><span>none yet</span></div>
+            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a client</a></div>
+            <div class="co-bar co-bar-empty" style="height:6px"></div>
+          </div>
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 0</span><span>none yet</span></div>
+            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a supplier</a></div>
+            <div class="co-bar co-bar-empty" style="height:6px"></div>
+          </div>
+          <span class="co-legend">Each company you invite appears here, with how their data stands.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- The company home, once there is a company in it (design direction D). Dummy data,
+     but real documents: the cross-sector set US buyers ask every supplier for. -->
+<div id="filled" hidden>
+
+  <!-- Profile completion: a quiet hairline strip under the header -->
+  <div class="co-strip"><div class="co-wrap">
+    <span class="co-strip-l">
+      <span class="eyebrow" style="font-size:0.75rem">Profile completion</span>
+      <span class="co-meter" id="co-meter" role="progressbar" aria-label="Profile completion" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100"><i style="width:82%"></i></span>
+      <span><b id="co-pct">82%</b><span class="co-strip-more" id="co-left"> · two things left: the expired license, and a diversity certificate if you hold one.</span></span>
+    </span>
+    <a href="#" onclick="return false">Finish profile</a>
+  </div></div>
+
+  <!-- Company name, then the invitations as button cards -->
+  <section class="co-sec co-head"><div class="co-wrap">
+    <div class="co-id">
+      <div class="co-id-l">
+        <span class="eyebrow">My company</span>
+        <h1 class="co-name">Ferreira Construction LLC</h1>
+        <span class="co-subtle" style="font-size:0.9375rem">General contractor · 24 people · EIN 84&#8209;3921745 · Delaware LLC · Wilmington, DE</span>
+      </div>
+      <div class="co-score">
+        <div class="co-ring" id="co-ring" style="--p:78%"><div id="co-score">78</div></div>
+        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" id="co-score-note" style="font-size:0.8125rem">Good · +9 once the license is replaced</span></div>
+      </div>
+    </div>
+    <div class="co-invites">
+      <div class="co-card co-invite">
+        <div class="co-card-k"><span class="eyebrow">Clients</span><a href="#" onclick="return false">View details</a></div>
+        <span class="co-big">5</span>
+        <span class="co-muted">invited · 4 connected, 1 pending</span>
+        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite client</a>
+      </div>
+      <div class="co-card co-invite">
+        <div class="co-card-k"><span class="eyebrow">Suppliers</span><a href="#" onclick="return false">View details</a></div>
+        <span class="co-big">4</span>
+        <span class="co-muted">invited · 3 keeping their papers up to date</span>
+        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite supplier</a>
+      </div>
+      <div class="co-card co-invite">
+        <div class="co-card-k"><span class="eyebrow">Users</span><a href="#" onclick="return false">View details</a></div>
+        <span class="co-big">3</span>
+        <span class="co-muted">invited · you, Ana Rocha, Tomás Dias</span>
+        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite users</a>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- Needs your attention: the landing's numbered steps, ALMA on the right -->
+  <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
+    <div class="co-attn-l">
+      <span class="eyebrow">Needs your attention</span>
+      <h2 class="co-h-xl">Some pending actions<br>are requiring your attention.</h2>
+      <div class="co-steps">
+        <div class="co-step"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-over">1 document</span></h3><p>E&#8209;Verify enrolment: 3 I&#8209;9 attestations were due and are still missing.</p></div>
+        <div class="co-step" id="co-step-license"><span class="co-num">2</span><h3>Expired documents <span class="co-badge b-over">1 document</span></h3><p>Your business license ran out on 15 August. Drop the new one on ALMA and she files it.</p></div>
+        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-pend">2 documents</span></h3><p>Certificate of Good Standing renews on 31 October, commercial auto on 3 November.</p></div>
+        <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-info">2 requests</span></h3><p>Northgate Facilities and Bramwell Group are waiting for your yes to see your insurance.</p></div>
+      </div>
+    </div>
+    <div class="co-drop" id="co-drop" role="button" tabindex="0" aria-label="Drop the new business license on ALMA, or press to browse">
+      <span class="alma-media" id="co-alma" aria-hidden="true"></span>
+      <span class="eyebrow">ALMA</span>
+      <span class="co-drop-t" id="co-drop-t">Drop the new license on me.</span>
+      <span class="co-muted" id="co-drop-s" style="font-size:0.9375rem">PDF, scan, a photo of it on the wall. I read it, date it and file it. <a href="#" id="co-browse">Or browse on your device</a></span>
+      <span class="co-drop-acts" id="co-drop-acts" hidden>
+        <button type="button" class="btn btn-primary" id="co-hand">Hand it to ALMA</button>
+        <button type="button" class="link-btn" id="co-again">Choose another</button>
+      </span>
+      <input type="file" id="co-file" hidden>
+    </div>
+  </div></section>
+
+  <!-- Documents: only what needs attention, or will soon -->
+  <section class="co-sec co-pad-top-0"><div class="co-wrap">
+    <div class="co-sec-head"><h2 class="co-h-l">Documents</h2><div class="co-sec-r"><span class="co-muted" id="co-docs-note">5 need attention or will soon · 5 more in order</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
+    <div class="co-card co-tbl-card">
+      <table class="co-tbl">
+        <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
+        <tbody>
+          <tr id="co-row-license"><td><span class="n">Business license</span><span class="d">City of Wilmington</span></td><td class="c co-subtle">Company &amp; legal</td><td class="c co-subtle">—</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c co-subtle">—</td><td class="c">12 Mar 2026</td><td><span class="co-exp">15 Aug 2026 <span class="co-badge b-over">Overdue</span></span></td></tr>
+          <tr><td><span class="n">Certificate of Good Standing</span><span class="d">Delaware</span></td><td class="c co-subtle">Company &amp; legal</td><td class="c co-subtle">—</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c co-subtle">—</td><td class="c">12 Mar 2026</td><td><span class="co-exp">31 Oct 2026 <span class="co-badge b-pend">32 days</span></span></td></tr>
+          <tr><td><span class="n">Commercial auto liability</span><span class="d">18 of 22 vehicles on the schedule</span></td><td class="c co-subtle">Insurance</td><td class="c co-subtle">—</td><td class="c">82%</td><td class="c">1</td><td class="c co-subtle">—</td><td class="c">3 Nov 2025</td><td><span class="co-exp">3 Nov 2026 <span class="co-badge b-pend">35 days</span></span></td></tr>
+          <tr><td><span class="n">E&#8209;Verify enrolment</span><span class="d">3 I&#8209;9 attestations missing</span></td><td class="c co-subtle">Workforce</td><td class="c">88%</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c">21 <span class="co-subtle">/ 24</span></td><td class="c">12 Mar 2026</td><td><span class="co-exp"><span class="co-subtle">Does not expire</span> <span class="co-badge b-pend">Incomplete</span></span></td></tr>
+          <tr><td><span class="n">Workers’ compensation certificate</span><span class="d">All 24 people covered</span></td><td class="c co-subtle">Insurance</td><td class="c">100%</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c">24 <span class="co-subtle">/ 24</span></td><td class="c">1 Jan 2026</td><td><span class="co-exp">1 Jan 2027 <span class="co-badge b-info">94 days</span></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div></section>
+
+  <!-- Consents -->
+  <section class="co-sec co-pad-top-0 co-last-sec"><div class="co-wrap">
+    <div class="co-sec-head"><h2 class="co-h-l">Consents</h2><span class="co-muted">What you allow, and who has asked. Nothing is shared without a yes here.</span></div>
+    <div class="co-consents">
+      <div class="co-card co-list">
+        <div class="co-card-k co-list-k"><span class="eyebrow">What you allow</span><a href="#" onclick="return false">View all</a></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">1</span>Privacy &amp; data processing</span><span class="co-subtle">Required to keep the company on C&#8209;MORE. Given 12 Mar 2026.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Privacy and data processing, required" disabled title="Required to keep the company on C-MORE, so it cannot be switched off"><i></i></button></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">2</span>Visible in the C&#8209;MORE ecosystem</span><span class="co-subtle">Buyers searching for a general contractor in Delaware can find you.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Visible in the C-MORE ecosystem"><i></i></button></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">3</span>Share renewals with clients automatically</span><span class="co-subtle">When a certificate is renewed, clients who hold it get the new one.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Share renewals with clients automatically"><i></i></button></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">4</span>C&#8209;MORE newsletter</span><span class="co-subtle">Product news and compliance tips, about once a month. Opt out any time.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="C-MORE newsletter"><i></i></button></div>
+      </div>
+      <div class="co-card co-list">
+        <div class="co-card-k co-list-k"><span class="eyebrow">Who has asked</span><a href="#" onclick="return false">View all</a></div>
+        <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Northgate Facilities <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: general liability, workers’ comp, W&#8209;9. Asked 2 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
+        <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Bramwell Group <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: everything in Insurance. Asked 6 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n">Meridian Health <span class="co-badge b-ok">Accepted</span></span><span class="co-subtle">Sees: Company &amp; legal, Insurance. Since 4 Sep 2026.</span></div><a href="#" onclick="return false" class="btn co-btn-ghost co-btn-sm">Manage</a></div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- Graphite band: your ecosystem + how you stand, as the landing's dark band -->
+  <section class="co-band">
+    <div class="co-band-mesh" aria-hidden="true"></div>
+    <div class="co-wrap co-band-in">
+      <div class="co-band-l">
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <span class="eyebrow co-on-dark">Your ecosystem</span>
+          <h2 class="co-h-xl" style="font-weight:300">9 companies<br><span style="font-weight:600">share data with you.</span></h2>
+        </div>
+        <div class="co-sides">
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a supplier</span>
+            <div class="co-side-n">
+              <div><span class="co-stat" style="color:var(--color-coral)">5</span><span>clients connected</span></div>
+              <div><span class="co-stat">9</span><span>requests · 7 yes, 2 pending</span></div>
+            </div>
+            <div class="co-bar" style="height:8px"><i style="width:78%;background:var(--color-light-beige)"></i><i style="width:22%;background:var(--color-coral)"></i></div>
+          </div>
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a buyer</span>
+            <div class="co-side-n">
+              <div><span class="co-stat" style="color:var(--color-coral)">4</span><span>suppliers connected</span></div>
+              <div><span class="co-stat">3<small>/4</small></span><span>papers in order · 1 pending</span></div>
+            </div>
+            <div class="co-bar" style="height:8px"><i style="width:75%;background:var(--color-light-beige)"></i><i style="width:25%;background:var(--color-coral)"></i></div>
+          </div>
+        </div>
+        <a href="#" onclick="return false" class="btn btn-primary co-map-btn">View my ecosystem</a>
+      </div>
+      <!-- One ring for the whole network, one row per side -->
+      <div class="co-net">
+        <div class="co-donut" role="img" aria-label="9 connections: 5 clients, 4 suppliers">
+          <div><span class="co-fc">FC</span><span class="co-donut-t">9 connections</span></div>
+        </div>
+        <div class="co-net-rows">
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-light-beige)"></i>Clients · 5</span><span>4 in order · 1 pending</span></div>
+            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><a href="#" onclick="return false">See all</a></div>
+            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-light-beige)"></i><i style="width:20%;background:var(--color-sand-400)"></i></div>
+          </div>
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 4</span><span>3 in order · 1 lagging</span></div>
+            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><a href="#" onclick="return false">See all</a></div>
+            <div class="co-bar" style="height:6px"><i style="width:75%;background:var(--color-coral)"></i><i style="width:25%;background:var(--color-coral-tint)"></i></div>
+          </div>
+          <span class="co-legend">Solid = papers in order · outlined = pending or lagging</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</main>
+
+<script src="js/app-3.js"></script>
+<script>
+(() => {
+  const root = document.documentElement;
+  // If anything below fails, the page must come back rather than leaving the
+  // visitor on a blank off-white field that the head script painted.
+  const reveal = () => root.classList.remove('intake-first');
+
+  const intake = document.getElementById('intake');
+  const source = document.querySelector('#empty .alma-media');
+  if (!intake || !source) { reveal(); return; }
+
+  // One copy of the composition in the source; the second is a clone.
+  document.getElementById('intake-alma').replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
+
+  // ---- the company home ------------------------------------------------------
+  // Empty: ALMA's card (and the strip's Start profile) opens the intake; files dropped
+  // on her here are handed straight to it.
+  const ceDrop = document.getElementById('ce-drop');
+  if (ceDrop) {
+    const start = (e) => { if (e) e.preventDefault(); open(); };
+    ceDrop.addEventListener('click', start);
+    ceDrop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') start(e); });
+    document.querySelectorAll('[data-ce-start]').forEach((a) => a.addEventListener('click', start));
+    ceDrop.addEventListener('dragover', (e) => { e.preventDefault(); ceDrop.classList.add('is-over'); });
+    ceDrop.addEventListener('dragleave', () => ceDrop.classList.remove('is-over'));
+    ceDrop.addEventListener('drop', (e) => { e.preventDefault(); ceDrop.classList.remove('is-over'); open(); take(e.dataTransfer.files); });
+  }
+  document.querySelectorAll('#empty .co-sw:not(:disabled)').forEach((sw) => sw.addEventListener('click', () => {
+    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+  }));
+  // ALMA again, in the attention card: a third copy of the same composition.
+  const coAlma = document.getElementById('co-alma');
+  if (coAlma) coAlma.replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
+  // Consents switch for real (the required one is locked on).
+  document.querySelectorAll('#filled .co-sw').forEach((sw) => sw.addEventListener('click', () => {
+    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+  }));
+  // Answering a request swaps the buttons for the answer.
+  document.querySelectorAll('#filled .co-req [data-answer]').forEach((b) => b.addEventListener('click', () => {
+    const row = b.closest('.co-row'), yes = b.dataset.answer === 'Accepted';
+    const badge = row.querySelector('.co-badge');
+    badge.className = 'co-badge ' + (yes ? 'b-ok' : 'b-neu'); badge.textContent = b.dataset.answer;
+    row.querySelector('.co-acts').replaceWith(Object.assign(document.createElement('span'), { className: 'co-subtle', style: 'font-size:.875rem', textContent: 'Just now' }));
+  }));
+  // The license drop: takes a file by drag or by browsing, names it, and waits for
+  // "Hand it to ALMA". She reads it, files it, and the page catches up: the action is
+  // done, the table row is in order, the profile and the score move. Prototype: the
+  // file never leaves the machine.
+  const coDrop = document.getElementById('co-drop'), coFile = document.getElementById('co-file');
+  if (coDrop && coFile) {
+    const $c = (id) => document.getElementById(id);
+    const t = $c('co-drop-t'), sub = $c('co-drop-s'), acts = $c('co-drop-acts');
+    const idle = { t: t.textContent, s: sub.innerHTML };
+    let picked = null, state = 'idle';
+    const setState = (st) => { state = st; coDrop.classList.toggle('has-file', st === 'file'); coDrop.classList.toggle('is-reading', st === 'reading'); coDrop.classList.toggle('is-filed', st === 'filed'); };
+    const took = (f) => {
+      if (!f || state === 'reading' || state === 'filed') return;
+      picked = f;
+      t.textContent = 'Got it: ' + f.name;
+      sub.textContent = 'Hand it over and I will read it, date it and file it.';
+      acts.hidden = false; setState('file');
+      setTimeout(() => $c('co-hand').focus({ preventScroll: true }), 50);
+    };
+    const browse = (e) => { e.preventDefault(); coFile.value = ''; coFile.click(); };
+    coDrop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
+    coDrop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === coDrop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
+    coFile.addEventListener('click', (e) => e.stopPropagation());
+    coFile.addEventListener('change', () => took(coFile.files[0]));
+    coDrop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') coDrop.classList.add('is-over'); });
+    coDrop.addEventListener('dragleave', () => coDrop.classList.remove('is-over'));
+    coDrop.addEventListener('drop', (e) => { e.preventDefault(); coDrop.classList.remove('is-over'); took(e.dataTransfer.files[0]); });
+    $c('co-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
+    $c('co-hand').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state !== 'file') return;
+      setState('reading'); acts.hidden = true;
+      t.textContent = 'Reading ' + picked.name + '…';
+      sub.textContent = 'Checking the issuer, the dates and the business it names.';
+      setTimeout(() => {
+        setState('filed');
+        t.textContent = 'Filed. Your license is valid again.';
+        sub.textContent = 'City of Wilmington · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
+        // the page catches up
+        const step = $c('co-step-license');
+        step.classList.add('is-done');
+        const sb = step.querySelector('.co-badge'); sb.className = 'co-badge b-ok'; sb.textContent = 'None left';
+        step.querySelector('p').textContent = 'Business license replaced today. ALMA filed it and dated the next renewal.';
+        const row = $c('co-row-license'), cells = row.querySelectorAll('td');
+        cells[6].textContent = '1 Oct 2026';
+        cells[7].innerHTML = '<span class="co-exp">15 Aug 2027 <span class="co-badge b-ok">In order</span></span>';
+        $c('co-docs-note').textContent = '4 need attention or will soon · 6 more in order';
+        $c('co-meter').firstElementChild.style.width = '91%'; $c('co-meter').setAttribute('aria-valuenow', '91');
+        $c('co-pct').textContent = '91%';
+        $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
+        $c('co-ring').style.setProperty('--p', '87%'); $c('co-score').textContent = '87';
+        $c('co-score-note').textContent = 'Good · up 9 with the new license';
+      }, reducedMotion ? 0 : 2200);
+    });
+  }
+
+  const drop = document.getElementById('drop');
+  const hint = document.getElementById('drop-hint');
+  const file = document.getElementById('file');
+  const took = document.getElementById('took');
+  const esc = (v) => v.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const open = () => { intake.hidden = false; root.classList.add('intake-open'); };
+  // Dropping the overlay also drops the arriving state, so the page fades up
+  // from the off-white rather than snapping into it.
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const close = () => {
+    intake.hidden = true;
+    root.classList.remove('intake-open');
+    document.getElementById('faq-cue-wrap').classList.remove('is-in');
+    reveal();
+  };
+
+  // ?page is the empty company home, ?filled the populated one. Both skip the
+  // intake, which is how either gets looked at without sitting through it.
+  if (new URLSearchParams(location.search).has('filled')) {
+    document.getElementById('empty').hidden = true;
+    document.getElementById('filled').hidden = false;
+  }
+  if (root.classList.contains('intake-first')) open(); else reveal();
+  // Arriving on the empty company (?page, the end of sign-up): the page settles, then
+  // ALMA's step comes up over it as an overlay. Skip, or Escape, leaves the empty page.
+  if (new URLSearchParams(location.search).has('page')) {
+    setTimeout(() => { if (intake.hidden) { intake.classList.add('over-page'); open(); } }, reducedMotion ? 0 : 650);
+  }
+  document.getElementById('skip').addEventListener('click', close);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intake.hidden) close(); });
+
+// The end of the reading: she and her last line go out to the off-white the
+  // whole step has been sitting on, and the company page — now with a company
+  // in it — comes up through the same colour. The body's background travels
+  // with them, so it reads as one movement rather than a screen swap.
+  const finish = () => {
+    document.getElementById('empty').hidden = true;
+    document.getElementById('filled').hidden = false;
+    screen.classList.add('is-finishing');
+    const toPage = () => { intake.hidden = true; root.classList.remove('intake-open'); reveal(); };
+    setTimeout(() => welcome(toPage), 760);
+  };
+
+  // ---- welcome --------------------------------------------------------------
+  // Up through the off-white she left, a breath on the sphere, then out to the
+  // company page the same way. It names the company the page is about to show.
+  const welcome = (next) => {
+    const w = document.getElementById('welcome');
+    if (!w) { next(); return; }
+    const co = document.querySelector('#filled .co-name');
+    document.getElementById('welcome-co').textContent = (co && co.textContent.trim()) || 'Your company';
+    w.hidden = false;
+    let sphere = null;
+    try {
+      if (window.__sphere) sphere = window.__sphere.mountSphere(document.getElementById('welcome-sphere'), {
+        n: 460, ink: '52,52,52', lineAlpha: 0.06, lineBase: 0.015, dotAlpha: 0.18, radius: 0.46,
+        inkOpacityMobile: 0.7, radiusMobile: 0.62, scrollRot: 0, pointer: 0.5,
+        coralPoint: true, pointColor: '#f46d4f', pulse: true, pointAngle: -0.62, pointSize: 14 });
+    } catch (e) { console.error(e); }
+    requestAnimationFrame(() => requestAnimationFrame(() => w.classList.add('is-in')));
+    // the ALMA screen is gone behind it by now
+    setTimeout(() => { intake.hidden = true; }, 900);
+    let left = false;
+    const leave = () => {
+      if (left) return; left = true;
+      w.classList.remove('is-in');
+      next();
+      setTimeout(() => { w.hidden = true; if (sphere) sphere.destroy(); }, 950);
+    };
+    const go = document.getElementById('welcome-go');
+    go.addEventListener('click', leave);
+    // no timer: it stays until they choose to go on
+    setTimeout(() => go.focus({ preventScroll: true }), 900);
+  };
+
+  // ---- the cue down to the list -------------------------------------------
+  const cues = intake.querySelector('.cues');
+  const cueWrap = document.getElementById('faq-cue-wrap');
+  // It asks "do you know what I want?", so it retires the moment that question
+  // is answered — and it has no backdrop, so leaving it over a growing list of
+  // filenames would just be two things printed on top of each other.
+  let cueRetired = false;
+  const retireCue = () => { cueRetired = true; cueWrap.classList.remove('is-in'); };
+  if (cues && cueWrap) {
+    // After she has arrived and said her piece, not competing with her.
+    setTimeout(() => { if (!intake.hidden && !cueRetired) cueWrap.classList.add('is-in'); }, 1900);
+    document.getElementById('faq-cue').addEventListener('click', () => {
+      cues.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+    // Once the list is reached it has done its job.
+    new IntersectionObserver(
+      ([e]) => cueWrap.classList.toggle('is-in', !e.isIntersecting && !intake.hidden && !cueRetired),
+      { root: intake, threshold: 0.12 },
+    ).observe(cues);
+  }
+
+  // ---- taking the files ---------------------------------------------------
+  const received = [];
+  const received_names = new Set();
+
+  const show = () => {
+    const n = received.length;
+    hint.textContent = n ? `${n} file${n === 1 ? '' : 's'}` : 'Drop them on me';
+    const first = received.slice(0, 6);
+    const rest = n - first.length;
+    took.hidden = false;
+    took.innerHTML =
+      `<p class="lead" style="margin-top:0">Got ${n === 1 ? 'it' : 'them'}. ` +
+      `<b style="font-weight:600;color:var(--color-ink)">${n} file${n === 1 ? '' : 's'}</b>, and nothing for you to sort.</p>` +
+      `<ul>${first.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` +
+      (rest > 0 ? `<p class="more">and ${rest} more</p>` : '') +
+      `<p class="more" style="margin-top:.75rem">Prototype — the files stay on your machine. Nothing is uploaded, read or saved.</p>`;
+  };
+
+  const screen = intake.querySelector('.intake-screen');
+  const take = (list) => {
+    for (const f of list) {
+      if (received_names.has(f.name)) continue;
+      received_names.add(f.name);
+      received.push(f.name);
+    }
+    if (!received.length) return;
+    // Her pitch folds away, the buttons come up, and the way on appears.
+    screen.classList.add('has-files');
+    retireCue();
+    show();
+  };
+
+  // ---- handing it over -----------------------------------------------------
+  // Everything but her folds and fades to the off-white, she grows into the
+  // middle of it, and she says what she is doing one line at a time. The
+  // lines name the visitor's own files, so the wait is about their paperwork
+  // rather than a generic spinner.
+  let handed = false;
+  document.getElementById('hand').addEventListener('click', () => {
+    if (handed) return;
+    handed = true;
+
+    screen.classList.add('is-working');
+
+    const working = document.getElementById('working');
+    const sq = document.getElementById('doing-sq');
+    const text = document.getElementById('doing-text');
+
+    const n = received.length;
+    const name = (i) => received[i % received.length];
+    const lines = [
+      `Opening ${n} file${n === 1 ? '' : 's'}.`,
+      `Reading <b>${esc(name(0))}</b>.`,
+      'Working out what each one is.',
+      n > 1 ? `Reading <b>${esc(name(1))}</b>.` : 'Reading every page.',
+      'Checking the dates they run out.',
+      'Matching them against what buyers ask for.',
+      'Filing them where they belong.',
+    ];
+    let quarter = 0;
+    const put = (html) => {
+      text.innerHTML = html;
+      // A quarter-turn per line. The square is what says she is still going,
+      // so it moves exactly when what she is doing changes — the mark's own
+      // ninety degrees, a click into place rather than a spin.
+      sq.style.transform = `rotate(${(quarter += 90)}deg)`;
+    };
+
+    if (reducedMotion) { finish(); return; }
+
+    // She takes the middle first, then starts talking.
+    setTimeout(() => {
+      working.hidden = false;
+      requestAnimationFrame(() => working.classList.add('is-in'));
+      put(lines[0]);
+    }, 620);
+
+    // Out over 400ms, swapped while invisible, back in over 400ms, then held
+    // for 900 — the same easing either way, so neither end reads as a cut.
+    let k = 1;
+    const tick = () => {
+      text.style.opacity = '0';
+      setTimeout(() => {
+        put(lines[k]);
+        text.style.opacity = '1';
+        k++;
+        // The last line is not followed by another line: it is followed by
+        // the company page.
+        setTimeout(k < lines.length ? tick : finish, 900);
+      }, 400);
+    };
+    setTimeout(tick, 1900);
+  });
+
+  document.getElementById('pick').addEventListener('click', () => file.click());
+  file.addEventListener('change', () => { take(file.files); file.value = ''; });
+  drop.addEventListener('click', () => file.click());
+
+  // The whole overlay accepts the drop, so a near miss still lands; only ALMA
+  // lights up, because she is what you are aiming at.
+  let depth = 0;
+  const over = (on) => drop.classList.toggle('is-over', on);
+  intake.addEventListener('dragenter', (e) => { e.preventDefault(); depth++; over(true); });
+  intake.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+  intake.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; over(false); } });
+  intake.addEventListener('drop', (e) => {
+    e.preventDefault(); depth = 0; over(false);
+    take(e.dataTransfer.files);
+  });
+  // A file dropped anywhere else would navigate the browser away from the page.
+  addEventListener('dragover', (e) => e.preventDefault());
+  addEventListener('drop', (e) => e.preventDefault());
+})();
+</script>
+
+<script src="js/lang.js"></script>
+</body>
+</html>
