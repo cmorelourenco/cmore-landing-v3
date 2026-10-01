@@ -426,10 +426,12 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 @media (max-width: 40rem) { .co-founder .co-founder-t { display: none; } .top-right { gap: 0.75rem; } }
 /* The founding badge runs on under the avatar, so badge and person read as one piece:
    the pill is as tall as the avatar and long enough for it to sit in its right end. */
-.top-right .co-founder { height: 2rem; padding: 0 2.5rem 0 0.75rem; }
-.top-right .co-founder + .who { margin-left: -3.5rem; }
-@media (max-width: 40rem) { .top-right .co-founder { padding-left: 0.625rem; } .top-right .co-founder + .who { margin-left: -3rem; } }
-#who-btn .who-pic { box-shadow: 0 0 0 2px var(--color-off-white); }
+/* The avatar is the larger shape and the badge a slimmer stripe that comes out from
+   behind it: the pill ends under the avatar's centre. */
+.top-right .co-founder { height: 1.625rem; padding: 0 1.75rem 0 0.75rem; font-size: 0.8125rem; }
+.top-right .co-founder + .who { margin-left: -2.75rem; }
+@media (max-width: 40rem) { .top-right .co-founder { padding-left: 0.625rem; } .top-right .co-founder + .who { margin-left: -2.25rem; } }
+#who-btn .who-pic { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; box-shadow: 0 0 0 2px var(--color-off-white); position: relative; z-index: 1; }
 
 /* badges and buttons, the design system's */
 .co-badge { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.75rem; padding: 0.25rem 0.5rem; border-radius: var(--radius-pill);
