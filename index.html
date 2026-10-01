@@ -1801,7 +1801,7 @@ class Component extends DCLogic {
     const mkIcon = (paths) => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': 'true', focusable: 'false', style: { display: 'block' } }, paths.map((d, i) => React.createElement('path', { key: i, d })));
     const actions = DS ? React.createElement(React.Fragment, null,
       React.createElement('span', { 'data-lang-switch': '', key: 'lang', style: { display: 'inline-flex', marginRight: '0.25rem' } }),
-      React.createElement(DS.Button, { variant: 'ghost', size: 'sm', href: 'register.html?login', 'aria-label': 'Log in', title: 'Log in' }, mkIcon(['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8']))) : null;
+      React.createElement('span', { 'data-account-menu': '', key: 'account', style: { display: 'inline-flex' } })) : null;
     return {
       navProps: { links: [], actions },
       footerProps: {
@@ -1820,4 +1820,5 @@ class Component extends DCLogic {
 
 
 <script src="js/lang.js"></script>
+<script src="js/account.js"></script>
 </body></html>
