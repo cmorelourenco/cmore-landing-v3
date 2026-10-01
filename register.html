@@ -216,11 +216,28 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 /* ---- The person, on the welcome screen --------------------------------- */
 .mono { flex: none; width: 3.25rem; height: 3.25rem; display: grid; place-items: center; border-radius: 3px;
   background: var(--color-graphite); color: var(--color-off-white); font-weight: 700; font-size: 1.125rem; letter-spacing: -0.02em; position: relative; }
-.avatar { flex: none; position: relative; width: 4rem; height: 4rem; }
-.avatar .pic { width: 100%; height: 100%; border-radius: 3px; overflow: hidden; background: var(--color-surface-sunken); }
-.avatar .pic svg, .avatar .pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.avatar .mono { position: absolute; right: -0.5rem; bottom: -0.5rem; width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; border: 2px solid var(--color-surface); }
-.done-pic { width: 3.5rem; height: 3.5rem; margin-bottom: 1.5rem; }
+/* Your picture on the welcome: your initials until you add a photo. The circle is the
+   button; the camera badge says it can be changed, and the links beside it say how. */
+.me { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.me-pic { position: relative; flex: none; width: 4rem; height: 4rem; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--color-graphite); color: var(--color-off-white); display: grid; place-items: center; }
+.me-pic:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 3px; border-radius: 50%; }
+.me-ini { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.me-img { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+.me-img:empty { display: none; }
+.me-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.me-cam { position: absolute; right: -2px; bottom: -2px; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center;
+  background: var(--color-coral); color: var(--color-graphite); border: 2px solid var(--color-ground); }
+.me-cam svg { width: 0.8125rem; height: 0.8125rem; }
+.me-pic::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: rgba(52, 52, 52, .28); opacity: 0; transition: opacity .15s ease; }
+.me-pic:hover::after { opacity: 1; }
+.me-pic.is-over { box-shadow: 0 0 0 3px var(--color-coral); }
+.me-acts { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; font-size: 0.875rem; }
+.me-acts .link-btn { color: var(--color-ink); font-weight: 500; text-decoration-color: var(--color-activation); }
+.me-acts .link-btn[hidden] { display: none; }
+.me-acts .me-note { color: var(--color-ink-subtle); font-size: 0.8125rem; }
+.me-acts .me-err { color: var(--color-critical); font-size: 0.8125rem; }
+.me-acts .me-err:empty { display: none; }
 .done-mark[hidden] { display: none; }
 /* Welcome, three lines: "Welcome to" / "the ecosystem," / the name. "ecosystem" carries the
    landing's coral highlight, drawn in once the screen has settled. */
@@ -425,7 +442,16 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
       <!-- 4. Done -->
       <section class="step" data-step="done" aria-labelledby="t-done">
-        <div class="avatar done-pic" aria-hidden="true"><div class="pic" id="d-pic"></div><div class="mono" id="d-mono">FC</div></div>
+        <div class="me">
+          <button type="button" class="me-pic" id="d-avatar" aria-label="Add a profile picture"><span class="me-ini" id="d-mono">MF</span><span class="me-img" id="d-pic"></span><span class="me-cam" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L8 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3l-1.5-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
+          <div class="me-acts">
+            <button type="button" class="link-btn" id="d-upload">Upload a photo</button>
+            <button type="button" class="link-btn" id="d-remove" hidden>Remove photo</button>
+            <span class="me-note" id="d-note">Optional · JPG or PNG</span>
+            <span class="me-err" id="d-err" role="alert"></span>
+          </div>
+          <input type="file" id="d-file" accept="image/*" hidden>
+        </div>
         <div class="done-mark" aria-hidden="true"><i></i><i></i><i></i></div>
         <h1 class="title done-title" id="t-done"><span class="ln">Welcome to</span><span class="ln">the <span class="hl">ecosystem</span><span id="done-name-wrap">,</span><span id="done-dot" hidden>.</span></span><span class="ln soft" id="done-name-line"><span id="done-name">Miguel</span>.</span></h1>
         <p class="lead">Your account is ready. Next, your company.</p>
@@ -458,12 +484,6 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   };
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  // Dummy profile pictures: an AI-generated stock portrait for the example CEO (not a real person),
-  // a neutral silhouette for anyone else.
-  const PHOTO = '<img src="images/profile-miguel.webp" alt="" width="256" height="256" decoding="async">';
-  const SILHOUETTE = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-    + '<rect width="64" height="64" fill="#e9e7e2"/><circle cx="32" cy="26" r="11" fill="#c3c0b8"/>'
-    + '<path d="M11 64c1-12 9-18 21-18s20 6 21 18z" fill="#c3c0b8"/></svg>';
   const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt' };
   const initials = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
 
@@ -659,11 +679,49 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   };
   $('#ready').addEventListener('click', (e) => { const b = e.target.closest('[data-edit]'); if (b) editRow(b.dataset.edit); });
 
+  // ---- the welcome's picture: initials until a photo is added -----------------------
+  // The photo is shrunk to 256px and kept for this tab (cm-photo), so the company page's
+  // header can show it too. Prototype: it never leaves the browser.
+  const readPhoto = () => { try { return sessionStorage.getItem('cm-photo') || ''; } catch (e) { return ''; } };
+  function paintPhoto() {
+    const src = readPhoto();
+    $('#d-pic').innerHTML = src ? `<img src="${src}" alt="">` : '';
+    $('#d-upload').textContent = src ? 'Change photo' : 'Upload a photo';
+    $('#d-remove').hidden = !src;
+    $('#d-note').hidden = !!src;
+    $('#d-avatar').setAttribute('aria-label', src ? 'Change your profile picture' : 'Add a profile picture');
+  }
+  const takePhoto = (f) => {
+    $('#d-err').textContent = '';
+    if (!f) return;
+    if (!/^image\//.test(f.type)) { $('#d-err').textContent = 'That is not an image. Try a JPG or PNG.'; return; }
+    const url = URL.createObjectURL(f), img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight), out = 256;
+      const c = document.createElement('canvas'); c.width = c.height = out;
+      c.getContext('2d').drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, out, out);
+      URL.revokeObjectURL(url);
+      try { sessionStorage.setItem('cm-photo', c.toDataURL('image/jpeg', 0.86)); } catch (e) {}
+      paintPhoto();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); $('#d-err').textContent = 'That image could not be read. Try another.'; };
+    img.src = url;
+  };
+  const pick = () => { $('#d-file').value = ''; $('#d-file').click(); };
+  $('#d-avatar').addEventListener('click', pick);
+  $('#d-upload').addEventListener('click', pick);
+  $('#d-file').addEventListener('change', () => takePhoto($('#d-file').files[0]));
+  $('#d-remove').addEventListener('click', () => { try { sessionStorage.removeItem('cm-photo'); } catch (e) {} paintPhoto(); $('#d-upload').focus(); });
+  const av = $('#d-avatar');
+  av.addEventListener('dragover', (e) => { e.preventDefault(); av.classList.add('is-over'); });
+  av.addEventListener('dragleave', () => av.classList.remove('is-over'));
+  av.addEventListener('drop', (e) => { e.preventDefault(); av.classList.remove('is-over'); takePhoto(e.dataTransfer.files[0]); });
+
   // ---- 4. done ---------------------------------------------------------------
   function done(showIt = true) {
     const first = person.name.split(/\s+/)[0];
     $('#done-name').textContent = first; nameLine(!!first);
-    $('#d-pic').innerHTML = person.email.toLowerCase() === EXAMPLE.email ? PHOTO : SILHOUETTE;
+    paintPhoto();
     $('#d-mono').textContent = initials(person.name);
     document.querySelector('[data-step="done"] .done-mark').hidden = true;
     renderReady();
@@ -690,7 +748,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
       const d = JSON.parse(sessionStorage.getItem('cm-done') || 'null');
       if (d) {
         $('#done-name').textContent = d.first; nameLine(!!d.first);
-        $('#d-pic').innerHTML = d.pic; $('#d-mono').textContent = d.mono;
+        $('#d-mono').textContent = d.mono; paintPhoto();
         try { person = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || person; } catch (e) {}
         if (person) renderReady(); else $('#ready').innerHTML = d.ready || '';
         document.querySelector('[data-step="done"] .done-mark').hidden = true;

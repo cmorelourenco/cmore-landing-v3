@@ -397,7 +397,9 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 /* header: founding badge, a round avatar, the menu */
 .co-founder { background: var(--color-graphite); color: var(--color-light-beige); }
 .who-chip { color: var(--color-ink); }
-.who-chip .who-pic { flex: none; display: block; width: 2rem; height: 2rem; border-radius: 50%; object-fit: cover; background: var(--color-mid-beige); }
+.who-chip .who-pic { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; overflow: hidden;
+  background: var(--color-graphite); color: var(--color-off-white); font-size: 0.75rem; font-weight: 600; letter-spacing: -0.02em; }
+.who-chip .who-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .top-right { gap: 1.25rem; }
 @media (max-width: 40rem) { .co-founder .co-founder-t { display: none; } .top-right { gap: 0.75rem; } }
 
@@ -794,7 +796,7 @@ body { transition: background-color .9s ease; }
   <div class="top-right">
     <span data-lang-switch></span>
     <span class="co-badge co-founder"><span aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
-    <span class="who-chip"><img class="who-pic" src="images/profile-miguel.webp" alt="" width="64" height="64" decoding="async"><span>Miguel Ferreira</span></span>
+    <span class="who-chip"><span class="who-pic" id="who-pic" aria-hidden="true">MF</span><span id="who-name">Miguel Ferreira</span></span>
   </div>
 </div></header>
 
@@ -1128,6 +1130,19 @@ body { transition: background-color .9s ease; }
 </main>
 
 <script src="js/app-3.js"></script>
+<script>
+/* The header's picture: the photo added at sign-up, or the initials. Name too, if known. */
+(() => {
+  try {
+    const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'), photo = sessionStorage.getItem('cm-photo');
+    const name = (p && p.name) || 'Miguel Ferreira';
+    document.getElementById('who-name').textContent = name;
+    const pic = document.getElementById('who-pic');
+    pic.textContent = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+    if (photo) { pic.textContent = ''; const img = new Image(); img.alt = ''; img.src = photo; pic.appendChild(img); }
+  } catch (e) {}
+})();
+</script>
 <script>
 (() => {
   const root = document.documentElement;
