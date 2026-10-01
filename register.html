@@ -135,7 +135,9 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
 
 .form { margin-top: 1.5rem; display: grid; gap: 0.875rem; }
-.form > .btn-primary { margin-top: 0.875rem; } /* air between the last field and the button */
+.form > .btn-primary { margin-top: 0.875rem; }
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.label-row .link-btn { font-size: 0.8125rem; } /* air between the last field and the button */
 
 /* ---- Stepper: where you are in the three steps -----------------------
    The landing's square nodes on a track. Behind you: graphite, with a check.
@@ -293,13 +295,42 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 <div class="reg">
   <header class="reg-top"><div class="hdr-in">
     <a class="brand" href="index.html" data-back aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
-    <div class="hdr-right"><span data-lang-switch></span><a class="top-link" href="#" onclick="return false">Already have an account? <b>Log in</b></a></div>
+    <div class="hdr-right"><span data-lang-switch></span><a class="top-link" href="register.html?login" data-to-login>Already have an account? <b>Log in</b></a></div>
   </div></header>
 
   <nav class="home-cue" aria-label="Leave sign-up"><a href="index.html" data-back>Back to home</a></nav>
 
   <main class="reg-main">
     <div class="stage">
+
+      <!-- Log in: the dummy account, any password; it ends on the company page -->
+      <section class="step" data-step="login" aria-labelledby="t-login">
+        <p class="eyebrow">Log in</p>
+        <h1 class="title" id="t-login">Welcome back.</h1>
+        <p class="subtitle">Log in to your company on C&#8209;MORE.</p>
+        <form class="form" id="f-login" novalidate>
+          <div class="field">
+            <label for="login-email">Work email</label>
+            <input class="input" id="login-email" name="email" type="email" inputmode="email" autocomplete="username" value="miguel@ferreiraconstrucoes.pt" required>
+            <p class="err" id="login-email-err" role="alert"></p>
+          </div>
+          <div class="field">
+            <div class="label-row"><label for="login-password">Password</label><button type="button" class="link-btn" onclick="return false">Forgot password?</button></div>
+            <div class="pw">
+              <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" class="reveal" aria-controls="login-password" aria-label="Show password" aria-pressed="false"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3.01 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3.01-9.96-7.18Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.98 8.22A10.48 10.48 0 0 0 1.93 12C3.23 16.34 7.24 19.5 12 19.5c.99 0 1.95-.14 2.86-.39M6.23 6.23A10.45 10.45 0 0 1 12 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 0 1-4.29 5.77M6.23 6.23 3 3m3.23 3.23 3.65 3.65m7.89 7.89L21 21m-3.23-3.23-3.65-3.65m0 0a3 3 0 1 0-4.24-4.24m4.24 4.24L9.88 9.88"/></svg></button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="login-go" disabled>Log in</button>
+        </form>
+        <p class="or">or</p>
+        <div class="sso">
+          <button type="button" class="btn btn-sso" data-login-sso="Google"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.81Z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.9l-3.88-3.02c-1.07.72-2.45 1.15-4.06 1.15-3.13 0-5.78-2.11-6.72-4.95H1.27v3.11A12 12 0 0 0 12 24Z"/><path fill="#FBBC05" d="M5.28 14.28a7.2 7.2 0 0 1 0-4.56V6.61H1.27a12 12 0 0 0 0 10.78l4.01-3.11Z"/><path fill="#EA4335" d="M12 4.77c1.76 0 3.34.61 4.59 1.8l3.44-3.44A11.5 11.5 0 0 0 12 0 12 12 0 0 0 1.27 6.61l4.01 3.11C6.22 6.88 8.87 4.77 12 4.77Z"/></svg>Continue with Google</button>
+          <button type="button" class="btn btn-sso" data-login-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
+        </div>
+        <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
+        <p class="hint" style="margin-top:0.75rem;text-align:center">Prototype: any password works. New here? <a class="link-btn" href="register.html" data-to-signup>Get early access</a></p>
+      </section>
 
       <!-- 1. Sign up: a provider, or a name and an email -->
       <section class="step is-on" data-step="signup" aria-labelledby="t-signup">
@@ -699,7 +730,47 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     document.querySelectorAll('.to-company').forEach((v) => v.remove());
   });
 
-  if (!qs.has('embed')) setTimeout(() => nameIn.focus({ preventScroll: true }), qs.has('from') ? 0 : 350);
+  // ---- log in ------------------------------------------------------------------
+  // Prototype: the dummy account and any password. It dissolves straight into the
+  // company page in its completed state, the way the welcome does into the empty one.
+  const toCompany = (href) => {
+    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...EXAMPLE, via: 'Email' })); } catch (e) {}
+    if (reduced) { location.href = href; return; }
+    const veil = document.createElement('div'); veil.className = 'to-company';
+    document.body.appendChild(veil);
+    requestAnimationFrame(() => veil.classList.add('on'));
+    setTimeout(() => { location.href = href; }, 950);
+  };
+  const liEmail = $('#login-email'), liPw = $('#login-password'), liGo = $('#login-go'), liErr = $('#login-email-err');
+  const liReady = () => { liGo.disabled = !(liEmail.value.trim() && liPw.value); };
+  ['input', 'change'].forEach((ev) => { liEmail.addEventListener(ev, () => { liErr.textContent = ''; liEmail.classList.remove('is-bad'); liReady(); }); liPw.addEventListener(ev, liReady); });
+  $('#f-login').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(liEmail.value.trim())) { liErr.textContent = 'That does not look like an email address.'; liEmail.classList.add('is-bad'); liEmail.focus(); return; }
+    liGo.disabled = true; liGo.textContent = 'Logging in…';
+    await wait(600);
+    toCompany('my-company.html?filled');
+  });
+  document.querySelectorAll('[data-login-sso]').forEach((b) => b.addEventListener('click', async () => {
+    document.querySelectorAll('[data-login-sso]').forEach((x) => (x.disabled = true));
+    b.lastChild.textContent = 'Connecting to ' + b.dataset.loginSso + '…';
+    await wait(900);
+    toCompany('my-company.html?filled');
+  }));
+  // the header's link and the tab title follow the mode: log in, or sign up
+  const topLink = document.querySelector('[data-to-login]');
+  const mode = (login) => {
+    document.title = (login ? 'Log in' : 'Get early access') + ' · C-MORE';
+    topLink.innerHTML = login ? 'New here? <b>Get early access</b>' : 'Already have an account? <b>Log in</b>';
+    topLink.setAttribute('href', login ? 'register.html' : 'register.html?login');
+  };
+  const toLogin = () => { show('login'); mode(true); history.replaceState(null, '', 'register.html?login'); setTimeout(() => liPw.focus({ preventScroll: true }), 80); };
+  const toSignup = () => { show('signup'); mode(false); history.replaceState(null, '', 'register.html'); };
+  topLink.addEventListener('click', (e) => { e.preventDefault(); (topLink.getAttribute('href') === 'register.html' ? toSignup : toLogin)(); });
+  document.querySelectorAll('[data-to-signup]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); toSignup(); }));
+  if (qs.has('login')) { show('login'); mode(true); liReady(); if (!qs.has('embed')) setTimeout(() => liPw.focus({ preventScroll: true }), 120); }
+
+  if (!qs.has('embed') && !qs.has('login')) setTimeout(() => nameIn.focus({ preventScroll: true }), qs.has('from') ? 0 : 350);
 })();
 </script>
 <script src="js/lang.js"></script>
