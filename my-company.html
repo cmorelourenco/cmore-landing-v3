@@ -12,7 +12,8 @@
      never seen for a frame on the way here. Inline and synchronous on
      purpose — a deferred script would run after the first paint, which is
      exactly the flash we are avoiding. */
-  if (!/[?&](page|filled)\b/.test(location.search)) document.documentElement.className += ' intake-first';
+  // ?welcome (straight from sign-up) also starts on off-white: the thank-you screen comes first.
+  if (!/[?&](page|filled)\b/.test(location.search) || /[?&]welcome\b/.test(location.search)) document.documentElement.className += ' intake-first';
 </script>
 <style>
 /* Figtree, the brand face — same self-hosted files as the landing. */
@@ -1331,12 +1332,21 @@ body { transition: background-color .9s ease; }
     document.getElementById('empty').hidden = true;
     document.getElementById('filled').hidden = false;
   }
-  if (root.classList.contains('intake-first')) open(); else reveal();
-  // Arriving on the empty company (?page, the end of sign-up): the page settles, then
-  // ALMA's step comes up over it as an overlay. Skip, or Escape, leaves the empty page.
-  if (new URLSearchParams(location.search).has('page')) {
-    setTimeout(() => { if (intake.hidden) { intake.classList.add('over-page'); open(); } }, reducedMotion ? 0 : 650);
-  }
+  // Arriving on the empty company (?page): the page settles, then ALMA's step comes up
+  // over it as an overlay. Skip, or Escape, leaves the empty page.
+  // Straight from sign-up (?page&welcome): the founding-member thank-you on off-white
+  // first, then the empty page, then ALMA over it.
+  const arrive = new URLSearchParams(location.search);
+  const overlay = () => setTimeout(() => { if (intake.hidden) { intake.classList.add('over-page'); open(); } }, reducedMotion ? 0 : 650);
+  if (arrive.has('welcome')) {
+    history.replaceState(null, '', location.pathname + '?page'); // a reload lands on the company, not the thank-you again
+    let first = 'You';
+    try { const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); if (p && p.name) first = p.name.split(/\s+/)[0]; } catch (e) {}
+    const name = first.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    // deferred: welcome() is defined further down this script
+    setTimeout(() => welcome(() => { reveal(); overlay(); }, `<b>${name}</b>, your founding seat is saved. Next, ALMA sets up your company with you.`), 0);
+  } else if (root.classList.contains('intake-first')) open(); else reveal();
+  if (!arrive.has('welcome') && arrive.has('page')) overlay();
   document.getElementById('skip').addEventListener('click', close);
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intake.hidden) close(); });
 
@@ -1349,17 +1359,17 @@ body { transition: background-color .9s ease; }
     document.getElementById('filled').hidden = false;
     screen.classList.add('is-finishing');
     const toPage = () => { intake.hidden = true; root.classList.remove('intake-open'); reveal(); };
-    setTimeout(() => welcome(toPage), 760);
+    setTimeout(toPage, 760); // the founding-member thank-you now comes at the end of sign-up, not here
   };
 
   // ---- welcome --------------------------------------------------------------
   // Up through the off-white she left, a breath on the sphere, then out to the
   // company page the same way. It names the company the page is about to show.
-  const welcome = (next) => {
+  const welcome = (next, lead) => {
     const w = document.getElementById('welcome');
     if (!w) { next(); return; }
-    const co = document.querySelector('#filled .co-name');
-    document.getElementById('welcome-co').textContent = (co && co.textContent.trim()) || 'Your company';
+    if (lead) w.querySelector('.w-lead').innerHTML = lead;
+    else { const co = document.querySelector('#filled .co-name'); document.getElementById('welcome-co').textContent = (co && co.textContent.trim()) || 'Your company'; }
     w.hidden = false;
     let sphere = null;
     try {
