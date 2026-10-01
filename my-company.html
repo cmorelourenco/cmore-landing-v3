@@ -118,7 +118,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .brand img { display: block; width: 6.8rem; height: 1.25rem; }
 .top-right { display: flex; align-items: center; gap: 0.75rem; }
 .who-chip { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
-@media (max-width: 30rem) { .who-chip span { display: none; } }
+@media (max-width: 30rem) { .who-chip .who-name { display: none; } }
 
 /* the header's column, so the page's left edge sits under the logo */
 .page { max-width: 78rem; margin-inline: auto; padding: 2.5rem 2rem 5rem; }
@@ -396,10 +396,32 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 
 /* header: founding badge, a round avatar, the menu */
 .co-founder { background: var(--color-graphite); color: var(--color-light-beige); }
-.who-chip { color: var(--color-ink); }
-.who-chip .who-pic { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; overflow: hidden;
+.who { position: relative; }
+.who-chip { color: var(--color-ink); border: 0; background: none; font: inherit; font-size: 0.875rem; cursor: pointer;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem; margin-right: -0.5rem; border-radius: 9999px; transition: background-color .14s var(--ease-brand); }
+.who-chip:hover, .who.is-open .who-chip { background: var(--color-mid-beige); }
+.who-chev { width: 0.875rem; height: 0.875rem; color: var(--color-ink-subtle); transition: transform .2s var(--ease-brand); }
+.who.is-open .who-chev { transform: rotate(180deg); }
+.who-menu { position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 80; min-width: 16rem; padding: 0.375rem;
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.75rem;
+  box-shadow: 0 12px 32px rgba(52, 52, 52, 0.12), 0 2px 6px rgba(52, 52, 52, 0.06);
+  opacity: 0; transform: translateY(-4px); pointer-events: none; visibility: hidden;
+  transition: opacity .16s ease, transform .2s var(--ease-brand), visibility .2s; }
+.who.is-open .who-menu { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
+.who-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem 0.75rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--color-mid-beige); }
+.who-head .who-id { display: flex; flex-direction: column; min-width: 0; }
+.who-head b { font-weight: 600; font-size: 0.9375rem; }
+.who-head small { font-size: 0.8125rem; color: var(--color-ink-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-menu a { display: flex; align-items: center; gap: 0.75rem; padding: 0.5625rem 0.75rem; border-radius: 0.5rem; text-decoration: none;
+  font-size: 0.9375rem; font-weight: 500; color: var(--color-ink); outline: none; }
+.who-menu a:hover, .who-menu a:focus-visible { background: var(--color-light-beige); color: var(--color-ink); }
+.who-menu a svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-ink-subtle); }
+.who-sep { height: 1px; margin: 0.25rem; background: var(--color-mid-beige); }
+@media (prefers-reduced-motion: reduce) { .who-menu, .who-chev { transition: none; } }
+.who-pic { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; overflow: hidden;
   background: var(--color-graphite); color: var(--color-off-white); font-size: 0.75rem; font-weight: 600; letter-spacing: -0.02em; }
-.who-chip .who-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.who-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.who-pic.who-pic-lg { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
 .top-right { gap: 1.25rem; }
 @media (max-width: 40rem) { .co-founder .co-founder-t { display: none; } .top-right { gap: 0.75rem; } }
 
@@ -796,7 +818,16 @@ body { transition: background-color .9s ease; }
   <div class="top-right">
     <span data-lang-switch></span>
     <span class="co-badge co-founder"><span aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
-    <span class="who-chip"><span class="who-pic" id="who-pic" aria-hidden="true">MF</span><span id="who-name">Miguel Ferreira</span></span>
+    <div class="who" id="who">
+      <button type="button" class="who-chip" id="who-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="who-menu" aria-label="Your account"><span class="who-pic" data-who-pic aria-hidden="true">MF</span><span class="who-name" data-who-name>Miguel Ferreira</span><svg class="who-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="who-menu" id="who-menu" role="menu" aria-label="Your account">
+        <div class="who-head"><span class="who-pic who-pic-lg" data-who-pic aria-hidden="true">MF</span><span class="who-id"><b data-who-name>Miguel Ferreira</b><small data-who-email>miguel@ferreiraconstrucoes.pt</small></span></div>
+        <a role="menuitem" tabindex="-1" href="#" data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/></svg>Edit profile</a>
+        <a role="menuitem" tabindex="-1" href="#" data-soon><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 3.9c.1-.5.6-.9 1.1-.9h2.6c.5 0 1 .4 1.1.9l.2 1.3c.1.4.3.7.6.9l.2.1c.3.2.7.3 1.1.1l1.2-.5c.5-.2 1.1 0 1.4.5l1.3 2.2c.3.5.1 1.1-.3 1.4l-1 .8c-.3.2-.4.6-.4 1v.3c0 .4.1.8.4 1l1 .8c.4.3.6.9.3 1.4l-1.3 2.2c-.3.5-.9.7-1.4.5l-1.2-.5c-.4-.1-.8 0-1.1.1l-.2.1c-.3.2-.6.5-.6.9l-.2 1.3c-.1.5-.6.9-1.1.9h-2.6c-.5 0-1-.4-1.1-.9l-.2-1.3c-.1-.4-.3-.7-.6-.9l-.2-.1c-.3-.2-.7-.3-1.1-.1l-1.2.5c-.5.2-1.1 0-1.4-.5L3.4 15.6c-.3-.5-.1-1.1.3-1.4l1-.8c.3-.2.4-.6.4-1v-.3c0-.4-.1-.8-.4-1l-1-.8c-.4-.3-.6-.9-.3-1.4l1.3-2.2c.3-.5.9-.7 1.4-.5l1.2.5c.4.1.8 0 1.1-.1l.2-.1c.3-.2.6-.5.6-.9l.2-1.3Z"/><circle cx="12" cy="12" r="3"/></svg>Settings</a>
+        <div class="who-sep" role="separator"></div>
+        <a role="menuitem" tabindex="-1" href="index.html" id="who-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h12"/></svg>Log out</a>
+      </div>
+    </div>
   </div>
 </div></header>
 
@@ -814,7 +845,7 @@ body { transition: background-color .9s ease; }
       <span class="co-meter" role="progressbar" aria-label="Profile completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
       <span><b>0%</b><span class="co-strip-more"> · give ALMA your documents and she fills in most of it.</span></span>
     </span>
-    <a href="#ce-drop" data-ce-start>Start profile</a>
+    <a href="#ce-drop" data-ce-start>Start company profile</a>
   </div></div>
 
   <!-- No company name yet, the invitations already open -->
@@ -974,7 +1005,7 @@ body { transition: background-color .9s ease; }
       <span class="co-meter" id="co-meter" role="progressbar" aria-label="Profile completion" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100"><i style="width:82%"></i></span>
       <span><b id="co-pct">82%</b><span class="co-strip-more" id="co-left"> · two things left: the expired license, and a diversity certificate if you hold one.</span></span>
     </span>
-    <a href="#" onclick="return false">Finish profile</a>
+    <a href="#" onclick="return false">Finish company profile</a>
   </div></div>
 
   <!-- Company name, then the invitations as button cards -->
@@ -1131,16 +1162,42 @@ body { transition: background-color .9s ease; }
 
 <script src="js/app-3.js"></script>
 <script>
-/* The header's picture: the photo added at sign-up, or the initials. Name too, if known. */
+/* The header's account: the photo added at sign-up (or the initials), the name and email,
+   and a menu with Edit profile, Settings and Log out. Log out forgets this tab's demo
+   session and goes back to the landing. */
 (() => {
-  try {
-    const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'), photo = sessionStorage.getItem('cm-photo');
-    const name = (p && p.name) || 'Miguel Ferreira';
-    document.getElementById('who-name').textContent = name;
-    const pic = document.getElementById('who-pic');
-    pic.textContent = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-    if (photo) { pic.textContent = ''; const img = new Image(); img.alt = ''; img.src = photo; pic.appendChild(img); }
-  } catch (e) {}
+  let p = null, photo = '';
+  try { p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); photo = sessionStorage.getItem('cm-photo') || ''; } catch (e) {}
+  const name = (p && p.name) || 'Miguel Ferreira', email = (p && p.email) || 'miguel@ferreiraconstrucoes.pt';
+  const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  document.querySelectorAll('[data-who-name]').forEach((n) => (n.textContent = name));
+  document.querySelectorAll('[data-who-email]').forEach((n) => (n.textContent = email));
+  document.querySelectorAll('[data-who-pic]').forEach((n) => {
+    n.textContent = photo ? '' : ini;
+    if (photo) { const img = new Image(); img.alt = ''; img.src = photo; n.appendChild(img); }
+  });
+  const who = document.getElementById('who'), btn = document.getElementById('who-btn');
+  const items = [...who.querySelectorAll('[role="menuitem"]')];
+  const open = (focus) => { who.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true'); if (focus) items[0].focus(); };
+  const close = (back) => { who.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); if (back) btn.focus(); };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); who.classList.contains('is-open') ? close() : open(e.detail === 0); });
+  btn.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); open(true); } });
+  items.forEach((a, i) => a.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Escape') close(true);
+    else if (e.key === 'Tab') close();
+  }));
+  // prototype: Edit profile and Settings are drawn but not built yet
+  who.querySelectorAll('[data-soon]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); close(true); }));
+  document.getElementById('who-logout').addEventListener('click', (e) => {
+    e.preventDefault();
+    ['cm-person', 'cm-photo', 'cm-done'].forEach((k) => { try { sessionStorage.removeItem(k); } catch (err) {} });
+    document.body.style.transition = 'opacity .35s ease'; document.body.style.opacity = '0';
+    setTimeout(() => { location.href = 'index.html'; }, 360);
+  });
+  document.addEventListener('click', (e) => { if (!who.contains(e.target)) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && who.classList.contains('is-open')) close(true); });
 })();
 </script>
 <script>
@@ -1158,7 +1215,7 @@ body { transition: background-color .9s ease; }
   document.getElementById('intake-alma').replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
 
   // ---- the company home ------------------------------------------------------
-  // Empty: ALMA's card (and the strip's Start profile) opens the intake; files dropped
+  // Empty: ALMA's card (and the strip's Start company profile) opens the intake; files dropped
   // on her here are handed straight to it.
   const ceDrop = document.getElementById('ce-drop');
   if (ceDrop) {
