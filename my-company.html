@@ -1049,7 +1049,7 @@ body { transition: background-color .9s ease; }
 
   <!-- Documents: an empty table, the columns already there -->
   <section class="co-sec co-pad-top-0"><div class="co-wrap">
-    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report you hold, dated and checked, in one place.</p></div><div class="co-sec-r"><span class="co-muted">0 on file</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
+    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report you hold, dated and checked, in one place.</p></div><div class="co-sec-r"><a href="#" onclick="return false" class="co-link">View all</a></div></div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl">
         <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
@@ -1217,7 +1217,7 @@ body { transition: background-color .9s ease; }
 
   <!-- Documents: only what needs attention, or will soon -->
   <section class="co-sec co-pad-top-0"><div class="co-wrap">
-    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report, dated and checked. These are the ones to look at first.</p></div><div class="co-sec-r"><span class="co-muted" id="co-docs-note">5 need attention or will soon · 5 more in order</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
+    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report, dated and checked. These are the ones to look at first.</p></div><div class="co-sec-r"><a href="#" onclick="return false" class="co-link">View all</a></div></div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl">
         <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
@@ -1390,7 +1390,6 @@ body { transition: background-color .9s ease; }
         const row = $c('co-row-license'), cells = row.querySelectorAll('td');
         cells[6].textContent = '1 Oct 2026';
         cells[7].innerHTML = '<span class="co-exp">15 Aug 2027 <span class="co-badge b-ok">In order</span></span>';
-        $c('co-docs-note').textContent = '4 need attention or will soon · 6 more in order';
         $c('co-meter').firstElementChild.style.width = '91%'; $c('co-meter').setAttribute('aria-valuenow', '91');
         $c('co-pct').textContent = '91%';
         $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
