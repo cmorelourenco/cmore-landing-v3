@@ -1,6 +1,6 @@
 /* The C-MORE ecosystem page: every supplier on C-MORE, filtered by country, state, region
-   and type of service. Each filter is a combobox that suggests as you type, showing only
-   what is there given the other filters (with how many suppliers each would leave), and
+   and type of service. Each filter is a combobox that suggests as you type: every country,
+   then only the states and regions there are given the other filters (with how many suppliers each would leave), and
    picking a state or a region fills in the places above it. Suppliers already in your
    ecosystem carry a tag and come first. Prototype data, kept here. */
 (() => {
@@ -49,6 +49,8 @@
     'Painting', 'Drywall', 'Excavation', 'Demolition', 'Scaffolding', 'Glazing', 'Insulation', 'Fire protection', 'Lumber supply', 'Equipment rental',
     'Waste management', 'Surveying', ...SUP.flatMap((s) => s.services)])];
 
+  // every country, whether or not anyone there is on C-MORE yet
+  const COUNTRIES = 'Afghanistan|Albania|Algeria|Andorra|Angola|Antigua and Barbuda|Argentina|Armenia|Australia|Austria|Azerbaijan|Bahamas|Bahrain|Bangladesh|Barbados|Belarus|Belgium|Belize|Benin|Bhutan|Bolivia|Bosnia and Herzegovina|Botswana|Brazil|Brunei|Bulgaria|Burkina Faso|Burundi|Cabo Verde|Cambodia|Cameroon|Canada|Central African Republic|Chad|Chile|China|Colombia|Comoros|Congo|Costa Rica|Côte d\'Ivoire|Croatia|Cuba|Cyprus|Czechia|Democratic Republic of the Congo|Denmark|Djibouti|Dominica|Dominican Republic|Ecuador|Egypt|El Salvador|Equatorial Guinea|Eritrea|Estonia|Eswatini|Ethiopia|Fiji|Finland|France|Gabon|Gambia|Georgia|Germany|Ghana|Greece|Grenada|Guatemala|Guinea|Guinea-Bissau|Guyana|Haiti|Honduras|Hungary|Iceland|India|Indonesia|Iran|Iraq|Ireland|Israel|Italy|Jamaica|Japan|Jordan|Kazakhstan|Kenya|Kiribati|Kosovo|Kuwait|Kyrgyzstan|Laos|Latvia|Lebanon|Lesotho|Liberia|Libya|Liechtenstein|Lithuania|Luxembourg|Madagascar|Malawi|Malaysia|Maldives|Mali|Malta|Marshall Islands|Mauritania|Mauritius|Mexico|Micronesia|Moldova|Monaco|Mongolia|Montenegro|Morocco|Mozambique|Myanmar|Namibia|Nauru|Nepal|Netherlands|New Zealand|Nicaragua|Niger|Nigeria|North Korea|North Macedonia|Norway|Oman|Pakistan|Palau|Palestine|Panama|Papua New Guinea|Paraguay|Peru|Philippines|Poland|Portugal|Qatar|Romania|Russia|Rwanda|Saint Kitts and Nevis|Saint Lucia|Saint Vincent and the Grenadines|Samoa|San Marino|São Tomé and Príncipe|Saudi Arabia|Senegal|Serbia|Seychelles|Sierra Leone|Singapore|Slovakia|Slovenia|Solomon Islands|Somalia|South Africa|South Korea|South Sudan|Spain|Sri Lanka|Sudan|Suriname|Sweden|Switzerland|Syria|Taiwan|Tajikistan|Tanzania|Thailand|Timor-Leste|Togo|Tonga|Trinidad and Tobago|Tunisia|Türkiye|Turkmenistan|Tuvalu|Uganda|Ukraine|United Arab Emirates|United Kingdom|United States|Uruguay|Uzbekistan|Vanuatu|Vatican City|Venezuela|Vietnam|Yemen|Zambia|Zimbabwe'.split('|');
   const FIELDS = ['country', 'state', 'region', 'service'];
   const PARENT = { state: 'country', region: 'state' };
   const sel = { country: '', state: '', region: '', service: '' };
@@ -67,7 +69,8 @@
     const pool = SUP.filter((s) => matches(s, field) && shown(s));
     const n = new Map();
     pool.forEach((s) => (field === 'service' ? s.services : [s[field]]).forEach((v) => n.set(v, (n.get(v) || 0) + 1)));
-    let list = field === 'service' ? SERVICES.map((v) => [v, n.get(v) || 0]) : [...n];
+    const all = field === 'service' ? SERVICES : field === 'country' ? COUNTRIES : null;
+    let list = all ? all.map((v) => [v, n.get(v) || 0]) : [...n];
     list.sort((a, b) => (b[1] > 0) - (a[1] > 0) || a[0].localeCompare(b[0]));
     // where an option sits, so two places with the same name can be told apart
     const where = (v) => {
@@ -97,7 +100,7 @@
         let label = esc(o.v);
         if (t && !exact) { const k = fold(o.v).indexOf(t); if (k >= 0) label = esc(o.v.slice(0, k)) + '<mark>' + esc(o.v.slice(k, k + t.length)) + '</mark>' + esc(o.v.slice(k + t.length)); }
         return `<li role="option" id="${field}-o${i}" aria-selected="${o.v === sel[field]}"><span>${label}${o.where ? ` <i>· ${esc(o.where)}</i>` : ''}</span><small>${o.c || '—'}</small></li>`;
-      }).join('') : `<li class="cb-empty" role="option" aria-disabled="true">Nothing called “${esc(typed)}” yet</li>`;
+      }).join('') : `<li class="cb-empty" role="option" aria-disabled="true">${typed ? `Nothing called “${esc(typed)}” yet` : `No suppliers in ${esc(sel.country || 'this area')} yet`}</li>`;
       active = opts.length && t && !exact ? 0 : -1;
       list.hidden = false; input.setAttribute('aria-expanded', 'true'); paint();
     };
@@ -125,7 +128,7 @@
     sel[field] = v;
     if (v && field !== 'service') {
       const s = SUP.find((x) => x[field] === v);
-      for (let p = PARENT[field]; p; p = PARENT[p]) sel[p] = s[p];
+      if (s) for (let p = PARENT[field]; p; p = PARENT[p]) sel[p] = s[p];
     }
     ['state', 'region'].forEach((f) => { if (sel[f] && !SUP.some((s) => s[f] === sel[f] && FIELDS.every((g) => g === 'service' || !sel[g] || s[g] === sel[g]))) sel[f] = ''; });
     update();
