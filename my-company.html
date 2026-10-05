@@ -1111,9 +1111,9 @@ body { transition: background-color .9s ease; }
       <span class="eyebrow">Needs your attention</span>
       <h2 class="co-h-xl">Some pending actions<br>are requiring your attention.</h2>
       <div class="co-steps">
-        <div class="co-step"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-over">1 document</span></h3><p>E&#8209;Verify enrolment: 3 I&#8209;9 attestations were due and are still missing.</p></div>
-        <div class="co-step" id="co-step-license"><span class="co-num">2</span><h3>About to expire <span class="co-badge b-over">1 document</span></h3><p>Your business license ran out on 15 August. Drop the new one on ALMA and she files it.</p></div>
-        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-pend">2 documents</span></h3><p>Certificate of Good Standing renews on 31 October, commercial auto on 3 November.</p></div>
+        <div class="co-step" id="co-step-license"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-over">2 documents</span></h3><p>Your business license ran out on 15 August, and E&#8209;Verify is still missing 3 I&#8209;9 attestations.</p></div>
+        <div class="co-step"><span class="co-num">2</span><h3>About to expire <span class="co-badge b-pend">1 document</span></h3><p>Your Certificate of Good Standing expires on 31 October. Drop the renewed one on ALMA and she files it.</p></div>
+        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-pend">1 document</span></h3><p>Commercial auto liability renews on 3 November.</p></div>
         <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-info">2 requests</span></h3><p>Northgate Facilities and Bramwell Group are waiting for your yes to see your insurance.</p></div>
       </div>
     </div>
@@ -1297,9 +1297,9 @@ body { transition: background-color .9s ease; }
         sub.textContent = 'City of Wilmington · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
         // the page catches up
         const step = $c('co-step-license');
-        step.classList.add('is-done');
-        const sb = step.querySelector('.co-badge'); sb.className = 'co-badge b-ok'; sb.textContent = 'None left';
-        step.querySelector('p').textContent = 'Business license replaced today. ALMA filed it and dated the next renewal.';
+        // one of the two overdue documents is done; E-Verify is still open
+        const sb = step.querySelector('.co-badge'); sb.textContent = '1 document';
+        step.querySelector('p').textContent = 'Business license replaced today. E\u2011Verify is still missing 3 I\u20119 attestations.';
         const row = $c('co-row-license'), cells = row.querySelectorAll('td');
         cells[6].textContent = '1 Oct 2026';
         cells[7].innerHTML = '<span class="co-exp">15 Aug 2027 <span class="co-badge b-ok">In order</span></span>';
