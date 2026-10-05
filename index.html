@@ -1428,6 +1428,167 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 @media (prefers-reduced-motion:reduce){:root,header{transition:none}}
 .reg-sheet{position:fixed;inset:0;z-index:1000;border:0;width:100%;height:100%;background:var(--color-ground);transform:translateY(100%);box-shadow:0 -24px 60px -30px rgba(52,52,52,.35);transition:transform .8s cubic-bezier(0.7,0,0.2,1)}
 .reg-sheet.is-up{transform:translateY(0)}
+/* ---- Early access, in the band: the perks deck from the old early access page,
+   set for the dark band. The open card is a shade deeper than the band with a fine
+   light edge; the closed cards are glass. */
+#how .perks { width: 100%; }
+#how .perks-eyebrow { color: var(--color-dark-beige); }
+#how .perks-title { margin: 0.75rem 0 0; font-size: clamp(2.25rem, 3.4vw, 3.25rem); line-height: 1.04; letter-spacing: -0.028em; font-weight: 600; color: var(--color-off-white); text-wrap: balance; }
+#how .perks-title .soft { font-weight: 300; }
+#how .perks-mark { white-space: nowrap; background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 0% 0.28em; padding-inline: 0.06em; transition: background-size 1s cubic-bezier(0.22, 1, 0.36, 1) .2s; }
+#how .perks.is-in .perks-mark { background-size: 100% 0.28em; }
+@media (min-width: 50rem) { #how .perks-lead { max-width: none !important; white-space: nowrap; } }
+#how .perks-lead { margin: 0.75rem auto 0; max-width: 40rem; font-size: 1.125rem; line-height: 1.5; font-weight: 300; color: var(--color-dark-beige); }
+#how .perks-cta { margin-top: 1.25rem; }
+#how .nb { white-space: nowrap; }
+#how .deck { width: 100%; max-width: 78rem; margin-top: 1.5rem !important; gap: 16px !important; }
+#how .deck { --tint: #f7b19f; margin-top: 1.75rem; display: flex; flex-direction: column; gap: 22px; }
+#how .deck .row { height: clamp(340px, 2vh, 800px); display: flex; gap: 12px; }
+#how .deck .panel { flex: 1 1 0; min-width: 0; height: clamp(340px, 2vh, 800px); padding: 0; border-radius: 18px; border: 1px solid var(--color-line); background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(52,52,52,.04); text-align: left; font-family: inherit; color: var(--color-ink); overflow: hidden; position: relative; cursor: pointer;
+  transition: flex-grow .6s cubic-bezier(.3,.8,.25,1), background-color .45s, border-color .45s, box-shadow .45s, transform .3s; }
+#how .deck .panel:hover { border-color: var(--color-sand-400); transform: translateY(-3px); }
+#how .deck .panel.on { flex-grow: 4; background: var(--color-graphite); border-color: var(--color-graphite); color: var(--color-off-white); box-shadow: 0 30px 60px -28px rgba(52,52,52,.55); }
+#how .deck .panel.on:hover { transform: none; }
+#how .deck .panel:focus-visible { outline: 3px solid var(--color-coral); outline-offset: 2px; }
+
+#how .deck .closed { position: absolute; inset: 0; padding: 28px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+#how .deck .closed .top { display: flex; justify-content: space-between; align-items: center; }
+#how .deck .sq { width: 10px; height: 10px; background: var(--color-coral); display: inline-block; }
+#how .deck .num { font-size: 15px; font-weight: 600; letter-spacing: .1em; color: var(--color-sand-500); }
+#how .deck .closed .ptitle { font-size: 23px; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; }
+#how .deck .closed .cue { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; color: var(--color-ink-muted); margin-top: 14px; }
+#how .deck .panel.on .closed { display: none; }
+
+#how .deck .open { position: absolute; inset: 0; padding: 32px 34px; display: none; gap: 26px; }
+#how .deck .panel.on .open { display: flex; }
+#how .deck .open .copy { flex: 0 0 310px; display: flex; flex-direction: column; justify-content: space-between; }
+#how .deck .open .head { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; letter-spacing: .12em; color: rgba(250,250,250,.6); }
+#how .deck .open h2 { margin: 16px 0 0; font-size: 42px; line-height: 1.12; font-weight: 700; letter-spacing: -.02em; color: var(--color-off-white); }
+#how .deck .open p { margin: 16px 0 0; font-size: 20px; line-height: 1.5; color: rgba(250,250,250,.78); }
+/* the key fact, set as a note under a hairline rather than a pill, so nothing here reads as a button */
+#how .deck .chip { display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid rgba(250,250,250,.16); color: var(--color-off-white); font-size: 18px; font-weight: 600; letter-spacing: -0.005em; white-space: nowrap; }
+#how .deck .chip::before { content: ""; flex: none; width: 8px; height: 8px; background: var(--color-coral); }
+#how .deck .illo { flex: 1 1 auto; min-width: 0; border-radius: 14px; background: rgba(250,250,250,.06); border: 1px solid rgba(250,250,250,.1); padding: 20px; display: flex; flex-direction: column; justify-content: center; }
+
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes pop { 0% { opacity: 0; transform: scale(.5); } 100% { opacity: 1; transform: scale(1); } }
+#how .deck .panel.on .head, #how .deck .panel.on h2, #how .deck .panel.on p, #how .deck .panel.on .chip, #how .deck .panel.on .illo { animation: rise .45s cubic-bezier(.2,.7,.2,1) both; }
+#how .deck .panel.on h2 { animation-delay: .1s; } #how .deck .panel.on p, #how .deck .panel.on .illo { animation-delay: .2s; } #how .deck .panel.on .chip { animation-delay: .3s; }
+
+/* illustrations */
+#how .deck .seats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; max-width: 16rem; }
+#how .deck .seat { aspect-ratio: 1; border-radius: 999px; border: 2px dashed rgba(244,109,79,.6); }
+#how .deck .panel.on .seat { animation: pop .3s cubic-bezier(.2,.9,.3,1.3) both; }
+#how .deck .seat.you { background: var(--color-coral); border: none; color: var(--color-graphite); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+#how .deck .seats .seat:nth-child(n+2) { animation-delay: calc(.03s * (var(--i, 1))); }
+#how .deck .big { display: flex; align-items: baseline; gap: 10px; margin-top: 16px; }
+#how .deck .big strong { font-size: 68px; font-weight: 700; letter-spacing: -.03em; color: var(--color-off-white); line-height: 1; }
+#how .deck .big span { font-size: 18px; color: rgba(250,250,250,.7); }
+
+#how .deck .dir { display: flex; flex-direction: column; gap: 8px; }
+#how .deck .dir .r { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 10px; background: rgba(250,250,250,.06); }
+#how .deck .dir .r.me { background: var(--color-coral); }
+#how .deck .dir .av { width: 36px; height: 36px; border-radius: 8px; background: rgba(250,250,250,.12); flex: none; }
+#how .deck .dir .me .av { background: var(--color-off-white); color: var(--color-coral-deep); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+#how .deck .dir .txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+#how .deck .dir .me .txt b { font-size: 19px; font-weight: 600; color: var(--color-graphite); }
+#how .deck .dir .me .txt small { font-size: 15px; color: rgba(52,52,52,.8); }
+#how .deck .dir .ph { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+#how .deck .dir .ph i { max-width: 100%; }
+#how .deck .dir .ph i { display: block; height: 8px; border-radius: 4px; background: rgba(250,250,250,.18); }
+#how .deck .dir .ph i + i { height: 6px; background: rgba(250,250,250,.1); }
+
+#how .deck .weeks { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+#how .deck .wk { display: flex; flex-direction: column; gap: 8px; }
+#how .deck .wk small { font-size: 15px; color: rgba(250,250,250,.55); }
+#how .deck .wk i { display: block; height: 170px; border-radius: 10px; background: rgba(250,250,250,.08); }
+#how .deck .wk.hot small { font-weight: 700; color: var(--color-coral); }
+#how .deck .wk.hot i { background: var(--color-coral); color: var(--color-graphite); display: flex; flex-direction: column; justify-content: space-between; padding: 10px; font-style: normal; font-size: 11px; font-weight: 700; }
+
+#how .deck .tl { display: flex; flex-direction: column; gap: 16px; }
+#how .deck .tl .lab { display: flex; justify-content: space-between; font-size: 17px; }
+#how .deck .tl .lab b { font-weight: 700; color: var(--color-off-white); } #how .deck .tl .lab span { color: rgba(250,250,250,.5); }
+#how .deck .track { position: relative; height: 18px; display: flex; align-items: center; }
+#how .deck .track i { position: absolute; display: block; }
+#how .deck .track .base { left: 0; right: 0; height: 2px; background: rgba(250,250,250,.15); }
+#how .deck .track .done { left: 0; width: 58%; height: 2px; background: var(--color-coral); }
+#how .deck .track .dot { left: 0; width: 18px; height: 18px; border-radius: 999px; background: var(--color-coral); box-shadow: 0 0 0 6px rgba(244,109,79,.25); }
+#how .deck .track .end { right: 0; width: 12px; height: 12px; border-radius: 999px; border: 2px solid rgba(250,250,250,.35); }
+#how .deck .new { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(244,109,79,.16); border: 1px solid rgba(244,109,79,.4); font-size: 17px; }
+#how .deck .new b { font-size: 13px; font-weight: 700; padding: 3px 7px; border-radius: 999px; background: var(--color-coral); color: var(--color-graphite); }
+#how .deck .new span { font-weight: 600; color: var(--color-off-white); } #how .deck .new em { margin-left: auto; font-style: normal; font-size: 15px; color: var(--tint); font-weight: 700; }
+
+/* carousel controls */
+#how .deck .ctl { display: flex; align-items: center; justify-content: center; gap: 22px; }
+#how .deck .nav { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; }
+#how .deck .nav:hover { background: var(--color-graphite); color: var(--color-off-white); border-color: var(--color-graphite); }
+#how .deck .bullets { display: flex; align-items: center; gap: 10px; }
+#how .deck .bullet { width: 12px; height: 44px; padding: 0; border: none; background: transparent; display: flex; align-items: center; cursor: pointer; transition: width .35s cubic-bezier(.2,.7,.2,1); }
+#how .deck .bullet i { display: block; width: 100%; height: 8px; border-radius: 4px; background: var(--color-line); overflow: hidden; }
+#how .deck .bullet i b { display: block; height: 8px; border-radius: 4px; background: var(--color-graphite); width: 0; transition: width .1s linear; }
+#how .deck .bullet.done i { background: var(--color-graphite); }
+#how .deck .bullet.on { width: 48px; } #how .deck .bullet.on i { background: var(--color-dark-beige); }
+
+/* the week column is too narrow for the word laid flat: it runs up the column instead */
+#how .deck .wk.hot i { padding: 10px 8px; overflow: hidden; }
+#how .deck .wk.hot i span { writing-mode: vertical-rl; transform: rotate(180deg); letter-spacing: 0.04em; }
+#how .deck .open h2 { text-wrap: wrap; }
+
+/* laptop (the 1024 artboard) */
+@media (max-width: 1200px) {
+  #how .deck .row, #how .deck .panel { height: clamp(340px, 2vh, 800px); } #how .deck .row { gap: 10px; } #how .deck .panel { border-radius: 16px; }
+  #how .deck .closed { padding: 22px 20px; } #how .deck .closed .ptitle { font-size: 19px; }
+  #how .deck .open { padding: 26px 28px; gap: 22px; } #how .deck .open .copy { flex-basis: 262px; }
+  #how .deck .open h2 { font-size: 34px; } #how .deck .open p { font-size: 18px; } #how .deck .chip { font-size: 16.5px; }
+  #how .deck .illo { padding: 16px; } #how .deck .wk i { height: 140px; } #how .deck .big strong { font-size: 52px; }
+}
+/* phone (the 390 artboard): the row becomes a vertical accordion */
+@media (max-width: 760px) {
+  #how .deck .row { height: auto; flex-direction: column; gap: 10px; }
+  #how .deck .panel { flex: none; height: 76px; transition: height .5s cubic-bezier(.3,.8,.25,1), background-color .4s, border-color .4s, box-shadow .4s; }
+  #how .deck .panel:hover { transform: none; }
+  #how .deck .panel.on { height: auto; }
+  #how .deck .closed { position: static; height: 76px; padding: 0 18px; flex-direction: row; align-items: center; gap: 14px; }
+  #how .deck .closed .top { display: contents; } #how .deck .closed .sq { display: none; } #how .deck .closed .num { width: 22px; }
+  #how .deck .closed > span:last-child { flex: 1; min-width: 0; text-align: left; }
+  #how .deck .closed .ptitle { font-size: 20px; } #how .deck .closed .cue, #how .deck .closed br { display: none; }
+  #how .deck .closed::after { content: "+"; width: 32px; height: 32px; border-radius: 999px; border: 1px solid var(--color-line); display: flex; align-items: center; justify-content: center; color: var(--color-ink-muted); font-size: 18px; line-height: 1; flex: none; }
+  #how .deck .open { position: static; flex-direction: column; padding: 20px; gap: 14px; }
+  #how .deck .open .copy { flex: none; gap: 14px; } #how .deck .open h2 { font-size: 32px; } #how .deck .open p { font-size: 18.5px; } #how .deck .chip { font-size: 17px; }
+  #how .deck .illo { min-height: 176px; padding: 16px; } #how .deck .wk i { height: 110px; }
+  #how .deck .ctl { justify-content: space-between; }
+}
+
+/* the dark band */
+#how .deck .row, #how .deck .panel { height: clamp(16rem, 40vh, 21.25rem); }
+#how .deck .panel { background: rgba(250,250,250,.045); border-color: rgba(250,250,250,.13); color: var(--color-off-white); box-shadow: none; }
+#how .deck .panel:hover { border-color: rgba(250,250,250,.32); }
+#how .deck .panel.on { background: #262626; border-color: rgba(250,250,250,.16); box-shadow: 0 30px 60px -28px rgba(0,0,0,.6); }
+#how .deck .closed .ptitle { color: var(--color-off-white); }
+#how .deck .num { color: var(--color-sand-400); }
+#how .deck .closed .cue { color: var(--color-dark-beige); }
+#how .deck .nav { background: transparent; border-color: rgba(250,250,250,.22); color: var(--color-off-white); }
+#how .deck .nav:hover { background: var(--color-off-white); border-color: var(--color-off-white); color: var(--color-graphite); }
+#how .deck .bullet i { background: rgba(250,250,250,.18); }
+#how .deck .bullet i b, #how .deck .bullet.done i { background: var(--color-off-white); }
+#how .deck .bullet.on i { background: rgba(250,250,250,.28); }
+#how .deck .panel:focus-visible { outline-color: var(--color-coral); }
+#how .deck .ctl { gap: 18px; }
+/* phones: the band stops pinning and grows with the accordion */
+@media (max-width: 760px) {
+  #how { position: relative !important; height: auto !important; padding: 4rem 0 5.5rem !important; }
+  #how .perks { align-items: stretch; }
+  #how .perks-title { font-size: 2.125rem !important; }
+  #how .perks-mark { white-space: normal; }
+  #how .deck .open h2 { font-size: 2rem !important; }
+  #how .deck .panel.on { height: auto; }
+  #how .deck .closed::after { border-color: rgba(250,250,250,.25); color: var(--color-dark-beige); }
+  #how .deck .row, #how .deck .panel { height: auto; }
+  #how .deck .panel:not(.on) { height: 76px; }
+}
+@media (prefers-reduced-motion: reduce) { #how .perks-mark { transition: none; background-size: 100% 0.28em; } }
 /* Hero: the headline block rides a little above centre and the CTA sits in the middle of the
    space left between the benefits and the Know more cue, however tall the window is */
 .hero-pin>.container-site{flex:1 1 auto;width:100%}
@@ -1444,7 +1605,7 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 </helmet>
 <div style="position:relative;min-height:100vh;font-family:var(--font-sans);color:var(--color-ink);overflow-x:clip">
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.Navbar" dc-props="{{ navProps }}" hint-size="100%,72px"></x-import>
-<div class="ea-strip" role="note" aria-label="Early access"><div class="ea-block"><p><span class="cta-long">Early access is now open and <span class="ea-mark">limited to the first <span class="ea-num">2,500</span> seats</span>.</span><span class="cta-short">Early access is open: <span class="ea-mark"><span class="ea-num">2,500</span> seats</span>.</span></p><a href="early-access.html">Get yours</a></div></div>
+<div class="ea-strip" role="note" aria-label="Early access"><div class="ea-block"><p><span class="cta-long">Early access is now open and <span class="ea-mark">limited to the first <span class="ea-num">2,500</span> seats</span>.</span><span class="cta-short">Early access is open: <span class="ea-mark"><span class="ea-num">2,500</span> seats</span>.</span></p><a href="register.html">Get yours</a></div></div>
 
 <section class="hero-pin" data-screen-label="Hero" style="position:sticky;top:var(--hdr);height:calc(100vh - var(--hdr));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(1.5rem,6vh,6.67rem) 0 3.375rem">
 <div aria-hidden="true" style="position:fixed;inset:0;z-index:0;pointer-events:none">
@@ -1463,7 +1624,7 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 <li><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg><div><b>Identify new potential</b><span>suppliers and contractors</span></div></li>
 </ul>
 <div class="hero-cta" style="will-change:transform">
-<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="early-access.html" hint-size="240px,52px">Get early access</x-import>
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="240px,52px">Get early access</x-import>
 </div>
 </div>
 <div class="hero-cue-wrap">
@@ -1474,28 +1635,105 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 <div class="band-layer" aria-hidden="true"><canvas id="sphere-band" style="width:100%;height:100%;display:block"></canvas></div><div class="band-layer" aria-hidden="true"><canvas id="sphere-cta" style="width:100%;height:100%;display:block"></canvas></div>
 
 <div class="how-pin">
-<section id="how" data-band="invert" class="surface-invert" data-screen-label="How it works" style="position:sticky;top:var(--hdr);border-top:2px solid var(--color-coral);box-sizing:border-box;height:calc(100vh - var(--hdr));display:flex;align-items:center;padding:6rem 0;background:transparent;overflow:clip">
+<section id="how" data-band="invert" class="surface-invert" data-screen-label="Early access" style="position:sticky;top:var(--hdr);border-top:2px solid var(--color-coral);box-sizing:border-box;height:calc(100vh - var(--hdr));display:flex;align-items:center;padding:2rem 0 4.75rem;background:transparent;overflow:clip">
 <div class="container-site" style="position:relative;width:100%">
-<div style="position:relative;display:flex;flex-direction:column;align-items:center;text-align:center">
-<h2 data-plx-y="-0.04" style="will-change:transform;margin:0;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:0 0.25em;font-weight:100;font-size:clamp(3rem,6vw,6.5rem);line-height:1;letter-spacing:-0.04em;color:var(--color-off-white);text-wrap:balance"><span class="how-sub">Up and running in</span><span style="white-space:nowrap"><span id="fill80" style="font-weight:700;font-size:1.3em;line-height:1;letter-spacing:-0.04em;padding:0 0.02em;color:transparent;background-image:linear-gradient(to top,var(--color-coral) var(--fill),var(--color-off-white) var(--fill));-webkit-background-clip:text;background-clip:text">3</span> <span class="mark-activate how-mark" style="background-position:0 80%">steps</span></span></h2>
-<div class="how-steps" data-plx-y="0.04" style="will-change:transform;margin-top:clamp(3rem,8vh,5.5rem);width:100%;max-width:72rem;text-align:left;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3rem">
-<div style="position:relative;isolation:isolate;text-align:center">
-<span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;font-weight:700;font-size:10rem;line-height:1;letter-spacing:-0.06em;color:color-mix(in oklab,var(--color-off-white) 9%,transparent);pointer-events:none;user-select:none">1</span>
-<h3 style="position:relative;margin:0;font-size:1.5rem;line-height:1.2;font-weight:500;letter-spacing:-0.015em;color:var(--color-off-white)">Create your account</h3>
-<p style="margin-top:0.5rem;font-size:1rem;line-height:1.55;font-weight:300;color:var(--color-dark-beige)">You need an email address and a couple of minutes. We'll do the rest.</p>
+<div class="perks" style="position:relative;display:flex;flex-direction:column;align-items:center;text-align:center">
+<div class="perks-intro" data-plx-y="-0.03" style="will-change:transform">
+<p class="eyebrow perks-eyebrow">Early access</p>
+<h2 class="perks-title">Be one of the first 2,500.<br><span class="soft">Become a <span class="perks-mark">founding member</span>.</span></h2>
+<p class="perks-lead">Early access is limited to the first 2,500 companies. Join now to get more than a head start.</p>
 </div>
-<div style="position:relative;isolation:isolate;text-align:center">
-<span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;font-weight:700;font-size:10rem;line-height:1;letter-spacing:-0.06em;color:color-mix(in oklab,var(--color-off-white) 9%,transparent);pointer-events:none;user-select:none">2</span>
-<h3 style="position:relative;margin:0;font-size:1.5rem;line-height:1.2;font-weight:500;letter-spacing:-0.015em;color:var(--color-off-white)">Add what you already have</h3>
-<p style="margin-top:0.5rem;font-size:1rem;line-height:1.55;font-weight:300;color:var(--color-dark-beige)">Upload your documents as they are. We sort them, label them and tell you what is missing.</p>
+<div class="deck">
+        <div class="row" id="row">
+          <button type="button" class="panel on" data-i="0" aria-pressed="true">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">01</span></span>
+              <span><span class="ptitle">Your first 20 users, free.</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 01 / 04</span><h2>Your first 20 users, free.</h2><p>Invite up to 20 people, from your team or the companies you work with, at no cost.</p></span>
+                <span class="chip">First 20 seats · Free</span>
+              </span>
+              <span class="illo">
+                <span class="seats"><span class="seat you">You</span><span class="seat" style="--i:1"></span><span class="seat" style="--i:2"></span><span class="seat" style="--i:3"></span><span class="seat" style="--i:4"></span><span class="seat" style="--i:5"></span><span class="seat" style="--i:6"></span><span class="seat" style="--i:7"></span><span class="seat" style="--i:8"></span><span class="seat" style="--i:9"></span><span class="seat" style="--i:10"></span><span class="seat" style="--i:11"></span><span class="seat" style="--i:12"></span><span class="seat" style="--i:13"></span><span class="seat" style="--i:14"></span><span class="seat" style="--i:15"></span><span class="seat" style="--i:16"></span><span class="seat" style="--i:17"></span><span class="seat" style="--i:18"></span><span class="seat" style="--i:19"></span></span>
+                <span class="big"><strong>20</strong><span>seats · Free</span></span>
+              </span>
+            </span>
+          </button>
+          <button type="button" class="panel" data-i="1" aria-pressed="false">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">02</span></span>
+              <span><span class="ptitle">Always visible</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 02 / 04</span><h2>Always visible</h2><p>Your company stays visible to everyone in the <span class="nb">C-MORE</span> ecosystem, for good.</p></span>
+                <span class="chip">Permanent listing</span>
+              </span>
+              <span class="illo">
+                <span class="dir">
+                  <span class="r me"><span class="av">Y</span><span class="txt"><b>Your company</b><small>Founding member · always listed</small></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
+                  <span class="r"><span class="av"></span><span class="ph"><i style="width:110px"></i><i style="width:66px"></i></span></span>
+                  <span class="r"><span class="av"></span><span class="ph"><i style="width:90px"></i><i style="width:56px"></i></span></span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <button type="button" class="panel" data-i="2" aria-pressed="false">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">03</span></span>
+              <span><span class="ptitle">Highlighted in the marketplace</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 03 / 04</span><h2>Highlighted in the marketplace</h2><p>One week every month, your company is featured in the <span class="nb">C-MORE</span> marketplace.</p></span>
+                <span class="chip">1 week every month</span>
+              </span>
+              <span class="illo">
+                <span class="weeks">
+                  <span class="wk"><small>W1</small><i></i></span>
+                  <span class="wk hot"><small>W2</small><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Featured</span></i></span>
+                  <span class="wk"><small>W3</small><i></i></span>
+                  <span class="wk"><small>W4</small><i></i></span>
+                </span>
+              </span>
+            </span>
+          </button>
+          <button type="button" class="panel" data-i="3" aria-pressed="false">
+            <span class="closed">
+              <span class="top"><span class="sq"></span><span class="num">04</span></span>
+              <span><span class="ptitle">New features first</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+            </span>
+            <span class="open">
+              <span class="copy">
+                <span><span class="head"><span class="sq"></span>PERK 04 / 04</span><h2>New features first</h2><p>Every new feature and functionality reaches founding members before anyone else.</p></span>
+                <span class="chip">Day-one access</span>
+              </span>
+              <span class="illo">
+                <span class="tl">
+                  <span class="lab"><b>Founding members</b><span>Everyone else</span></span>
+                  <span class="track"><i class="base"></i><i class="done"></i><i class="dot"></i><i class="end"></i></span>
+                  <span class="new"><b>NEW</b><span>The next release</span><em>Day one</em></span>
+                </span>
+              </span>
+            </span>
+          </button>
+        </div>
+        <div class="ctl">
+          <button type="button" class="nav" id="prev" aria-label="Previous perk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          <div class="bullets" aria-label="Perks" id="bullets">
+            <button type="button" class="bullet on" data-i="0" aria-label="Perk 01: Your first 20 users, free."><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="1" aria-label="Perk 02: Always visible"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="2" aria-label="Perk 03: Highlighted in the marketplace"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="3" aria-label="Perk 04: New features first"><i><b></b></i></button>
+          </div>
+          <button type="button" class="nav" id="next" aria-label="Next perk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </div>
+        </div>
+<div class="perks-cta">
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="240px,52px">Get early access</x-import>
 </div>
-<div style="position:relative;isolation:isolate;text-align:center">
-<span aria-hidden="true" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;font-weight:700;font-size:10rem;line-height:1;letter-spacing:-0.06em;color:color-mix(in oklab,var(--color-off-white) 9%,transparent);pointer-events:none;user-select:none">3</span>
-<h3 style="position:relative;margin:0;font-size:1.5rem;line-height:1.2;font-weight:500;letter-spacing:-0.015em;color:var(--color-off-white)">Share it when someone asks</h3>
-<p style="margin-top:0.5rem;font-size:1rem;line-height:1.55;font-weight:300;color:var(--color-dark-beige)">A client needs proof? Give them access in one click, and take it back whenever you like.</p>
-</div>
-</div>
-
 </div>
 </div>
 <div class="section-cue" style="position:absolute;left:0;right:0;bottom:2.25rem;display:flex;justify-content:center;z-index:3">
@@ -1540,7 +1778,7 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 <div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.CTA" heading="Welcome to the C-⁠MORE ecosystem." hint-size="100%,420px">
 <div class="eco-steps"><div class="eco-frame"><ol class="eco-track" aria-label="How to get started"><li class="eco-step"><span class="eco-node" aria-hidden="true">1</span><h3 class="eco-title">Join</h3><p class="eco-desc">Create your account in a couple of minutes. Quickly and guided.</p></li><li class="eco-step"><span class="eco-node" aria-hidden="true">2</span><h3 class="eco-title">Invite</h3><p class="eco-desc">Bring in your team, your suppliers and your clients.</p></li><li class="eco-step"><span class="eco-node" aria-hidden="true">3</span><h3 class="eco-title">Connect</h3><p class="eco-desc">Everyone shares what is asked, when it is asked. No more chasing.</p></li></ol><div class="eco-flow" aria-hidden="true"><i style="--d:4.38s;--dl:-0.06s;--y:-7px;--s:4px;--r:-90deg"></i><i style="--d:3.97s;--dl:-0.74s;--y:7px;--s:5px;--r:90deg"></i><i style="--d:3.95s;--dl:-1.19s;--y:-2px;--s:4px;--r:-90deg"></i><i style="--d:4.56s;--dl:-1.86s;--y:-5px;--s:5px;--r:-90deg"></i><i style="--d:4.93s;--dl:-2.42s;--y:3px;--s:4px;--r:90deg"></i><i style="--d:3.88s;--dl:-2.9s;--y:0px;--s:6px;--r:90deg"></i><i style="--d:4.77s;--dl:-3.3s;--y:7px;--s:5px;--r:90deg"></i><i style="--d:4.85s;--dl:-3.83s;--y:2px;--s:4px;--r:-90deg"></i><i style="--d:5.08s;--dl:-4.31s;--y:-2px;--s:6px;--r:-90deg"></i></div></div></div>
-<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="base" href="early-access.html" hint-size="220px,52px">Get early access</x-import>
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="base" href="register.html" hint-size="220px,52px">Get early access</x-import>
 </x-import>
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.Footer" dc-props="{{ footerProps }}" hint-size="100%,340px"></x-import>
 </div>
@@ -1667,7 +1905,7 @@ class Component extends DCLogic {
         setTimeout(start, 900); // never leave the click hanging on a slow load
       };
       document.addEventListener('click', (e) => {
-        const a = e.target.closest && e.target.closest('a[href="register.html"], a[href^="register.html?"], a[href="early-access.html"]');
+        const a = e.target.closest && e.target.closest('a[href="register.html"], a[href^="register.html?"]');
         if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
         if (reduced) return;
         e.preventDefault();
@@ -1821,4 +2059,5 @@ class Component extends DCLogic {
 
 <script src="js/lang.js"></script>
 <script src="js/account.js"></script>
+<script src="js/perks.js"></script>
 </body></html>
