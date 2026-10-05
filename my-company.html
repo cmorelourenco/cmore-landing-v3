@@ -32,10 +32,11 @@
   --color-coral-tint: #f9e7e3;
   /* the pending/lagging share in the hero: coral at 45% over the ground, visible where the tint is not */
   --color-coral-soft: color-mix(in oklab, var(--color-coral) 45%, var(--color-light-beige));
-  /* The clients' side of the ecosystem: the design system's green (its status green, derived
-     from the brand lime), with its pending shade made the same way as the coral's. */
-  --color-clients: var(--color-positive);
-  --color-clients-soft: color-mix(in oklab, var(--color-positive) 45%, var(--color-light-beige));
+  /* The clients' side of the ecosystem: a saturated cobalt in the brand's blue family (the
+     manual's blues read grey on the beige). Not in the design system yet: proposed here, with
+     its pending shade made the same way as the coral's. */
+  --color-clients: #3366cc;
+  --color-clients-soft: color-mix(in oklab, var(--color-clients) 45%, var(--color-light-beige));
   --color-blue: #4e638b;
   --color-mid-blue: #909db6;
   --color-off-white: #fafafa;
@@ -621,7 +622,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-side-n > div > span:last-child, .co-hero .co-stat small, .co-hero .co-net-k > span:last-child,
 .co-hero .co-legend, .co-hero .co-donut-t { color: var(--color-ink-subtle); }
 .co-hero .co-stat-empty { color: var(--color-sand-400); }
-/* two families: clients in the design system's green, suppliers in coral;
+/* two families: clients in cobalt (the proposed tertiary), suppliers in coral;
    the lighter shade of each marks what is pending or lagging */
 .co-hero .co-bar-empty, .co-hero .co-donut-empty { background: var(--color-mid-beige); }
 .co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-clients) 0 44.4%, var(--color-clients-soft) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-soft) 88.9% 100%); }
