@@ -14,6 +14,8 @@
      exactly the flash we are avoiding. */
   // ?welcome (straight from sign-up) also starts on off-white: the thank-you screen comes first.
   if (!/[?&](page|filled)\b/.test(location.search) || /[?&]welcome\b/.test(location.search)) document.documentElement.className += ' intake-first';
+  // the side menu starts as its rail (a drawer on phones); opening it lays it over the page
+  document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : 'rail';
 </script>
 <style>
 /* Figtree, the brand face — same self-hosted files as the landing. */
@@ -689,12 +691,11 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-proj-tbl th:nth-child(4) { width: 8%; } .co-proj-tbl th:nth-child(5) { width: 10%; } .co-proj-tbl th:nth-child(6) { width: 10%; } .co-proj-tbl th:nth-child(7) { width: 7%; }
 .co-proj-tbl .co-alert { min-width: 1.75rem; justify-content: center; }
 /* ---- Side menu ----------------------------------------------------------
-   A white column down the left under the header. The header keeps the site's column
-   (the same 78rem as every other page), the menu sits outside it, the page beside it.
-   Four ways it can be, set on <html data-sn> by the script:
-     full    the whole menu, the page beside it (wide screens, by default)
-     rail    icons only, the page beside the rail (wide screens when collapsed; mid screens)
-     over    the whole menu opened over the page from the rail (mid screens)
+   A white column down the left under the header. The header and the page keep the
+   site's column (the same 78rem as every other page); the menu sits in the margin.
+   Three ways it can be, set on <html data-sn>; the page never moves for any of them:
+     rail    icons only, in the margin beside the page's column (the resting state)
+     over    the whole menu, opened over the page from the rail
      drawer  hidden, slides in from the header's menu button (phones) */
 :root { --sn-w: 15rem; --sn-rail: 4.5rem; }
 .sn { position: fixed; z-index: 9; top: 4.5rem; bottom: 0; left: 0; width: var(--sn-w); background: var(--color-surface);
@@ -722,8 +723,16 @@ html.intake-first .sn { opacity: 0; visibility: hidden; }
 .sn-collapse button { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink-subtle); cursor: pointer; }
 .sn-collapse button:hover { background: var(--color-light-beige); color: var(--color-ink); }
 .sn-collapse svg { width: 1.125rem; height: 1.125rem; transition: transform .25s var(--ease-brand); }
-.page { margin-left: var(--sn-w); transition: margin-left .25s var(--ease-brand); }
-.page:has(#filled:not([hidden])), .page:has(#empty:not([hidden])) { margin-left: var(--sn-w); }
+/* The page keeps the header's column whatever the menu does. Only where the margin
+   beside that column is narrower than the rail does it step in, by just enough. */
+:root { --wrap-pad: 2rem;
+  /* how far the column's content must step in to clear the rail: the rail and a little air,
+     less the column's own side margin and inner padding */
+  --sn-clear: max(0px, calc(var(--sn-rail) + 0.75rem - var(--wrap-pad) - max(0px, (100vw - 78rem) / 2))); }
+@media (min-width: 64rem) { :root { --wrap-pad: 2.5rem; } }
+.page:has(#filled:not([hidden])), .page:has(#empty:not([hidden])) { margin-left: 0; }
+/* the header and every section column step in by the same amount, so the logo stays over the content */
+html:not([data-sn="drawer"]) .top .hdr-in, html:not([data-sn="drawer"]) .co-wrap { padding-left: calc(var(--wrap-pad) + var(--sn-clear)); }
 /* rail */
 html[data-sn="rail"] .sn { width: var(--sn-rail); }
 html[data-sn="rail"] .sn-in { padding-inline: 0.625rem; }
@@ -733,10 +742,9 @@ html[data-sn="rail"] .sn-item.is-on::before { left: -0.625rem; }
 html[data-sn="rail"] .sn-count { position: absolute; top: 0.0625rem; right: 0.0625rem; min-width: 1.125rem; height: 1.125rem; padding: 0 0.25rem; font-size: 0.625rem; margin: 0; }
 html[data-sn="rail"] .sn-collapse { justify-content: center; }
 html[data-sn="rail"] .sn-collapse svg { transform: rotate(180deg); }
-html[data-sn="rail"] .page, html[data-sn="over"] .page,
-html[data-sn="rail"] .page:has(#filled:not([hidden])), html[data-sn="rail"] .page:has(#empty:not([hidden])),
-html[data-sn="over"] .page:has(#filled:not([hidden])), html[data-sn="over"] .page:has(#empty:not([hidden])) { margin-left: var(--sn-rail); }
 html[data-sn="over"] .sn { z-index: 30; box-shadow: 0 0 40px rgba(52,52,52,.18); }
+/* opened over the page: no shade, the page stays readable beside it */
+html[data-sn="over"] .sn-scrim { background: transparent; }
 /* drawer: phones */
 .sn-toggle { display: none; place-items: center; width: 2.5rem; height: 2.5rem; margin-left: -0.5rem; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink); cursor: pointer; }
 .sn-toggle:hover { background: var(--color-mid-beige); }
@@ -752,7 +760,7 @@ html[data-sn="drawer"] .top-right { gap: 0.5rem; }
 html[data-sn="drawer"] .top-right .co-founder + .who { margin-left: 0; }
 html[data-sn="drawer"] .who-chev { display: none; }
 html[data-sn="drawer"] .who-chip { margin-right: 0; padding-right: 0.25rem; }
-html[data-sn="drawer"] .page, html[data-sn="drawer"] .page:has(#filled:not([hidden])), html[data-sn="drawer"] .page:has(#empty:not([hidden])) { margin-left: 0; }
+
 .sn-scrim { position: fixed; inset: 4.5rem 0 0 0; z-index: 29; background: rgba(52,52,52,.28); }
 .sn-scrim[hidden] { display: none; }
 /* the header's bell */
@@ -760,7 +768,7 @@ html[data-sn="drawer"] .page, html[data-sn="drawer"] .page:has(#filled:not([hidd
 .hdr-bell:hover { background: var(--color-mid-beige); }
 .hdr-bell svg { width: 1.375rem; height: 1.375rem; }
 .hdr-bell .bell-count { position: absolute; top: 0.125rem; right: 0; min-width: 1.125rem; height: 1.125rem; padding: 0 0.25rem; font-size: 0.625rem; }
-@media (prefers-reduced-motion: reduce) { .sn, .page, .sn-collapse svg { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .sn, .sn-collapse svg { transition: none; } }
 /* ---- The same page, empty ---------------------------------------------- */
 .co-name-empty, .co-big-empty { color: var(--color-sand-400); }
 .co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
@@ -1737,12 +1745,9 @@ body { transition: background-color .9s ease; }
     return key.startsWith('.') ? p.querySelector(key) : null;
   };
   const root = document.documentElement, collapseBtn = document.getElementById('sn-collapse');
-  const KEY = 'cm-sn-collapsed';
-  let collapsed = false, over = false;
-  try { collapsed = localStorage.getItem(KEY) === '1'; } catch (e) {}
+  let over = false;
   const mode = () => {
-    const w = innerWidth;
-    const m = w <= 640 ? 'drawer' : w <= 1024 ? (over ? 'over' : 'rail') : (collapsed ? 'rail' : 'full');
+    const m = innerWidth <= 640 ? 'drawer' : over ? 'over' : 'rail';
     root.dataset.sn = m;
     const open = m === 'full' || m === 'over';
     collapseBtn.setAttribute('aria-expanded', String(open));
@@ -1750,11 +1755,7 @@ body { transition: background-color .9s ease; }
     collapseBtn.title = open ? 'Collapse menu' : 'Expand menu';
     scrim.hidden = !(m === 'over' || (m === 'drawer' && sn.classList.contains('is-open')));
   };
-  collapseBtn.addEventListener('click', () => {
-    if (innerWidth <= 1024) over = !over;
-    else { collapsed = !collapsed; try { localStorage.setItem(KEY, collapsed ? '1' : '0'); } catch (e) {} }
-    mode();
-  });
+  collapseBtn.addEventListener('click', () => { over = !over; mode(); });
   const drawer = (open) => {
     if (root.dataset.sn === 'over') { over = false; mode(); return; }
     sn.classList.toggle('is-open', open); toggle.setAttribute('aria-expanded', String(open)); mode();
