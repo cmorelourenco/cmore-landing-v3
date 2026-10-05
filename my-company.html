@@ -669,6 +669,14 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-band-l { grid-area: l; } .co-hero .co-net { grid-area: n; }
 .co-hero .co-hero-acts { grid-area: a; align-self: center; }
 .page .co-hero .co-hero-link { grid-area: k; justify-self: end; align-self: center; margin: 0; }
+/* side by side, the network's last bar sits on the same line as the two figures' bars
+   (they end 1rem above the column's foot); the legend hangs just under it */
+@media (min-width: 76.0625rem) {
+  .co-hero .co-band-in { row-gap: 2.5rem; }
+  .co-hero .co-net { align-self: stretch; }
+  .co-hero .co-net-rows { position: relative; align-self: end; padding-bottom: 1rem; }
+  .co-hero .co-net-rows .co-legend { position: absolute; left: 0; top: calc(100% - 0.375rem); }
+}
 @media (max-width: 76rem) {
   .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); }
   .page .co-hero .co-hero-link { justify-self: start; }
