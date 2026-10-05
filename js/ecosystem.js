@@ -206,7 +206,7 @@
     const tag = s.mine ? `<span class="eco-tag">${CHECK}In your ecosystem</span>` : s.sent ? `<span class="eco-tag is-sent">${CLOCK}Request sent</span>` : '';
     const papers = s.pending ? `<span class="co-badge b-pend">${s.pending} paper${s.pending > 1 ? 's' : ''} pending</span>` : '<span class="co-badge b-ok">Papers in order</span>';
     const foot = s.mine
-      ? `<a href="#" class="co-link" onclick="return false">Open profile</a><button type="button" class="btn co-btn-light" data-req="${s.id}" onclick="return false">Request documents</button>`
+      ? `<a href="#" class="co-link" onclick="return false">Open profile</a><button type="button" class="btn co-btn-light" data-req="${s.id}" onclick="return false">Contact supplier</button>`
       : `<a href="#" class="co-link" onclick="return false">View profile</a>` + (s.sent ? '<button type="button" class="btn co-btn-light" disabled>Request sent</button>' : `<button type="button" class="btn btn-primary" data-invite="${s.id}">Connect to supplier</button>`);
     return `<li class="eco-card${s.mine ? ' is-mine' : ''}">
       <div class="eco-card-top">${s.logo ? `<img class="eco-logo eco-logo-img" src="${s.logo}" alt="" width="48" height="48" loading="lazy">` : `<span class="eco-logo" aria-hidden="true">${s.ini}</span>`}${tag}</div>
