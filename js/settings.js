@@ -20,6 +20,7 @@
     document.querySelectorAll('[data-who-name]').forEach((n) => (n.textContent = person.name));
     document.querySelectorAll('[data-who-email]').forEach((n) => (n.textContent = person.email));
     $('#set-photo-rm').hidden = !photo;
+    $('#set-photo-up').textContent = photo ? 'Change picture' : 'Upload a picture';
   };
   const flash = (el, text) => { el.textContent = text; clearTimeout(el._t); el._t = setTimeout(() => (el.textContent = ''), 2600); };
 
