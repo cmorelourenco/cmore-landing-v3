@@ -608,7 +608,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-donut-t { margin-top: 0.375rem; font-size: 0.75rem; color: var(--color-sand-400); }
 /* the count, large, in the middle of the chart */
 .co-donut-n { font-size: 2.75rem; font-weight: 500; letter-spacing: -0.035em; line-height: 0.9; color: var(--color-sand-600); }
-.co-donut-tl { margin: 0 0 0.25rem; font-size: 0.8125rem; font-weight: 700; }
+.co-donut-tl { margin: 0.25rem 0 0; font-size: 0.8125rem; font-weight: 700; }
 .co-hero .co-donut .co-donut-tl { color: var(--color-ink); }
 .co-net-rows { display: flex; flex-direction: column; gap: 1.375rem; min-width: 0; }
 .co-net-row { display: flex; flex-direction: column; gap: 0.625rem; }
@@ -1325,7 +1325,7 @@ body { transition: background-color .9s ease; }
       <!-- One ring for the whole network, one row per side -->
       <div class="co-net">
         <div class="co-donut" role="img" aria-label="9 connections: 5 clients, 4 suppliers">
-          <div><span class="co-donut-t co-donut-tl">connections</span><span class="co-donut-n">9</span></div>
+          <div><span class="co-donut-n">9</span><span class="co-donut-t co-donut-tl">connections</span></div>
         </div>
         <div class="co-net-rows">
           <div class="co-net-row">
