@@ -710,7 +710,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-dl { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; }
 .co-dl-t { display: inline-flex; align-items: baseline; gap: 0.3125rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .co-dl-t b { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
-.co-dl-t small { margin-left: 0.0625rem; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.co-dl-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .co-dl .d { white-space: nowrap; }
 .co-proj-tbl .co-alert { min-width: 1.75rem; justify-content: center; }
 /* ---- Side menu ----------------------------------------------------------
@@ -1906,12 +1906,11 @@ body { transition: background-color .9s ease; }
 })();
 </script>
 <script>
-/* Delivery deadlines on My projects: days, hours and minutes to go, kept running; once the
+/* Delivery deadlines on My projects: the days to go, kept current; once the
    date has passed the cell turns into a delayed badge with how late it is. */
 (() => {
   const cells = [...document.querySelectorAll('.co-dl[data-due]')]; if (!cells.length) return;
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const pad = (n) => String(n).padStart(2, '0');
   const draw = () => {
     const now = Date.now();
     cells.forEach((c) => {
@@ -1921,11 +1920,11 @@ body { transition: background-color .9s ease; }
         c.innerHTML = `<span class="co-badge b-over">Delayed</span><span class="d" title="Was due ${when}">${late} day${late === 1 ? '' : 's'} late</span>`;
         return;
       }
-      const d = Math.floor(ms / 864e5), h = Math.floor(ms / 36e5) % 24, m = Math.floor(ms / 6e4) % 60;
-      c.innerHTML = `<span class="co-dl-t" aria-label="${d} days, ${h} hours and ${m} minutes left"><b>${d}<small>d</small></b><b>${pad(h)}<small>h</small></b><b>${pad(m)}<small>m</small></b></span><span class="d">Due ${when}</span>`;
+      const d = Math.ceil(ms / 864e5);
+      c.innerHTML = `<span class="co-dl-t" aria-label="${d} day${d === 1 ? '' : 's'} left"><b>${d}</b><small>day${d === 1 ? '' : 's'}</small></span><span class="d">Due ${when}</span>`;
     });
   };
-  draw(); setInterval(draw, 30000);
+  draw(); setInterval(draw, 60000);
 })();
 </script>
 <script src="js/lang.js"></script>
