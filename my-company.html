@@ -603,6 +603,26 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .page .co-avs a:hover { color: var(--color-light-beige); }
 .co-legend { font-size: 0.75rem; color: var(--color-sand-400); }
 
+/* ---- The hero: company, then the ecosystem, on the graphite band --------- */
+.co-hero { border-top: 0; padding: 2rem 0 2.75rem; }
+.co-hero .co-band-l { gap: 1.5rem; }
+.co-hero .co-side { padding: 1rem 0; }
+.co-hero-id { position: relative; padding-bottom: 1.5rem; margin-bottom: 1.75rem; border-bottom: 1px solid rgba(242, 241, 237, .14); }
+.co-hero .co-id .eyebrow { color: var(--color-sand-400); }
+.co-hero .co-name { color: var(--color-light-beige); }
+.co-hero .co-name-empty { color: rgba(242, 241, 237, .4); }
+.co-hero .co-subtle { color: var(--color-sand-400); }
+.co-hero .co-score { background: rgba(250, 250, 250, .06); border-color: rgba(250, 250, 250, .14); color: var(--color-light-beige); }
+.co-hero .co-score .co-muted { color: var(--color-sand-400); }
+.co-hero .co-ring { background: conic-gradient(var(--color-coral) 0 var(--p), rgba(250, 250, 250, .14) var(--p) 100%); }
+.co-hero-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 0.75rem; }
+.co-hero-btn { height: 2.5rem; padding-inline: 1.125rem; font-size: 0.9375rem; }
+.co-btn-light { background: transparent; border: 1.5px solid rgba(242, 241, 237, .35); color: var(--color-light-beige); }
+.co-btn-light:hover { border-color: var(--color-light-beige); background: rgba(242, 241, 237, .08); color: var(--color-light-beige); }
+.page .co-hero-link { margin-left: 0.25rem; white-space: nowrap; font-size: 0.9375rem; font-weight: 500; color: var(--color-light-beige); text-decoration: underline; text-decoration-color: var(--color-coral); text-underline-offset: 0.2em; }
+.page .co-hero-link:hover { color: var(--color-off-white); }
+@media (max-width: 34rem) { .co-hero-acts { flex-direction: column; align-items: stretch; } .co-hero-btn { width: 100%; } .page .co-hero-link { margin: 0.25rem 0 0; text-align: center; } }
+.co-hero .co-ring > div { background: var(--color-graphite); color: var(--color-light-beige); }
 /* ---- The same page, empty ---------------------------------------------- */
 .co-name-empty, .co-big-empty { color: var(--color-sand-400); }
 .co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
@@ -857,9 +877,11 @@ body { transition: background-color .9s ease; }
     <a href="#ce-drop" data-ce-start>Start company profile</a>
   </div></div>
 
-  <!-- No company name yet, the invitations already open -->
-  <section class="co-sec co-head"><div class="co-wrap">
-    <div class="co-id">
+  <!-- Hero: who you are, then your ecosystem -->
+  <section class="co-band co-hero">
+    <div class="co-band-mesh" aria-hidden="true"></div>
+    <div class="co-wrap co-hero-id">
+      <div class="co-id">
       <div class="co-id-l">
         <span class="eyebrow">My company</span>
         <h1 class="co-name co-name-empty">Your company</h1>
@@ -870,27 +892,58 @@ body { transition: background-color .9s ease; }
         <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" style="font-size:0.8125rem">Appears once your documents are in</span></div>
       </div>
     </div>
-    <div class="co-invites">
-      <div class="co-card co-invite">
-        <div class="co-card-k"><span class="eyebrow">Clients</span><a href="#" onclick="return false">View details</a></div>
-        <span class="co-big co-big-empty">0</span>
-        <span class="co-muted">invited · bring in the companies you supply</span>
-        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite client</a>
+    </div>
+    <div class="co-wrap co-band-in">
+      <div class="co-band-l">
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <span class="eyebrow co-on-dark">Your ecosystem</span>
+          <h2 class="co-h-xl" style="font-weight:300">0 companies<br><span style="font-weight:600">share data with you.</span></h2>
+        </div>
+        <div class="co-sides">
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a supplier</span>
+            <div class="co-side-n">
+              <div><span class="co-stat co-stat-empty">0</span><span>clients connected</span></div>
+              <div><span class="co-stat co-stat-empty">0</span><span>requests</span></div>
+            </div>
+            <div class="co-bar co-bar-empty" style="height:8px"></div>
+          </div>
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a buyer</span>
+            <div class="co-side-n">
+              <div><span class="co-stat co-stat-empty">0</span><span>suppliers connected</span></div>
+              <div><span class="co-stat co-stat-empty">0</span><span>data in order</span></div>
+            </div>
+            <div class="co-bar co-bar-empty" style="height:8px"></div>
+          </div>
+        </div>
+        <div class="co-hero-acts">
+          <a href="#" onclick="return false" class="btn btn-primary co-hero-btn">Invite client</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
+          <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
+        </div>
       </div>
-      <div class="co-card co-invite">
-        <div class="co-card-k"><span class="eyebrow">Suppliers</span><a href="#" onclick="return false">View details</a></div>
-        <span class="co-big co-big-empty">0</span>
-        <span class="co-muted">invited · they keep their own data up to date</span>
-        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite supplier</a>
-      </div>
-      <div class="co-card co-invite">
-        <div class="co-card-k"><span class="eyebrow">Users</span><a href="#" onclick="return false">View details</a></div>
-        <span class="co-big">1</span>
-        <span class="co-muted">invited · just you, for now</span>
-        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite users</a>
+      <div class="co-net">
+        <div class="co-donut co-donut-empty" role="img" aria-label="No connections yet">
+          <div><span class="co-fc">?</span><span class="co-donut-t">0 connections</span></div>
+        </div>
+        <div class="co-net-rows">
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-light-beige)"></i>Clients · 0</span><span>none yet</span></div>
+            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a client</a></div>
+            <div class="co-bar co-bar-empty" style="height:6px"></div>
+          </div>
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 0</span><span>none yet</span></div>
+            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a supplier</a></div>
+            <div class="co-bar co-bar-empty" style="height:6px"></div>
+          </div>
+          <span class="co-legend">Each company you invite appears here, with how their data stands.</span>
+        </div>
       </div>
     </div>
-  </div></section>
+  </section>
 
   <!-- Needs your attention: the way in, ALMA on the right -->
   <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
@@ -951,55 +1004,7 @@ body { transition: background-color .9s ease; }
     </div>
   </div></section>
 
-  <!-- Graphite band: the ecosystem, with nobody in it yet -->
-  <section class="co-band">
-    <div class="co-band-mesh" aria-hidden="true"></div>
-    <div class="co-wrap co-band-in">
-      <div class="co-band-l">
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <span class="eyebrow co-on-dark">Your ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">0 companies<br><span style="font-weight:600">share data with you.</span></h2>
-        </div>
-        <div class="co-sides">
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a supplier</span>
-            <div class="co-side-n">
-              <div><span class="co-stat co-stat-empty">0</span><span>clients connected</span></div>
-              <div><span class="co-stat co-stat-empty">0</span><span>requests</span></div>
-            </div>
-            <div class="co-bar co-bar-empty" style="height:8px"></div>
-          </div>
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a buyer</span>
-            <div class="co-side-n">
-              <div><span class="co-stat co-stat-empty">0</span><span>suppliers connected</span></div>
-              <div><span class="co-stat co-stat-empty">0</span><span>data in order</span></div>
-            </div>
-            <div class="co-bar co-bar-empty" style="height:8px"></div>
-          </div>
-        </div>
-        <a href="#" onclick="return false" class="btn btn-primary co-map-btn">View my ecosystem</a>
-      </div>
-      <div class="co-net">
-        <div class="co-donut co-donut-empty" role="img" aria-label="No connections yet">
-          <div><span class="co-fc">?</span><span class="co-donut-t">0 connections</span></div>
-        </div>
-        <div class="co-net-rows">
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-light-beige)"></i>Clients · 0</span><span>none yet</span></div>
-            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a client</a></div>
-            <div class="co-bar co-bar-empty" style="height:6px"></div>
-          </div>
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 0</span><span>none yet</span></div>
-            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a supplier</a></div>
-            <div class="co-bar co-bar-empty" style="height:6px"></div>
-          </div>
-          <span class="co-legend">Each company you invite appears here, with how their data stands.</span>
-        </div>
-      </div>
-    </div>
-  </section>
+  
 
 </div>
 
@@ -1017,9 +1022,11 @@ body { transition: background-color .9s ease; }
     <a href="#" onclick="return false">Finish company profile</a>
   </div></div>
 
-  <!-- Company name, then the invitations as button cards -->
-  <section class="co-sec co-head"><div class="co-wrap">
-    <div class="co-id">
+  <!-- Hero: who you are, then your ecosystem -->
+  <section class="co-band co-hero">
+    <div class="co-band-mesh" aria-hidden="true"></div>
+    <div class="co-wrap co-hero-id">
+      <div class="co-id">
       <div class="co-id-l">
         <span class="eyebrow">My company</span>
         <h1 class="co-name">Ferreira Construction LLC</h1>
@@ -1030,27 +1037,59 @@ body { transition: background-color .9s ease; }
         <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" id="co-score-note" style="font-size:0.8125rem">Good · +9 once the license is replaced</span></div>
       </div>
     </div>
-    <div class="co-invites">
-      <div class="co-card co-invite">
-        <div class="co-card-k"><span class="eyebrow">Clients</span><a href="#" onclick="return false">View details</a></div>
-        <span class="co-big">5</span>
-        <span class="co-muted">invited · 4 connected, 1 pending</span>
-        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite client</a>
+    </div>
+    <div class="co-wrap co-band-in">
+      <div class="co-band-l">
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <span class="eyebrow co-on-dark">Your ecosystem</span>
+          <h2 class="co-h-xl" style="font-weight:300">9 companies<br><span style="font-weight:600">share data with you.</span></h2>
+        </div>
+        <div class="co-sides">
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a supplier</span>
+            <div class="co-side-n">
+              <div><span class="co-stat" style="color:var(--color-coral)">5</span><span>clients connected</span></div>
+              <div><span class="co-stat">9</span><span>requests · 7 yes, 2 pending</span></div>
+            </div>
+            <div class="co-bar" style="height:8px"><i style="width:78%;background:var(--color-light-beige)"></i><i style="width:22%;background:var(--color-coral)"></i></div>
+          </div>
+          <div class="co-side">
+            <span class="eyebrow co-on-dark">As a buyer</span>
+            <div class="co-side-n">
+              <div><span class="co-stat" style="color:var(--color-coral)">4</span><span>suppliers connected</span></div>
+              <div><span class="co-stat">3<small>/4</small></span><span>papers in order · 1 pending</span></div>
+            </div>
+            <div class="co-bar" style="height:8px"><i style="width:75%;background:var(--color-light-beige)"></i><i style="width:25%;background:var(--color-coral)"></i></div>
+          </div>
+        </div>
+        <div class="co-hero-acts">
+          <a href="#" onclick="return false" class="btn btn-primary co-hero-btn">Invite client</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
+          <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
+        </div>
       </div>
-      <div class="co-card co-invite">
-        <div class="co-card-k"><span class="eyebrow">Suppliers</span><a href="#" onclick="return false">View details</a></div>
-        <span class="co-big">4</span>
-        <span class="co-muted">invited · 3 keeping their papers up to date</span>
-        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite supplier</a>
-      </div>
-      <div class="co-card co-invite">
-        <div class="co-card-k"><span class="eyebrow">Users</span><a href="#" onclick="return false">View details</a></div>
-        <span class="co-big">3</span>
-        <span class="co-muted">invited · you, Ana Rocha, Tomás Dias</span>
-        <a href="#" onclick="return false" class="btn btn-primary co-invite-btn">Invite users</a>
+      <!-- One ring for the whole network, one row per side -->
+      <div class="co-net">
+        <div class="co-donut" role="img" aria-label="9 connections: 5 clients, 4 suppliers">
+          <div><span class="co-fc">FC</span><span class="co-donut-t">9 connections</span></div>
+        </div>
+        <div class="co-net-rows">
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-light-beige)"></i>Clients · 5</span><span>4 in order · 1 pending</span></div>
+            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><a href="#" onclick="return false">See all</a></div>
+            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-light-beige)"></i><i style="width:20%;background:var(--color-sand-400)"></i></div>
+          </div>
+          <div class="co-net-row">
+            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 4</span><span>3 in order · 1 lagging</span></div>
+            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><a href="#" onclick="return false">See all</a></div>
+            <div class="co-bar" style="height:6px"><i style="width:75%;background:var(--color-coral)"></i><i style="width:25%;background:var(--color-coral-tint)"></i></div>
+          </div>
+          <span class="co-legend">Solid = papers in order · outlined = pending or lagging</span>
+        </div>
       </div>
     </div>
-  </div></section>
+  </section>
 
   <!-- Needs your attention: the landing's numbered steps, ALMA on the right -->
   <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
@@ -1114,56 +1153,7 @@ body { transition: background-color .9s ease; }
     </div>
   </div></section>
 
-  <!-- Graphite band: your ecosystem + how you stand, as the landing's dark band -->
-  <section class="co-band">
-    <div class="co-band-mesh" aria-hidden="true"></div>
-    <div class="co-wrap co-band-in">
-      <div class="co-band-l">
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <span class="eyebrow co-on-dark">Your ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">9 companies<br><span style="font-weight:600">share data with you.</span></h2>
-        </div>
-        <div class="co-sides">
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a supplier</span>
-            <div class="co-side-n">
-              <div><span class="co-stat" style="color:var(--color-coral)">5</span><span>clients connected</span></div>
-              <div><span class="co-stat">9</span><span>requests · 7 yes, 2 pending</span></div>
-            </div>
-            <div class="co-bar" style="height:8px"><i style="width:78%;background:var(--color-light-beige)"></i><i style="width:22%;background:var(--color-coral)"></i></div>
-          </div>
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a buyer</span>
-            <div class="co-side-n">
-              <div><span class="co-stat" style="color:var(--color-coral)">4</span><span>suppliers connected</span></div>
-              <div><span class="co-stat">3<small>/4</small></span><span>papers in order · 1 pending</span></div>
-            </div>
-            <div class="co-bar" style="height:8px"><i style="width:75%;background:var(--color-light-beige)"></i><i style="width:25%;background:var(--color-coral)"></i></div>
-          </div>
-        </div>
-        <a href="#" onclick="return false" class="btn btn-primary co-map-btn">View my ecosystem</a>
-      </div>
-      <!-- One ring for the whole network, one row per side -->
-      <div class="co-net">
-        <div class="co-donut" role="img" aria-label="9 connections: 5 clients, 4 suppliers">
-          <div><span class="co-fc">FC</span><span class="co-donut-t">9 connections</span></div>
-        </div>
-        <div class="co-net-rows">
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-light-beige)"></i>Clients · 5</span><span>4 in order · 1 pending</span></div>
-            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><a href="#" onclick="return false">See all</a></div>
-            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-light-beige)"></i><i style="width:20%;background:var(--color-sand-400)"></i></div>
-          </div>
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 4</span><span>3 in order · 1 lagging</span></div>
-            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><a href="#" onclick="return false">See all</a></div>
-            <div class="co-bar" style="height:6px"><i style="width:75%;background:var(--color-coral)"></i><i style="width:25%;background:var(--color-coral-tint)"></i></div>
-          </div>
-          <span class="co-legend">Solid = papers in order · outlined = pending or lagging</span>
-        </div>
-      </div>
-    </div>
-  </section>
+  
 
 </div>
 
