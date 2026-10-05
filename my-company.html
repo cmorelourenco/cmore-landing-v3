@@ -32,10 +32,10 @@
   --color-coral-tint: #f9e7e3;
   /* the pending/lagging share in the hero: coral at 45% over the ground, visible where the tint is not */
   --color-coral-soft: color-mix(in oklab, var(--color-coral) 45%, var(--color-light-beige));
-  /* A tertiary for the clients' side of the ecosystem, opposite the coral on the wheel.
-     Not in the design system yet: proposed here, with its pending shade made the same way. */
-  --color-teal: #2a9d8f;
-  --color-teal-soft: color-mix(in oklab, var(--color-teal) 45%, var(--color-light-beige));
+  /* The clients' side of the ecosystem: the design system's green (its status green, derived
+     from the brand lime), with its pending shade made the same way as the coral's. */
+  --color-clients: var(--color-positive);
+  --color-clients-soft: color-mix(in oklab, var(--color-positive) 45%, var(--color-light-beige));
   --color-blue: #4e638b;
   --color-mid-blue: #909db6;
   --color-off-white: #fafafa;
@@ -621,16 +621,16 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-side-n > div > span:last-child, .co-hero .co-stat small, .co-hero .co-net-k > span:last-child,
 .co-hero .co-legend, .co-hero .co-donut-t { color: var(--color-ink-subtle); }
 .co-hero .co-stat-empty { color: var(--color-sand-400); }
-/* two families: clients in teal (the proposed tertiary), suppliers in coral;
+/* two families: clients in the design system's green, suppliers in coral;
    the lighter shade of each marks what is pending or lagging */
 .co-hero .co-bar-empty, .co-hero .co-donut-empty { background: var(--color-mid-beige); }
-.co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-teal) 0 44.4%, var(--color-teal-soft) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-soft) 88.9% 100%); }
+.co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-clients) 0 44.4%, var(--color-clients-soft) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-soft) 88.9% 100%); }
 .co-hero .co-donut > div { background: var(--color-light-beige); }
 .co-hero .co-fc { background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); }
 .co-hero .co-donut-empty .co-fc { background: transparent; color: var(--color-sand-500); border-color: var(--color-sand-400); }
-.co-hero .co-avs span { background: var(--color-teal); color: var(--color-graphite); border-color: var(--color-light-beige); }
+.co-hero .co-avs span { background: var(--color-clients); color: var(--color-off-white); border-color: var(--color-light-beige); }
 .co-hero .co-avs.is-coral span { background: var(--color-coral); color: var(--color-graphite); }
-.co-hero .co-avs span.is-out { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-teal); }
+.co-hero .co-avs span.is-out { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-clients); }
 .co-hero .co-avs.is-coral span.is-out { border-color: var(--color-coral); }
 .co-hero .co-avs-empty span { background: transparent; border: 1.5px dashed var(--color-sand-400); }
 .page .co-hero .co-avs a { color: var(--color-ink); }
@@ -954,7 +954,7 @@ body { transition: background-color .9s ease; }
         </div>
         <div class="co-net-rows">
           <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-teal)"></i>Clients · 0</span><span>none yet</span></div>
+            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 0</span><span>none yet</span></div>
             <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a client</a></div>
             <div class="co-bar co-bar-empty" style="height:6px"></div>
           </div>
@@ -1078,10 +1078,10 @@ body { transition: background-color .9s ease; }
           <div class="co-side">
             <span class="eyebrow co-on-dark">As a supplier</span>
             <div class="co-side-n">
-              <div><span class="co-stat" style="color:var(--color-teal)">5</span><span>clients connected</span></div>
+              <div><span class="co-stat" style="color:var(--color-clients)">5</span><span>clients connected</span></div>
               <div><span class="co-stat">9</span><span>requests · 7 yes, 2 pending</span></div>
             </div>
-            <div class="co-bar" style="height:8px"><i style="width:78%;background:var(--color-teal)"></i><i style="width:22%;background:var(--color-teal-soft)"></i></div>
+            <div class="co-bar" style="height:8px"><i style="width:78%;background:var(--color-clients)"></i><i style="width:22%;background:var(--color-clients-soft)"></i></div>
           </div>
           <div class="co-side">
             <span class="eyebrow co-on-dark">As a buyer</span>
@@ -1100,9 +1100,9 @@ body { transition: background-color .9s ease; }
         </div>
         <div class="co-net-rows">
           <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-teal)"></i>Clients · 5</span><span>4 in order · 1 pending</span></div>
+            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 5</span><span>4 in order · 1 pending</span></div>
             <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><a href="#" onclick="return false">See all</a></div>
-            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-teal)"></i><i style="width:20%;background:var(--color-teal-soft)"></i></div>
+            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-clients)"></i><i style="width:20%;background:var(--color-clients-soft)"></i></div>
           </div>
           <div class="co-net-row">
             <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 4</span><span>3 in order · 1 lagging</span></div>
