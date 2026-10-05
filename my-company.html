@@ -643,7 +643,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 /* two families: clients in light sand greys, suppliers in coral;
    the lighter shade of each marks what is pending or lagging */
 .co-hero .co-bar-empty, .co-hero .co-donut-empty { background: var(--color-mid-beige); }
-.co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-clients) 0 44.4%, var(--color-clients-soft) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-soft) 88.9% 100%); }
+.co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-clients) 0 50%, var(--color-clients-soft) 50% 58.3%, var(--color-coral) 58.3% 91.7%, var(--color-coral-soft) 91.7% 100%); }
 .co-hero .co-donut > div { background: var(--color-light-beige); }
 .co-hero .co-fc { background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); }
 .co-hero .co-donut-empty .co-fc { background: transparent; color: var(--color-sand-500); border-color: var(--color-sand-400); }
@@ -652,6 +652,8 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-avs span.is-out { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-clients); }
 .co-hero .co-avs.is-coral span.is-out { border-color: var(--color-coral); }
 .co-hero .co-avs-empty span { background: transparent; border: 1.5px dashed var(--color-sand-400); }
+/* the rest of the side, counted in a plain chip */
+.co-hero .co-avs span.is-more, .co-hero .co-avs.is-coral span.is-more { background: var(--color-surface); color: var(--color-ink-subtle); border-color: var(--color-line); font-weight: 600; }
 .page .co-hero .co-avs a { color: var(--color-ink); }
 .page .co-hero .co-avs a:hover { color: var(--color-coral-deep); }
 .co-hero .co-net-row + .co-net-row { border-top-color: var(--color-line); }
@@ -1301,42 +1303,42 @@ body { transition: background-color .9s ease; }
       <div class="co-band-l">
         <div style="display:flex;flex-direction:column;gap:0.75rem">
           <span class="eyebrow co-on-dark">Your ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">9 companies<br><span style="font-weight:600">share data with you.</span></h2>
+          <h2 class="co-h-xl" style="font-weight:300">24 companies<br><span style="font-weight:600">share data with you.</span></h2>
         </div>
         <div class="co-sides">
           <div class="co-side">
             <span class="eyebrow co-on-dark">As a supplier</span>
             <div class="co-side-n">
-              <div><span class="co-stat">5</span><span>clients connected</span></div>
-              <div><span class="co-stat">9</span><span>requests · 7 yes, 2 pending</span></div>
+              <div><span class="co-stat">14</span><span>clients connected</span></div>
+              <div><span class="co-stat">26</span><span>requests · 22 yes, 4 pending</span></div>
             </div>
-            <div class="co-bar" style="height:8px"><i style="width:78%;background:var(--color-clients)"></i><i style="width:22%;background:var(--color-clients-soft)"></i></div>
+            <div class="co-bar" style="height:8px"><i style="width:85%;background:var(--color-clients)"></i><i style="width:15%;background:var(--color-clients-soft)"></i></div>
           </div>
           <div class="co-side">
             <span class="eyebrow co-on-dark">As a buyer</span>
             <div class="co-side-n">
-              <div><span class="co-stat" style="color:var(--color-coral)">4</span><span>suppliers connected</span></div>
-              <div><span class="co-stat">3<small>/4</small></span><span>papers in order · 1 pending</span></div>
+              <div><span class="co-stat" style="color:var(--color-coral)">10</span><span>suppliers connected</span></div>
+              <div><span class="co-stat">8<small>/10</small></span><span>papers in order · 2 pending</span></div>
             </div>
-            <div class="co-bar" style="height:8px"><i style="width:75%;background:var(--color-coral)"></i><i style="width:25%;background:var(--color-coral-soft)"></i></div>
+            <div class="co-bar" style="height:8px"><i style="width:80%;background:var(--color-coral)"></i><i style="width:20%;background:var(--color-coral-soft)"></i></div>
           </div>
         </div>
       </div>
       <!-- One ring for the whole network, one row per side -->
       <div class="co-net">
-        <div class="co-donut" role="img" aria-label="9 connections: 5 clients, 4 suppliers">
-          <div><span class="co-donut-n">9</span><span class="co-donut-t co-donut-tl">connections</span></div>
+        <div class="co-donut" role="img" aria-label="24 connections: 14 clients, 10 suppliers">
+          <div><span class="co-donut-n">24</span><span class="co-donut-t co-donut-tl">connections</span></div>
         </div>
         <div class="co-net-rows">
           <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 5</span><span>4 in order · 1 pending</span></div>
-            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><a href="#" onclick="return false">See all</a></div>
-            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-clients)"></i><i style="width:20%;background:var(--color-clients-soft)"></i></div>
+            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 14</span><span>12 in order · 2 pending</span></div>
+            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><span class="is-more">+9</span><a href="#" onclick="return false">See all</a></div>
+            <div class="co-bar" style="height:6px"><i style="width:86%;background:var(--color-clients)"></i><i style="width:14%;background:var(--color-clients-soft)"></i></div>
           </div>
           <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 4</span><span>3 in order · 1 lagging</span></div>
-            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><a href="#" onclick="return false">See all</a></div>
-            <div class="co-bar" style="height:6px"><i style="width:75%;background:var(--color-coral)"></i><i style="width:25%;background:var(--color-coral-soft)"></i></div>
+            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 10</span><span>8 in order · 2 lagging</span></div>
+            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><span class="is-more">+6</span><a href="#" onclick="return false">See all</a></div>
+            <div class="co-bar" style="height:6px"><i style="width:80%;background:var(--color-coral)"></i><i style="width:20%;background:var(--color-coral-soft)"></i></div>
           </div>
           <span class="co-legend">Solid = papers in order · outlined = pending or lagging</span>
         </div>
