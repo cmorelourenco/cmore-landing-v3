@@ -642,9 +642,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-band-in { grid-template-areas: "l n" "a k"; row-gap: 1.5rem; }
 .co-hero .co-band-l { grid-area: l; } .co-hero .co-net { grid-area: n; }
 .co-hero .co-hero-acts { grid-area: a; align-self: center; }
-/* the same pill as the invite buttons, so the row reads as one set of actions */
-.page .co-hero .co-hero-link { grid-area: k; justify-self: end; align-self: center; margin: 0; text-decoration: none; color: var(--color-ink); }
-.page .co-hero .co-hero-link:hover { color: var(--color-ink); }
+.page .co-hero .co-hero-link { grid-area: k; justify-self: end; align-self: center; margin: 0; }
 @media (max-width: 76rem) {
   .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; }
   .page .co-hero .co-hero-link { justify-self: start; }
@@ -967,7 +965,7 @@ body { transition: background-color .9s ease; }
           <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
           <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
       </div>
-      <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
+      <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
@@ -1113,7 +1111,7 @@ body { transition: background-color .9s ease; }
           <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
           <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
       </div>
-      <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
+      <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
