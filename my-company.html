@@ -632,11 +632,21 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-net-row + .co-net-row { border-top-color: var(--color-line); }
 .co-hero-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 0.75rem; }
 .co-hero-btn { height: 2.5rem; padding-inline: 1.125rem; font-size: 0.9375rem; }
-.co-btn-light { background: var(--color-surface); border: 1px solid var(--color-line); color: var(--color-ink); }
+.co-btn-light { background: var(--color-off-white); border: 1px solid var(--color-line); color: var(--color-ink); }
 .co-btn-light:hover { border-color: var(--color-sand-400); color: var(--color-ink); }
 .page .co-hero-link { margin-left: 0.25rem; white-space: nowrap; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); text-underline-offset: 0.2em; }
 .page .co-hero-link:hover { color: var(--color-coral-deep); }
 @media (max-width: 34rem) { .co-hero-acts { flex-direction: column; align-items: stretch; } .co-hero-btn { width: 100%; } .page .co-hero-link { margin: 0.25rem 0 0; text-align: center; } }
+/* the band's grid: figures and network on top, the invite row and the ecosystem link
+   sharing the line under them */
+.co-hero .co-band-in { grid-template-areas: "l n" "a k"; row-gap: 1.5rem; }
+.co-hero .co-band-l { grid-area: l; } .co-hero .co-net { grid-area: n; }
+.co-hero .co-hero-acts { grid-area: a; align-self: center; }
+.page .co-hero .co-hero-link { grid-area: k; justify-self: end; align-self: center; margin: 0; }
+@media (max-width: 76rem) {
+  .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; }
+  .page .co-hero .co-hero-link { justify-self: start; }
+}
 /* ---- The same page, empty ---------------------------------------------- */
 .co-name-empty, .co-big-empty { color: var(--color-sand-400); }
 .co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
@@ -931,12 +941,6 @@ body { transition: background-color .9s ease; }
             <div class="co-bar co-bar-empty" style="height:8px"></div>
           </div>
         </div>
-        <div class="co-hero-acts">
-          <a href="#" onclick="return false" class="btn btn-primary co-hero-btn">Invite client</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
-          <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
-        </div>
       </div>
       <div class="co-net">
         <div class="co-donut co-donut-empty" role="img" aria-label="No connections yet">
@@ -956,6 +960,12 @@ body { transition: background-color .9s ease; }
           <span class="co-legend">Each company you invite appears here, with how their data stands.</span>
         </div>
       </div>
+      <div class="co-hero-acts">
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
+      </div>
+      <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
@@ -1076,12 +1086,6 @@ body { transition: background-color .9s ease; }
             <div class="co-bar" style="height:8px"><i style="width:75%;background:var(--color-coral)"></i><i style="width:25%;background:var(--color-coral-tint)"></i></div>
           </div>
         </div>
-        <div class="co-hero-acts">
-          <a href="#" onclick="return false" class="btn btn-primary co-hero-btn">Invite client</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
-          <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
-        </div>
       </div>
       <!-- One ring for the whole network, one row per side -->
       <div class="co-net">
@@ -1102,6 +1106,12 @@ body { transition: background-color .9s ease; }
           <span class="co-legend">Solid = papers in order · outlined = pending or lagging</span>
         </div>
       </div>
+      <div class="co-hero-acts">
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
+          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
+      </div>
+      <a href="#" onclick="return false" class="co-hero-link">View my ecosystem <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
