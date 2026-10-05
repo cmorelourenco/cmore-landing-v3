@@ -639,7 +639,6 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-net-half .co-net-rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; align-self: stretch; }
 .co-hero .co-net-half .co-net-row + .co-net-row { padding-top: 0; border-top: 0; }
 .co-hero .co-net-half .co-net-k { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
-.co-hero .co-net-half .co-legend { grid-column: 1 / -1; }
 @media (max-width: 40rem) { .co-hero .co-net-half .co-net-rows { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---- The hero: company, then the ecosystem, on the page's own light ground.
@@ -690,6 +689,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 @media (min-width: 76.0625rem) {
   .co-hero .co-band-in { row-gap: 1.5rem; }
   .co-hero .co-net { align-self: stretch; }
+  .co-hero .co-net-half .co-net-rows { padding-bottom: 1rem; } /* the figures' bars sit 1rem above their column's foot */
 }
 @media (max-width: 76rem) {
   .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); }
@@ -1186,7 +1186,6 @@ body { transition: background-color .9s ease; }
             <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 0</span><span>none yet</span></div>
             <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a supplier</a></div>
           </div>
-          <span class="co-legend">Each company you invite appears here, with how their data stands.</span>
         </div>
       </div>
       <div class="co-hero-acts">
@@ -1352,7 +1351,6 @@ body { transition: background-color .9s ease; }
             <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 10</span><span>8 in order · 2 lagging</span></div>
             <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><span class="is-more">+6</span><a href="#" onclick="return false">See all</a></div>
           </div>
-          <span class="co-legend">Solid = papers in order · light or outlined = pending or lagging</span>
         </div>
       </div>
       <div class="co-hero-acts">
