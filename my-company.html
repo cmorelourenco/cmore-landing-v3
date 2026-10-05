@@ -669,6 +669,10 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 /* the description sits under the title here, not across from it */
 .co-sec-head-stack { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 2rem; }
 .co-sec-head-stack .co-muted { font-size: 1.0625rem; }
+/* title with its description under it, the count and View all across from them */
+.co-sec-head-desc { align-items: flex-end; margin-bottom: 1.5rem; }
+.co-sec-t { display: flex; flex-direction: column; gap: 0.5rem; }
+.co-sec-t .co-muted { font-size: 1.0625rem; }
 /* each table's title sits above its card, like the section heads */
 .co-proj { gap: 2rem !important; }
 .co-sub-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
@@ -1045,7 +1049,7 @@ body { transition: background-color .9s ease; }
 
   <!-- Documents: an empty table, the columns already there -->
   <section class="co-sec co-pad-top-0"><div class="co-wrap">
-    <div class="co-sec-head"><h2 class="co-h-l">Documents</h2><div class="co-sec-r"><span class="co-muted">0 on file</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
+    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report you hold, dated and checked, in one place.</p></div><div class="co-sec-r"><span class="co-muted">0 on file</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl">
         <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
@@ -1213,7 +1217,7 @@ body { transition: background-color .9s ease; }
 
   <!-- Documents: only what needs attention, or will soon -->
   <section class="co-sec co-pad-top-0"><div class="co-wrap">
-    <div class="co-sec-head"><h2 class="co-h-l">Documents</h2><div class="co-sec-r"><span class="co-muted" id="co-docs-note">5 need attention or will soon · 5 more in order</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
+    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report, dated and checked. These are the ones to look at first.</p></div><div class="co-sec-r"><span class="co-muted" id="co-docs-note">5 need attention or will soon · 5 more in order</span><a href="#" onclick="return false" class="co-link">View all</a></div></div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl">
         <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
