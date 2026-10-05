@@ -286,6 +286,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .ready .opt { color: var(--color-sand-500); }
 .ready-err { flex-basis: 100%; font-size: 0.8125rem; color: var(--color-critical); }
 .ready-err:empty { display: none; }
+.ready-note { flex-basis: 100%; margin: 0.125rem 0 0; font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
 
 /* ---- Arriving and leaving --------------------------------------------- */
 /* Direct visits settle in; arrivals from the landing do not, because the landing
@@ -627,8 +628,9 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     const cc = person.cc || BY_TLD[tld] || '+1';
     return `<li data-row="phone" class="is-field"><label class="k" for="d-phone">Phone <span class="opt">(optional)</span></label>` +
       `<span class="ready-form"><select class="input" id="d-cc" aria-label="Country code">${CODES.map(([c, k]) => `<option value="${c}"${c === cc ? ' selected' : ''}>${k} ${c}</option>`).join('')}</select>` +
-      `<input class="input" id="d-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Phone number" value="${esc(person.phone || '')}" style="flex:1;min-width:0"></span>` +
-      `<p class="ready-err" id="d-phone-err" role="alert"></p></li>`;
+      `<input class="input" id="d-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Phone number" aria-describedby="d-phone-note" value="${esc(person.phone || '')}" style="flex:1;min-width:0"></span>` +
+      `<p class="ready-err" id="d-phone-err" role="alert"></p>` +
+      `<p class="ready-note" id="d-phone-note">Used only for two-factor sign-in and for suppliers you contact on the C&#8209;MORE marketplace.</p></li>`;
   };
   const phoneOk = (val) => { const d = val.replace(/\D/g, ''); return !val || (d.length >= 6 && d.length <= 15 && !/[^\d\s()+.-]/.test(val)); };
   const checkPhone = () => {
