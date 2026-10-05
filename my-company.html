@@ -772,6 +772,15 @@ html[data-sn="drawer"] .who-chip { margin-right: 0; padding-right: 0.25rem; }
 .hdr-bell .bell-count { position: absolute; top: 0.125rem; right: 0; min-width: 1.125rem; height: 1.125rem; padding: 0 0.25rem; font-size: 0.625rem;
   background: var(--color-coral); border-color: var(--color-coral); color: var(--color-off-white); }
 @media (prefers-reduced-motion: reduce) { .sn, .sn-collapse svg, .top .hdr-in, .co-wrap { transition: none !important; } }
+/* the company's logo, beside its name: who this page is about, at a glance */
+.co-id-main { display: flex; align-items: center; gap: 1.25rem; min-width: 0; }
+.co-logo { flex: none; width: 5.5rem; height: 5.5rem; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(52,52,52,.06), 0 8px 20px -10px rgba(52,52,52,.35); }
+.co-logo-empty { display: grid; place-items: center; align-content: center; gap: 0.125rem; padding: 0; cursor: pointer; box-shadow: none;
+  border: 2px dashed var(--color-sand-400); background: transparent; color: var(--color-sand-500); font: inherit; font-size: 0.75rem; font-weight: 500; }
+.co-logo-empty svg { width: 1.375rem; height: 1.375rem; }
+.co-logo-empty:hover { border-color: var(--color-coral); color: var(--color-coral-deep); }
+.co-hero .co-fc.co-fc-logo { width: 2.75rem; height: 2.75rem; padding: 0; border: 0; border-radius: 0.625rem; background: none; }
+@media (max-width: 52rem) { .co-logo { width: 4rem; height: 4rem; border-radius: 0.875rem; } .co-id-main { gap: 0.875rem; } }
 /* ---- The same page, empty ---------------------------------------------- */
 .co-name-empty, .co-big-empty { color: var(--color-sand-400); }
 .co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
@@ -1054,10 +1063,13 @@ body { transition: background-color .9s ease; }
     <div class="co-band-mesh" aria-hidden="true"></div>
     <div class="co-wrap co-hero-id">
       <div class="co-id">
+      <div class="co-id-main">
+      <button type="button" class="co-logo co-logo-empty" aria-label="Add your company logo" title="Add your company logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Logo</span></button>
       <div class="co-id-l">
         <span class="eyebrow">My company</span>
         <h1 class="co-name co-name-empty">Your company</h1>
         <span class="co-subtle" style="font-size:0.9375rem">Name, sector, size, tax number and address will show here once ALMA has read your documents.</span>
+      </div>
       </div>
       <div class="co-score">
         <div class="co-ring" style="--p:0%"><div>—</div></div>
@@ -1218,10 +1230,13 @@ body { transition: background-color .9s ease; }
     <div class="co-band-mesh" aria-hidden="true"></div>
     <div class="co-wrap co-hero-id">
       <div class="co-id">
+      <div class="co-id-main">
+      <img class="co-logo" src="images/ferreira-logo.svg" alt="Ferreira Construction logo" width="88" height="88">
       <div class="co-id-l">
         <span class="eyebrow">My company</span>
         <h1 class="co-name">Ferreira Construction LLC</h1>
         <span class="co-subtle" style="font-size:0.9375rem">General contractor · 24 people · EIN 84&#8209;3921745 · Delaware LLC · Wilmington, DE</span>
+      </div>
       </div>
       <div class="co-score">
         <div class="co-ring" id="co-ring" style="--p:78%"><div id="co-score">78</div></div>
@@ -1257,7 +1272,7 @@ body { transition: background-color .9s ease; }
       <!-- One ring for the whole network, one row per side -->
       <div class="co-net">
         <div class="co-donut" role="img" aria-label="9 connections: 5 clients, 4 suppliers">
-          <div><span class="co-fc">FC</span><span class="co-donut-t">9 connections</span></div>
+          <div><img class="co-fc co-fc-logo" src="images/ferreira-logo.svg" alt="" width="44" height="44"><span class="co-donut-t">9 connections</span></div>
         </div>
         <div class="co-net-rows">
           <div class="co-net-row">
