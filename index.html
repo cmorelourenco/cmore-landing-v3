@@ -1576,6 +1576,10 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 #how .deck .bullet.on i { background: rgba(250,250,250,.28); }
 #how .deck .panel:focus-visible { outline-color: var(--color-coral); }
 #how .deck .ctl { gap: 18px; }
+#how .deck .perks-title, #how .perks-title { margin-top: 0; }
+#how .deck .dir .r > svg { flex: none; color: var(--color-coral); }
+#how .deck .dir .me > svg { color: var(--color-graphite); }
+#how .deck .dir .me .av { font-size: 13px; }
 /* phones: the band stops pinning and grows with the accordion */
 @media (max-width: 760px) {
   #how { position: relative !important; height: auto !important; padding: 4rem 0 5.5rem !important; }
@@ -1635,100 +1639,76 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 <div class="band-layer" aria-hidden="true"><canvas id="sphere-band" style="width:100%;height:100%;display:block"></canvas></div><div class="band-layer" aria-hidden="true"><canvas id="sphere-cta" style="width:100%;height:100%;display:block"></canvas></div>
 
 <div class="how-pin">
-<section id="how" data-band="invert" class="surface-invert" data-screen-label="Early access" style="position:sticky;top:var(--hdr);border-top:2px solid var(--color-coral);box-sizing:border-box;height:calc(100vh - var(--hdr));display:flex;align-items:center;padding:2rem 0 4.75rem;background:transparent;overflow:clip">
+<section id="how" data-band="invert" class="surface-invert" data-screen-label="What C-MORE changes" style="position:sticky;top:var(--hdr);border-top:2px solid var(--color-coral);box-sizing:border-box;height:calc(100vh - var(--hdr));display:flex;align-items:center;padding:2rem 0 4.75rem;background:transparent;overflow:clip">
 <div class="container-site" style="position:relative;width:100%">
 <div class="perks" style="position:relative;display:flex;flex-direction:column;align-items:center;text-align:center">
 <div class="perks-intro" data-plx-y="-0.03" style="will-change:transform">
-<p class="eyebrow perks-eyebrow">Early access</p>
-<h2 class="perks-title">Be one of the first 2,500.<br><span class="soft">Become a <span class="perks-mark">founding member</span>.</span></h2>
-<p class="perks-lead">Early access is limited to the first 2,500 companies. Join now to get more than a head start.</p>
+<h2 class="perks-title">What C&#8209;MORE <span class="perks-mark">changes</span></h2>
 </div>
 <div class="deck">
         <div class="row" id="row">
           <button type="button" class="panel on" data-i="0" aria-pressed="true">
             <span class="closed">
               <span class="top"><span class="sq"></span><span class="num">01</span></span>
-              <span><span class="ptitle">Your first 20 users, free.</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+              <span><span class="ptitle">1&nbsp;=&nbsp;100 clients</span><br><span class="cue">See how <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
             </span>
             <span class="open">
               <span class="copy">
-                <span><span class="head"><span class="sq"></span>PERK 01 / 04</span><h2>Your first 20 users, free.</h2><p>Invite up to 20 people, from your team or the companies you work with, at no cost.</p></span>
-                <span class="chip">First 20 seats · Free</span>
+                <span><span class="head"><span class="sq"></span>01 / 04</span><h2>1&nbsp;=&nbsp;100 clients</h2><p>Network effect: the contractor profile is reusable. This is the growth engine.</p></span>
+                <span class="chip">Network effect</span>
               </span>
-              <span class="illo">
-                <span class="seats"><span class="seat you">You</span><span class="seat" style="--i:1"></span><span class="seat" style="--i:2"></span><span class="seat" style="--i:3"></span><span class="seat" style="--i:4"></span><span class="seat" style="--i:5"></span><span class="seat" style="--i:6"></span><span class="seat" style="--i:7"></span><span class="seat" style="--i:8"></span><span class="seat" style="--i:9"></span><span class="seat" style="--i:10"></span><span class="seat" style="--i:11"></span><span class="seat" style="--i:12"></span><span class="seat" style="--i:13"></span><span class="seat" style="--i:14"></span><span class="seat" style="--i:15"></span><span class="seat" style="--i:16"></span><span class="seat" style="--i:17"></span><span class="seat" style="--i:18"></span><span class="seat" style="--i:19"></span></span>
-                <span class="big"><strong>20</strong><span>seats · Free</span></span>
-              </span>
+              <span class="illo"><span class="seats"><span class="seat you">You</span><span class="seat" style="--i:1"></span><span class="seat" style="--i:2"></span><span class="seat" style="--i:3"></span><span class="seat" style="--i:4"></span><span class="seat" style="--i:5"></span><span class="seat" style="--i:6"></span><span class="seat" style="--i:7"></span><span class="seat" style="--i:8"></span><span class="seat" style="--i:9"></span><span class="seat" style="--i:10"></span><span class="seat" style="--i:11"></span><span class="seat" style="--i:12"></span><span class="seat" style="--i:13"></span><span class="seat" style="--i:14"></span><span class="seat" style="--i:15"></span><span class="seat" style="--i:16"></span><span class="seat" style="--i:17"></span><span class="seat" style="--i:18"></span><span class="seat" style="--i:19"></span></span><span class="big"><strong>100</strong><span>clients</span></span></span>
             </span>
           </button>
           <button type="button" class="panel" data-i="1" aria-pressed="false">
             <span class="closed">
               <span class="top"><span class="sq"></span><span class="num">02</span></span>
-              <span><span class="ptitle">Always visible</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+              <span><span class="ptitle">&gt;90% accuracy</span><br><span class="cue">See how <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
             </span>
             <span class="open">
               <span class="copy">
-                <span><span class="head"><span class="sq"></span>PERK 02 / 04</span><h2>Always visible</h2><p>Your company stays visible to everyone in the <span class="nb">C-MORE</span> ecosystem, for good.</p></span>
-                <span class="chip">Permanent listing</span>
+                <span><span class="head"><span class="sq"></span>02 / 04</span><h2>&gt;90% accuracy</h2><p>On agent-filled information. Every document validated and traceable.</p></span>
+                <span class="chip">Validated and traceable</span>
               </span>
-              <span class="illo">
-                <span class="dir">
-                  <span class="r me"><span class="av">Y</span><span class="txt"><b>Your company</b><small>Founding member · always listed</small></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>
-                  <span class="r"><span class="av"></span><span class="ph"><i style="width:110px"></i><i style="width:66px"></i></span></span>
-                  <span class="r"><span class="av"></span><span class="ph"><i style="width:90px"></i><i style="width:56px"></i></span></span>
-                </span>
-              </span>
+              <span class="illo"><span class="dir"><span class="r me"><span class="av">AI</span><span class="txt"><b>Filled by ALMA</b><small>Matches the source</small></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="r"><span class="av"></span><span class="ph"><i style="width:120px"></i><i style="width:70px"></i></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="r"><span class="av"></span><span class="ph"><i style="width:96px"></i><i style="width:58px"></i></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></span></span>
             </span>
           </button>
           <button type="button" class="panel" data-i="2" aria-pressed="false">
             <span class="closed">
               <span class="top"><span class="sq"></span><span class="num">03</span></span>
-              <span><span class="ptitle">Highlighted in the marketplace</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+              <span><span class="ptitle">97% automated</span><br><span class="cue">See how <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
             </span>
             <span class="open">
               <span class="copy">
-                <span><span class="head"><span class="sq"></span>PERK 03 / 04</span><h2>Highlighted in the marketplace</h2><p>One week every month, your company is featured in the <span class="nb">C-MORE</span> marketplace.</p></span>
-                <span class="chip">1 week every month</span>
+                <span><span class="head"><span class="sq"></span>03 / 04</span><h2>97% automated</h2><p>Of the manual administrative work, enabling H&amp;S teams to focus on on-site audits and ensuring compliance.</p></span>
+                <span class="chip">More time on site</span>
               </span>
-              <span class="illo">
-                <span class="weeks">
-                  <span class="wk"><small>W1</small><i></i></span>
-                  <span class="wk hot"><small>W2</small><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><span>Featured</span></i></span>
-                  <span class="wk"><small>W3</small><i></i></span>
-                  <span class="wk"><small>W4</small><i></i></span>
-                </span>
-              </span>
+              <span class="illo"><span class="tl"><span class="lab"><b>97% automated</b><span>3% manual</span></span><span class="track"><i class="base"></i><i class="done" style="width:97%"></i><i class="dot" style="left:calc(97% - 9px)"></i><i class="end"></i></span><span class="new"><b>H&amp;S</b><span>On-site audits</span></span></span></span>
             </span>
           </button>
           <button type="button" class="panel" data-i="3" aria-pressed="false">
             <span class="closed">
               <span class="top"><span class="sq"></span><span class="num">04</span></span>
-              <span><span class="ptitle">New features first</span><br><span class="cue">See perk <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
+              <span><span class="ptitle">Zero expiry checks</span><br><span class="cue">See how <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></span>
             </span>
             <span class="open">
               <span class="copy">
-                <span><span class="head"><span class="sq"></span>PERK 04 / 04</span><h2>New features first</h2><p>Every new feature and functionality reaches founding members before anyone else.</p></span>
-                <span class="chip">Day-one access</span>
+                <span><span class="head"><span class="sq"></span>04 / 04</span><h2>Zero manual expiry checks</h2><p>C&#8209;MORE watches every expiry date and asks for the renewal before anything lapses.</p></span>
+                <span class="chip">Renewals on time</span>
               </span>
-              <span class="illo">
-                <span class="tl">
-                  <span class="lab"><b>Founding members</b><span>Everyone else</span></span>
-                  <span class="track"><i class="base"></i><i class="done"></i><i class="dot"></i><i class="end"></i></span>
-                  <span class="new"><b>NEW</b><span>The next release</span><em>Day one</em></span>
-                </span>
-              </span>
+              <span class="illo"><span class="weeks"><span class="wk"><small>Jan</small><i></i></span><span class="wk hot"><small>Feb</small><i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v4l2.5 2.5"/><circle cx="12" cy="12" r="8.5"/></svg><span>Renewed</span></i></span><span class="wk"><small>Mar</small><i></i></span><span class="wk"><small>Apr</small><i></i></span></span></span>
             </span>
           </button>
         </div>
         <div class="ctl">
-          <button type="button" class="nav" id="prev" aria-label="Previous perk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
-          <div class="bullets" aria-label="Perks" id="bullets">
-            <button type="button" class="bullet on" data-i="0" aria-label="Perk 01: Your first 20 users, free."><i><b></b></i></button>
-            <button type="button" class="bullet" data-i="1" aria-label="Perk 02: Always visible"><i><b></b></i></button>
-            <button type="button" class="bullet" data-i="2" aria-label="Perk 03: Highlighted in the marketplace"><i><b></b></i></button>
-            <button type="button" class="bullet" data-i="3" aria-label="Perk 04: New features first"><i><b></b></i></button>
+          <button type="button" class="nav" id="prev" aria-label="Previous"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          <div class="bullets" aria-label="What C-MORE changes" id="bullets">
+            <button type="button" class="bullet on" data-i="0" aria-label="1 = 100 clients"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="1" aria-label="More than 90% accuracy"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="2" aria-label="97% automated"><i><b></b></i></button>
+            <button type="button" class="bullet" data-i="3" aria-label="Zero manual expiry checks"><i><b></b></i></button>
           </div>
-          <button type="button" class="nav" id="next" aria-label="Next perk"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <button type="button" class="nav" id="next" aria-label="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </div>
         </div>
 <div class="perks-cta">
