@@ -39,9 +39,72 @@
     ['Fontanería Barcelona', 'Barcelona', 'Barcelonès', 'Cataluña', ES, ['Plumbing', 'HVAC'], 17, 0, 0, 2026],
     ['Bayern Stahlbau', 'München', 'Oberbayern', 'Bavaria', DE, ['Steel erection', 'Welding'], 95, 0, 0, 2025],
     ['Rhein Dach', 'Köln', 'Regierungsbezirk Köln', 'North Rhine-Westphalia', DE, ['Roofing'], 28, 0, 0, 2026],
+    // more on every region
+    ['Christiana Carpentry', 'Newark', 'New Castle County', 'Delaware', US, ['Carpentry'], 14, 0, 0, 2026],
+    ['Brandywine Fire & Safety', 'Wilmington', 'New Castle County', 'Delaware', US, ['Fire protection'], 20, 0, 0, 2025],
+    ['Bear Insulation Pros', 'Bear', 'New Castle County', 'Delaware', US, ['Insulation'], 10, 1, 0, 2026],
+    ['Wilmington Demolition Co.', 'Wilmington', 'New Castle County', 'Delaware', US, ['Demolition', 'Waste management'], 38, 0, 0, 2025],
+    ['Dover Drywall & Interiors', 'Dover', 'Kent County', 'Delaware', US, ['Drywall', 'Painting'], 17, 0, 0, 2026],
+    ['Milford Mechanical', 'Milford', 'Kent County', 'Delaware', US, ['HVAC', 'Plumbing'], 25, 0, 0, 2025],
+    ['Harrington Equipment Rental', 'Harrington', 'Kent County', 'Delaware', US, ['Equipment rental'], 6, 0, 0, 2026],
+    ['Rehoboth Roofing', 'Rehoboth Beach', 'Sussex County', 'Delaware', US, ['Roofing'], 12, 0, 0, 2026],
+    ['Seaford Concrete Pumping', 'Seaford', 'Sussex County', 'Delaware', US, ['Concrete'], 19, 1, 0, 2025],
+    ['Millsboro Electric', 'Millsboro', 'Sussex County', 'Delaware', US, ['Electrical'], 15, 0, 0, 2026],
+    ['Chester Valley Masonry', 'Exton', 'Chester County', 'Pennsylvania', US, ['Masonry'], 22, 0, 0, 2025],
+    ['Brandywine Valley HVAC', 'Downingtown', 'Chester County', 'Pennsylvania', US, ['HVAC'], 29, 0, 0, 2026],
+    ['Phoenixville Iron Works', 'Phoenixville', 'Chester County', 'Pennsylvania', US, ['Welding', 'Steel erection'], 51, 0, 0, 2025],
+    ['Chester Waterfront Welding', 'Chester', 'Delaware County', 'Pennsylvania', US, ['Welding'], 13, 1, 0, 2026],
+    ['Springfield Painting', 'Springfield', 'Delaware County', 'Pennsylvania', US, ['Painting'], 9, 0, 0, 2026],
+    ['Media Glass Co.', 'Media', 'Delaware County', 'Pennsylvania', US, ['Glazing'], 11, 0, 0, 2025],
+    ['Schuylkill Scaffolding', 'Philadelphia', 'Philadelphia County', 'Pennsylvania', US, ['Scaffolding'], 34, 0, 0, 2025],
+    ['Fishtown Electric', 'Philadelphia', 'Philadelphia County', 'Pennsylvania', US, ['Electrical'], 27, 0, 0, 2026],
+    ['Northeast Philly Plumbing', 'Philadelphia', 'Philadelphia County', 'Pennsylvania', US, ['Plumbing'], 16, 0, 0, 2026],
+    ['Delaware River Builders', 'Philadelphia', 'Philadelphia County', 'Pennsylvania', US, ['General construction'], 160, 0, 0, 2025],
+    ['King of Prussia Contractors', 'King of Prussia', 'Montgomery County', 'Pennsylvania', US, ['General construction'], 74, 1, 0, 2025],
+    ['Conshohocken Roofing', 'Conshohocken', 'Montgomery County', 'Pennsylvania', US, ['Roofing'], 18, 0, 0, 2026],
+    ['Lansdale Equipment Rental', 'Lansdale', 'Montgomery County', 'Pennsylvania', US, ['Equipment rental'], 12, 0, 0, 2026],
+    ['Pennsauken Steel', 'Pennsauken', 'Camden County', 'New Jersey', US, ['Steel erection', 'Welding'], 46, 0, 0, 2025],
+    ['Collingswood Carpentry', 'Collingswood', 'Camden County', 'New Jersey', US, ['Carpentry'], 8, 0, 0, 2026],
+    ['Haddonfield Electric', 'Haddonfield', 'Camden County', 'New Jersey', US, ['Electrical'], 21, 0, 0, 2025],
+    ['Deptford Excavating', 'Deptford', 'Gloucester County', 'New Jersey', US, ['Excavation'], 24, 0, 0, 2026],
+    ['Woodbury Plumbing & Air', 'Woodbury', 'Gloucester County', 'New Jersey', US, ['Plumbing', 'HVAC'], 14, 1, 0, 2026],
+    ['Mullica Hill Masonry', 'Mullica Hill', 'Gloucester County', 'New Jersey', US, ['Masonry'], 10, 0, 0, 2025],
+    ['Elkton Welding & Fabrication', 'Elkton', 'Cecil County', 'Maryland', US, ['Welding'], 17, 0, 0, 2026],
+    ['Perryville Paving', 'Perryville', 'Cecil County', 'Maryland', US, ['Concrete', 'Excavation'], 31, 0, 0, 2025],
+    ['Chesapeake City Carpentry', 'Chesapeake City', 'Cecil County', 'Maryland', US, ['Carpentry'], 7, 0, 0, 2026],
+    ['Harbor Point Builders', 'Baltimore', 'Baltimore City', 'Maryland', US, ['General construction'], 132, 0, 0, 2025],
+    ['Fells Point Glazing', 'Baltimore', 'Baltimore City', 'Maryland', US, ['Glazing'], 15, 0, 0, 2026],
+    ['Inner Harbor Electric', 'Baltimore', 'Baltimore City', 'Maryland', US, ['Electrical'], 39, 1, 0, 2025],
+    ['Canton Fire Systems', 'Baltimore', 'Baltimore City', 'Maryland', US, ['Fire protection'], 23, 0, 0, 2026],
+    ['Alfama Eletricidade', 'Lisboa', 'Grande Lisboa', 'Lisboa', PT, ['Electrical'], 18, 0, 0, 2026],
+    ['Sintra Telhados', 'Sintra', 'Grande Lisboa', 'Lisboa', PT, ['Roofing'], 12, 0, 0, 2026],
+    ['Amadora Canalizações', 'Amadora', 'Grande Lisboa', 'Lisboa', PT, ['Plumbing'], 9, 0, 0, 2025],
+    ['Almada Construções', 'Almada', 'Península de Setúbal', 'Setúbal', PT, ['General construction'], 64, 0, 0, 2025],
+    ['Barreiro Metalomecânica', 'Barreiro', 'Península de Setúbal', 'Setúbal', PT, ['Welding', 'Steel erection'], 37, 1, 0, 2026],
+    ['Gaia Betão', 'Vila Nova de Gaia', 'Área Metropolitana do Porto', 'Porto', PT, ['Concrete'], 42, 0, 0, 2025],
+    ['Matosinhos Climatização', 'Matosinhos', 'Área Metropolitana do Porto', 'Porto', PT, ['HVAC'], 16, 0, 0, 2026],
+    ['Maia Andaimes', 'Maia', 'Área Metropolitana do Porto', 'Porto', PT, ['Scaffolding'], 21, 0, 0, 2026],
+    ['Barcelos Carpintaria', 'Barcelos', 'Cávado', 'Braga', PT, ['Carpentry'], 11, 0, 0, 2026],
+    ['Braga Pinturas', 'Braga', 'Cávado', 'Braga', PT, ['Painting'], 8, 0, 0, 2025],
+    ['Getafe Electricidad', 'Getafe', 'Área Metropolitana de Madrid', 'Comunidad de Madrid', ES, ['Electrical'], 33, 0, 0, 2025],
+    ['Alcobendas Climatización', 'Alcobendas', 'Área Metropolitana de Madrid', 'Comunidad de Madrid', ES, ['HVAC'], 26, 0, 0, 2026],
+    ['Móstoles Estructuras', 'Móstoles', 'Área Metropolitana de Madrid', 'Comunidad de Madrid', ES, ['Steel erection', 'Welding'], 58, 1, 0, 2025],
+    ['Badalona Cubiertas', 'Badalona', 'Barcelonès', 'Cataluña', ES, ['Roofing'], 14, 0, 0, 2026],
+    ['Hospitalet Construccions', "L'Hospitalet de Llobregat", 'Barcelonès', 'Cataluña', ES, ['General construction'], 88, 0, 0, 2025],
+    ['Isar Elektrotechnik', 'München', 'Oberbayern', 'Bavaria', DE, ['Electrical'], 47, 0, 0, 2025],
+    ['Ingolstadt Gerüstbau', 'Ingolstadt', 'Oberbayern', 'Bavaria', DE, ['Scaffolding'], 29, 0, 0, 2026],
+    ['Rosenheim Holzbau', 'Rosenheim', 'Oberbayern', 'Bavaria', DE, ['Carpentry'], 22, 0, 0, 2026],
+    ['Bonn Sanitär', 'Bonn', 'Regierungsbezirk Köln', 'North Rhine-Westphalia', DE, ['Plumbing', 'HVAC'], 19, 0, 0, 2025],
+    ['Leverkusen Betonbau', 'Leverkusen', 'Regierungsbezirk Köln', 'North Rhine-Westphalia', DE, ['Concrete'], 54, 1, 0, 2026],
   ];
+  // the suppliers that have uploaded their own logo
+  const LOGOS = ['Delmarva Steel', 'Keystone Electric', 'Coastal Concrete', 'Brandywine Plumbing & Heating', 'Summit Roofing', 'Tri-State Fire Protection',
+    'Diamond State Builders', 'Garden State Contractors', 'Liberty Mechanical', 'Chesapeake HVAC', 'Construções Tejo', 'Construcciones Meseta',
+    'Bayern Stahlbau', 'Rhein Dach', 'Isar Elektrotechnik', 'Harbor Point Builders'];
+  const slug = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' ').split(/[^a-z0-9]+/).filter((w) => w && w !== 'heating').join('-');
   const SUP = RAW.map(([name, city, region, state, country, services, workers, pending, mine, since], id) => ({
     id, name, city, region, state, country, services, workers, pending, mine: !!mine, since, sent: false,
+    logo: LOGOS.includes(name) ? `images/suppliers/${slug(name)}.svg` : '',
     ini: name.replace(/[^A-Za-zÀ-ÿ ]/g, ' ').split(/\s+/).filter((w) => w && !/^(of|do|de|and|co)$/i.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase(),
   }));
   // every type of service anyone might look for, not only the ones on the list today
@@ -144,9 +207,9 @@
     const papers = s.pending ? `<span class="co-badge b-pend">${s.pending} paper${s.pending > 1 ? 's' : ''} pending</span>` : '<span class="co-badge b-ok">Papers in order</span>';
     const foot = s.mine
       ? `<a href="#" class="co-link" onclick="return false">Open profile</a><button type="button" class="btn co-btn-light" data-req="${s.id}" onclick="return false">Request documents</button>`
-      : `<a href="#" class="co-link" onclick="return false">View profile</a>` + (s.sent ? '<button type="button" class="btn co-btn-light" disabled>Invitation sent</button>' : `<button type="button" class="btn btn-primary" data-invite="${s.id}">Invite to my ecosystem</button>`);
+      : `<a href="#" class="co-link" onclick="return false">View profile</a>` + (s.sent ? '<button type="button" class="btn co-btn-light" disabled>Request sent</button>' : `<button type="button" class="btn btn-primary" data-invite="${s.id}">Connect to supplier</button>`);
     return `<li class="eco-card${s.mine ? ' is-mine' : ''}">
-      <div class="eco-card-top"><span class="eco-logo" aria-hidden="true">${s.ini}</span>${tag}</div>
+      <div class="eco-card-top">${s.logo ? `<img class="eco-logo eco-logo-img" src="${s.logo}" alt="" width="48" height="48" loading="lazy">` : `<span class="eco-logo" aria-hidden="true">${s.ini}</span>`}${tag}</div>
       <div class="eco-id"><h3>${esc(s.name)}</h3><span class="eco-loc">${PIN}<span>${esc(s.city)} · ${esc(s.region)}<br>${esc(s.state)}, ${esc(s.country)}</span></span></div>
       <div class="eco-svcs">${s.services.map((v) => `<span class="eco-svc${v === sel.service ? ' is-hit' : ''}">${esc(v)}</span>`).join('')}</div>
       <div class="eco-facts">${papers}<span>${s.workers} workers</span><span>On C&#8209;MORE since ${s.since}</span></div>
