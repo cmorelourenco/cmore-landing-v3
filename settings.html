@@ -1004,6 +1004,8 @@ body { transition: background-color .9s ease; }
 .set-foot { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
 .set-foot-l { justify-content: flex-start; gap: 0.75rem; }
 .set-saved { font-size: 0.875rem; color: var(--color-positive); font-weight: 500; }
+/* a button with nothing to do looks it */
+.set-card .btn:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
 .set-list { padding: 0; }
 .set-row { padding: 0.25rem 0; border-bottom: 0; }
 .set-sessions { display: flex; flex-direction: column; }
@@ -1166,7 +1168,7 @@ body { transition: background-color .9s ease; }
       </section>
 
       <!-- Consents & privacy: moved here from the company page -->
-      <section class="co-card set-card" id="consents" aria-labelledby="h-consents">
+      <section class="co-card set-card" id="consents" data-area aria-labelledby="h-consents">
         <div class="set-card-h"><h2 id="h-consents">Consents &amp; privacy</h2><p class="co-subtle">What you allow C&#8209;MORE to do with your company's information. Requests from clients to see your documents are on <a href="my-company.html?filled#consents">your company page</a>.</p></div>
         <div class="co-list set-list">
           <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">1</span>Privacy &amp; data processing</span><span class="co-subtle">Required to keep the company on C&#8209;MORE. Given 12 Mar 2026.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Privacy and data processing, required" disabled title="Required to keep the company on C-MORE, so it cannot be switched off"><i></i></button></div>
@@ -1174,11 +1176,12 @@ body { transition: background-color .9s ease; }
           <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">3</span>Share renewals with clients automatically</span><span class="co-subtle">When a certificate is renewed, clients who hold it get the new one.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Share renewals with clients automatically"><i></i></button></div>
           <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">4</span>C&#8209;MORE newsletter</span><span class="co-subtle">Product news and compliance tips, about once a month. Opt out any time.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="C-MORE newsletter"><i></i></button></div>
         </div>
+        <div class="set-foot"><span class="set-saved" role="status"></span><button type="button" class="btn btn-primary btn-sm" data-save disabled>Save changes</button></div>
         <div class="set-foot set-foot-l"><button type="button" class="link-btn" onclick="return false">Download a copy of my data</button><span class="co-subtle" style="font-size:.8125rem">·</span><a href="#" class="link-btn" onclick="return false">Privacy policy</a></div>
       </section>
 
       <!-- Notifications -->
-      <section class="co-card set-card" id="notifications" aria-labelledby="h-notif">
+      <section class="co-card set-card" id="notifications" data-area aria-labelledby="h-notif">
         <div class="set-card-h"><h2 id="h-notif">Notifications</h2><p class="co-subtle">What we email you about. The bell in the header always shows everything.</p></div>
         <div class="co-list set-list">
           <div class="co-row"><div class="co-row-t"><span class="co-row-n">A document is about to expire</span><span class="co-subtle">30 days before, and again a week before.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="A document is about to expire"><i></i></button></div>
@@ -1186,17 +1189,18 @@ body { transition: background-color .9s ease; }
           <div class="co-row"><div class="co-row-t"><span class="co-row-n">A supplier wants to connect</span><span class="co-subtle">Requests from the C&#8209;MORE ecosystem.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="A supplier wants to connect"><i></i></button></div>
           <div class="co-row"><div class="co-row-t"><span class="co-row-n">Weekly summary</span><span class="co-subtle">Every Monday: what changed, and what is coming up.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Weekly summary"><i></i></button></div>
         </div>
+        <div class="set-foot"><span class="set-saved" role="status"></span><button type="button" class="btn btn-primary btn-sm" data-save disabled>Save changes</button></div>
       </section>
 
       <!-- Language & region -->
-      <section class="co-card set-card" id="language" aria-labelledby="h-lang">
+      <section class="co-card set-card" id="language" data-area aria-labelledby="h-lang">
         <div class="set-card-h"><h2 id="h-lang">Language &amp; region</h2><p class="co-subtle">How dates, times and the interface read for you.</p></div>
         <div class="set-grid">
           <div class="set-f"><label for="r-lang">Language</label><select class="input" id="r-lang"><option value="pt">Português</option><option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option><option value="fr">Français</option><option value="it">Italiano</option></select></div>
           <div class="set-f"><label for="r-tz">Time zone</label><select class="input" id="r-tz"><option>Eastern Time (New York)</option><option>Central Time (Chicago)</option><option>Pacific Time (Los Angeles)</option><option>Lisbon</option><option>Madrid</option><option>Berlin</option></select></div>
           <div class="set-f"><label for="r-date">Date format</label><select class="input" id="r-date"><option>5 Oct 2026</option><option>10/05/2026</option><option>05/10/2026</option><option>2026-10-05</option></select></div>
         </div>
-        <div class="set-foot"><span class="set-saved" role="status" id="r-saved"></span></div>
+        <div class="set-foot"><span class="set-saved" role="status"></span><button type="button" class="btn btn-primary btn-sm" data-save disabled>Save changes</button></div>
       </section>
 
       <!-- Account -->

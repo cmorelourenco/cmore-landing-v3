@@ -104,14 +104,24 @@
     if (sw.disabled) return;
     sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
   }));
-  document.querySelectorAll('[data-signout]').forEach((b) => b.addEventListener('click', () => b.closest('li').remove()));
+  const others = () => { if (!document.querySelector('[data-signout]')) { const b = $('#signout-all'); b.disabled = true; } };
+  document.querySelectorAll('[data-signout]').forEach((b) => b.addEventListener('click', () => { b.closest('li').remove(); others(); }));
   $('#signout-all').addEventListener('click', (e) => { document.querySelectorAll('[data-signout]').forEach((b) => b.closest('li').remove()); e.currentTarget.disabled = true; e.currentTarget.textContent = 'Signed out everywhere else'; });
   let lang = 'en'; try { lang = localStorage.getItem('cm-lang') || 'en'; } catch (e) {}
   $('#r-lang').value = lang;
-  document.querySelectorAll('#language select').forEach((s) => s.addEventListener('change', () => {
-    if (s.id === 'r-lang') try { localStorage.setItem('cm-lang', s.value); } catch (e) {}
-    flash($('#r-saved'), 'Saved');
-  }));
+  // Consents, notifications, language: changes wait for Save, which only wakes when something differs
+  document.querySelectorAll('[data-area]').forEach((area) => {
+    const btn = area.querySelector('[data-save]'), note = area.querySelector('.set-saved');
+    const state = () => [...area.querySelectorAll('.co-sw, select')].map((c) => (c.tagName === 'SELECT' ? c.value : c.getAttribute('aria-checked'))).join('|');
+    let kept = state();
+    const sync = () => { btn.disabled = state() === kept; };
+    area.addEventListener('click', (e) => { if (e.target.closest('.co-sw')) setTimeout(sync, 0); });
+    area.addEventListener('change', sync);
+    btn.addEventListener('click', () => {
+      if (area.id === 'language') try { localStorage.setItem('cm-lang', $('#r-lang').value); } catch (e) {}
+      kept = state(); sync(); flash(note, 'Saved');
+    });
+  });
   $('#set-logout').addEventListener('click', () => { const out = document.getElementById('who-logout'); if (out) out.click(); });
 
   // ---- the section in view is the one marked in the list on the left ---------------
