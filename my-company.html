@@ -557,6 +557,12 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-tbl td { padding: 0.875rem 0.75rem; border-bottom: 1px solid var(--color-mid-beige); vertical-align: middle; }
 .co-tbl tr:last-child td { border-bottom: 0; }
 .co-tbl .c { text-align: center; }
+/* every data row opens its record: the hand cursor and a light ground say so */
+.co-tbl tbody tr:not(:has(.co-tbl-empty)) { cursor: pointer; transition: background-color .12s ease; }
+.co-tbl tbody tr:not(:has(.co-tbl-empty)):hover, .co-tbl tbody tr:not(:has(.co-tbl-empty)):focus-visible { background: var(--color-light-beige); }
+.co-tbl tbody tr:not(:has(.co-tbl-empty)):focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
+.co-tbl tbody tr td:first-child { border-top-left-radius: 0.5rem; border-bottom-left-radius: 0.5rem; }
+.co-tbl tbody tr td:last-child { border-top-right-radius: 0.5rem; border-bottom-right-radius: 0.5rem; }
 .co-tbl .n { display: block; font-weight: 500; font-size: 0.9375rem; }
 .co-tbl .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .co-exp { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; white-space: nowrap; }
@@ -1296,6 +1302,8 @@ body { transition: background-color .9s ease; }
   document.getElementById('intake-alma').replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
 
   // ---- the company home ------------------------------------------------------
+  // Table rows are links to their record. Prototype: reachable and highlighted, not wired yet.
+  document.querySelectorAll('.co-tbl tbody tr').forEach((tr) => { if (!tr.querySelector('.co-tbl-empty')) { tr.tabIndex = 0; tr.setAttribute('role', 'link'); } });
   // Empty: ALMA's card (and the strip's Start company profile) opens the intake; files dropped
   // on her here are handed straight to it.
   const ceDrop = document.getElementById('ce-drop');
