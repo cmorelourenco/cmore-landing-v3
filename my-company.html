@@ -603,26 +603,40 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .page .co-avs a:hover { color: var(--color-light-beige); }
 .co-legend { font-size: 0.75rem; color: var(--color-sand-400); }
 
-/* ---- The hero: company, then the ecosystem, on the graphite band --------- */
-.co-hero { border-top: 0; padding: 2rem 0 2.75rem; }
+/* ---- The hero: company, then the ecosystem, on the page's own light ground.
+   It reuses the graphite band's layout, with every colour set for light. ------- */
+.co-band.co-hero { border-top: 0; padding: 2rem 0 2.75rem; background: transparent; color: var(--color-ink); }
+.co-hero .co-band-mesh { display: none; }
 .co-hero .co-band-l { gap: 1.5rem; }
-.co-hero .co-side { padding: 1rem 0; }
-.co-hero-id { position: relative; padding-bottom: 1.5rem; margin-bottom: 1.75rem; border-bottom: 1px solid rgba(242, 241, 237, .14); }
-.co-hero .co-id .eyebrow { color: var(--color-sand-400); }
-.co-hero .co-name { color: var(--color-light-beige); }
-.co-hero .co-name-empty { color: rgba(242, 241, 237, .4); }
-.co-hero .co-subtle { color: var(--color-sand-400); }
-.co-hero .co-score { background: rgba(250, 250, 250, .06); border-color: rgba(250, 250, 250, .14); color: var(--color-light-beige); }
-.co-hero .co-score .co-muted { color: var(--color-sand-400); }
-.co-hero .co-ring { background: conic-gradient(var(--color-coral) 0 var(--p), rgba(250, 250, 250, .14) var(--p) 100%); }
+.co-hero .co-side { padding: 1rem 0; border-top-color: var(--color-line); }
+.co-hero-id { position: relative; padding-bottom: 1.5rem; margin-bottom: 1.75rem; border-bottom: 1px solid var(--color-line); }
+.co-band.co-hero h2 { color: var(--color-ink); }
+.co-hero .co-on-dark { color: var(--color-ink-muted); }
+.co-hero .co-side-n > div > span:last-child, .co-hero .co-stat small, .co-hero .co-net-k > span:last-child,
+.co-hero .co-legend, .co-hero .co-donut-t { color: var(--color-ink-subtle); }
+.co-hero .co-stat-empty { color: var(--color-sand-400); }
+/* what was light on the dark band is graphite here; the coral stays coral */
+.co-hero .co-bar i[style*="light-beige"], .co-hero .co-net-k i[style*="light-beige"] { background: var(--color-graphite) !important; }
+.co-hero .co-bar-empty, .co-hero .co-donut-empty { background: var(--color-mid-beige); }
+.co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-graphite) 0 44.4%, var(--color-sand-400) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-tint) 88.9% 100%); }
+.co-hero .co-donut > div { background: var(--color-light-beige); }
+.co-hero .co-fc { background: var(--color-graphite); color: var(--color-off-white); }
+.co-hero .co-donut-empty .co-fc { background: transparent; color: var(--color-sand-500); border-color: var(--color-sand-400); }
+.co-hero .co-avs span { background: var(--color-graphite); color: var(--color-off-white); border-color: var(--color-light-beige); }
+.co-hero .co-avs.is-coral span { background: var(--color-coral); color: var(--color-graphite); }
+.co-hero .co-avs span.is-out { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-sand-400); }
+.co-hero .co-avs.is-coral span.is-out { border-color: var(--color-coral); }
+.co-hero .co-avs-empty span { background: transparent; border: 1.5px dashed var(--color-sand-400); }
+.page .co-hero .co-avs a { color: var(--color-ink); }
+.page .co-hero .co-avs a:hover { color: var(--color-coral-deep); }
+.co-hero .co-net-row + .co-net-row { border-top-color: var(--color-line); }
 .co-hero-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 0.75rem; }
 .co-hero-btn { height: 2.5rem; padding-inline: 1.125rem; font-size: 0.9375rem; }
-.co-btn-light { background: transparent; border: 1.5px solid rgba(242, 241, 237, .35); color: var(--color-light-beige); }
-.co-btn-light:hover { border-color: var(--color-light-beige); background: rgba(242, 241, 237, .08); color: var(--color-light-beige); }
-.page .co-hero-link { margin-left: 0.25rem; white-space: nowrap; font-size: 0.9375rem; font-weight: 500; color: var(--color-light-beige); text-decoration: underline; text-decoration-color: var(--color-coral); text-underline-offset: 0.2em; }
-.page .co-hero-link:hover { color: var(--color-off-white); }
+.co-btn-light { background: var(--color-surface); border: 1px solid var(--color-line); color: var(--color-ink); }
+.co-btn-light:hover { border-color: var(--color-sand-400); color: var(--color-ink); }
+.page .co-hero-link { margin-left: 0.25rem; white-space: nowrap; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); text-underline-offset: 0.2em; }
+.page .co-hero-link:hover { color: var(--color-coral-deep); }
 @media (max-width: 34rem) { .co-hero-acts { flex-direction: column; align-items: stretch; } .co-hero-btn { width: 100%; } .page .co-hero-link { margin: 0.25rem 0 0; text-align: center; } }
-.co-hero .co-ring > div { background: var(--color-graphite); color: var(--color-light-beige); }
 /* ---- The same page, empty ---------------------------------------------- */
 .co-name-empty, .co-big-empty { color: var(--color-sand-400); }
 .co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
