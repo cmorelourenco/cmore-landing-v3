@@ -403,6 +403,8 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 
 /* header: founding badge, a round avatar, the menu */
 .co-founder { background: var(--color-graphite); color: var(--color-light-beige); }
+/* the founding star in gold: a warm metallic that reads on the graphite (not a design-system token yet) */
+.co-founder-star { color: #e3b341; }
 .who { position: relative; }
 .who-chip { color: var(--color-ink); border: 0; background: none; font: inherit; font-size: 0.875rem; cursor: pointer;
   padding: 0.25rem 0.5rem 0.25rem 0.25rem; margin-right: -0.5rem; border-radius: 9999px; transition: background-color .14s var(--ease-brand); }
@@ -907,7 +909,7 @@ body { transition: background-color .9s ease; }
   <a class="brand" href="index.html" aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
   <div class="top-right">
     <span data-lang-switch></span>
-    <span class="co-badge co-founder"><span aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
+    <span class="co-badge co-founder"><span class="co-founder-star" aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
     <div class="who" id="who">
       <button type="button" class="who-chip" id="who-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="who-menu" aria-label="Your account"><span class="who-pic" data-who-pic aria-hidden="true">MF</span><span class="who-name" data-who-name>Miguel Ferreira</span><svg class="who-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="who-menu" id="who-menu" role="menu" aria-label="Your account">
