@@ -3,17 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My company · C-MORE</title>
+<title>Settings · C-MORE</title>
 <meta name="robots" content="noindex">
 <script>
-  /* Before the first paint: unless ?page asks for the company page itself,
-     this visit starts on ALMA. The class hides the page and paints the
-     off-white the previous screen dissolved into, so the company home is
-     never seen for a frame on the way here. Inline and synchronous on
-     purpose — a deferred script would run after the first paint, which is
-     exactly the flash we are avoiding. */
-  // ?welcome (straight from sign-up) also starts on off-white: the thank-you screen comes first.
-  if (!/[?&](page|filled)\b/.test(location.search) || /[?&]welcome\b/.test(location.search)) document.documentElement.className += ' intake-first';
   // the side menu starts open (a drawer on phones) unless the visitor closed it last time
   var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
   document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
@@ -949,119 +941,96 @@ body { transition: background-color .9s ease; }
   .alma-sphere,.alma-radial,.alma-sphere img,.alma-comp{animation:none !important}
   .alma-sphere .b{opacity:0}
 }
+
+/* ---- Settings ------------------------------------------------------------- */
+.page:has(#settings) { max-width: none; padding: 0; margin-left: 0; }
+.eco-head { padding: 2rem 0 2rem; }
+.eco-crumbs { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.75rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.eco-crumbs a { color: var(--color-ink-subtle); text-decoration: none; }
+.eco-crumbs a:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); }
+.eco-crumbs [aria-current] { color: var(--color-ink); font-weight: 500; }
+.eco-head-t { display: flex; flex-direction: column; gap: 0.875rem; max-width: 44rem; }
+.eco-head .co-h-xl { font-size: clamp(2.25rem, 3vw, 3.25rem); }
+.eco-lead { font-size: 1.0625rem; max-width: 38rem; }
+.set-body { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 2.5rem; align-items: start; padding-bottom: 5rem; }
+.set-nav { position: sticky; top: 6rem; display: flex; flex-direction: column; gap: 0.125rem; }
+.set-nav a { position: relative; display: block; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink-subtle); text-decoration: none; }
+.set-nav a:hover { background: var(--color-mid-beige); color: var(--color-ink); }
+.set-nav a.is-on { color: var(--color-ink); font-weight: 600; }
+.set-nav a.is-on::before { content: ""; position: absolute; left: 0; top: 0.5rem; bottom: 0.5rem; width: 3px; border-radius: 3px; background: var(--color-coral); }
+.set-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.set-card { padding: 1.75rem; gap: 1.25rem; scroll-margin-top: 6rem; }
+.set-card-h { display: flex; flex-direction: column; gap: 0.25rem; }
+.set-card-h h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; }
+.set-card-h p { font-size: 0.9375rem; max-width: 40rem; }
+.set-sub { font-size: 1rem; font-weight: 600; }
+.set-sep { height: 1px; background: var(--color-mid-beige); }
+.set-photo { display: flex; align-items: center; gap: 1.25rem; }
+.set-pic { flex: none; display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 50%; overflow: hidden; background: var(--color-graphite); color: var(--color-off-white); font-size: 1.5rem; font-weight: 600; }
+.set-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.set-photo-t { display: flex; flex-direction: column; gap: 0.375rem; }
+.set-photo-t .co-subtle { font-size: 0.8125rem; }
+.set-photo-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.set-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+#language .set-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.set-f { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+.set-f-wide { grid-column: 1 / -1; }
+.set-f label { font-size: 0.8125rem; font-weight: 600; }
+.set-opt { font-weight: 400; color: var(--color-sand-500); }
+.set-card .input { width: 100%; height: 2.875rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-off-white);
+  font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; transition: border-color .14s ease, background-color .14s ease; }
+.set-card .input:hover { border-color: var(--color-sand-400); }
+.set-card .input:focus { border-color: var(--color-graphite); background: var(--color-surface); }
+.set-card .input.is-bad { border-color: var(--color-critical); }
+.set-card select.input { appearance: none; padding-right: 2.25rem; cursor: pointer;
+  background: var(--color-off-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 0.75rem center / 1rem no-repeat; }
+.set-phone { display: flex; gap: 0.5rem; }
+.set-phone select.input { width: 7.5rem; flex: none; }
+.set-hint { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.set-err { font-size: 0.8125rem; color: var(--color-critical); }
+.set-err:empty { display: none; }
+.set-pw { position: relative; display: block; }
+.set-pw .input { padding-right: 2.75rem; }
+.set-eye { position: absolute; right: 0.375rem; top: 50%; transform: translateY(-50%); width: 2.125rem; height: 2.125rem; border: 0; border-radius: 0.5rem; background: none; cursor: pointer; color: var(--color-ink-subtle);
+  display: grid; place-items: center; }
+.set-eye:hover { background: var(--color-light-beige); color: var(--color-ink); }
+.set-eye svg { width: 1.125rem; height: 1.125rem; }
+.set-rules { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+.set-rules li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.set-rules li::before { content: ""; width: 0.875rem; height: 0.875rem; border-radius: 50%; border: 1.5px solid var(--color-sand-400); }
+.set-rules li.is-ok { color: var(--color-ink); }
+.set-rules li.is-ok::before { border-color: var(--color-positive); background: var(--color-positive) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center / 0.625rem no-repeat; }
+.set-foot { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
+.set-foot-l { justify-content: flex-start; gap: 0.75rem; }
+.set-saved { font-size: 0.875rem; color: var(--color-positive); font-weight: 500; }
+.set-list { padding: 0; }
+.set-row { padding: 0.25rem 0; border-bottom: 0; }
+.set-sessions { display: flex; flex-direction: column; }
+.set-sessions li { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.set-sessions li:last-child { border-bottom: 0; }
+.set-dev { flex: none; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.625rem; background: var(--color-light-beige); color: var(--color-ink); }
+.set-dev svg { width: 1.25rem; height: 1.25rem; }
+.set-dev-t { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.set-dev-t b { font-weight: 500; font-size: 0.9375rem; }
+.set-dev-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.set-danger { border: 1px solid var(--color-critical-subtle); background: var(--color-critical-subtle); color: var(--color-critical); }
+.set-danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
+@media (max-width: 64rem) {
+  .set-body { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .set-nav { position: static; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 0.25rem; padding-bottom: 0.25rem; }
+  .set-nav a { white-space: nowrap; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 9999px; padding: 0.375rem 0.875rem; font-size: 0.875rem; }
+  .set-nav a.is-on { border-color: var(--color-graphite); }
+  .set-nav a.is-on::before { display: none; }
+}
+@media (max-width: 40rem) {
+  .set-grid, #language .set-grid { grid-template-columns: minmax(0, 1fr); }
+  .set-card { padding: 1.25rem; }
+  .set-photo { align-items: flex-start; }
+}
 </style>
 </head>
 <body>
-
-<!-- The first step. Hidden until the script shows it: without JavaScript the
-     company page underneath is what you get, which is the right fallback.
-     ALMA's composition is cloned in from the page below rather than repeated
-     here, so there is one copy of those eighteen frames in the source. -->
-<div class="intake" id="intake" hidden role="dialog" aria-modal="true" aria-labelledby="intake-title">
-  <div class="intake-inner">
-
-    <!-- One full screen. The list of documents below it must not peek into
-         view here: the step is "give me what you have", not "work through a
-         checklist", and a visible list turns it into the second thing. -->
-    <div class="intake-screen alma-ask">
-      <button class="drop" id="drop" type="button"
-              aria-describedby="intake-title drop-note">
-        <span class="alma-media" id="intake-alma" aria-hidden="true"></span>
-        <span class="drop-hint" id="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add files</span></span>
-      </button>
-
-      <!-- Everything she says before the handover, in one collapsible group:
-           faded and folded together it leaves in one movement instead of
-           winking out and dropping the layout underneath it. -->
-      <div class="pitch" id="pitch"><div class="pitch-in">
-      <p class="says rise d1">ALMA</p>
-      <!-- Her pitch. Once there are files it has been answered, so it folds
-           away and the buttons come up to meet her. -->
-      <div class="say">
-        <div>
-          <h1 class="rise d1" id="intake-title">Let's create your Company profile.</h1>
-          <p class="lead rise d2" id="drop-note">Drag your company's documents onto me, in whatever state they are in.
-            PDF's, scans, a photo of a certificate on your wall. I'll read them and work out what belongs where,
-            while you can go grab a coffee.</p>
-
-        </div>
-      </div>
-
-      <div class="actions rise d3">
-        <button class="btn btn-primary" type="button" id="hand">Hand it to ALMA</button>
-        <button class="btn btn-quiet" type="button" id="pick">Add files</button>
-        <button class="link-btn" type="button" id="skip">Skip</button>
-      </div>
-      <input id="file" type="file" multiple hidden
-             accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.doc,.docx,.xls,.xlsx,.csv,.txt">
-
-      <div class="took" id="took" hidden aria-live="polite"></div>
-      </div></div>
-
-      <p class="working" id="working" hidden aria-live="polite">
-        <i class="doing-sq" id="doing-sq" aria-hidden="true"></i>
-        <span id="doing-text"></span>
-      </p>
-    </div>
-
-    <div class="faq-cue-wrap" id="faq-cue-wrap">
-      <button class="faq-cue" type="button" id="faq-cue">Frequently asked documents</button>
-    </div>
-
-    <section class="cues rise d4" aria-labelledby="cues-k">
-      <p class="k" id="cues-k">Don't go hunting. Whatever you have now is enough.<br>
-        If something is missing I'll let you know.</p>
-      <div class="cue-grid">
-
-        <div class="cue">
-          <h2>Company &amp; legal</h2>
-          <ul>
-            <li>Form W-9 <i>— taxpayer ID</i></li>
-            <li>Certificate of Good Standing</li>
-            <li>Business license or registration</li>
-            <li>EIN letter <i>— CP-575 or 147C</i></li>
-          </ul>
-        </div>
-
-        <div class="cue">
-          <h2>Insurance</h2>
-          <ul>
-            <li>General liability certificate <i>— ACORD 25</i></li>
-            <li>Workers' compensation certificate</li>
-            <li>Commercial auto liability</li>
-          </ul>
-        </div>
-
-        <div class="cue">
-          <h2>Workforce</h2>
-          <ul>
-            <li>E-Verify enrolment or I-9 attestation</li>
-          </ul>
-        </div>
-
-        <div class="cue is-optional">
-          <h2>Worth having</h2>
-          <ul>
-            <li>Code of conduct or anti-corruption acknowledgement</li>
-            <li>MBE / WBE / DBE certification <i>— if you hold one</i></li>
-          </ul>
-        </div>
-
-      </div>
-    </section>
-
-  </div>
-</div>
-
-<!-- Welcome: shown once, between ALMA's reading and the company page. -->
-<div class="welcome" id="welcome" hidden role="status" aria-live="polite">
-  <canvas id="welcome-sphere" aria-hidden="true"></canvas>
-  <div class="welcome-in">
-    <h1>Thank you for being a <span class="w-mark">founding member</span>!</h1>
-    <p class="w-lead"><b id="welcome-co">Your company</b> is now part of the C&#8209;MORE ecosystem.</p>
-    <p class="w-go"><button class="btn btn-primary" type="button" id="welcome-go">Continue to my company</button></p>
-  </div>
-</div>
 
 <div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
 
@@ -1092,16 +1061,14 @@ body { transition: background-color .9s ease; }
   </div>
 </div></header>
 
-<!-- Side menu: the company's places. Home, Projects, Documents and Consents are sections of
-     this page (the current one is marked as you scroll); Notifications and Legal are drawn
-     but not built yet; Log out is the account menu's. -->
+<!-- Side menu: the same as on the company page; its places link back there. -->
 <nav class="sn" id="sn" aria-label="Company">
   <div class="sn-in">
     <div class="sn-collapse"><button type="button" id="sn-collapse" aria-controls="sn" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
-    <a class="sn-item" href="#" data-sn="top" title="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg><span class="sn-l">Home</span></a>
-    <a class="sn-item" href="#" data-sn=".co-proj-sec" title="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg><span class="sn-l">Projects</span></a>
-    <a class="sn-item" href="#" data-sn="docs" title="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span class="sn-l">Documents</span></a>
-    <a class="sn-item" href="#" data-sn=".co-last-sec" title="Consents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span class="sn-l">Consents</span></a>
+    <a class="sn-item" href="my-company.html?filled" data-sn="go" title="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg><span class="sn-l">Home</span></a>
+    <a class="sn-item" href="my-company.html?filled#projects" data-sn="go" title="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg><span class="sn-l">Projects</span></a>
+    <a class="sn-item" href="my-company.html?filled#documents" data-sn="go" title="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span class="sn-l">Documents</span></a>
+    <a class="sn-item" href="my-company.html?filled#consents" data-sn="go" title="Consents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span class="sn-l">Consents</span></a>
     <a class="sn-item" href="#" data-sn="notifications" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg><span class="sn-l">Notifications</span><span class="sn-count" data-sn-count>6</span></a>
     <div class="sn-sep" role="separator"></div>
     <a class="sn-item" href="ecosystem.html" data-sn="go" title="C-MORE ecosystem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418"/></svg><span class="sn-l">C&#8209;MORE ecosystem</span></a>
@@ -1109,7 +1076,7 @@ body { transition: background-color .9s ease; }
     <a class="sn-item" href="#" data-sn="soon" title="My suppliers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg><span class="sn-l">My suppliers</span></a>
     <div class="sn-foot">
       <div class="sn-sep" role="separator"></div>
-      <a class="sn-item" href="settings.html" data-sn="go" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span class="sn-l">Settings</span></a>
+      <a class="sn-item is-on" href="settings.html" data-sn="here" aria-current="page" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span class="sn-l">Settings</span></a>
       <a class="sn-item" href="#" data-sn="soon" title="Legal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"/></svg><span class="sn-l">Legal</span></a>
       <a class="sn-item" href="#" data-sn="logout" title="Log out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg><span class="sn-l">Log out</span></a>
     </div>
@@ -1118,333 +1085,135 @@ body { transition: background-color .9s ease; }
 <div class="sn-scrim" id="sn-scrim" hidden></div>
 
 <main class="page">
-<!-- The company home before there is a company in it: the same page as the filled one,
-     area for area, each showing what it will hold and how it gets there. ALMA's
-     composition lives here once in the source; the intake step and the filled page
-     both clone it from this copy. -->
-<div id="empty">
+<div id="settings">
 
-  <!-- Profile completion: nothing done yet -->
-  <div class="co-strip"><div class="co-wrap">
-    <span class="co-strip-l">
-      <span class="eyebrow" style="font-size:0.75rem">Profile completion</span>
-      <span class="co-meter" role="progressbar" aria-label="Profile completion" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"><i style="width:0%"></i></span>
-      <span><b>0%</b><span class="co-strip-more"> · give ALMA your documents and she fills in most of it.</span></span>
-    </span>
-    <a href="#ce-drop" data-ce-start>Start company profile</a>
-  </div></div>
+  <section class="eco-head set-head"><div class="co-wrap">
+    <nav class="eco-crumbs" aria-label="Breadcrumb"><a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><span aria-current="page">Settings</span></nav>
+    <div class="eco-head-t">
+      <span class="eyebrow">Settings</span>
+      <h1 class="co-h-xl" style="font-weight:300">Your account,<br><span style="font-weight:600">your way.</span></h1>
+      <p class="co-muted eco-lead">Your profile, how you sign in, what you allow C&#8209;MORE to do, and what we tell you about.</p>
+    </div>
+  </div></section>
 
-  <!-- Hero: who you are, then your ecosystem -->
-  <section class="co-band co-hero">
-    <div class="co-band-mesh" aria-hidden="true"></div>
-    <div class="co-wrap co-hero-id">
-      <div class="co-id">
-      <div class="co-id-col">
-      <span class="eyebrow">My company</span>
-      <div class="co-id-main">
-      <button type="button" class="co-logo co-logo-empty" aria-label="Add your company logo" title="Add your company logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Logo</span></button>
-      <div class="co-id-l">
-        <h1 class="co-name co-name-empty">Your company</h1>
-        <span class="co-subtle" style="font-size:0.9375rem">Name, sector, size, tax number and address will show here once ALMA has read your documents.</span>
-      </div>
-      </div>
-      </div>
-      <div class="co-score">
-        <div class="co-ring" style="--p:0%"><div>—</div></div>
-        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" style="font-size:0.8125rem">Appears once your documents are in</span></div>
-      </div>
-    </div>
-    </div>
-    <div class="co-wrap co-band-in">
-      <div class="co-band-l">
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <span class="eyebrow co-on-dark">Your C&#8209;MORE ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">0 companies<br><span style="font-weight:600">share data with you.</span></h2>
+  <div class="co-wrap set-body">
+    <nav class="set-nav" aria-label="Settings sections">
+      <a href="#profile" class="is-on">Profile</a>
+      <a href="#security">Password &amp; security</a>
+      <a href="#consents">Consents &amp; privacy</a>
+      <a href="#notifications">Notifications</a>
+      <a href="#language">Language &amp; region</a>
+      <a href="#account">Account</a>
+    </nav>
+
+    <div class="set-main">
+
+      <!-- Profile -->
+      <section class="co-card set-card" id="profile" aria-labelledby="h-profile">
+        <div class="set-card-h"><h2 id="h-profile">Profile</h2><p class="co-subtle">How you appear to your clients and suppliers on C&#8209;MORE.</p></div>
+        <div class="set-photo">
+          <span class="set-pic" id="set-pic" aria-hidden="true">MF</span>
+          <div class="set-photo-t">
+            <div class="set-photo-acts"><button type="button" class="btn co-btn-light btn-sm" id="set-photo-up">Upload a photo</button><button type="button" class="link-btn" id="set-photo-rm">Remove</button></div>
+            <span class="co-subtle">JPG or PNG. A square photo works best.</span>
+          </div>
+          <input type="file" id="set-photo-file" accept="image/png,image/jpeg,image/webp" hidden>
         </div>
-        <div class="co-sides">
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a supplier</span>
-            <div class="co-side-n">
-              <div><span class="co-stat co-stat-empty">0</span><span>clients connected</span></div>
-              <div><span class="co-stat co-stat-empty">0</span><span>requests</span></div>
+        <form class="set-form" id="f-profile" novalidate>
+          <div class="set-grid">
+            <div class="set-f"><label for="p-name">Full name</label><input class="input" id="p-name" autocomplete="name" required></div>
+            <div class="set-f"><label for="p-role">Job title</label><input class="input" id="p-role" autocomplete="organization-title" placeholder="Owner, project manager…"></div>
+            <div class="set-f set-f-wide"><label for="p-email">Work email</label><input class="input" id="p-email" type="email" autocomplete="email" required><p class="set-hint">If you change it, we send a code to the new address before it takes over.</p></div>
+            <div class="set-f set-f-wide">
+              <label for="p-phone">Phone <span class="set-opt">(optional)</span></label>
+              <div class="set-phone"><select class="input" id="p-cc" aria-label="Country code"></select><input class="input" id="p-phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="Phone number" aria-describedby="p-phone-note"></div>
+              <p class="set-err" id="p-phone-err" role="alert"></p>
+              <p class="set-hint" id="p-phone-note">Used only for two-factor sign-in and for suppliers you contact on the C&#8209;MORE marketplace.</p>
             </div>
-            <div class="co-bar co-bar-empty" style="height:8px"></div>
           </div>
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a buyer</span>
-            <div class="co-side-n">
-              <div><span class="co-stat co-stat-empty">0</span><span>suppliers connected</span></div>
-              <div><span class="co-stat co-stat-empty">0</span><span>data in order</span></div>
-            </div>
-            <div class="co-bar co-bar-empty" style="height:8px"></div>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <!-- Password & security -->
+      <section class="co-card set-card" id="security" aria-labelledby="h-security">
+        <div class="set-card-h"><h2 id="h-security">Password &amp; security</h2><p class="co-subtle">Change your password, add a second step when you sign in, and see where you are signed in.</p></div>
+        <form class="set-form" id="f-password" novalidate>
+          <h3 class="set-sub">Change password</h3>
+          <div class="set-grid">
+            <div class="set-f set-f-wide"><label for="pw-cur">Current password</label><span class="set-pw"><input class="input" id="pw-cur" type="password" autocomplete="current-password"><button type="button" class="set-eye" aria-label="Show password" aria-pressed="false"></button></span></div>
+            <div class="set-f"><label for="pw-new">New password</label><span class="set-pw"><input class="input" id="pw-new" type="password" autocomplete="new-password" aria-describedby="pw-rules"><button type="button" class="set-eye" aria-label="Show password" aria-pressed="false"></button></span></div>
+            <div class="set-f"><label for="pw-again">Confirm new password</label><span class="set-pw"><input class="input" id="pw-again" type="password" autocomplete="new-password"><button type="button" class="set-eye" aria-label="Show password" aria-pressed="false"></button></span><p class="set-err" id="pw-err" role="alert"></p></div>
           </div>
+          <ul class="set-rules" id="pw-rules">
+            <li data-rule="len">At least 8 characters</li>
+            <li data-rule="case">Upper and lower case letters</li>
+            <li data-rule="num">At least one number</li>
+          </ul>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Update password</button></div>
+        </form>
+        <div class="set-sep"></div>
+        <h3 class="set-sub">Two-factor sign-in</h3>
+        <div class="co-row set-row"><div class="co-row-t"><span class="co-row-n">Text me a code when I sign in</span><span class="co-subtle" id="tfa-hint">A six-digit code to your phone, on top of your password.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" id="tfa-sw" aria-label="Two-factor sign-in"><i></i></button></div>
+        <div class="set-sep"></div>
+        <h3 class="set-sub">Where you are signed in</h3>
+        <ul class="set-sessions" id="set-sessions">
+          <li><span class="set-dev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M2 19.5h20"/></svg></span><span class="set-dev-t"><b>MacBook · Chrome</b><small>Wilmington, DE · now</small></span><span class="co-badge b-ok">This device</span></li>
+          <li><span class="set-dev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2"/><path d="M11 18.5h2"/></svg></span><span class="set-dev-t"><b>iPhone · Safari</b><small>Wilmington, DE · 2 days ago</small></span><button type="button" class="link-btn" data-signout>Sign out</button></li>
+          <li><span class="set-dev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="12" rx="1.5"/><path d="M2 19.5h20"/></svg></span><span class="set-dev-t"><b>Windows · Edge</b><small>Newark, DE · 9 days ago</small></span><button type="button" class="link-btn" data-signout>Sign out</button></li>
+        </ul>
+        <div class="set-foot set-foot-l"><button type="button" class="btn co-btn-light btn-sm" id="signout-all">Sign out of all other devices</button></div>
+      </section>
+
+      <!-- Consents & privacy: moved here from the company page -->
+      <section class="co-card set-card" id="consents" aria-labelledby="h-consents">
+        <div class="set-card-h"><h2 id="h-consents">Consents &amp; privacy</h2><p class="co-subtle">What you allow C&#8209;MORE to do with your company's information. Requests from clients to see your documents are on <a href="my-company.html?filled#consents">your company page</a>.</p></div>
+        <div class="co-list set-list">
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">1</span>Privacy &amp; data processing</span><span class="co-subtle">Required to keep the company on C&#8209;MORE. Given 12 Mar 2026.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Privacy and data processing, required" disabled title="Required to keep the company on C-MORE, so it cannot be switched off"><i></i></button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">2</span>Visible in the C&#8209;MORE ecosystem</span><span class="co-subtle">Buyers searching for a general contractor in Delaware can find you.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Visible in the C-MORE ecosystem"><i></i></button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">3</span>Share renewals with clients automatically</span><span class="co-subtle">When a certificate is renewed, clients who hold it get the new one.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Share renewals with clients automatically"><i></i></button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n"><span class="co-num">4</span>C&#8209;MORE newsletter</span><span class="co-subtle">Product news and compliance tips, about once a month. Opt out any time.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="C-MORE newsletter"><i></i></button></div>
         </div>
-      </div>
-      <div class="co-net co-net-half">
-        <div class="co-half-wrap">
-        <div class="co-half co-half-empty" role="img" aria-label="No connections yet"><svg viewBox="0 0 220 116" fill="none" stroke-width="24" aria-hidden="true"><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-mid-beige)" stroke-dasharray="100.00 200" stroke-dashoffset="0.00"/></svg><div class="co-half-c"><span class="co-donut-n">0</span><span class="co-donut-t co-donut-tl">connections</span></div></div>
-        <div class="co-net-rows">
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 0</span><span>none yet</span></div>
-            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a client</a></div>
-          </div>
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 0</span><span>none yet</span></div>
-            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a supplier</a></div>
-          </div>
+        <div class="set-foot set-foot-l"><button type="button" class="link-btn" onclick="return false">Download a copy of my data</button><span class="co-subtle" style="font-size:.8125rem">·</span><a href="#" class="link-btn" onclick="return false">Privacy policy</a></div>
+      </section>
+
+      <!-- Notifications -->
+      <section class="co-card set-card" id="notifications" aria-labelledby="h-notif">
+        <div class="set-card-h"><h2 id="h-notif">Notifications</h2><p class="co-subtle">What we email you about. The bell in the header always shows everything.</p></div>
+        <div class="co-list set-list">
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n">A document is about to expire</span><span class="co-subtle">30 days before, and again a week before.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="A document is about to expire"><i></i></button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n">Someone asks to see your documents</span><span class="co-subtle">So a client never waits on you.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="Someone asks to see your documents"><i></i></button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n">A supplier wants to connect</span><span class="co-subtle">Requests from the C&#8209;MORE ecosystem.</span></div><button class="co-sw" type="button" role="switch" aria-checked="true" aria-label="A supplier wants to connect"><i></i></button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n">Weekly summary</span><span class="co-subtle">Every Monday: what changed, and what is coming up.</span></div><button class="co-sw" type="button" role="switch" aria-checked="false" aria-label="Weekly summary"><i></i></button></div>
         </div>
-</div>
-      </div>
-      <div class="co-hero-acts">
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
-      </div>
-      <a href="ecosystem.html" class="co-hero-link">View my C&#8209;MORE ecosystem <span aria-hidden="true">→</span></a>
-    </div>
-  </section>
+      </section>
 
-  <!-- Project view: the projects you run, and the ones you supply -->
-  <section class="co-sec co-proj-sec"><div class="co-wrap">
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project view</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
-    <div class="co-proj">
-      <div class="co-proj-block">
-      <div class="co-sub-head"><h3 class="eyebrow">My projects</h3><span class="co-sub-head-r"><span class="co-muted">0 projects</span><a href="#" onclick="return false" class="co-link">View all</a></span></div>
-      <div class="co-card co-tbl-card">
-        <table class="co-tbl co-proj-tbl co-proj-dl"><thead><tr><th>Project</th><th class="c">Client</th><th class="c">Address</th><th class="c">Suppliers</th><th class="c">Start date</th><th class="c">End date</th><th class="c">Delivery deadline</th><th>Alerts</th></tr></thead><tbody><tr><td colspan="8" class="co-tbl-empty"><span class="n">No projects yet</span><span class="d">Projects you run appear here, with their suppliers and anything that needs attention.</span></td></tr></tbody></table>
-      </div>
-      </div>
-      <div class="co-proj-block">
-      <div class="co-sub-head"><h3 class="eyebrow">As a supplier</h3><span class="co-sub-head-r"><span class="co-muted">0 projects</span><a href="#" onclick="return false" class="co-link">View all</a></span></div>
-      <div class="co-card co-tbl-card">
-        <table class="co-tbl co-proj-tbl"><thead><tr><th>Project</th><th class="c">Client</th><th class="c">Address</th><th class="c">Workers</th><th class="c">Start date</th><th class="c">End date</th><th>Alerts</th></tr></thead><tbody><tr><td colspan="8" class="co-tbl-empty"><span class="n">No projects yet</span><span class="d">Projects where you supply another company appear here, with the workers you send.</span></td></tr></tbody></table>
-      </div>
-      </div>
-    </div>
-  </div></section>
-
-  <!-- Needs your attention: the way in, ALMA on the right -->
-  <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
-    <div class="co-attn-l">
-      <span class="eyebrow">Needs your attention</span>
-      <h2 class="co-h-xl">Nothing needs you yet.<br><span style="font-weight:300">Let's get your company in.</span></h2>
-      <div class="co-steps">
-        <div class="co-step"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-neu">None</span></h3><p>Anything a client asked for by a date that has not arrived yet.</p></div>
-        <div class="co-step"><span class="co-num">2</span><h3>About to expire <span class="co-badge b-neu">None</span></h3><p>Close to its date. Renew it before a client asks to see it.</p></div>
-        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-neu">None</span></h3><p>Due for renewal soon, flagged early enough to renew in time.</p></div>
-        <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-neu">None</span></h3><p>A client has asked to see your data and is waiting for your yes.</p></div>
-      </div>
-    </div>
-    <div class="co-drop" id="ce-drop" role="button" tabindex="0" aria-label="Drop your company documents on ALMA, or press to browse">
-      <span class="alma-media" aria-hidden="true">
-<span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>
-      </span>
-      <span class="eyebrow">ALMA</span>
-      <span class="co-drop-t">Drop your documents on me.</span>
-      <span class="co-muted" style="font-size:0.9375rem">I read them, find your company and fill in your profile. <a href="#" id="ce-browse">Or browse on your device</a></span>
-    </div>
-  </div></section>
-
-  <!-- Documents: an empty table, the columns already there -->
-  <section class="co-sec co-pad-top-0"><div class="co-wrap">
-    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report you hold, dated and checked, in one place.</p></div><div class="co-sec-r"><a href="#" onclick="return false" class="co-link">View all</a></div></div>
-    <div class="co-card co-tbl-card">
-      <table class="co-tbl">
-        <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
-        <tbody>
-          <tr><td colspan="8" class="co-tbl-empty">
-            <span class="n">No documents yet</span>
-            <span class="d">Drop them on ALMA and they appear here, sorted, dated and flagged before they expire.</span>
-          </td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div></section>
-
-  <!-- Consents: the switches are yours from day one; nobody has asked yet -->
-  <section class="co-sec co-pad-top-0 co-last-sec"><div class="co-wrap">
-    <div class="co-sec-head"><h2 class="co-h-l">Consents</h2><span class="co-muted">Who has asked to see your documents. Nothing is shared without a yes here. What you allow C&#8209;MORE to do is in <a href="settings.html#consents">Settings</a>.</span></div>
-    <div class="co-consents">
-      <div class="co-card co-list">
-        <div class="co-card-k co-list-k"><span class="eyebrow">Who has asked</span><a href="#" onclick="return false">View all</a></div>
-        <div class="co-list-empty">
-          <span class="co-row-n">No requests yet</span>
-          <span class="co-subtle">When a client asks to see your documents, it shows up here for a yes or a no.</span>
+      <!-- Language & region -->
+      <section class="co-card set-card" id="language" aria-labelledby="h-lang">
+        <div class="set-card-h"><h2 id="h-lang">Language &amp; region</h2><p class="co-subtle">How dates, times and the interface read for you.</p></div>
+        <div class="set-grid">
+          <div class="set-f"><label for="r-lang">Language</label><select class="input" id="r-lang"><option value="pt">Português</option><option value="en">English</option><option value="de">Deutsch</option><option value="es">Español</option><option value="fr">Français</option><option value="it">Italiano</option></select></div>
+          <div class="set-f"><label for="r-tz">Time zone</label><select class="input" id="r-tz"><option>Eastern Time (New York)</option><option>Central Time (Chicago)</option><option>Pacific Time (Los Angeles)</option><option>Lisbon</option><option>Madrid</option><option>Berlin</option></select></div>
+          <div class="set-f"><label for="r-date">Date format</label><select class="input" id="r-date"><option>5 Oct 2026</option><option>10/05/2026</option><option>05/10/2026</option><option>2026-10-05</option></select></div>
         </div>
-      </div>
-    </div>
-  </div></section>
+        <div class="set-foot"><span class="set-saved" role="status" id="r-saved"></span></div>
+      </section>
 
-  
+      <!-- Account -->
+      <section class="co-card set-card" id="account" aria-labelledby="h-account">
+        <div class="set-card-h"><h2 id="h-account">Account</h2><p class="co-subtle">Leaving, for now or for good.</p></div>
+        <div class="co-list set-list">
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n">Log out</span><span class="co-subtle">On this device. You can log back in any time.</span></div><button type="button" class="btn co-btn-light btn-sm" id="set-logout">Log out</button></div>
+          <div class="co-row"><div class="co-row-t"><span class="co-row-n">Delete my account</span><span class="co-subtle">Your company's documents stay with the company. Anything only you can see is removed after 30 days.</span></div><button type="button" class="btn btn-sm set-danger" onclick="return false">Delete account</button></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
 
 </div>
-
-<!-- The company home, once there is a company in it (design direction D). Dummy data,
-     but real documents: the cross-sector set US buyers ask every supplier for. -->
-<div id="filled" hidden>
-
-  <!-- Profile completion: a quiet hairline strip under the header -->
-  <div class="co-strip"><div class="co-wrap">
-    <span class="co-strip-l">
-      <span class="eyebrow" style="font-size:0.75rem">Profile completion</span>
-      <span class="co-meter" id="co-meter" role="progressbar" aria-label="Profile completion" aria-valuenow="82" aria-valuemin="0" aria-valuemax="100"><i style="width:82%"></i></span>
-      <span><b id="co-pct">82%</b><span class="co-strip-more" id="co-left"> · two things left: the expired license, and a diversity certificate if you hold one.</span></span>
-    </span>
-    <a href="#" onclick="return false">Finish company profile</a>
-  </div></div>
-
-  <!-- Hero: who you are, then your ecosystem -->
-  <section class="co-band co-hero">
-    <div class="co-band-mesh" aria-hidden="true"></div>
-    <div class="co-wrap co-hero-id">
-      <div class="co-id">
-      <div class="co-id-col">
-      <span class="eyebrow">My company</span>
-      <div class="co-id-main">
-      <img class="co-logo" src="images/ferreira-logo.webp" alt="Ferreira Construction logo" width="88" height="88">
-      <div class="co-id-l">
-        <h1 class="co-name">Ferreira Construction LLC</h1>
-        <span class="co-subtle" style="font-size:0.9375rem">General contractor · 24 people · EIN 84&#8209;3921745 · Delaware LLC · Wilmington, DE</span>
-      </div>
-      </div>
-      </div>
-      <div class="co-score">
-        <div class="co-ring" id="co-ring" style="--p:78%"><div id="co-score">78</div></div>
-        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" id="co-score-note" style="font-size:0.8125rem">Good · +9 once the license is replaced</span></div>
-      </div>
-    </div>
-    </div>
-    <div class="co-wrap co-band-in">
-      <div class="co-band-l">
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <span class="eyebrow co-on-dark">Your C&#8209;MORE ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">24 companies<br><span style="font-weight:600">share data with you.</span></h2>
-        </div>
-        <div class="co-sides">
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a supplier</span>
-            <div class="co-side-n">
-              <div><span class="co-stat">14</span><span>clients connected</span></div>
-              <div><span class="co-stat">26</span><span>requests · 22 yes, 4 pending</span></div>
-            </div>
-            <div class="co-bar" style="height:8px"><i style="width:85%;background:var(--color-clients)"></i><i style="width:15%;background:var(--color-clients-soft)"></i></div>
-          </div>
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a buyer</span>
-            <div class="co-side-n">
-              <div><span class="co-stat" style="color:var(--color-coral)">10</span><span>suppliers connected</span></div>
-              <div><span class="co-stat">8<small>/10</small></span><span>papers in order · 2 pending</span></div>
-            </div>
-            <div class="co-bar" style="height:8px"><i style="width:80%;background:var(--color-coral)"></i><i style="width:20%;background:var(--color-coral-soft)"></i></div>
-          </div>
-        </div>
-      </div>
-      <!-- One ring for the whole network, one row per side -->
-      <div class="co-net co-net-half">
-        <div class="co-half-wrap">
-        <div class="co-half" role="img" aria-label="24 connections: 14 clients, 10 suppliers"><svg viewBox="0 0 220 116" fill="none" stroke-width="24" aria-hidden="true"><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-clients)" stroke-dasharray="49.50 200" stroke-dashoffset="0.00"/><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-clients-soft)" stroke-dasharray="7.83 200" stroke-dashoffset="-50.00"/><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-coral)" stroke-dasharray="32.84 200" stroke-dashoffset="-58.33"/><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-coral-soft)" stroke-dasharray="7.83 200" stroke-dashoffset="-91.67"/></svg><div class="co-half-c"><span class="co-donut-n">24</span><span class="co-donut-t co-donut-tl">connections</span></div></div>
-        <div class="co-net-rows">
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 14</span><span>12 in order · 2 pending</span></div>
-            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><span class="is-more">+9</span><a href="#" onclick="return false">See all</a></div>
-          </div>
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 10</span><span>8 in order · 2 lagging</span></div>
-            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><span class="is-more">+6</span><a href="ecosystem.html?show=mine">See all</a></div>
-          </div>
-        </div>
-</div>
-      </div>
-      <div class="co-hero-acts">
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
-      </div>
-      <a href="ecosystem.html" class="co-hero-link">View my C&#8209;MORE ecosystem <span aria-hidden="true">→</span></a>
-    </div>
-  </section>
-
-  <!-- Project view: the projects you run, and the ones you supply -->
-  <section class="co-sec co-proj-sec"><div class="co-wrap">
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project view</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
-    <div class="co-proj">
-      <div class="co-proj-block">
-      <div class="co-sub-head"><h3 class="eyebrow">My projects</h3><span class="co-sub-head-r"><span class="co-muted">4 projects · 18 suppliers</span><a href="#" onclick="return false" class="co-link">View all</a></span></div>
-      <div class="co-card co-tbl-card">
-        <table class="co-tbl co-proj-tbl co-proj-dl"><thead><tr><th>Project</th><th class="c">Client</th><th class="c">Address</th><th class="c">Suppliers</th><th class="c">Start date</th><th class="c">End date</th><th class="c">Delivery deadline</th><th>Alerts</th></tr></thead><tbody><tr><td><span class="n">East wing extension</span></td><td class="c">Brandywine Regional Hospital<span class="d">Hospital</span></td><td class="c co-subtle">1200 Riverside Ave, Wilmington, DE</td><td class="c">6</td><td class="c">3 Feb 2026</td><td class="c">18 Dec 2026</td><td class="c"><span class="co-dl" data-due="2026-10-16"></span></td><td><span class="co-badge b-over co-alert">2</span></td></tr><tr><td><span class="n">Route 9 resurfacing, phase 2</span></td><td class="c">State of Delaware<span class="d">Roads &amp; Bridges</span></td><td class="c co-subtle">Route 9, New Castle, DE</td><td class="c">4</td><td class="c">14 Apr 2026</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td class="c"><span class="co-dl" data-due="2026-09-26"></span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="n">Elm Street Elementary renovation</span></td><td class="c">Wilmington Public Schools<span class="d">Education</span></td><td class="c co-subtle">410 Elm St, Wilmington, DE</td><td class="c">3</td><td class="c">9 Jun 2025</td><td class="c">15 Jan 2027</td><td class="c"><span class="co-dl" data-due="2026-12-18"></span></td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="n">Harbor View apartments</span></td><td class="c">Harbor View Living LLC<span class="d">Residential</span></td><td class="c co-subtle">75 Harbor Rd, Newark, DE</td><td class="c">5</td><td class="c">1 Sep 2026</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td class="c"><span class="co-dl" data-due="2027-03-12"></span></td><td><span class="co-subtle">—</span></td></tr></tbody></table>
-      </div>
-      </div>
-      <div class="co-proj-block">
-      <div class="co-sub-head"><h3 class="eyebrow">As a supplier</h3><span class="co-sub-head-r"><span class="co-muted">3 projects · 26 workers</span><a href="#" onclick="return false" class="co-link">View all</a></span></div>
-      <div class="co-card co-tbl-card">
-        <table class="co-tbl co-proj-tbl"><thead><tr><th>Project</th><th class="c">Client</th><th class="c">Address</th><th class="c">Workers</th><th class="c">Start date</th><th class="c">End date</th><th>Alerts</th></tr></thead><tbody><tr><td><span class="n">Data centre shell, Building B</span></td><td class="c">Northgate Facilities<span class="d">General contractor</span></td><td class="c co-subtle">2200 Commerce Pkwy, Middletown, DE</td><td class="c">12</td><td class="c">6 Mar 2026</td><td class="c">30 Nov 2026</td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="n">Clinic fit-out, level 3</span></td><td class="c">Meridian Health<span class="d">Healthcare</span></td><td class="c co-subtle">88 Market St, Wilmington, DE</td><td class="c">8</td><td class="c">20 Jul 2026</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="n">Warehouse expansion</span></td><td class="c">Bramwell Group<span class="d">Logistics</span></td><td class="c co-subtle">15 Industrial Way, Dover, DE</td><td class="c">6</td><td class="c">11 Aug 2026</td><td class="c">28 Feb 2027</td><td><span class="co-badge b-over co-alert">2</span></td></tr></tbody></table>
-      </div>
-      </div>
-    </div>
-  </div></section>
-
-  <!-- Needs your attention: the landing's numbered steps, ALMA on the right -->
-  <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
-    <div class="co-attn-l">
-      <span class="eyebrow">Needs your attention</span>
-      <h2 class="co-h-xl">Some pending actions<br>are requiring your attention.</h2>
-      <div class="co-steps">
-        <div class="co-step" id="co-step-license"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-over">2 documents</span></h3><p>Your business license ran out on 15 August, and E&#8209;Verify is still missing 3 I&#8209;9 attestations.</p></div>
-        <div class="co-step"><span class="co-num">2</span><h3>About to expire <span class="co-badge b-pend">1 document</span></h3><p>Your Certificate of Good Standing expires on 31 October. Drop the renewed one on ALMA and she files it.</p></div>
-        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-pend">1 document</span></h3><p>Commercial auto liability renews on 3 November.</p></div>
-        <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-info">2 requests</span></h3><p>Northgate Facilities and Bramwell Group are waiting for your yes to see your insurance.</p></div>
-      </div>
-    </div>
-    <div class="co-drop" id="co-drop" role="button" tabindex="0" aria-label="Drop the new business license on ALMA, or press to browse">
-      <span class="alma-media" id="co-alma" aria-hidden="true"></span>
-      <span class="eyebrow">ALMA</span>
-      <span class="co-drop-t" id="co-drop-t">Drop the new license on me.</span>
-      <span class="co-muted" id="co-drop-s" style="font-size:0.9375rem">PDF, scan, a photo of it on the wall. I read it, date it and file it. <a href="#" id="co-browse">Or browse on your device</a></span>
-      <span class="co-drop-acts" id="co-drop-acts" hidden>
-        <button type="button" class="btn btn-primary" id="co-hand">Hand it to ALMA</button>
-        <button type="button" class="link-btn" id="co-again">Choose another</button>
-      </span>
-      <input type="file" id="co-file" hidden>
-    </div>
-  </div></section>
-
-  <!-- Documents: only what needs attention, or will soon -->
-  <section class="co-sec co-pad-top-0"><div class="co-wrap">
-    <div class="co-sec-head co-sec-head-desc"><div class="co-sec-t"><h2 class="co-h-l">Documents</h2><p class="co-muted">Every certificate, policy and report, dated and checked. These are the ones to look at first.</p></div><div class="co-sec-r"><a href="#" onclick="return false" class="co-link">View all</a></div></div>
-    <div class="co-card co-tbl-card">
-      <table class="co-tbl">
-        <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Workers</th><th class="c">Machines</th><th class="c">Company docs</th><th class="c">Worker docs</th><th class="c">Entry date</th><th>Expiry date</th></tr></thead>
-        <tbody>
-          <tr id="co-row-license"><td><span class="n">Business license</span><span class="d">City of Wilmington</span></td><td class="c co-subtle">Company &amp; legal</td><td class="c co-subtle">—</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c co-subtle">—</td><td class="c">12 Mar 2026</td><td><span class="co-exp">15 Aug 2026 <span class="co-badge b-over">Overdue</span></span></td></tr>
-          <tr><td><span class="n">Certificate of Good Standing</span><span class="d">Delaware</span></td><td class="c co-subtle">Company &amp; legal</td><td class="c co-subtle">—</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c co-subtle">—</td><td class="c">12 Mar 2026</td><td><span class="co-exp">31 Oct 2026 <span class="co-badge b-pend">32 days</span></span></td></tr>
-          <tr><td><span class="n">Commercial auto liability</span><span class="d">18 of 22 vehicles on the schedule</span></td><td class="c co-subtle">Insurance</td><td class="c co-subtle">—</td><td class="c">82%</td><td class="c">1</td><td class="c co-subtle">—</td><td class="c">3 Nov 2025</td><td><span class="co-exp">3 Nov 2026 <span class="co-badge b-pend">35 days</span></span></td></tr>
-          <tr><td><span class="n">E&#8209;Verify enrolment</span><span class="d">3 I&#8209;9 attestations missing</span></td><td class="c co-subtle">Workforce</td><td class="c">88%</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c">21 <span class="co-subtle">/ 24</span></td><td class="c">12 Mar 2026</td><td><span class="co-exp"><span class="co-subtle">Does not expire</span> <span class="co-badge b-pend">Incomplete</span></span></td></tr>
-          <tr><td><span class="n">Workers’ compensation certificate</span><span class="d">All 24 people covered</span></td><td class="c co-subtle">Insurance</td><td class="c">100%</td><td class="c co-subtle">—</td><td class="c">1</td><td class="c">24 <span class="co-subtle">/ 24</span></td><td class="c">1 Jan 2026</td><td><span class="co-exp">1 Jan 2027 <span class="co-badge b-info">94 days</span></span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div></section>
-
-  <!-- Consents -->
-  <section class="co-sec co-pad-top-0 co-last-sec"><div class="co-wrap">
-    <div class="co-sec-head"><h2 class="co-h-l">Consents</h2><span class="co-muted">Who has asked to see your documents. Nothing is shared without a yes here. What you allow C&#8209;MORE to do is in <a href="settings.html#consents">Settings</a>.</span></div>
-    <div class="co-consents">
-      <div class="co-card co-list">
-        <div class="co-card-k co-list-k"><span class="eyebrow">Who has asked</span><a href="#" onclick="return false">View all</a></div>
-        <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Northgate Facilities <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: general liability, workers’ comp, W&#8209;9. Asked 2 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
-        <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Bramwell Group <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: everything in Insurance. Asked 6 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
-        <div class="co-row"><div class="co-row-t"><span class="co-row-n">Meridian Health <span class="co-badge b-ok">Accepted</span></span><span class="co-subtle">Sees: Company &amp; legal, Insurance. Since 4 Sep 2026.</span></div><a href="#" onclick="return false" class="btn co-btn-ghost co-btn-sm">Manage</a></div>
-      </div>
-    </div>
-  </div></section>
-
-  
-
-</div>
-
 </main>
 
-<script src="js/app-3.js"></script>
 <script>
 /* The header's account: the photo added at sign-up (or the initials), the name and email,
    and a menu with Edit profile, Settings and Log out. Log out forgets this tab's demo
@@ -1486,333 +1255,7 @@ body { transition: background-color .9s ease; }
 })();
 </script>
 <script>
-(() => {
-  const root = document.documentElement;
-  // If anything below fails, the page must come back rather than leaving the
-  // visitor on a blank off-white field that the head script painted.
-  const reveal = () => root.classList.remove('intake-first');
-
-  const intake = document.getElementById('intake');
-  const source = document.querySelector('#empty .alma-media');
-  if (!intake || !source) { reveal(); return; }
-
-  // One copy of the composition in the source; the second is a clone.
-  document.getElementById('intake-alma').replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
-
-  // ---- the company home ------------------------------------------------------
-  // Table rows are links to their record. Prototype: reachable and highlighted, not wired yet.
-  document.querySelectorAll('.co-tbl tbody tr').forEach((tr) => { if (!tr.querySelector('.co-tbl-empty')) { tr.tabIndex = 0; tr.setAttribute('role', 'link'); } });
-  // Empty: ALMA's card (and the strip's Start company profile) opens the intake; files dropped
-  // on her here are handed straight to it.
-  const ceDrop = document.getElementById('ce-drop');
-  if (ceDrop) {
-    const start = (e) => { if (e) e.preventDefault(); open(); };
-    ceDrop.addEventListener('click', start);
-    ceDrop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') start(e); });
-    document.querySelectorAll('[data-ce-start]').forEach((a) => a.addEventListener('click', start));
-    ceDrop.addEventListener('dragover', (e) => { e.preventDefault(); ceDrop.classList.add('is-over'); });
-    ceDrop.addEventListener('dragleave', () => ceDrop.classList.remove('is-over'));
-    ceDrop.addEventListener('drop', (e) => { e.preventDefault(); ceDrop.classList.remove('is-over'); open(); take(e.dataTransfer.files); });
-  }
-  document.querySelectorAll('#empty .co-sw:not(:disabled)').forEach((sw) => sw.addEventListener('click', () => {
-    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
-  }));
-  // ALMA again, in the attention card: a third copy of the same composition.
-  const coAlma = document.getElementById('co-alma');
-  if (coAlma) coAlma.replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
-  // Consents switch for real (the required one is locked on).
-  document.querySelectorAll('#filled .co-sw').forEach((sw) => sw.addEventListener('click', () => {
-    sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
-  }));
-  // Answering a request swaps the buttons for the answer.
-  document.querySelectorAll('#filled .co-req [data-answer]').forEach((b) => b.addEventListener('click', () => {
-    const row = b.closest('.co-row'), yes = b.dataset.answer === 'Accepted';
-    const badge = row.querySelector('.co-badge');
-    badge.className = 'co-badge ' + (yes ? 'b-ok' : 'b-neu'); badge.textContent = b.dataset.answer;
-    row.querySelector('.co-acts').replaceWith(Object.assign(document.createElement('span'), { className: 'co-subtle', style: 'font-size:.875rem', textContent: 'Just now' }));
-  }));
-  // The license drop: takes a file by drag or by browsing, names it, and waits for
-  // "Hand it to ALMA". She reads it, files it, and the page catches up: the action is
-  // done, the table row is in order, the profile and the score move. Prototype: the
-  // file never leaves the machine.
-  const coDrop = document.getElementById('co-drop'), coFile = document.getElementById('co-file');
-  if (coDrop && coFile) {
-    const $c = (id) => document.getElementById(id);
-    const t = $c('co-drop-t'), sub = $c('co-drop-s'), acts = $c('co-drop-acts');
-    const idle = { t: t.textContent, s: sub.innerHTML };
-    let picked = null, state = 'idle';
-    const setState = (st) => { state = st; coDrop.classList.toggle('has-file', st === 'file'); coDrop.classList.toggle('is-reading', st === 'reading'); coDrop.classList.toggle('is-filed', st === 'filed'); };
-    const took = (f) => {
-      if (!f || state === 'reading' || state === 'filed') return;
-      picked = f;
-      t.textContent = 'Got it: ' + f.name;
-      sub.textContent = 'Hand it over and I will read it, date it and file it.';
-      acts.hidden = false; setState('file');
-      setTimeout(() => $c('co-hand').focus({ preventScroll: true }), 50);
-    };
-    const browse = (e) => { e.preventDefault(); coFile.value = ''; coFile.click(); };
-    coDrop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
-    coDrop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === coDrop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
-    coFile.addEventListener('click', (e) => e.stopPropagation());
-    coFile.addEventListener('change', () => took(coFile.files[0]));
-    coDrop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') coDrop.classList.add('is-over'); });
-    coDrop.addEventListener('dragleave', () => coDrop.classList.remove('is-over'));
-    coDrop.addEventListener('drop', (e) => { e.preventDefault(); coDrop.classList.remove('is-over'); took(e.dataTransfer.files[0]); });
-    $c('co-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
-    $c('co-hand').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (state !== 'file') return;
-      setState('reading'); acts.hidden = true;
-      t.textContent = 'Reading ' + picked.name + '…';
-      sub.textContent = 'Checking the issuer, the dates and the business it names.';
-      setTimeout(() => {
-        setState('filed');
-        t.textContent = 'Filed. Your license is valid again.';
-        sub.textContent = 'City of Wilmington · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
-        // the page catches up
-        const step = $c('co-step-license');
-        // one of the two overdue documents is done; E-Verify is still open
-        const sb = step.querySelector('.co-badge'); sb.textContent = '1 document';
-        step.querySelector('p').textContent = 'Business license replaced today. E\u2011Verify is still missing 3 I\u20119 attestations.';
-        const row = $c('co-row-license'), cells = row.querySelectorAll('td');
-        cells[6].textContent = '1 Oct 2026';
-        cells[7].innerHTML = '<span class="co-exp">15 Aug 2027 <span class="co-badge b-ok">In order</span></span>';
-        $c('co-meter').firstElementChild.style.width = '91%'; $c('co-meter').setAttribute('aria-valuenow', '91');
-        $c('co-pct').textContent = '91%';
-        $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
-        $c('co-ring').style.setProperty('--p', '87%'); $c('co-score').textContent = '87';
-        $c('co-score-note').textContent = 'Good · up 9 with the new license';
-      }, reducedMotion ? 0 : 2200);
-    });
-  }
-
-  const drop = document.getElementById('drop');
-  const hint = document.getElementById('drop-hint');
-  const file = document.getElementById('file');
-  const took = document.getElementById('took');
-  const esc = (v) => v.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-
-  const open = () => { intake.hidden = false; root.classList.add('intake-open'); };
-  // Dropping the overlay also drops the arriving state, so the page fades up
-  // from the off-white rather than snapping into it.
-  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const close = () => {
-    intake.hidden = true;
-    root.classList.remove('intake-open');
-    document.getElementById('faq-cue-wrap').classList.remove('is-in');
-    reveal();
-  };
-
-  // ?page is the empty company home, ?filled the populated one. Both skip the
-  // intake, which is how either gets looked at without sitting through it.
-  if (new URLSearchParams(location.search).has('filled')) {
-    document.getElementById('empty').hidden = true;
-    document.getElementById('filled').hidden = false;
-  }
-  // Arriving on the empty company (?page): the page settles, then ALMA's step comes up
-  // over it as an overlay. Skip, or Escape, leaves the empty page.
-  // Straight from sign-up (?page&welcome): the founding-member thank-you on off-white,
-  // then it fades straight into ALMA. The empty page shows only if she is skipped.
-  const arrive = new URLSearchParams(location.search);
-  const overlay = () => setTimeout(() => { if (intake.hidden) { intake.classList.add('over-page'); open(); } }, reducedMotion ? 0 : 650);
-  if (arrive.has('welcome')) {
-    history.replaceState(null, '', location.pathname + '?page'); // a reload lands on the company, not the thank-you again
-    let first = 'You';
-    try { const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); if (p && p.name) first = p.name.split(/\s+/)[0]; } catch (e) {}
-    const name = first.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    // deferred: welcome() is defined further down this script
-    setTimeout(() => welcome(() => {
-      open();
-      setTimeout(() => { if (!intake.hidden && !cueRetired) cueWrap.classList.add('is-in'); }, reducedMotion ? 0 : 1900);
-    }, `<b>${name}</b>, your founding seat is saved. Next, ALMA sets up your company with you.`), 0);
-  } else if (root.classList.contains('intake-first')) open(); else reveal();
-  if (!arrive.has('welcome') && arrive.has('page')) overlay();
-  document.getElementById('skip').addEventListener('click', close);
-  addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intake.hidden) close(); });
-
-// The end of the reading: she and her last line go out to the off-white the
-  // whole step has been sitting on, and the company page — now with a company
-  // in it — comes up through the same colour. The body's background travels
-  // with them, so it reads as one movement rather than a screen swap.
-  const finish = () => {
-    document.getElementById('empty').hidden = true;
-    document.getElementById('filled').hidden = false;
-    screen.classList.add('is-finishing');
-    const toPage = () => { intake.hidden = true; root.classList.remove('intake-open'); reveal(); };
-    setTimeout(toPage, 760); // the founding-member thank-you now comes at the end of sign-up, not here
-  };
-
-  // ---- welcome --------------------------------------------------------------
-  // Up through the off-white she left, a breath on the sphere, then out to the
-  // company page the same way. It names the company the page is about to show.
-  const welcome = (next, lead) => {
-    const w = document.getElementById('welcome');
-    if (!w) { next(); return; }
-    if (lead) w.querySelector('.w-lead').innerHTML = lead;
-    else { const co = document.querySelector('#filled .co-name'); document.getElementById('welcome-co').textContent = (co && co.textContent.trim()) || 'Your company'; }
-    w.hidden = false;
-    let sphere = null;
-    try {
-      if (window.__sphere) sphere = window.__sphere.mountSphere(document.getElementById('welcome-sphere'), {
-        n: 460, ink: '52,52,52', lineAlpha: 0.06, lineBase: 0.015, dotAlpha: 0.18, radius: 0.46,
-        inkOpacityMobile: 0.7, radiusMobile: 0.62, scrollRot: 0, pointer: 0.5,
-        coralPoint: true, pointColor: '#f46d4f', pulse: true, pointAngle: -0.62, pointSize: 14 });
-    } catch (e) { console.error(e); }
-    requestAnimationFrame(() => requestAnimationFrame(() => w.classList.add('is-in')));
-    // the ALMA screen is gone behind it by now
-    const hideBehind = setTimeout(() => { intake.hidden = true; }, 900); // ALMA's screen is gone behind it by now
-    let left = false;
-    const leave = () => {
-      clearTimeout(hideBehind);
-      if (left) return; left = true;
-      w.classList.remove('is-in');
-      next();
-      setTimeout(() => { w.hidden = true; if (sphere) sphere.destroy(); }, 950);
-    };
-    const go = document.getElementById('welcome-go');
-    go.addEventListener('click', leave);
-    // no timer: it stays until they choose to go on
-    setTimeout(() => go.focus({ preventScroll: true }), 900);
-  };
-
-  // ---- the cue down to the list -------------------------------------------
-  const cues = intake.querySelector('.cues');
-  const cueWrap = document.getElementById('faq-cue-wrap');
-  // It asks "do you know what I want?", so it retires the moment that question
-  // is answered — and it has no backdrop, so leaving it over a growing list of
-  // filenames would just be two things printed on top of each other.
-  let cueRetired = false;
-  const retireCue = () => { cueRetired = true; cueWrap.classList.remove('is-in'); };
-  if (cues && cueWrap) {
-    // After she has arrived and said her piece, not competing with her.
-    setTimeout(() => { if (!intake.hidden && !cueRetired) cueWrap.classList.add('is-in'); }, 1900);
-    document.getElementById('faq-cue').addEventListener('click', () => {
-      cues.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
-    });
-    // Once the list is reached it has done its job.
-    new IntersectionObserver(
-      ([e]) => cueWrap.classList.toggle('is-in', !e.isIntersecting && !intake.hidden && !cueRetired),
-      { root: intake, threshold: 0.12 },
-    ).observe(cues);
-  }
-
-  // ---- taking the files ---------------------------------------------------
-  const received = [];
-  const received_names = new Set();
-
-  const show = () => {
-    const n = received.length;
-    hint.textContent = n ? `${n} file${n === 1 ? '' : 's'}` : 'Drop them on me';
-    const first = received.slice(0, 6);
-    const rest = n - first.length;
-    took.hidden = false;
-    took.innerHTML =
-      `<p class="lead" style="margin-top:0">Got ${n === 1 ? 'it' : 'them'}. ` +
-      `<b style="font-weight:600;color:var(--color-ink)">${n} file${n === 1 ? '' : 's'}</b>, and nothing for you to sort.</p>` +
-      `<ul>${first.map((f) => `<li>${esc(f)}</li>`).join('')}</ul>` +
-      (rest > 0 ? `<p class="more">and ${rest} more</p>` : '') +
-      `<p class="more" style="margin-top:.75rem">Prototype — the files stay on your machine. Nothing is uploaded, read or saved.</p>`;
-  };
-
-  const screen = intake.querySelector('.intake-screen');
-  const take = (list) => {
-    for (const f of list) {
-      if (received_names.has(f.name)) continue;
-      received_names.add(f.name);
-      received.push(f.name);
-    }
-    if (!received.length) return;
-    // Her pitch folds away, the buttons come up, and the way on appears.
-    screen.classList.add('has-files');
-    retireCue();
-    show();
-  };
-
-  // ---- handing it over -----------------------------------------------------
-  // Everything but her folds and fades to the off-white, she grows into the
-  // middle of it, and she says what she is doing one line at a time. The
-  // lines name the visitor's own files, so the wait is about their paperwork
-  // rather than a generic spinner.
-  let handed = false;
-  document.getElementById('hand').addEventListener('click', () => {
-    if (handed) return;
-    handed = true;
-
-    screen.classList.add('is-working');
-
-    const working = document.getElementById('working');
-    const sq = document.getElementById('doing-sq');
-    const text = document.getElementById('doing-text');
-
-    const n = received.length;
-    const name = (i) => received[i % received.length];
-    const lines = [
-      `Opening ${n} file${n === 1 ? '' : 's'}.`,
-      `Reading <b>${esc(name(0))}</b>.`,
-      'Working out what each one is.',
-      n > 1 ? `Reading <b>${esc(name(1))}</b>.` : 'Reading every page.',
-      'Checking the dates they run out.',
-      'Matching them against what buyers ask for.',
-      'Filing them where they belong.',
-    ];
-    let quarter = 0;
-    const put = (html) => {
-      text.innerHTML = html;
-      // A quarter-turn per line. The square is what says she is still going,
-      // so it moves exactly when what she is doing changes — the mark's own
-      // ninety degrees, a click into place rather than a spin.
-      sq.style.transform = `rotate(${(quarter += 90)}deg)`;
-    };
-
-    if (reducedMotion) { finish(); return; }
-
-    // She takes the middle first, then starts talking.
-    setTimeout(() => {
-      working.hidden = false;
-      requestAnimationFrame(() => working.classList.add('is-in'));
-      put(lines[0]);
-    }, 620);
-
-    // Out over 400ms, swapped while invisible, back in over 400ms, then held
-    // for 900 — the same easing either way, so neither end reads as a cut.
-    let k = 1;
-    const tick = () => {
-      text.style.opacity = '0';
-      setTimeout(() => {
-        put(lines[k]);
-        text.style.opacity = '1';
-        k++;
-        // The last line is not followed by another line: it is followed by
-        // the company page.
-        setTimeout(k < lines.length ? tick : finish, 900);
-      }, 400);
-    };
-    setTimeout(tick, 1900);
-  });
-
-  document.getElementById('pick').addEventListener('click', () => file.click());
-  file.addEventListener('change', () => { take(file.files); file.value = ''; });
-  drop.addEventListener('click', () => file.click());
-
-  // The whole overlay accepts the drop, so a near miss still lands; only ALMA
-  // lights up, because she is what you are aiming at.
-  let depth = 0;
-  const over = (on) => drop.classList.toggle('is-over', on);
-  intake.addEventListener('dragenter', (e) => { e.preventDefault(); depth++; over(true); });
-  intake.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
-  intake.addEventListener('dragleave', () => { if (--depth <= 0) { depth = 0; over(false); } });
-  intake.addEventListener('drop', (e) => {
-    e.preventDefault(); depth = 0; over(false);
-    take(e.dataTransfer.files);
-  });
-  // A file dropped anywhere else would navigate the browser away from the page.
-  addEventListener('dragover', (e) => e.preventDefault());
-  addEventListener('drop', (e) => e.preventDefault());
-})();
-</script>
-
-<script>
-/* Side menu: jump to this page's sections and mark the one in view; a drawer on phones. */
+/* Side menu: the company page's places, a drawer on phones. */
 (() => {
   const sn = document.getElementById('sn'); if (!sn) return;
   const items = [...sn.querySelectorAll('.sn-item')];
@@ -1848,6 +1291,7 @@ body { transition: background-color .9s ease; }
     e.preventDefault();
     const key = a.dataset.sn;
     if (key === 'go') { location.href = a.getAttribute('href'); return; }
+    if (key === 'here') { drawer(false); scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (key === 'logout') { const out = document.getElementById('who-logout'); if (out) out.click(); return; }
     if (key === 'soon') { drawer(false); return; } // prototype: not built yet
     drawer(false);
@@ -1858,9 +1302,9 @@ body { transition: background-color .9s ease; }
   // the section in view is the one marked
   const spy = ['.co-proj-sec', 'docs', '.co-last-sec'];
   const mark = () => {
+    if (!page()) return; // not the company page: the marked item is set in the markup
     let on = 'top';
     spy.forEach((k) => { const t = target(k); if (t && t.getBoundingClientRect().top < innerHeight * 0.4) on = k; });
-    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) on = spy[spy.length - 1]; // the last section can't scroll up to the line
     items.forEach((a) => { const is = a.dataset.sn === on; a.classList.toggle('is-on', is); if (is) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
   };
   addEventListener('scroll', mark, { passive: true }); addEventListener('resize', mark);
@@ -1873,29 +1317,23 @@ body { transition: background-color .9s ease; }
 </script>
 <script>
 /* Notifications: the bell opens its panel (so does the menu's Notifications); a notification
-   goes to its section on this page and is marked read; the counts follow what is unread. */
+   opens its section on the company page and is marked read; the counts follow what is unread. */
 (() => {
   const nt = document.getElementById('nt'), bell = document.getElementById('hdr-bell'); if (!nt) return;
   const items = [...nt.querySelectorAll('.nt-item')];
   const open = (on) => { nt.classList.toggle('is-open', on); bell.setAttribute('aria-expanded', String(on)); if (on) setTimeout(() => (items.find((i) => i.classList.contains('is-unread')) || items[0]).focus({ preventScroll: true }), 60); };
   const count = () => {
     const n = items.filter((i) => i.classList.contains('is-unread')).length;
-    const filled = !!document.querySelector('#filled:not([hidden])');
+    const filled = true;
     document.querySelectorAll('[data-sn-count]').forEach((c) => { c.textContent = n; c.hidden = !filled || !n; });
     bell.setAttribute('aria-label', filled && n ? `Notifications, ${n} new` : 'Notifications');
-  };
-  const section = (key) => {
-    const p = document.querySelector('#filled:not([hidden])') || document.querySelector('#empty:not([hidden])'); if (!p) return null;
-    if (key === 'docs') { const h = [...p.querySelectorAll('h2')].find((e) => e.textContent.trim() === 'Documents'); return h && h.closest('section'); }
-    return p.querySelector(key === 'consents' ? '.co-last-sec' : '.co-proj-sec');
   };
   bell.addEventListener('click', (e) => { e.stopPropagation(); open(!nt.classList.contains('is-open')); });
   document.getElementById('nt-readall').addEventListener('click', (e) => { e.stopPropagation(); items.forEach((i) => i.classList.remove('is-unread')); count(); });
   items.forEach((i) => i.addEventListener('click', (e) => {
     e.preventDefault();
     i.classList.remove('is-unread'); count(); open(false);
-    const t = section(i.dataset.go);
-    if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 80, behavior: 'smooth' });
+    location.href = 'my-company.html?filled#' + ({ docs: 'documents', consents: 'consents', projects: 'projects' }[i.dataset.go] || '');
   }));
   document.addEventListener('click', (e) => { if (!nt.contains(e.target)) open(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && nt.classList.contains('is-open')) { open(false); bell.focus(); } });
@@ -1903,32 +1341,9 @@ body { transition: background-color .9s ease; }
   const menuItem = document.querySelector('.sn-item[data-sn="notifications"]');
   if (menuItem) menuItem.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); open(true); });
   count();
-  new MutationObserver(count).observe(document.getElementById('filled'), { attributes: true, attributeFilter: ['hidden'] });
 })();
 </script>
-<script>
-/* Delivery deadlines on My projects: the days to go, kept current, in red when close; once the
-   date has passed the cell turns into a delayed badge with how late it is. */
-(() => {
-  const cells = [...document.querySelectorAll('.co-dl[data-due]')]; if (!cells.length) return;
-  const SOON = 14; // days: from here the countdown turns red
-  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const draw = () => {
-    const now = Date.now();
-    cells.forEach((c) => {
-      const due = new Date(c.dataset.due + 'T23:59:59'), ms = due - now, when = `${due.getDate()} ${MON[due.getMonth()]} ${due.getFullYear()}`;
-      if (ms <= 0) {
-        const late = Math.max(1, Math.floor(-ms / 864e5));
-        c.innerHTML = `<span class="co-badge b-over">Delayed</span><span class="d" title="Was due ${when}">${late} day${late === 1 ? '' : 's'} late</span>`;
-        return;
-      }
-      const d = Math.ceil(ms / 864e5);
-      c.innerHTML = `<span class="co-dl-t${d <= SOON ? ' is-soon' : ''}" aria-label="${d} day${d === 1 ? '' : 's'} left"><b>${d}</b><small>day${d === 1 ? '' : 's'}</small></span><span class="d">Due ${when}</span>`;
-    });
-  };
-  draw(); setInterval(draw, 60000);
-})();
-</script>
+<script src="js/settings.js"></script>
 <script src="js/lang.js"></script>
 </body>
 </html>
