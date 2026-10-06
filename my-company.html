@@ -1507,13 +1507,13 @@ body { transition: background-color .9s ease; }
       <table class="co-tbl co-docs-tbl">
         <thead><tr><th>Document name</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
         <tbody>
-          <tr id="co-row-license"><td><span class="n">Business license</span><span class="d">City of Wilmington · expired 15 Aug</span></td><td class="c">Company</td><td class="c">15 Aug 2026</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
-          <tr><td><span class="n">E&#8209;Verify enrolment</span><span class="d">3 I&#8209;9 attestations missing</span></td><td class="c">Worker</td><td class="c">Does not expire</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
-          <tr><td><span class="n">Certificate of Good Standing</span><span class="d">Delaware</span></td><td class="c">Company</td><td class="c">31 Oct 2026</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr>
-          <tr><td><span class="n">Commercial auto liability</span><span class="d">18 of 22 vehicles on the schedule</span></td><td class="c">Equipment</td><td class="c">3 Nov 2026</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr>
-          <tr><td><span class="n">Crane inspection certificate</span><span class="d">Liebherr LTM 1060 · annual</span></td><td class="c">Equipment</td><td class="c">20 Oct 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
-          <tr><td><span class="n">Forklift operator certification</span><span class="d">2 operators renewed, awaiting review</span></td><td class="c">Worker</td><td class="c">12 Dec 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
-          <tr><td><span class="n">Workers&rsquo; compensation certificate</span><span class="d">All 24 people covered</span></td><td class="c">Worker</td><td class="c">1 Jan 2027</td><td class="c"><span class="co-badge b-ok">In conformity</span></td></tr>
+          <tr id="co-row-license" data-code="E01"><td><span class="n">Contractor&rsquo;s license (IMPIC certificate)</span><span class="d">Expired 15 August &mdash; drop the renewed one on ALMA.</span></td><td class="c">Company</td><td class="c">15 Aug 2026</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
+          <tr data-code="E18"><td><span class="n">Health &amp; safety organisation &amp; risk assessment</span><span class="d">E&#8209;Verify enrolment incomplete.</span></td><td class="c">Company</td><td class="c">3 I&#8209;9 attestations missing</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
+          <tr data-code="E12"><td><span class="n">Social security payment receipt</span><span class="d">September&rsquo;s receipt is in review.</span></td><td class="c">Company</td><td class="c">Due monthly</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="E10"><td><span class="n">Public liability insurance</span><span class="d">18 of 22 vehicles on the schedule.</span></td><td class="c">Company</td><td class="c">3 Nov 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="EQ03"><td><span class="n">Periodic safety inspection reports</span><span class="d">Crane inspection awaiting sign&#8209;off.</span></td><td class="c">Equipment</td><td class="c">20 Oct 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="T05"><td><span class="n">Special&#8209;risk training (height, confined spaces)</span><span class="d">2 workers due for refresher.</span></td><td class="c">Worker</td><td class="c">9 Jun 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="T07"><td><span class="n">Foreign workers&rsquo; residence &amp; work authorization</span><span class="d">None on payroll this quarter.</span></td><td class="c">Worker</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -1600,8 +1600,15 @@ body { transition: background-color .9s ease; }
   document.getElementById('intake-alma').replaceChildren(...[...source.children].map(n => n.cloneNode(true)));
 
   // ---- the company home ------------------------------------------------------
-  // Table rows are links to their record. Prototype: reachable and highlighted, not wired yet.
+  // Table rows are links to their record. Prototype: Project rows are reachable and
+  // highlighted but not wired (there is no project page yet); Documents rows carry the
+  // real document's code and open straight to it in the Documents section.
   document.querySelectorAll('.co-tbl tbody tr').forEach((tr) => { if (!tr.querySelector('.co-tbl-empty')) { tr.tabIndex = 0; tr.setAttribute('role', 'link'); } });
+  document.querySelectorAll('.co-docs-tbl tbody tr[data-code]').forEach((tr) => {
+    const go = () => { location.href = `company-details.html?open=${encodeURIComponent(tr.dataset.code)}`; };
+    tr.addEventListener('click', go);
+    tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
   // Empty: ALMA's card (and the strip's Start company profile) opens the intake; files dropped
   // on her here are handed straight to it.
   const ceDrop = document.getElementById('ce-drop');
@@ -1667,11 +1674,11 @@ body { transition: background-color .9s ease; }
       sub.textContent = 'Checking the issuer, the dates and the business it names.';
       setTimeout(() => {
         setState('filed');
-        t.textContent = 'Filed: your business license, valid again.';
-        sub.textContent = 'City of Wilmington · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
+        t.textContent = 'Filed: your contractor’s license, valid again.';
+        sub.textContent = 'IMPIC certificate · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
         // the page catches up
         const row = $c('co-row-license'), cells = row.querySelectorAll('td');
-        cells[0].querySelector('.d').textContent = 'City of Wilmington · replaced today';
+        cells[0].querySelector('.d').textContent = 'Replaced today.';
         cells[2].textContent = '15 Aug 2027';
         cells[3].innerHTML = '<span class="co-badge b-ok">In conformity</span>';
         $c('co-meter').firstElementChild.style.width = '91%'; $c('co-meter').setAttribute('aria-valuenow', '91');

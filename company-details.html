@@ -1137,6 +1137,9 @@ button.cd-row.is-rosterable:hover .cd-row-open { transform: translateX(3px); col
 /* the count of people or machines that need attention, right beside the document's name */
 .cd-row-alert { display: inline-grid; place-items: center; min-width: 1.125rem; height: 1.125rem; margin-left: 0.5rem; padding: 0 0.3125rem; border-radius: 9999px;
   background: var(--color-critical-subtle); color: var(--color-critical); font-size: 0.6875rem; font-weight: 700; vertical-align: 1px; }
+/* arriving straight at one document from elsewhere: a brief glow so it's easy to spot */
+.cd-row.is-arrived { animation: cd-arrive 2.4s var(--ease-brand); border-radius: 0.5rem; margin: 0 -0.5rem; padding-inline: 0.5rem; width: calc(100% + 1rem); }
+@keyframes cd-arrive { 0%, 55% { background: var(--color-light-beige); } 100% { background: none; } }
 /* a document's own page: everyone or everything behind it, searchable, not a dropdown */
 .cd-detail-tools { justify-content: space-between; margin-bottom: 0.875rem; } /* same gap to the list as the main toolbar, everywhere */
 .cd-detail-count { font-size: 0.8125rem; white-space: nowrap; }

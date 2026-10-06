@@ -158,7 +158,7 @@
     const alert = attn ? `<span class="cd-row-alert">${attn}</span>` : '';
     const open = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : '';
     const tag = hasRoster ? 'button' : 'div';
-    const attrs = hasRoster ? ` type="button" data-detail="${d.id}"` : '';
+    const attrs = (hasRoster ? ` type="button" data-detail="${d.id}"` : '') + ` data-row-id="${d.id}"`;
     return `<${tag} class="co-row cd-row${hasRoster ? ' is-rosterable' : ''}"${attrs}>` +
       `<div class="co-row-t"><span class="co-row-n">${d.name}${alert}</span><span class="co-subtle">${d.code}${d.note ? ' · ' + d.note : ''}</span></div>` +
       `<div class="cd-row-r"><span class="cd-row-dates">${dates}</span>${share}<span class="co-badge ${cls}">${label}</span>${open}</div></${tag}>`;
@@ -391,5 +391,17 @@
     });
   }
 
+  // arriving from elsewhere (the home page's "Documents requiring attention", a notification)
+  // already knowing which document: open straight to it instead of the profile's front page
+  const openCode = new URLSearchParams(location.search).get('open');
+  const openDoc = openCode && DOCS.find((d) => d.code === openCode);
+  if (openDoc) {
+    area = AREAS.find((a) => a.cats.includes(openDoc.cat)).key;
+    if (ROSTERS[openDoc.code]) detail = openDoc.code;
+  }
   render();
+  if (openDoc && !detail) {
+    const arrived = groupsEl.querySelector(`[data-row-id="${openDoc.id}"]`);
+    if (arrived) { arrived.scrollIntoView({ block: 'center' }); arrived.classList.add('is-arrived'); }
+  }
 })();
