@@ -535,6 +535,17 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-step.is-done h3 .co-badge { text-decoration: none; }
 .co-drop-t { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
 
+/* ALMA on her side, between the documents title and the table: her, the words, the buttons */
+.co-drop.co-drop-h { height: auto; flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 1.5rem; padding: 1.25rem 1.75rem; margin-bottom: 1.5rem; border-radius: 1.25rem; }
+.co-drop-h .alma-media { position: relative; left: auto; top: auto; translate: none; flex: none; width: 6.5rem; max-width: none; margin: 0; }
+.co-drop-h.has-file .alma-media { transform: none; }
+.co-drop-w { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.co-drop-h .co-drop-t { font-size: 1.25rem; }
+.co-drop-s { font-size: 0.9375rem; }
+.co-drop-h .co-drop-acts { flex-direction: row; margin: 0 0 0 auto; flex: none; }
+.co-docs-sec { border-top: 1px solid var(--color-line); }
+@media (max-width: 40rem) { .co-drop.co-drop-h { flex-direction: column; align-items: flex-start; } .co-drop-h .co-drop-acts { margin: 0; } }
+
 /* consents */
 .co-consents { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; } /* your own consents live in Settings */
 .co-list { padding: 0.5rem 1.5rem; gap: 0; }
@@ -1309,31 +1320,21 @@ body { transition: background-color .9s ease; }
   </div></section>
 
   <!-- Needs your attention: the way in, ALMA on the right -->
-  <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
-    <div class="co-attn-l">
-      <span class="eyebrow">Needs your attention</span>
-      <h2 class="co-h-xl">Nothing needs you yet.<br><span style="font-weight:300">Let's get your company in.</span></h2>
-      <div class="co-steps">
-        <div class="co-step"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-neu">None</span></h3><p>Anything a client asked for by a date that has not arrived yet.</p></div>
-        <div class="co-step"><span class="co-num">2</span><h3>About to expire <span class="co-badge b-neu">None</span></h3><p>Close to its date. Renew it before a client asks to see it.</p></div>
-        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-neu">None</span></h3><p>Due for renewal soon, flagged early enough to renew in time.</p></div>
-        <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-neu">None</span></h3><p>A client has asked to see your data and is waiting for your yes.</p></div>
-      </div>
-    </div>
-    <div class="co-drop" id="ce-drop" role="button" tabindex="0" aria-label="Drop your company documents on ALMA, or press to browse">
+
+  <!-- Documents: an empty table, the columns already there -->
+  <section class="co-sec co-docs-sec"><div class="co-wrap">
+    <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Company documentation</h3></div>
+    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Documents requiring attention</h2><p class="co-muted">Once ALMA has your documents, anything expired, missing or waiting on a review shows here.</p></div>
+    <div class="co-drop co-drop-h" id="ce-drop" role="button" tabindex="0" aria-label="Drop your company documents on ALMA, or press to browse">
       <span class="alma-media" aria-hidden="true">
 <span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>
       </span>
-      <span class="eyebrow">ALMA</span>
-      <span class="co-drop-t">Drop your documents on me.</span>
-      <span class="co-muted" style="font-size:0.9375rem">I read them, find your company and fill in your profile. <a href="#" id="ce-browse">Or browse on your device</a></span>
+      <span class="co-drop-w">
+        <span class="eyebrow">ALMA</span>
+        <span class="co-drop-t">Drop your documents on me.</span>
+        <span class="co-muted co-drop-s">Licenses, certificates, policies. I read them, find your company and fill in your profile. <a href="#" id="ce-browse">Or browse on your device</a></span>
+      </span>
     </div>
-  </div></section>
-
-  <!-- Documents: an empty table, the columns already there -->
-  <section class="co-sec co-pad-top-0 co-docs-sec"><div class="co-wrap">
-    <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Company documentation</h3></div>
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Documents requiring attention</h2><p class="co-muted">Once ALMA has your documents, anything expired, missing or waiting on a review shows here.</p></div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl co-docs-tbl">
         <thead><tr><th>Document name</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
@@ -1463,34 +1464,24 @@ body { transition: background-color .9s ease; }
   </div></section>
 
   <!-- Needs your attention: the landing's numbered steps, ALMA on the right -->
-  <section class="co-sec co-attn-sec"><div class="co-wrap co-attn">
-    <div class="co-attn-l">
-      <span class="eyebrow">Needs your attention</span>
-      <h2 class="co-h-xl">Some pending actions<br>are requiring your attention.</h2>
-      <div class="co-steps">
-        <div class="co-step" id="co-step-license"><span class="co-num">1</span><h3>Documents overdue <span class="co-badge b-over">2 documents</span></h3><p>Your business license ran out on 15 August, and E&#8209;Verify is still missing 3 I&#8209;9 attestations.</p></div>
-        <div class="co-step"><span class="co-num">2</span><h3>About to expire <span class="co-badge b-pend">1 document</span></h3><p>Your Certificate of Good Standing expires on 31 October. Drop the renewed one on ALMA and she files it.</p></div>
-        <div class="co-step"><span class="co-num">3</span><h3>Pending documents <span class="co-badge b-pend">1 document</span></h3><p>Commercial auto liability renews on 3 November.</p></div>
-        <div class="co-step"><span class="co-num">4</span><h3>Missing consents <span class="co-badge b-info">2 requests</span></h3><p>Northgate Facilities and Bramwell Group are waiting for your yes to see your insurance.</p></div>
-      </div>
-    </div>
-    <div class="co-drop" id="co-drop" role="button" tabindex="0" aria-label="Drop the new business license on ALMA, or press to browse">
+
+  <!-- Documents: only what needs attention, or will soon -->
+  <section class="co-sec co-docs-sec"><div class="co-wrap">
+    <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Company documentation</h3></div>
+    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Documents requiring attention</h2><p class="co-muted">Anything expired, missing or waiting on a review. Drop the new one on ALMA and she files it.</p></div>
+    <div class="co-drop co-drop-h" id="co-drop" role="button" tabindex="0" aria-label="Drop documents on ALMA, or press to browse">
       <span class="alma-media" id="co-alma" aria-hidden="true"></span>
-      <span class="eyebrow">ALMA</span>
-      <span class="co-drop-t" id="co-drop-t">Drop the new license on me.</span>
-      <span class="co-muted" id="co-drop-s" style="font-size:0.9375rem">PDF, scan, a photo of it on the wall. I read it, date it and file it. <a href="#" id="co-browse">Or browse on your device</a></span>
+      <span class="co-drop-w">
+        <span class="eyebrow">ALMA</span>
+        <span class="co-drop-t" id="co-drop-t">Drop new or renewed documents on me.</span>
+        <span class="co-muted co-drop-s" id="co-drop-s">PDF, scan, a photo of it on the wall. I read each one, date it and file it in the right row below. <a href="#" id="co-browse">Or browse on your device</a></span>
+      </span>
       <span class="co-drop-acts" id="co-drop-acts" hidden>
         <button type="button" class="btn btn-primary" id="co-hand">Hand it to ALMA</button>
         <button type="button" class="link-btn" id="co-again">Choose another</button>
       </span>
       <input type="file" id="co-file" hidden>
     </div>
-  </div></section>
-
-  <!-- Documents: only what needs attention, or will soon -->
-  <section class="co-sec co-pad-top-0 co-docs-sec"><div class="co-wrap">
-    <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Company documentation</h3></div>
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Documents requiring attention</h2><p class="co-muted">Anything expired, missing or waiting on a review. Drop the new one on ALMA and she files it.</p></div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl co-docs-tbl">
         <thead><tr><th>Document name</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
@@ -1652,13 +1643,9 @@ body { transition: background-color .9s ease; }
       sub.textContent = 'Checking the issuer, the dates and the business it names.';
       setTimeout(() => {
         setState('filed');
-        t.textContent = 'Filed. Your license is valid again.';
+        t.textContent = 'Filed: your business license, valid again.';
         sub.textContent = 'City of Wilmington · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
         // the page catches up
-        const step = $c('co-step-license');
-        // one of the two overdue documents is done; E-Verify is still open
-        const sb = step.querySelector('.co-badge'); sb.textContent = '1 document';
-        step.querySelector('p').textContent = 'Business license replaced today. E\u2011Verify is still missing 3 I\u20119 attestations.';
         const row = $c('co-row-license'), cells = row.querySelectorAll('td');
         cells[0].querySelector('.d').textContent = 'City of Wilmington · replaced today';
         cells[2].textContent = '15 Aug 2027';
