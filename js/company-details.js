@@ -142,6 +142,13 @@
   let area = null; // null = every area, at the top; otherwise one of AREAS[].key
   let detail = null; // the code of a document whose full roster is open, or null
   let detailQ = ''; // search typed inside a roster page
+  // a roster page's own filter, independent of the document list's: status always, plus a
+  // tag — role for people, equipment type for machines — when the roster has one to offer
+  let detailFilter = { status: new Set(), tag: new Set() };
+  let detailFiltOpen = false;
+  const resetDetailFilter = () => { detailFilter = { status: new Set(), tag: new Set() }; detailFiltOpen = false; };
+  const rosterTagLabel = (r) => (r.list === WORKERS ? 'Role' : r.list === EQUIPMENT ? 'Type' : null);
+  const rosterTag = (r, i) => (r.list === WORKERS ? r.list[i][1] : r.list === EQUIPMENT ? r.list[i][0].split(' &mdash; ')[0] : null);
 
   const CHEV_R = '<svg class="cd-row-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
 
@@ -169,10 +176,32 @@
   const renderDetail = (code) => {
     const doc = DOCS.find((d) => d.code === code), r = ROSTERS[code];
     const fq = fold(detailQ);
-    const items = r.pick.map((i, k) => ({ ...({ name: r.list[i][0], sub: r.list[i][1] }), status: r.status(k), text: fold(r.list[i][0]) }));
-    const shown = fq ? items.filter((it) => it.text.includes(fq)) : items;
+    const tagLabel = rosterTagLabel(r);
+    const items = r.pick.map((i, k) => ({ name: r.list[i][0], sub: r.list[i][1], status: r.status(k), tag: rosterTag(r, i), text: fold(r.list[i][0]) }));
+    // each filter ignores its own dimension when counting, so a menu always shows how many
+    // rows a choice would leave rather than how many it already excludes
+    const dKeep = (it, skip) => (!fq || it.text.includes(fq))
+      && (skip === 'status' || !detailFilter.status.size || detailFilter.status.has(it.status))
+      && (skip === 'tag' || !detailFilter.tag.size || (it.tag && detailFilter.tag.has(it.tag)));
+    const shown = items.filter((it) => dKeep(it, null));
+    const nOnD = detailFilter.status.size + detailFilter.tag.size;
     const crumb = `<div class="cd-area-head"><h2 class="co-h-l">${doc.name}</h2><p class="co-muted">${doc.code} · ${r.pick.length} on file${doc.note ? '. ' + doc.note.replace(/\.$/, '') + '.' : '.'}</p></div>`;
-    const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><span class="co-muted cd-detail-count">${shown.length} of ${r.pick.length}</span></div>`;
+
+    const statusVals = STATUSES.filter((s) => items.some((it) => it.status === s));
+    const tagVals = tagLabel ? [...new Set(items.map((it) => it.tag).filter(Boolean))].sort() : [];
+    const panelHtml = detailFiltOpen ? '<div class="co-filt-list">'
+      + '<div class="co-menu-h">Status</div>' + statusVals.map((s) => {
+        const [label] = STATUS[s], n = items.filter((it) => dKeep(it, 'status') && it.status === s).length;
+        return `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${detailFilter.status.has(s)}" data-dk="status" data-dv="${s}"><span class="co-menu-c">${TICK}</span>${label}<small>${n}</small></button>`;
+      }).join('')
+      + (tagVals.length ? '<div class="co-menu-sep" role="separator"></div>' + `<div class="co-menu-h">${tagLabel}</div>` + tagVals.map((v) => {
+        const n = items.filter((it) => dKeep(it, 'tag') && it.tag === v).length;
+        return `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${detailFilter.tag.has(v)}" data-dk="tag" data-dv="${v}"><span class="co-menu-c">${TICK}</span>${v}<small>${n}</small></button>`;
+      }).join('') : '')
+      + `<div class="co-menu-sep" role="separator"></div><button type="button" class="co-menu-i" role="menuitem" data-dclear${nOnD ? '' : ' disabled'}><span class="co-menu-c">${X}</span>Clear filters</button></div>`
+      : '';
+    const filt = `<div class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="${detailFiltOpen}" data-dfilt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n"${nOnD ? '' : ' hidden'}>${nOnD}</span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button><div class="co-filt-panel" role="menu" aria-label="Filter this roster" data-dfilt-panel${detailFiltOpen ? '' : ' hidden'}>${panelHtml}</div></div>`;
+    const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><div class="co-tools-r"><span class="co-muted cd-detail-count">${shown.length} of ${r.pick.length}</span>${nOnD ? '<button type="button" class="link-btn co-tools-clear" data-dclear>Clear filters</button>' : ''}${filt}</div></div>`;
     const list = shown.length
       ? `<div class="co-card co-list">${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<div class="co-row cd-roster-row"><span class="cd-roster-n">${it.name}</span>${it.sub ? `<span class="co-subtle">${it.sub}</span>` : ''}<span class="co-badge ${cls}">${label}</span></div>`; }).join('')}</div>`
       : '<div class="co-card cd-none"><b class="co-row-n">No one matches that.</b></div>';
@@ -271,7 +300,7 @@
       return sep + (lvl.href ? `<a href="${lvl.href}">${lvl.label}</a>` : `<button type="button" data-crumb="${lvl.crumb}">${lvl.label}</button>`);
     }).join('');
     crumbBack.onclick = () => {
-      if (doc) { detail = null; render(); toTop(); }
+      if (doc) { detail = null; resetDetailFilter(); render(); toTop(); }
       else if (a) { area = null; render(); toTop(); }
       else location.href = 'my-company.html?filled';
     };
@@ -309,8 +338,8 @@
 
   crumbTrail.addEventListener('click', (e) => {
     const b = e.target.closest('[data-crumb]'); if (!b) return;
-    if (b.dataset.crumb === 'root') { area = null; detail = null; }
-    else if (b.dataset.crumb === 'area') { detail = null; }
+    if (b.dataset.crumb === 'root') { area = null; detail = null; resetDetailFilter(); }
+    else if (b.dataset.crumb === 'area') { detail = null; resetDetailFilter(); }
     render(); toTop();
   });
 
@@ -322,8 +351,25 @@
       // the DOM would have already decoded by the time a dataset read it back
       const doc = DOCS.find((d) => d.id === +open.dataset.detail);
       area = AREAS.find((a) => a.cats.includes(doc.cat)).key; // so Back lands where this row was
-      detail = doc.code; detailQ = '';
+      detail = doc.code; detailQ = ''; resetDetailFilter();
       render(); toTop();
+      return;
+    }
+    // the roster page's own filter: same menu pattern as the document list's, scoped to detailFilter
+    const dBtn = e.target.closest('[data-dfilt-btn]'); if (dBtn) {
+      detailFiltOpen = !detailFiltOpen; renderDetail(detail);
+      if (detailFiltOpen) { const first = groupsEl.querySelector('[data-dfilt-panel] .co-menu-i'); if (first) first.focus(); }
+      return;
+    }
+    const dClear = e.target.closest('[data-dclear]'); if (dClear) {
+      if (dClear.disabled) return;
+      detailFilter = { status: new Set(), tag: new Set() }; renderDetail(detail);
+      return;
+    }
+    const dItem = e.target.closest('[data-dfilt-panel] .co-menu-i'); if (dItem) {
+      const { dk, dv } = dItem.dataset; detailFilter[dk].has(dv) ? detailFilter[dk].delete(dv) : detailFilter[dk].add(dv);
+      renderDetail(detail);
+      const again = groupsEl.querySelector(`[data-dk="${dk}"][data-dv="${dv}"]`); if (again) again.focus();
       return;
     }
   });
@@ -331,6 +377,12 @@
     if (!e.target.matches('[data-detail-q]')) return;
     detailQ = e.target.value; renderDetail(detail);
     const again = groupsEl.querySelector('[data-detail-q]'); if (again) { again.focus(); again.setSelectionRange(detailQ.length, detailQ.length); }
+  });
+  document.addEventListener('click', (e) => { if (detailFiltOpen && !e.target.closest('.cd-detail-tools')) { detailFiltOpen = false; if (detail) renderDetail(detail); } });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !detailFiltOpen) return;
+    detailFiltOpen = false; if (detail) renderDetail(detail);
+    const b = groupsEl.querySelector('[data-dfilt-btn]'); if (b) b.focus();
   });
 
   // each total is also a shortcut: a second click on the same one clears it again
@@ -397,7 +449,7 @@
   const openDoc = openCode && DOCS.find((d) => d.code === openCode);
   if (openDoc) {
     area = AREAS.find((a) => a.cats.includes(openDoc.cat)).key;
-    if (ROSTERS[openDoc.code]) detail = openDoc.code;
+    if (ROSTERS[openDoc.code]) { detail = openDoc.code; resetDetailFilter(); }
   }
   render();
   if (openDoc && !detail) {
