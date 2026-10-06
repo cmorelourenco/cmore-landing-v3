@@ -752,8 +752,30 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-proj-dl th:nth-child(9) { width: 6%; }
 .co-proj-dl th:not(:first-child):not(:last-child), .co-proj-dl td:not(:first-child):not(:last-child) { padding-inline: 0.5rem; }
 .co-proj-dl td:nth-child(8) { white-space: nowrap; }
+/* the projects table's search and filters */
+.co-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem; margin-bottom: 0.875rem; }
+.co-search { position: relative; flex: 1 1 18rem; max-width: 26rem; }
+.co-search svg { position: absolute; left: 0.75rem; top: 50%; width: 1.0625rem; height: 1.0625rem; transform: translateY(-50%); color: var(--color-ink-subtle); pointer-events: none; }
+.co-search input { width: 100%; height: 2.5rem; padding: 0 0.875rem 0 2.375rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface);
+  font: inherit; font-size: 0.875rem; color: var(--color-ink); outline: none; }
+.co-search input:focus { border-color: var(--color-graphite); }
+.co-search input::placeholder { color: var(--color-sand-500); }
+.co-seg { display: inline-flex; gap: 0.125rem; padding: 0.1875rem; border-radius: 0.625rem; background: var(--color-mid-beige); }
+.co-seg button { height: 2.125rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; background: none; font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-subtle); cursor: pointer; }
+.co-seg button:hover { color: var(--color-ink); }
+.co-seg button[aria-checked="true"] { background: var(--color-surface); color: var(--color-ink); box-shadow: 0 1px 2px rgba(52, 52, 52, .1); }
+.co-select select { height: 2.5rem; padding: 0 2.25rem 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; appearance: none; cursor: pointer;
+  background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 0.75rem center / 1rem no-repeat;
+  font: inherit; font-size: 0.875rem; color: var(--color-ink); }
+.co-select select:focus { outline: none; border-color: var(--color-graphite); }
+.co-chip-t { height: 2.5rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 9999px; background: var(--color-surface); font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink); cursor: pointer; }
+.co-chip-t[aria-pressed="true"] { background: var(--color-critical-subtle); border-color: var(--color-critical-subtle); color: var(--color-critical); }
+.co-tools-clear { margin-left: auto; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.co-tbl td.co-tbl-none { padding: 2.5rem 0.75rem; text-align: center; color: var(--color-ink-subtle); cursor: default; }
+.co-tbl tbody tr:has(.co-tbl-none), .co-tbl tbody tr:has(.co-tbl-none):hover { cursor: default; background: none; }
 /* the projects table, ten to a page */
-.co-pager { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.875rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+.co-pager { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .co-pager[hidden] { display: none; }
 .co-pager-btns { display: flex; align-items: center; gap: 0.25rem; }
 .co-pager button { min-width: 2.25rem; height: 2.25rem; padding: 0 0.625rem; border: 1px solid transparent; border-radius: 0.5rem; background: none;
@@ -1363,6 +1385,13 @@ body { transition: background-color .9s ease; }
     <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project overview</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
     <div class="co-proj">
       <div class="co-proj-block">
+      <div class="co-tools" data-tools-for="co-proj-filled">
+        <label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by ID, project, client or region" aria-label="Search projects" data-q></label>
+        <div class="co-seg" role="radiogroup" aria-label="Ownership"><button type="button" role="radio" aria-checked="true" data-own="">All</button><button type="button" role="radio" aria-checked="false" data-own="Owner">Owner</button><button type="button" role="radio" aria-checked="false" data-own="Supplier">Supplier</button></div>
+        <label class="co-select"><span class="sr-only">Region</span><select data-region aria-label="Region"><option value="">All regions</option></select></label>
+        <button type="button" class="co-chip-t" aria-pressed="false" data-alerts>With alerts</button>
+        <button type="button" class="link-btn co-tools-clear" data-clear hidden>Clear</button>
+      </div>
       <div class="co-card co-tbl-card">
         <table class="co-tbl co-proj-tbl co-proj-dl" id="co-proj-filled"><thead><tr><th>Project ID</th><th>Project name</th><th class="c">Ownership</th><th class="c">Client</th><th class="c">Region</th><th class="c">Suppliers</th><th class="c">Workers</th><th class="c">End date</th><th>Alerts</th></tr></thead><tbody><tr><td><span class="co-pid">FC-2026-031</span></td><td><span class="n">East wing extension</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Brandywine Regional Hospital<span class="d">Hospital</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">6</td><td class="c">42</td><td class="c">18 Dec 2026</td><td><span class="co-badge b-over co-alert">2</span></td></tr><tr><td><span class="co-pid">FC-2026-018</span></td><td><span class="n">Route 9 resurfacing, phase 2</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">State of Delaware<span class="d">Roads &amp; Bridges</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">4</td><td class="c">28</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">FC-2025-047</span></td><td><span class="n">Elm Street Elementary renovation</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Wilmington Public Schools<span class="d">Education</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">3</td><td class="c">19</td><td class="c">15 Jan 2027</td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="co-pid">FC-2026-052</span></td><td><span class="n">Harbor View apartments</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Harbor View Living LLC<span class="d">Residential</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">5</td><td class="c">33</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">NF-2026-112</span></td><td><span class="n">Data centre shell, Building B</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Northgate Facilities<span class="d">General contractor</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">9</td><td class="c">12</td><td class="c">30 Nov 2026</td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="co-pid">MH-2026-027</span></td><td><span class="n">Clinic fit-out, level 3</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Meridian Health<span class="d">Healthcare</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">7</td><td class="c">8</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">BG-2026-064</span></td><td><span class="n">Warehouse expansion</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Bramwell Group<span class="d">Logistics</span></td><td class="c">Kent County<span class="d">Delaware</span></td><td class="c">11</td><td class="c">6</td><td class="c">28 Feb 2027</td><td><span class="co-badge b-over co-alert">2</span></td></tr><tr><td><span class="co-pid">FC-2026-044</span></td><td><span class="n">Christiana Mall parking deck</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Christiana Retail Partners<span class="d">Retail</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">7</td><td class="c">51</td><td class="c">30 Jun 2027</td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="co-pid">FC-2026-009</span></td><td><span class="n">Riverfront office fit-out</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Riverfront Development Corp.<span class="d">Commercial</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">4</td><td class="c">22</td><td class="c">15 Nov 2026</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">NF-2026-131</span></td><td><span class="n">Data centre shell, Building C</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Northgate Facilities<span class="d">General contractor</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">10</td><td class="c">14</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">FC-2025-061</span></td><td><span class="n">Dover fire station no. 2</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">City of Dover<span class="d">Public safety</span></td><td class="c">Kent County<span class="d">Delaware</span></td><td class="c">5</td><td class="c">26</td><td class="c">20 Dec 2026</td><td><span class="co-badge b-over co-alert">2</span></td></tr><tr><td><span class="co-pid">FC-2026-023</span></td><td><span class="n">Newark library expansion</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">City of Newark<span class="d">Civic</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">4</td><td class="c">18</td><td class="c">31 Mar 2027</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">DS-2026-008</span></td><td><span class="n">Seaford water treatment upgrade</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Diamond State Builders<span class="d">General contractor</span></td><td class="c">Sussex County<span class="d">Delaware</span></td><td class="c">12</td><td class="c">9</td><td class="c">14 May 2027</td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="co-pid">FC-2026-058</span></td><td><span class="n">Middletown medical offices</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">ChristianaCare<span class="d">Healthcare</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">6</td><td class="c">30</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">MH-2026-033</span></td><td><span class="n">Imaging suite, ground floor</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Meridian Health<span class="d">Healthcare</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">5</td><td class="c">7</td><td class="c">12 Dec 2026</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">FC-2026-036</span></td><td><span class="n">Wilmington station canopy</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">DelDOT<span class="d">Transport</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">3</td><td class="c">15</td><td class="c">28 Feb 2027</td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="co-pid">GS-2026-090</span></td><td><span class="n">Cherry Hill school gym</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Garden State Contractors<span class="d">General contractor</span></td><td class="c">Camden County<span class="d">New Jersey</span></td><td class="c">8</td><td class="c">10</td><td class="c">30 Aug 2027</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">FC-2025-052</span></td><td><span class="n">Bear community centre</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">New Castle County<span class="d">Civic</span></td><td class="c">New Castle County<span class="d">Delaware</span></td><td class="c">4</td><td class="c">17</td><td class="c">10 Nov 2026</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">BG-2026-071</span></td><td><span class="n">Cold storage annex</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Bramwell Group<span class="d">Logistics</span></td><td class="c">Kent County<span class="d">Delaware</span></td><td class="c">9</td><td class="c">5</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-badge b-over co-alert">1</span></td></tr><tr><td><span class="co-pid">FC-2026-061</span></td><td><span class="n">Lewes boardwalk repairs</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">City of Lewes<span class="d">Civic</span></td><td class="c">Sussex County<span class="d">Delaware</span></td><td class="c">3</td><td class="c">12</td><td class="c">15 May 2027</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">DR-2026-014</span></td><td><span class="n">Penn&rsquo;s Landing pier works</span></td><td class="c"><span class="co-badge b-neu">Supplier</span></td><td class="c">Delaware River Builders<span class="d">General contractor</span></td><td class="c">Philadelphia County<span class="d">Pennsylvania</span></td><td class="c">14</td><td class="c">11</td><td class="c">30 Sep 2027</td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">FC-2026-064</span></td><td><span class="n">Smyrna warehouse slab</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Smyrna Logistics Park<span class="d">Logistics</span></td><td class="c">Kent County<span class="d">Delaware</span></td><td class="c">2</td><td class="c">9</td><td class="c"><span class="co-badge b-info">Ongoing</span></td><td><span class="co-subtle">—</span></td></tr><tr><td><span class="co-pid">FC-2026-067</span></td><td><span class="n">Elkton clinic renovation</span></td><td class="c"><span class="co-badge co-own">Owner</span></td><td class="c">Union Hospital<span class="d">Healthcare</span></td><td class="c">Cecil County<span class="d">Maryland</span></td><td class="c">5</td><td class="c">20</td><td class="c">31 Jan 2027</td><td><span class="co-badge b-over co-alert">1</span></td></tr></tbody></table>
       </div>
@@ -1900,29 +1929,53 @@ body { transition: background-color .9s ease; }
 })();
 </script>
 <script>
-/* Project overview: ten projects to a page, with the page numbers and the arrows under the table */
+/* Project overview: search and filters over the projects, ten of what is left to a page,
+   with the page numbers centred under the table */
 (() => {
   const PER = 10;
   document.querySelectorAll('[data-pager-for]').forEach((nav) => {
-    const rows = [...document.getElementById(nav.dataset.pagerFor).tBodies[0].rows];
-    const pages = Math.ceil(rows.length / PER);
-    if (pages < 2) { nav.hidden = true; return; }
+    const table = document.getElementById(nav.dataset.pagerFor), body = table.tBodies[0];
+    const rows = [...body.rows], cols = table.tHead.rows[0].cells.length;
+    const tools = document.querySelector(`[data-tools-for="${table.id}"]`);
+    const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const data = rows.map((r) => ({ r, text: fold(r.innerText), own: r.cells[2].innerText.trim(), region: r.cells[4].firstChild.textContent.trim() + ', ' + r.cells[4].querySelector('.d').textContent.trim(), alerts: !!r.cells[8].querySelector('.co-alert') }));
+    const none = body.insertRow(); none.hidden = true; none.innerHTML = `<td colspan="${cols}" class="co-tbl-none">No project matches that. <button type="button" class="link-btn" data-clear>Clear the search and filters</button></td>`;
+    const f = { q: '', own: '', region: '', alerts: false };
     let page = 1;
-    const go = (n, focus) => {
+    if (tools) {
+      const sel = tools.querySelector('[data-region]');
+      [...new Set(data.map((d) => d.region))].sort().forEach((r) => sel.add(new Option(r, r)));
+      tools.querySelector('[data-q]').addEventListener('input', (e) => { f.q = fold(e.target.value.trim()); go(1); });
+      tools.querySelectorAll('[data-own]').forEach((b) => b.addEventListener('click', () => { f.own = b.dataset.own; go(1); }));
+      sel.addEventListener('change', () => { f.region = sel.value; go(1); });
+      tools.querySelector('[data-alerts]').addEventListener('click', () => { f.alerts = !f.alerts; go(1); });
+    }
+    const clear = () => { Object.assign(f, { q: '', own: '', region: '', alerts: false }); if (tools) { tools.querySelector('[data-q]').value = ''; tools.querySelector('[data-region]').value = ''; } go(1); };
+    document.addEventListener('click', (e) => { const c = e.target.closest('[data-clear]'); if (c && (tools && tools.contains(c) || none.contains(c))) clear(); });
+    function go(n, focus) {
+      const shown = data.filter((d) => (!f.q || d.text.includes(f.q)) && (!f.own || d.own === f.own) && (!f.region || d.region === f.region) && (!f.alerts || d.alerts));
+      const pages = Math.max(1, Math.ceil(shown.length / PER));
       page = Math.min(pages, Math.max(1, n));
-      rows.forEach((r, i) => { r.hidden = i < (page - 1) * PER || i >= page * PER; });
-      const from = (page - 1) * PER + 1, to = Math.min(rows.length, page * PER);
-      nav.innerHTML = `<span aria-live="polite">Showing ${from}\u2013${to} of ${rows.length}</span><span class="co-pager-btns">` +
+      rows.forEach((r) => (r.hidden = true));
+      shown.slice((page - 1) * PER, page * PER).forEach((d) => (d.r.hidden = false));
+      none.hidden = !!shown.length;
+      if (tools) {
+        tools.querySelectorAll('[data-own]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.own === f.own)));
+        tools.querySelector('[data-alerts]').setAttribute('aria-pressed', String(f.alerts));
+        tools.querySelector('.co-tools-clear').hidden = !(f.q || f.own || f.region || f.alerts);
+      }
+      const from = shown.length ? (page - 1) * PER + 1 : 0, to = Math.min(shown.length, page * PER);
+      const count = `<span aria-live="polite">${shown.length ? `Showing ${from}–${to} of ${shown.length}` : 'No projects to show'}${shown.length < rows.length ? ` <span>(filtered from ${rows.length})</span>` : ''}</span>`;
+      nav.innerHTML = (pages > 1 ? `<span class="co-pager-btns">` +
         `<button type="button" class="co-pager-arrow" data-to="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Previous page"><span aria-hidden="true">←</span> Previous</button>` +
         Array.from({ length: pages }, (_, k) => `<button type="button" data-to="${k + 1}"${k + 1 === page ? ' aria-current="page"' : ''} aria-label="Page ${k + 1}">${k + 1}</button>`).join('') +
-        `<button type="button" class="co-pager-arrow" data-to="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="Next page">Next <span aria-hidden="true">→</span></button></span>`;
+        `<button type="button" class="co-pager-arrow" data-to="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="Next page">Next <span aria-hidden="true">→</span></button></span>` : '') + count;
       if (focus) { const b = nav.querySelector('[aria-current="page"]'); if (b) b.focus(); }
-    };
+    }
     nav.addEventListener('click', (e) => {
       const b = e.target.closest('button[data-to]'); if (!b || b.disabled) return;
       go(+b.dataset.to, true);
-      // keep the table's top in view when a page is shorter than the last
-      const sec = nav.closest('section'); const top = sec.getBoundingClientRect().top;
+      const top = nav.closest('section').getBoundingClientRect().top;
       if (top < 0) scrollTo({ top: top + scrollY - 80, behavior: 'smooth' });
     });
     go(1);
