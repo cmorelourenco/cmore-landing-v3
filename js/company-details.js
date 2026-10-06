@@ -176,7 +176,9 @@
     const list = shown.length
       ? `<div class="co-card co-list">${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<div class="co-row cd-roster-row"><span class="cd-roster-n">${it.name}</span>${it.sub ? `<span class="co-subtle">${it.sub}</span>` : ''}<span class="co-badge ${cls}">${label}</span></div>`; }).join('')}</div>`
       : '<div class="co-card cd-none"><b class="co-row-n">No one matches that.</b></div>';
-    groupsEl.innerHTML = crumb + search + list;
+    // one child, not three: #cd-groups is a flex column with its own gap between items,
+    // which would otherwise stack on top of the toolbar's own margin and widen just this gap
+    groupsEl.innerHTML = `<div class="cd-detail">${crumb}${search}${list}</div>`;
   };
 
   const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
@@ -269,8 +271,8 @@
       return sep + (lvl.href ? `<a href="${lvl.href}">${lvl.label}</a>` : `<button type="button" data-crumb="${lvl.crumb}">${lvl.label}</button>`);
     }).join('');
     crumbBack.onclick = () => {
-      if (doc) { detail = null; render(); }
-      else if (a) { area = null; render(); }
+      if (doc) { detail = null; render(); toTop(); }
+      else if (a) { area = null; render(); toTop(); }
       else location.href = 'my-company.html?filled';
     };
     hero.hidden = !!doc;
@@ -301,23 +303,27 @@
     tools.querySelector('.co-tools-clear').hidden = !(n || f.q);
   }
 
+  // every level change lands at the very top of the page, not just at the top of the list —
+  // a tall card below could otherwise leave the new title and breadcrumb off screen
+  const toTop = () => scrollTo({ top: 0, behavior: 'smooth' });
+
   crumbTrail.addEventListener('click', (e) => {
     const b = e.target.closest('[data-crumb]'); if (!b) return;
     if (b.dataset.crumb === 'root') { area = null; detail = null; }
     else if (b.dataset.crumb === 'area') { detail = null; }
-    render(); groupsEl.scrollIntoView({ block: 'start' });
+    render(); toTop();
   });
 
   groupsEl.addEventListener('click', (e) => {
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
-    const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); groupsEl.scrollIntoView({ block: 'start' }); return; }
+    const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); toTop(); return; }
     const open = e.target.closest('[data-detail]'); if (open) {
       // the id, not the code: a code like PF‑T1 carries an HTML entity for display, which
       // the DOM would have already decoded by the time a dataset read it back
       const doc = DOCS.find((d) => d.id === +open.dataset.detail);
       area = AREAS.find((a) => a.cats.includes(doc.cat)).key; // so Back lands where this row was
       detail = doc.code; detailQ = '';
-      render(); groupsEl.scrollIntoView({ block: 'start' });
+      render(); toTop();
       return;
     }
   });
