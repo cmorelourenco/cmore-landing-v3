@@ -127,7 +127,7 @@
     groupsEl.innerHTML = shown.length
       ? CATS.map((cat) => {
           const docs = shown.filter((d) => d.cat === cat); if (!docs.length) return '';
-          return `<div class="co-card co-list cd-group"><div class="co-card-k co-list-k cd-group-k"><span class="eyebrow">${cat}</span><span class="co-muted">${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docs.map(row).join('')}</div>`;
+          return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${docs.length} document${docs.length === 1 ? '' : 's'}</span></div><div class="co-card co-list">${docs.map(row).join('')}</div></div>`;
         }).join('')
       : '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
