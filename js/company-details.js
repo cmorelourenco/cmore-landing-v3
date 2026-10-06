@@ -145,9 +145,9 @@
     clearAll();
     if (key && !was) { f.status = new Set(STATUS_SETS[key]); render(); if (!panel.hidden) paintFilters(); c.classList.add('is-on'); }
   }));
-  const syncCards = () => cards.forEach((c) => { const want = c.dataset.status ? STATUS_SETS[c.dataset.status] : null;
-    c.classList.toggle('is-on', want ? f.status.size === want.length && want.every((v) => f.status.has(v)) && !f.cat.size && !f.sharing.size && !f.q
-      : f.status.size === 0 && f.cat.size === 0 && f.sharing.size === 0 && !f.q); });
+  // "On file" is the total, not a filter of its own, so it never outlines
+  const syncCards = () => cards.forEach((c) => { const want = c.dataset.status && STATUS_SETS[c.dataset.status];
+    c.classList.toggle('is-on', !!want && f.status.size === want.length && want.every((v) => f.status.has(v)) && !f.cat.size && !f.sharing.size && !f.q); });
 
   // ALMA's drop: takes a file by drag or by browsing, then files it against the contractor's
   // license (the one document already marked non conform), the same flow as the home page's
