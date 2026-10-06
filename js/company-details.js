@@ -48,38 +48,49 @@
   ].map(([code, name, cat, issued, valid, sharing, status, note], id) => ({ id, code, name, cat, issued, valid, sharing, status, note }));
 
   // the people and the equipment behind the rows above, so "24 workers on file" or
-  // "11 machines on file" opens into something real rather than staying a number
+  // "11 machines on file" opens into something real rather than staying a number. The
+  // whole roster, not a sample: at this size a dropdown would not hold it, so a document
+  // with one of these opens its own page of people or machines instead.
   const WORKERS = [
     ['Carlos Pinto', 'Foreman'], ['Miguel Alves', 'Carpenter'], ['Tiago Sousa', 'Electrician'],
     ['Bruno Ferreira', 'Laborer'], ['Ricardo Lopes', 'Crane operator'], ['Andr&eacute; Costa', 'Welder'],
-    ['Paulo Martins', 'Laborer'], ['Nuno Silva', 'Safety officer'],
+    ['Paulo Martins', 'Laborer'], ['Nuno Silva', 'Safety officer'], ['Diogo Pereira', 'Carpenter'],
+    ['Jo&atilde;o Fernandes', 'Laborer'], ['Rui Gon&ccedil;alves', 'Mason'], ['Hugo Marques', 'Rigger'],
+    ['S&eacute;rgio Rocha', 'Electrician'], ['Lu&iacute;s Carvalho', 'Plumber'], ['Filipe Teixeira', 'Laborer'],
+    ['V&iacute;tor Ramos', 'Painter'], ['Fernando Correia', 'Foreman'], ['Artur Nunes', 'Surveyor'],
+    ['Gon&ccedil;alo Pires', 'Laborer'], ['M&aacute;rio Dias', 'Crane operator'], ['Rodrigo Cardoso', 'Welder'],
+    ['Eduardo Batista', 'Mason'], ['Daniel Moreira', 'Laborer'], ['Pedro Antunes', 'Safety officer'],
   ];
   const EQUIPMENT = [
     ['Excavator &mdash; CAT 320', 'EQ&#8209;014'], ['Tower crane &mdash; Liebherr 1060', 'EQ&#8209;002'],
     ['Scissor lift &mdash; Genie GS&#8209;1932', 'EQ&#8209;021'], ['Welding set &mdash; Lincoln 210', 'EQ&#8209;033'],
     ['Concrete mixer &mdash; CM&#8209;500', 'EQ&#8209;009'], ['Plate compactor &mdash; CP&#8209;120', 'EQ&#8209;041'],
+    ['Dump truck &mdash; Volvo A25', 'EQ&#8209;017'], ['Backhoe loader &mdash; JCB 3CX', 'EQ&#8209;006'],
+    ['Generator &mdash; Atlas Copco QAS60', 'EQ&#8209;028'], ['Light tower &mdash; Allmand Maxi&#8209;Lite', 'EQ&#8209;035'],
+    ['Compressor &mdash; Ingersoll Rand 185', 'EQ&#8209;019'],
   ];
   const MATERIALS = [
     ['Ready&#8209;mix concrete, C30/37', ''], ['Structural steel rebar', ''],
     ['Epoxy adhesive &mdash; Sika AnchorFix', ''], ['Solvent&#8209;based degreaser', ''],
   ];
-  // which of the sample roster is behind this particular document, and how each one reads
+  const ALL = (list) => list.map((_, i) => i);
+  // which of the roster is behind this particular document, and how each one reads
   const ROSTERS = {
-    'PF&#8209;T1': { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
-    T02: { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
-    T03: { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
-    'PF&#8209;T2': { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: (i) => (i === 5 ? 'bad' : i === 2 ? 'pending' : 'ok') },
-    T05: { list: WORKERS, pick: [2, 4], status: () => 'pending' },
-    T06: { list: WORKERS, pick: [4, 2, 1, 5, 7, 0], status: () => 'ok' },
-    T08: { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
+    'PF&#8209;T1': { list: WORKERS, pick: ALL(WORKERS), status: () => 'ok' },
+    T02: { list: WORKERS, pick: ALL(WORKERS), status: () => 'ok' },
+    T03: { list: WORKERS, pick: ALL(WORKERS), status: () => 'ok' },
+    'PF&#8209;T2': { list: WORKERS, pick: ALL(WORKERS), status: (i) => (i === 5 ? 'bad' : i === 14 ? 'pending' : 'ok') },
+    T05: { list: WORKERS, pick: [2, 13], status: () => 'pending' },
+    T06: { list: WORKERS, pick: [4, 2, 1, 5, 19, 20], status: () => 'ok' },
+    T08: { list: WORKERS, pick: ALL(WORKERS), status: () => 'ok' },
     T09: { list: WORKERS, pick: [3, 6, 7], status: () => 'ok' },
-    'PF&#8209;EQ': { list: EQUIPMENT, pick: [0, 1, 2, 3, 4, 5], status: () => 'ok' },
-    EQ01: { list: EQUIPMENT, pick: [0, 1, 2, 3, 4, 5], status: () => 'ok' },
-    EQ03: { list: EQUIPMENT, pick: [0, 1, 2, 3, 4, 5], status: (i) => (i === 1 ? 'review' : 'ok') },
-    EQ04: { list: EQUIPMENT, pick: [0, 1, 2, 3, 4, 5], status: () => 'ok' },
-    EQ06: { list: EQUIPMENT, pick: [0, 1, 2, 3, 4, 5], status: () => 'ok' },
-    M01: { list: MATERIALS, pick: [0, 1, 2, 3], status: () => 'ok' },
-    M02: { list: MATERIALS, pick: [0, 1, 2, 3], status: () => 'ok' },
+    'PF&#8209;EQ': { list: EQUIPMENT, pick: ALL(EQUIPMENT), status: () => 'ok' },
+    EQ01: { list: EQUIPMENT, pick: ALL(EQUIPMENT), status: () => 'ok' },
+    EQ03: { list: EQUIPMENT, pick: ALL(EQUIPMENT), status: (i) => (i === 1 ? 'review' : 'ok') },
+    EQ04: { list: EQUIPMENT, pick: ALL(EQUIPMENT), status: () => 'ok' },
+    EQ06: { list: EQUIPMENT, pick: ALL(EQUIPMENT), status: () => 'ok' },
+    M01: { list: MATERIALS, pick: ALL(MATERIALS), status: () => 'ok' },
+    M02: { list: MATERIALS, pick: ALL(MATERIALS), status: () => 'ok' },
   };
 
   // the four areas the home page's compliance cards already point at; "Company" is the
@@ -129,30 +140,45 @@
   const q = tools.querySelector('[data-q]'), btn = tools.querySelector('[data-filt-btn]'), panel = tools.querySelector('[data-filt-panel]');
 
   let area = null; // null = every area, at the top; otherwise one of AREAS[].key
-  const openRows = new Set(); // ids of the roster rows currently expanded
+  let detail = null; // the code of a document whose full roster is open, or null
+  let detailQ = ''; // search typed inside a roster page
 
-  const CHEV = '<svg class="cd-row-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>';
+  const CHEV_R = '<svg class="cd-row-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
 
-  const roster = (d) => {
-    const r = ROSTERS[d.code]; if (!r) return '';
-    const items = r.pick.map((i, k) => {
-      const [name, sub] = r.list[i], st = r.status(k), [label, cls] = STATUS[st];
-      return `<div class="cd-roster-i"><span class="cd-roster-n">${name}</span>${sub ? `<span class="co-subtle">${sub}</span>` : ''}<span class="co-badge ${cls}">${label}</span></div>`;
-    }).join('');
-    const of = r.list === WORKERS ? 24 : r.list === EQUIPMENT ? 11 : r.pick.length;
-    const note = of > r.pick.length ? `<span class="co-subtle cd-roster-note">Showing ${r.pick.length} of ${of}.</span>` : '';
-    return `<div class="cd-roster">${items}${note}</div>`;
-  };
+  // how many in a document's roster need attention, so a row can carry its own alert
+  // without anyone having to open it first
+  const rosterAttention = (code) => { const r = ROSTERS[code]; if (!r) return 0; return r.pick.filter((_, i) => RANK[r.status(i)] > 0).length; };
 
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
     const share = d.sharing === 'Restricted' ? '<span class="co-badge b-neu">Restricted</span>' : '';
     const dates = d.valid.startsWith('—') || !/\d/.test(d.issued) ? d.valid : `${d.issued} – ${d.valid}`;
-    const hasRoster = !!ROSTERS[d.code], open = hasRoster && openRows.has(d.id);
-    const chev = hasRoster ? `<button type="button" class="cd-row-open" data-open="${d.id}" aria-expanded="${open}" aria-label="${open ? 'Hide' : 'Show'} who this covers">${CHEV}</button>` : '';
-    return `<div class="cd-row-wrap${open ? ' is-open' : ''}"><div class="co-row cd-row${hasRoster ? ' is-rosterable' : ''}" data-id="${d.id}"${hasRoster ? ` data-open-row="${d.id}"` : ''}>` +
-      `<div class="co-row-t"><span class="co-row-n">${d.name}</span><span class="co-subtle">${d.code}${d.note ? ' · ' + d.note : ''}</span></div>` +
-      `<div class="cd-row-r"><span class="cd-row-dates">${dates}</span>${share}<span class="co-badge ${cls}">${label}</span>${chev}</div></div>${open ? roster(d) : ''}</div>`;
+    const hasRoster = !!ROSTERS[d.code];
+    const attn = hasRoster ? rosterAttention(d.code) : 0;
+    const alert = attn ? `<span class="cd-row-alert">${attn}</span>` : '';
+    const open = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : '';
+    const tag = hasRoster ? 'button' : 'div';
+    const attrs = hasRoster ? ` type="button" data-detail="${d.id}"` : '';
+    return `<${tag} class="co-row cd-row${hasRoster ? ' is-rosterable' : ''}"${attrs}>` +
+      `<div class="co-row-t"><span class="co-row-n">${d.name}${alert}</span><span class="co-subtle">${d.code}${d.note ? ' · ' + d.note : ''}</span></div>` +
+      `<div class="cd-row-r"><span class="cd-row-dates">${dates}</span>${share}<span class="co-badge ${cls}">${label}</span>${open}</div></${tag}>`;
+  };
+
+  // a document's whole roster, its own page rather than a dropdown — the kind of list
+  // that keeps working whether it holds eight rows or eight thousand
+  const renderDetail = (code) => {
+    const doc = DOCS.find((d) => d.code === code), r = ROSTERS[code];
+    const a = AREAS.find((x) => x.cats.includes(doc.cat));
+    const fq = fold(detailQ);
+    const items = r.pick.map((i, k) => ({ ...({ name: r.list[i][0], sub: r.list[i][1] }), status: r.status(k), text: fold(r.list[i][0]) }));
+    const shown = fq ? items.filter((it) => it.text.includes(fq)) : items;
+    const crumb = `<button type="button" class="cd-back" data-back-detail>← ${a.title}</button>` +
+      `<div class="cd-area-head"><h2 class="co-h-l">${doc.name}</h2><p class="co-muted">${doc.code} · ${r.pick.length} on file${doc.note ? '. ' + doc.note.replace(/\.$/, '') + '.' : '.'}</p></div>`;
+    const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><span class="co-muted cd-detail-count">${shown.length} of ${r.pick.length}</span></div>`;
+    const list = shown.length
+      ? `<div class="co-card co-list">${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<div class="co-row cd-roster-row"><span class="cd-roster-n">${it.name}</span>${it.sub ? `<span class="co-subtle">${it.sub}</span>` : ''}<span class="co-badge ${cls}">${label}</span></div>`; }).join('')}</div>`
+      : '<div class="co-card cd-none"><b class="co-row-n">No one matches that.</b></div>';
+    groupsEl.innerHTML = crumb + search + list;
   };
 
   const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
@@ -233,10 +259,15 @@
 
   function render() {
     if (typeof syncCards === 'function') syncCards();
-    if (filtering()) renderFiltered();
+    // the toolbar and the pills only mean anything one level up from a roster page
+    tools.hidden = !!detail;
+    pills.hidden = !!detail;
+    if (detail) { renderDetail(detail); }
+    else if (filtering()) renderFiltered();
     else if (area) renderArea(area);
     else renderHome();
 
+    if (detail) return;
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
     pills.hidden = !on.length;
     pills.innerHTML = on.map(([label, k, v]) => `<button type="button" class="co-pill" data-k="${k}" data-v="${v}" aria-label="Remove filter ${label}: ${v}"><span>${label}:</span><b>${v}</b><i aria-hidden="true">×</i></button>`).join('');
@@ -246,14 +277,23 @@
 
   groupsEl.addEventListener('click', (e) => {
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
+    const backDetail = e.target.closest('[data-back-detail]'); if (backDetail) { detail = null; detailQ = ''; render(); groupsEl.scrollIntoView({ block: 'start' }); return; }
     const back = e.target.closest('[data-back]'); if (back) { area = null; render(); return; }
-    const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; openRows.clear(); render(); groupsEl.scrollIntoView({ block: 'start' }); return; }
-    const op = e.target.closest('[data-open]'); if (op) {
-      const id = +op.dataset.open; openRows.has(id) ? openRows.delete(id) : openRows.add(id);
-      render();
-      const again = groupsEl.querySelector(`[data-open-row="${id}"]`); if (again) again.scrollIntoView({ block: 'nearest' });
+    const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); groupsEl.scrollIntoView({ block: 'start' }); return; }
+    const open = e.target.closest('[data-detail]'); if (open) {
+      // the id, not the code: a code like PF‑T1 carries an HTML entity for display, which
+      // the DOM would have already decoded by the time a dataset read it back
+      const doc = DOCS.find((d) => d.id === +open.dataset.detail);
+      area = AREAS.find((a) => a.cats.includes(doc.cat)).key; // so Back lands where this row was
+      detail = doc.code; detailQ = '';
+      render(); groupsEl.scrollIntoView({ block: 'start' });
       return;
     }
+  });
+  groupsEl.addEventListener('input', (e) => {
+    if (!e.target.matches('[data-detail-q]')) return;
+    detailQ = e.target.value; renderDetail(detail);
+    const again = groupsEl.querySelector('[data-detail-q]'); if (again) { again.focus(); again.setSelectionRange(detailQ.length, detailQ.length); }
   });
 
   // each total is also a shortcut: a second click on the same one clears it again
