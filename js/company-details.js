@@ -68,7 +68,7 @@
     'PF&#8209;T1': { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
     T02: { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
     T03: { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
-    'PF&#8209;T2': { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: (i) => (i === 5 ? 'pending' : 'ok') },
+    'PF&#8209;T2': { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: (i) => (i === 5 ? 'bad' : i === 2 ? 'pending' : 'ok') },
     T05: { list: WORKERS, pick: [2, 4], status: () => 'pending' },
     T06: { list: WORKERS, pick: [4, 2, 1, 5, 7, 0], status: () => 'ok' },
     T08: { list: WORKERS, pick: [0, 1, 2, 3, 4, 5, 6, 7], status: () => 'ok' },
