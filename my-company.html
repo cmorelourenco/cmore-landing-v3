@@ -818,6 +818,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-pager-row .co-pager-all { grid-column: 3; justify-self: end; font-size: 0.875rem; }
 /* Company documentation: four columns, the status last */
 .co-docs-tbl { table-layout: fixed; min-width: 40rem; }
+.co-docs-tbl th:last-child, .co-docs-tbl td:last-child { text-align: right; } /* the status lines up on the card's right edge */
 .co-docs-tbl th:nth-child(1) { width: 46%; } .co-docs-tbl th:nth-child(2) { width: 16%; } .co-docs-tbl th:nth-child(3) { width: 18%; } .co-docs-tbl th:nth-child(4) { width: 20%; }
 /* the projects table, ten to a page */
 .co-pager { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
