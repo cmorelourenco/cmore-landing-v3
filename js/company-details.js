@@ -156,19 +156,22 @@
   // without anyone having to open it first
   const rosterAttention = (code) => { const r = ROSTERS[code]; if (!r) return 0; return r.pick.filter((_, i) => RANK[r.status(i)] > 0).length; };
 
+  // every document's own row has the same four columns — name, upload date, expiry date,
+  // status — each left blank with an em dash where the document simply has nothing to say there
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
-    const share = d.sharing === 'Restricted' ? '<span class="co-badge b-neu">Restricted</span>' : '';
-    const dates = d.valid.startsWith('—') || !/\d/.test(d.issued) ? d.valid : `${d.issued} – ${d.valid}`;
+    const share = d.sharing === 'Restricted' ? ' · Restricted' : '';
+    const uploaded = /\d/.test(d.issued) ? d.issued : '—';
+    const expires = d.valid;
     const hasRoster = !!ROSTERS[d.code];
     const attn = hasRoster ? rosterAttention(d.code) : 0;
     const alert = attn ? `<span class="cd-row-alert">${attn}</span>` : '';
     const open = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : '';
-    const tag = hasRoster ? 'button' : 'div';
-    const attrs = (hasRoster ? ` type="button" data-detail="${d.id}"` : '') + ` data-row-id="${d.id}"`;
-    return `<${tag} class="co-row cd-row${hasRoster ? ' is-rosterable' : ''}"${attrs}>` +
-      `<div class="co-row-t"><span class="co-row-n">${d.name}${alert}</span><span class="co-subtle">${d.code}${d.note ? ' · ' + d.note : ''}</span></div>` +
-      `<div class="cd-row-r"><span class="cd-row-dates">${dates}</span>${share}<span class="co-badge ${cls}">${label}</span>${open}</div></${tag}>`;
+    const attrs = (hasRoster ? ` data-detail="${d.id}"` : '') + ` data-row-id="${d.id}"`;
+    return `<tr class="cd-row${hasRoster ? ' is-rosterable' : ''}"${attrs}>` +
+      `<td><span class="n">${d.name}${alert}</span><span class="d">${d.code}${d.note ? ' · ' + d.note : ''}${share}</span></td>` +
+      `<td class="c">${uploaded}</td><td class="c">${expires}</td>` +
+      `<td><span class="co-badge ${cls}">${label}</span>${open}</td></tr>`;
   };
 
   // a document's whole roster, its own page rather than a dropdown — the kind of list
@@ -202,8 +205,12 @@
       : '';
     const filt = `<div class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="${detailFiltOpen}" data-dfilt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n"${nOnD ? '' : ' hidden'}>${nOnD}</span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button><div class="co-filt-panel" role="menu" aria-label="Filter this roster" data-dfilt-panel${detailFiltOpen ? '' : ' hidden'}>${panelHtml}</div></div>`;
     const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><div class="co-tools-r"><span class="co-muted cd-detail-count">${shown.length} of ${r.pick.length}</span>${nOnD ? '<button type="button" class="link-btn co-tools-clear" data-dclear>Clear filters</button>' : ''}${filt}</div></div>`;
+    // one certificate behind the lot of them, so every row on this page shares the same
+    // upload and expiry — the roster doesn't track one date per person or machine
+    const uploaded = /\d/.test(doc.issued) ? doc.issued : '—';
+    const expires = doc.valid;
     const list = shown.length
-      ? `<div class="co-card co-list">${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<div class="co-row cd-roster-row"><span class="cd-roster-n">${it.name}</span>${it.sub ? `<span class="co-subtle">${it.sub}</span>` : ''}<span class="co-badge ${cls}">${label}</span></div>`; }).join('')}</div>`
+      ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl"><thead><tr><th>Name</th><th class="c">Uploaded</th><th class="c">Expires</th><th>Status</th></tr></thead><tbody>${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<tr><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td class="c">${uploaded}</td><td class="c">${expires}</td><td><span class="co-badge ${cls}">${label}</span></td></tr>`; }).join('')}</tbody></table></div>`
       : '<div class="co-card cd-none"><b class="co-row-n">No one matches that.</b></div>';
     // one child, not three: #cd-groups is a flex column with its own gap between items,
     // which would otherwise stack on top of the toolbar's own margin and widen just this gap
@@ -250,7 +257,9 @@
   tools.querySelector('.co-tools-clear').addEventListener('click', clearAll);
 
   // the groups themselves: a category's rows, each with a roster toggle where there is one
-  const group = (cat, docs) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${docs.length} document${docs.length === 1 ? '' : 's'}</span></div><div class="co-card co-list">${docs.map(row).join('')}</div></div>`;
+  const DOC_THEAD = '<thead><tr><th>Document</th><th class="c">Uploaded</th><th class="c">Expires</th><th>Status</th></tr></thead>';
+  const docTable = (docs) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl">${DOC_THEAD}<tbody>${docs.map(row).join('')}</tbody></table></div>`;
+  const group = (cat, docs) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docTable(docs)}</div>`;
 
   // the four areas, each a tile with its own count and an alert badge when something there needs you
   const renderHome = () => {
@@ -272,7 +281,7 @@
     const cats = area ? AREAS.find((x) => x.key === area).cats : CATS;
     const shown = DATA.filter((d) => keep(d) && cats.includes(d.cat));
     groupsEl.innerHTML = shown.length
-      ? (cats.length > 1 ? cats.map((cat) => { const docs = shown.filter((d) => d.cat === cat); return docs.length ? group(cat, docs) : ''; }).join('') : `<div class="co-card co-list">${shown.map(row).join('')}</div>`)
+      ? (cats.length > 1 ? cats.map((cat) => { const docs = shown.filter((d) => d.cat === cat); return docs.length ? group(cat, docs) : ''; }).join('') : docTable(shown))
       : none();
   };
 
