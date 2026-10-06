@@ -1071,10 +1071,12 @@ body { transition: background-color .9s ease; }
 
 /* ---- Company details: the identity hero, then the full documentation profile ---- */
 .page:has(#cdetails) { max-width: none; padding: 0; margin-left: 0; }
-.cd-hero { padding-top: 2rem; }
-.cd-hero-id { padding-bottom: 2.5rem; margin-bottom: 0; border-bottom: 0; }
-.cd-hero .co-band-mesh { display: block; }
-.cd-sec { border-top: 1px solid var(--color-line); padding-top: var(--sec-gap); padding-bottom: 4rem; }
+.cd-crumb { padding-top: 2rem; }
+.cd-back-link { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-subtle); text-decoration: none; }
+.cd-back-link:hover { color: var(--color-ink); }
+.cd-back-link span { transition: transform .2s var(--ease-brand); }
+.cd-back-link:hover span { transform: translateX(-3px); }
+.cd-sec { padding-top: 1.5rem; padding-bottom: 4rem; }
 .cd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 0 0 1.5rem; }
 .cd-drop-gap { margin-bottom: 1.5rem; }
 .cd-card { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.125rem 1.25rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
@@ -1202,29 +1204,10 @@ body { transition: background-color .9s ease; }
 <main class="page">
 <div id="cdetails">
 
-  <!-- Hero: the same company identity as the home page, no dashboard beside it -->
-  <section class="co-band co-hero cd-hero">
-    <div class="co-band-mesh" aria-hidden="true"></div>
-    <div class="co-wrap co-hero-id cd-hero-id">
-      <nav class="eco-crumbs" aria-label="Breadcrumb"><a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><span aria-current="page">Company details</span></nav>
-      <div class="co-id">
-      <div class="co-id-col">
-      <span class="eyebrow">My company</span>
-      <div class="co-id-main">
-      <img class="co-logo" src="images/ferreira-logo.webp" alt="Ferreira Construction logo" width="88" height="88">
-      <div class="co-id-l">
-        <h1 class="co-name">Ferreira Construction LLC</h1>
-        <span class="co-subtle" style="font-size:0.9375rem">General contractor · 24 people · EIN 84&#8209;3921745 · Delaware LLC · Wilmington, DE</span>
-      </div>
-      </div>
-      </div>
-      <div class="co-score">
-        <div class="co-ring" style="--p:78%"><div>78</div></div>
-        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" style="font-size:0.8125rem">Good · +9 once the license is replaced</span></div>
-      </div>
-    </div>
-    </div>
-  </section>
+  <!-- Already inside the company's own area: a way back, not the identity hero again -->
+  <div class="co-wrap cd-crumb">
+    <a class="cd-back-link" href="my-company.html?filled"><span aria-hidden="true">←</span> Back to company overview</a>
+  </div>
 
   <!-- The documentation profile: every document the company or ALMA has on file, built the
        way the C-MORE Subcontractor Documentation Profile groups them — company, workers,
