@@ -1127,6 +1127,7 @@ body { transition: background-color .9s ease; }
    a fixed layout so a long name truncates instead of wrapping and throwing off row heights */
 .cd-tbl { table-layout: fixed; }
 .cd-tbl th:nth-child(1) { width: 44%; } .cd-tbl th:nth-child(2) { width: 15%; } .cd-tbl th:nth-child(3) { width: 21%; } .cd-tbl th:nth-child(4) { width: 20%; }
+.cd-tbl th:last-child, .cd-tbl td:last-child { text-align: right; }
 .cd-tbl .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cd-tbl td:nth-child(2), .cd-tbl td:nth-child(3) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cd-tbl td:last-child { white-space: nowrap; }
