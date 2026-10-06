@@ -50,7 +50,7 @@
   const SHARES = ['Open', 'Restricted'];
   const STATUSES = Object.keys(STATUS);
 
-  // the counts up top
+  // the counts up top, each a shortcut into the table below
   document.getElementById('cd-total').textContent = DOCS.length;
   document.getElementById('cd-ok').textContent = DOCS.filter((d) => d.status === 'ok').length;
   document.getElementById('cd-pend').textContent = DOCS.filter((d) => d.status === 'pending' || d.status === 'review').length;
@@ -120,6 +120,7 @@
   document.addEventListener('click', (e) => { const c = e.target.closest('[data-clear]'); if (c && (tools.contains(c) || body.contains(c))) clearAll(); });
 
   function go(to) {
+    if (typeof syncCards === 'function') syncCards();
     const shown = DATA.filter((d) => keep(d));
     const pages = Math.max(1, Math.ceil(shown.length / PER));
     page = Math.min(pages, Math.max(1, to));
@@ -143,5 +144,17 @@
     const top = tbl.closest('section').getBoundingClientRect().top;
     if (top < 0) scrollTo({ top: top + scrollY - 80, behavior: 'smooth' });
   });
+  // each total is also a shortcut: a second click on the same one clears it again
+  const cards = [...document.querySelectorAll('.cd-card')];
+  const STATUS_SETS = { ok: ['In conformity'], pend: ['Pending', 'Pending approval'], bad: ['Non conform'] };
+  cards.forEach((c) => c.addEventListener('click', () => {
+    const key = c.dataset.status, was = c.classList.contains('is-on');
+    clearAll();
+    if (key && !was) { f.status = new Set(STATUS_SETS[key]); go(1); if (!panel.hidden) paintFilters(); c.classList.add('is-on'); }
+  }));
+  const syncCards = () => cards.forEach((c) => { const want = c.dataset.status ? STATUS_SETS[c.dataset.status] : null;
+    c.classList.toggle('is-on', want ? f.status.size === want.length && want.every((v) => f.status.has(v)) && !f.cat.size && !f.sharing.size && !f.q
+      : f.status.size === 0 && f.cat.size === 0 && f.sharing.size === 0 && !f.q); });
+
   go(1);
 })();
