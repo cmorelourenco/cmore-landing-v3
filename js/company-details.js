@@ -96,6 +96,16 @@
   const SHARES = ['Open', 'Restricted'];
   const STATUSES = Object.keys(STATUS);
 
+  // a document can only read as good as the worst person or machine behind it: if the
+  // roster has someone non conform, the row above it cannot say "in conformity" either
+  const RANK = { ok: 0, pending: 1, review: 1, bad: 2 };
+  Object.keys(ROSTERS).forEach((code) => {
+    const doc = DOCS.find((d) => d.code === code); if (!doc) return;
+    const r = ROSTERS[code];
+    const worst = r.pick.reduce((acc, _, i) => (RANK[r.status(i)] > RANK[acc] ? r.status(i) : acc), 'ok');
+    if (RANK[worst] > RANK[doc.status]) doc.status = worst;
+  });
+
   // the counts up top, each a shortcut into the areas below
   document.getElementById('cd-total').textContent = DOCS.length;
   document.getElementById('cd-ok').textContent = DOCS.filter((d) => d.status === 'ok').length;
