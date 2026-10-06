@@ -156,5 +156,52 @@
     c.classList.toggle('is-on', want ? f.status.size === want.length && want.every((v) => f.status.has(v)) && !f.cat.size && !f.sharing.size && !f.q
       : f.status.size === 0 && f.cat.size === 0 && f.sharing.size === 0 && !f.q); });
 
+  // ALMA's drop: takes a file by drag or by browsing, then files it against the business
+  // license row (the one document already marked non conform), the same flow as the home
+  // page's Documents section. Prototype: the file never leaves the machine.
+  const drop = document.getElementById('cd-drop'), file = document.getElementById('cd-file');
+  if (drop && file) {
+    const t = document.getElementById('cd-drop-t'), sub = document.getElementById('cd-drop-s'), acts = document.getElementById('cd-drop-acts');
+    const idle = { t: t.textContent, s: sub.innerHTML };
+    let picked = null, state = 'idle';
+    const setState = (st) => { state = st; drop.classList.toggle('has-file', st === 'file'); drop.classList.toggle('is-reading', st === 'reading'); drop.classList.toggle('is-filed', st === 'filed'); };
+    const took = (f) => {
+      if (!f || state === 'reading' || state === 'filed') return;
+      picked = f;
+      t.textContent = 'Got it: ' + f.name;
+      sub.textContent = 'Hand it over and I will read it, date it and file it.';
+      acts.hidden = false; setState('file');
+      setTimeout(() => document.getElementById('cd-hand').focus({ preventScroll: true }), 50);
+    };
+    const browse = (e) => { e.preventDefault(); file.value = ''; file.click(); };
+    drop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
+    drop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === drop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
+    file.addEventListener('click', (e) => e.stopPropagation());
+    file.addEventListener('change', () => took(file.files[0]));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') drop.classList.add('is-over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
+    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); took(e.dataTransfer.files[0]); });
+    document.getElementById('cd-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
+    document.getElementById('cd-hand').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state !== 'file') return;
+      setState('reading'); acts.hidden = true;
+      t.textContent = 'Reading ' + picked.name + '…';
+      sub.textContent = 'Checking the issuer, the dates and the business it names.';
+      setTimeout(() => {
+        setState('filed');
+        t.textContent = 'Filed: your contractor\u2019s license, valid again.';
+        sub.textContent = 'City of Wilmington \u00b7 valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
+        const doc = DOCS.find((d) => d.code === 'E01');
+        doc.status = 'ok'; doc.issued = '1 Oct 2026'; doc.valid = '15 Aug 2027'; doc.note = '';
+        doc.text = fold(`${doc.code} ${doc.name} ${doc.cat}`);
+        const live = DATA.find((d) => d.id === doc.id); Object.assign(live, doc);
+        document.getElementById('cd-ok').textContent = DOCS.filter((d) => d.status === 'ok').length;
+        document.getElementById('cd-bad').textContent = DOCS.filter((d) => d.status === 'bad').length;
+        go(page); syncCards();
+      }, 2200);
+    });
+  }
+
   go(1);
 })();
