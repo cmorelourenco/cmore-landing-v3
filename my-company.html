@@ -2020,12 +2020,11 @@ body { transition: background-color .9s ease; }
       shown.slice((page - 1) * PER, page * PER).forEach((d) => (d.r.hidden = false));
       none.hidden = !!shown.length;
       if (btn) { const n = nOn(), el = tools.querySelector('[data-filt-n]'); el.hidden = !n; el.textContent = n; tools.querySelector('.co-tools-clear').hidden = !(n || f.q); }
-      const from = shown.length ? (page - 1) * PER + 1 : 0, to = Math.min(shown.length, page * PER);
-      const count = `<span aria-live="polite">${shown.length ? `Showing ${from}–${to} of ${shown.length}` : 'No projects to show'}${shown.length < rows.length ? ` <span>(filtered from ${rows.length})</span>` : ''}</span>`;
+      nav.hidden = pages < 2;
       nav.innerHTML = (pages > 1 ? `<span class="co-pager-btns">` +
         `<button type="button" class="co-pager-arrow" data-to="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Previous page"><span aria-hidden="true">←</span> Previous</button>` +
         Array.from({ length: pages }, (_, k) => `<button type="button" data-to="${k + 1}"${k + 1 === page ? ' aria-current="page"' : ''} aria-label="Page ${k + 1}">${k + 1}</button>`).join('') +
-        `<button type="button" class="co-pager-arrow" data-to="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="Next page">Next <span aria-hidden="true">→</span></button></span>` : '') + count;
+        `<button type="button" class="co-pager-arrow" data-to="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="Next page">Next <span aria-hidden="true">→</span></button></span>` : '');
       if (focus) { const b = nav.querySelector('[aria-current="page"]'); if (b) b.focus(); }
     }
     nav.addEventListener('click', (e) => {
