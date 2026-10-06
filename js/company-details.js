@@ -262,7 +262,7 @@
   const updateHeader = () => {
     const a = area ? AREAS.find((x) => x.key === area) : null;
     const doc = detail ? DOCS.find((d) => d.code === detail) : null;
-    const levels = [{ label: 'My company', href: 'my-company.html?filled' }, { label: 'Company details', crumb: 'root' }];
+    const levels = [{ label: 'My company', href: 'my-company.html?filled' }, { label: 'Documents', crumb: 'root' }];
     if (a) levels.push({ label: a.title, crumb: 'area' });
     if (doc) levels.push({ label: doc.name, crumb: 'detail' });
     crumbTrail.innerHTML = levels.map((lvl, i) => {
