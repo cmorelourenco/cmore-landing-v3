@@ -647,9 +647,8 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 
 /* ---- The hero's compliance: three numbers, each a way into the documents ---- */
 .co-hero .co-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: stretch; justify-items: stretch; align-self: end; width: 100%; max-width: none; }
-/* the heading, then the three numbers across the column, then the invites beside the link */
-.co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l l" "n n" "a k"; grid-template-columns: minmax(0, 1fr) auto; }
-@media (max-width: 76rem) { .co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); } }
+/* the heading, then the three numbers across the column */
+.co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l" "n"; grid-template-columns: minmax(0, 1fr); }
 .co-k { display: flex; flex-direction: column; gap: 0.25rem; padding: 1.25rem 1.25rem 1.125rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
   text-decoration: none; color: var(--color-ink); transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
 .co-k:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
@@ -1185,12 +1184,6 @@ body { transition: background-color .9s ease; }
           <a href="#" class="co-k co-k-miss is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Missing</span><span class="co-k-d">What a client asked for that you have not given yet.</span></a>
           <a href="#" class="co-k co-k-exp is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Expired</span><span class="co-k-d">Documents past their date.</span></a>
       </div>
-      <div class="co-hero-acts">
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
-      </div>
-      <a href="ecosystem.html" class="co-hero-link">View my C&#8209;MORE ecosystem <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
@@ -1317,12 +1310,6 @@ body { transition: background-color .9s ease; }
           <a href="#" class="co-k co-k-miss" data-go="docs" id="co-k-miss"><span class="co-k-n">3</span><span class="co-k-l">Missing</span><span class="co-k-d">I&#8209;9 attestations for your E&#8209;Verify enrolment.</span></a>
           <a href="#" class="co-k co-k-exp" data-go="docs" id="co-k-exp"><span class="co-k-n">1</span><span class="co-k-l">Expired</span><span class="co-k-d">Business license, since 15 August.</span></a>
       </div>
-      <div class="co-hero-acts">
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite supplier</a>
-          <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite users</a>
-      </div>
-      <a href="ecosystem.html" class="co-hero-link">View my C&#8209;MORE ecosystem <span aria-hidden="true">→</span></a>
     </div>
   </section>
 
