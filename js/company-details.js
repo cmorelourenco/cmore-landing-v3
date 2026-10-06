@@ -168,12 +168,10 @@
   // that keeps working whether it holds eight rows or eight thousand
   const renderDetail = (code) => {
     const doc = DOCS.find((d) => d.code === code), r = ROSTERS[code];
-    const a = AREAS.find((x) => x.cats.includes(doc.cat));
     const fq = fold(detailQ);
     const items = r.pick.map((i, k) => ({ ...({ name: r.list[i][0], sub: r.list[i][1] }), status: r.status(k), text: fold(r.list[i][0]) }));
     const shown = fq ? items.filter((it) => it.text.includes(fq)) : items;
-    const crumb = `<button type="button" class="cd-back" data-back-detail>← ${a.title}</button>` +
-      `<div class="cd-area-head"><h2 class="co-h-l">${doc.name}</h2><p class="co-muted">${doc.code} · ${r.pick.length} on file${doc.note ? '. ' + doc.note.replace(/\.$/, '') + '.' : '.'}</p></div>`;
+    const crumb = `<div class="cd-area-head"><h2 class="co-h-l">${doc.name}</h2><p class="co-muted">${doc.code} · ${r.pick.length} on file${doc.note ? '. ' + doc.note.replace(/\.$/, '') + '.' : '.'}</p></div>`;
     const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><span class="co-muted cd-detail-count">${shown.length} of ${r.pick.length}</span></div>`;
     const list = shown.length
       ? `<div class="co-card co-list">${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<div class="co-row cd-roster-row"><span class="cd-roster-n">${it.name}</span>${it.sub ? `<span class="co-subtle">${it.sub}</span>` : ''}<span class="co-badge ${cls}">${label}</span></div>`; }).join('')}</div>`
@@ -236,38 +234,66 @@
     }).join('')}</div>`;
   };
 
-  // one area's own documents, grouped by category when it has more than one (Company does;
-  // Workers, Equipment and Materials are already a single category, so the rows show plainly)
-  const renderArea = (key) => {
-    const a = AREAS.find((x) => x.key === key);
-    const shown = DATA.filter((d) => keep(d) && a.cats.includes(d.cat));
-    const crumb = `<button type="button" class="cd-back" data-back>← All areas</button><div class="cd-area-head"><h2 class="co-h-l">${a.title}</h2><p class="co-muted">${a.sub}</p></div>`;
-    if (!shown.length) { groupsEl.innerHTML = crumb + none(); return; }
-    groupsEl.innerHTML = crumb + (a.cats.length > 1 ? a.cats.map((cat) => { const docs = shown.filter((d) => d.cat === cat); return docs.length ? group(cat, docs) : ''; }).join('') : `<div class="co-card co-list">${shown.map(row).join('')}</div>`);
-  };
-
-  // filtered across every area at once, so search always finds a document regardless of
-  // where you are standing
-  const renderFiltered = () => {
-    const shown = DATA.filter((d) => keep(d));
+  // one area's documents (or, with no area chosen, every document): grouped by category
+  // when there is more than one in scope — Company has four; Workers, Equipment and
+  // Materials are already a single category each, so their rows just show plainly
+  const renderGroups = () => {
+    const cats = area ? AREAS.find((x) => x.key === area).cats : CATS;
+    const shown = DATA.filter((d) => keep(d) && cats.includes(d.cat));
     groupsEl.innerHTML = shown.length
-      ? `<p class="co-muted cd-scope">Across every area.</p>` + CATS.map((cat) => { const docs = shown.filter((d) => d.cat === cat); return docs.length ? group(cat, docs) : ''; }).join('')
+      ? (cats.length > 1 ? cats.map((cat) => { const docs = shown.filter((d) => d.cat === cat); return docs.length ? group(cat, docs) : ''; }).join('') : `<div class="co-card co-list">${shown.map(row).join('')}</div>`)
       : none();
   };
 
   const none = () => '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
 
+  // the breadcrumb, the back button, and the title/subtitle/stats above the list — every
+  // level writes its own, so the chrome always matches where you actually are
+  const AREA_SUB = {
+    company: 'Where you&rsquo;ll find everything about the company itself &mdash; who you are, your standing, your cover and how you run health &amp; safety.',
+    workers: 'Where you&rsquo;ll find all your worker documentation &mdash; who&rsquo;s on the crew, and what each of them is cleared for.',
+    equipment: 'Where you&rsquo;ll find all your equipment documentation &mdash; every machine on site, its checks and its paperwork.',
+    materials: 'Where you&rsquo;ll find all your materials and waste documentation &mdash; what goes into the work, and what leaves the site.',
+  };
+  const crumbTrail = document.getElementById('cd-crumb-trail'), crumbBack = document.getElementById('cd-crumb-back');
+  const hero = document.getElementById('cd-hero'), h2 = document.getElementById('cd-h2'), sub = document.getElementById('cd-sub');
+  const updateHeader = () => {
+    const a = area ? AREAS.find((x) => x.key === area) : null;
+    const doc = detail ? DOCS.find((d) => d.code === detail) : null;
+    const levels = [{ label: 'My company', href: 'my-company.html?filled' }, { label: 'Company details', crumb: 'root' }];
+    if (a) levels.push({ label: a.title, crumb: 'area' });
+    if (doc) levels.push({ label: doc.name, crumb: 'detail' });
+    crumbTrail.innerHTML = levels.map((lvl, i) => {
+      const sep = i ? '<span aria-hidden="true">/</span>' : '';
+      if (i === levels.length - 1) return sep + `<span aria-current="page">${lvl.label}</span>`;
+      return sep + (lvl.href ? `<a href="${lvl.href}">${lvl.label}</a>` : `<button type="button" data-crumb="${lvl.crumb}">${lvl.label}</button>`);
+    }).join('');
+    crumbBack.onclick = () => {
+      if (doc) { detail = null; render(); }
+      else if (a) { area = null; render(); }
+      else location.href = 'my-company.html?filled';
+    };
+    hero.hidden = !!doc;
+    if (doc) return;
+    h2.textContent = a ? a.title : 'All company documents';
+    sub.innerHTML = a ? AREA_SUB[a.key] : 'Everything you or ALMA have uploaded, kept in one profile so any client finds the same set. Reused across every project &mdash; only what a specific site needs gets added to it.';
+    const scoped = a ? DOCS.filter((d) => a.cats.includes(d.cat)) : DOCS;
+    document.getElementById('cd-total').textContent = scoped.length;
+    document.getElementById('cd-ok').textContent = scoped.filter((d) => d.status === 'ok').length;
+    document.getElementById('cd-pend').textContent = scoped.filter((d) => d.status === 'pending' || d.status === 'review').length;
+    document.getElementById('cd-bad').textContent = scoped.filter((d) => d.status === 'bad').length;
+    document.getElementById('cd-card-total-d').textContent = a ? `Every document in ${a.title.toLowerCase()}.` : 'Every document uploaded for the company.';
+  };
+
   function render() {
     if (typeof syncCards === 'function') syncCards();
+    updateHeader();
     // the toolbar and the pills only mean anything one level up from a roster page
     tools.hidden = !!detail;
     pills.hidden = !!detail;
-    if (detail) { renderDetail(detail); }
-    else if (filtering()) renderFiltered();
-    else if (area) renderArea(area);
-    else renderHome();
+    if (detail) { renderDetail(detail); return; }
+    if (!area && !filtering()) renderHome(); else renderGroups();
 
-    if (detail) return;
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
     pills.hidden = !on.length;
     pills.innerHTML = on.map(([label, k, v]) => `<button type="button" class="co-pill" data-k="${k}" data-v="${v}" aria-label="Remove filter ${label}: ${v}"><span>${label}:</span><b>${v}</b><i aria-hidden="true">×</i></button>`).join('');
@@ -275,10 +301,15 @@
     tools.querySelector('.co-tools-clear').hidden = !(n || f.q);
   }
 
+  crumbTrail.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-crumb]'); if (!b) return;
+    if (b.dataset.crumb === 'root') { area = null; detail = null; }
+    else if (b.dataset.crumb === 'area') { detail = null; }
+    render(); groupsEl.scrollIntoView({ block: 'start' });
+  });
+
   groupsEl.addEventListener('click', (e) => {
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
-    const backDetail = e.target.closest('[data-back-detail]'); if (backDetail) { detail = null; detailQ = ''; render(); groupsEl.scrollIntoView({ block: 'start' }); return; }
-    const back = e.target.closest('[data-back]'); if (back) { area = null; render(); return; }
     const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); groupsEl.scrollIntoView({ block: 'start' }); return; }
     const open = e.target.closest('[data-detail]'); if (open) {
       // the id, not the code: a code like PF‑T1 carries an HTML entity for display, which
