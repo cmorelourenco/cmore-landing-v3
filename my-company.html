@@ -761,26 +761,30 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-search input:focus { border-color: var(--color-graphite); }
 .co-search input::placeholder { color: var(--color-sand-500); }
 .co-filt { position: relative; }
-.co-filt-btn { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 0.75rem 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem;
-  background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); cursor: pointer; }
-.co-filt-btn:hover, .co-filt-btn[aria-expanded="true"] { border-color: var(--color-sand-400); }
+/* The design system's filter: a ghost button opening a menu of checkbox items
+   (Flux's dropdown + menu.checkbox), headings between groups, floating shadow. */
+.co-filt-btn { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; background: transparent;
+  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); cursor: pointer; transition: background-color .14s ease; }
+.co-filt-btn:hover, .co-filt-btn[aria-expanded="true"] { background: var(--color-coral-tint); }
 .co-filt-btn > svg { width: 1rem; height: 1rem; color: var(--color-ink-subtle); }
 .co-filt-chev { transition: transform .2s var(--ease-brand); }
 .co-filt-btn[aria-expanded="true"] .co-filt-chev { transform: rotate(180deg); }
 .co-filt-n { display: grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3125rem; border-radius: 9999px; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.6875rem; font-weight: 700; }
 .co-filt-n[hidden] { display: none; }
-.co-filt-panel { position: absolute; left: 0; top: calc(100% + 0.375rem); z-index: 40; width: 18rem; max-height: 24rem; overflow-y: auto; padding: 0.5rem;
-  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.75rem; box-shadow: 0 12px 32px rgba(52, 52, 52, .12), 0 2px 6px rgba(52, 52, 52, .06); }
+.co-filt-panel { position: absolute; left: 0; top: calc(100% + 0.375rem); z-index: 40; min-width: 20rem; max-height: 26rem; overflow-y: auto; padding: 0.3125rem;
+  background: var(--color-surface); border-radius: 0.75rem; box-shadow: 0 0 0 1px var(--color-line), 0 2px 4px rgba(52, 52, 52, .05), 0 12px 32px -12px rgba(52, 52, 52, .18); }
 .co-filt-panel[hidden] { display: none; }
-.co-filt-g { padding: 0.25rem 0 0.375rem; }
-.co-filt-g + .co-filt-g { border-top: 1px solid var(--color-mid-beige); padding-top: 0.5rem; }
-.co-filt-g > b { display: block; padding: 0.25rem 0.5rem 0.375rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-subtle); }
-.co-filt-o { display: flex; align-items: center; gap: 0.625rem; padding: 0.4375rem 0.5rem; border-radius: 0.5rem; font-size: 0.875rem; cursor: pointer; }
-.co-filt-o:hover { background: var(--color-light-beige); }
-.co-filt-o input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--color-graphite); cursor: pointer; }
-.co-filt-o small { margin-left: auto; font-size: 0.75rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
-.co-filt-foot { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.5rem 0.25rem; border-top: 1px solid var(--color-mid-beige); margin-top: 0.25rem; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.co-menu-h { padding: 0.5rem 0.5rem 0.25rem 2.25rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-subtle); }
+.co-menu-sep { height: 1px; margin: 0.3125rem -0.3125rem; background: var(--color-mid-beige); }
+.co-menu-i { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.5rem; border: 0; border-radius: 0.375rem; background: none; text-align: left;
+  font: inherit; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
+.co-menu-i { white-space: nowrap; }
+.co-menu-i:hover, .co-menu-i:focus-visible { background: var(--color-coral-tint); outline: none; }
+.co-menu-i .co-menu-c { flex: none; display: grid; place-items: center; width: 1.25rem; height: 1.25rem; color: var(--color-ink); }
+.co-menu-i .co-menu-c svg { width: 1rem; height: 1rem; visibility: hidden; }
+.co-menu-i[aria-checked="true"] .co-menu-c svg { visibility: visible; }
+.co-menu-i small { margin-left: auto; padding-left: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
+.co-menu-i:disabled { color: var(--color-sand-400); cursor: not-allowed; background: none; }
 .co-tbl td.co-tbl-none { padding: 2.5rem 0.75rem; text-align: center; color: var(--color-ink-subtle); cursor: default; }
 .co-tbl tbody tr:has(.co-tbl-none), .co-tbl tbody tr:has(.co-tbl-none):hover { cursor: default; background: none; }
 /* the projects table, ten to a page */
@@ -1397,8 +1401,8 @@ body { transition: background-color .9s ease; }
       <div class="co-tools" data-tools-for="co-proj-filled">
         <label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by ID, project, client or region" aria-label="Search projects" data-q></label>
         <div class="co-filt">
-          <button type="button" class="co-filt-btn" aria-haspopup="true" aria-expanded="false" data-filt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filters<span class="co-filt-n" data-filt-n hidden></span><svg class="co-filt-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-          <div class="co-filt-panel" role="dialog" aria-label="Filter projects" data-filt-panel hidden></div>
+          <button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="false" data-filt-btn><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.591L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd"/></svg>Filter<span class="co-filt-n" data-filt-n hidden></span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button>
+          <div class="co-filt-panel" role="menu" aria-label="Filter projects" data-filt-panel hidden></div>
         </div>
       </div>
       <div class="co-card co-tbl-card">
@@ -1961,24 +1965,33 @@ body { transition: background-color .9s ease; }
     const keep = (d, skip) => (!f.q || d.text.includes(f.q)) && GROUPS.every(([, k, fn]) => k === skip || !f[k].size || vals(d, fn).some((v) => f[k].has(v)));
     const nOn = () => GROUPS.reduce((n, [, k]) => n + f[k].size, 0);
     let panel, btn;
+    const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
+    const X = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="visibility:visible"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
     const paint = () => {
-      panel.innerHTML = GROUPS.map(([label, k, fn]) => {
+      panel.innerHTML = GROUPS.map(([label, k, fn], gi) => {
         const all = [...new Set(data.flatMap((d) => vals(d, fn)))].sort();
-        return `<div class="co-filt-g"><b>${label}</b>` + all.map((v) => {
+        return (gi ? '<div class="co-menu-sep" role="separator"></div>' : '') + `<div class="co-menu-h">${label}</div>` + all.map((v) => {
           const n = data.filter((d) => keep(d, k) && vals(d, fn).includes(v)).length;
-          return `<label class="co-filt-o"><input type="checkbox" data-k="${k}" value="${v}"${f[k].has(v) ? ' checked' : ''}>${v}<small>${n}</small></label>`;
-        }).join('') + '</div>';
-      }).join('') + `<div class="co-filt-foot"><button type="button" class="link-btn" data-clear${nOn() ? '' : ' disabled'}>Clear filters</button><button type="button" class="btn btn-quiet btn-sm" data-done>Done</button></div>`;
+          return `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${f[k].has(v)}" data-k="${k}" data-v="${v}"><span class="co-menu-c">${TICK}</span>${v}<small>${n}</small></button>`;
+        }).join('');
+      }).join('') + `<div class="co-menu-sep" role="separator"></div><button type="button" class="co-menu-i" role="menuitem" data-clear${nOn() ? '' : ' disabled'}><span class="co-menu-c">${X}</span>Clear filters</button>`;
     };
     if (tools) {
       panel = tools.querySelector('[data-filt-panel]'); btn = tools.querySelector('[data-filt-btn]');
       const open = (on) => { panel.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) paint(); };
-      btn.addEventListener('click', (e) => { e.stopPropagation(); open(panel.hidden); });
-      panel.addEventListener('click', (e) => { e.stopPropagation(); if (e.target.closest('[data-done]')) { open(false); btn.focus(); } else if (e.target.closest('[data-clear]')) clear(); });
-      panel.addEventListener('change', (e) => {
-        const c = e.target; if (!c.dataset.k) return;
-        f[c.dataset.k][c.checked ? 'add' : 'delete'](c.value); go(1);
-        const focus = c.value, k = c.dataset.k; paint(); const again = panel.querySelector(`[data-k="${k}"][value="${focus}"]`); if (again) again.focus();
+      btn.addEventListener('click', (e) => { e.stopPropagation(); open(panel.hidden); if (!panel.hidden && e.detail === 0) panel.querySelector('.co-menu-i').focus(); });
+      panel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const i = e.target.closest('.co-menu-i'); if (!i || i.disabled) return;
+        if (i.hasAttribute('data-clear')) { clear(); panel.querySelector('.co-menu-i').focus(); return; }
+        const { k, v } = i.dataset; f[k].has(v) ? f[k].delete(v) : f[k].add(v); go(1); paint();
+        const again = panel.querySelector(`[data-k="${k}"][data-v="${v}"]`); if (again) again.focus();
+      });
+      panel.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        e.preventDefault();
+        const items = [...panel.querySelectorAll('.co-menu-i:not(:disabled)')], at = items.indexOf(document.activeElement);
+        items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
       });
       document.addEventListener('click', (e) => { if (!tools.contains(e.target)) open(false); });
       document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { open(false); btn.focus(); } });
