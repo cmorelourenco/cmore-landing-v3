@@ -645,6 +645,24 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-net-half .co-net-k { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
 @media (max-width: 40rem) { .co-half-wrap { width: 100%; } .co-hero .co-net-half .co-net-rows { grid-template-columns: minmax(0, 1fr); } }
 
+/* ---- The hero's compliance: three numbers, each a way into the documents ---- */
+.co-hero .co-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: stretch; justify-items: stretch; align-self: end; width: 100%; max-width: none; }
+/* the heading, then the three numbers across the column, then the invites beside the link */
+.co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l l" "n n" "a k"; grid-template-columns: minmax(0, 1fr) auto; }
+@media (max-width: 76rem) { .co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); } }
+.co-k { display: flex; flex-direction: column; gap: 0.25rem; padding: 1.25rem 1.25rem 1.125rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
+  text-decoration: none; color: var(--color-ink); transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
+.co-k:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
+.co-k-n { font-size: 3.25rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.5rem; }
+.co-k-l { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 600; }
+.co-k-l::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.co-k-d { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.co-k-attn .co-k-n { color: var(--color-coral); } .co-k-attn .co-k-l::before { background: var(--color-coral); }
+.co-k-miss .co-k-n { color: var(--color-caution); } .co-k-miss .co-k-l::before { background: var(--color-caution); }
+.co-k-exp .co-k-n { color: var(--color-critical); } .co-k-exp .co-k-l::before { background: var(--color-critical); }
+.co-k.is-zero .co-k-n { color: var(--color-sand-400); } .co-k.is-zero .co-k-l::before { background: var(--color-sand-400); }
+@media (max-width: 40rem) { .co-hero .co-kpis { grid-template-columns: minmax(0, 1fr); } .co-k-n { font-size: 2.5rem; } }
+
 /* ---- The hero: company, then the ecosystem, on the page's own light ground.
    It reuses the graphite band's layout, with every colour set for light. ------- */
 .co-band.co-hero { border-top: 0; padding: 2rem 0 2.75rem; background: transparent; color: var(--color-ink); }
@@ -1133,7 +1151,7 @@ body { transition: background-color .9s ease; }
     <a href="#ce-drop" data-ce-start>Start company profile</a>
   </div></div>
 
-  <!-- Hero: who you are, then your ecosystem -->
+  <!-- Hero: who you are, then where your compliance stands -->
   <section class="co-band co-hero">
     <div class="co-band-mesh" aria-hidden="true"></div>
     <div class="co-wrap co-hero-id">
@@ -1157,42 +1175,15 @@ body { transition: background-color .9s ease; }
     <div class="co-wrap co-band-in">
       <div class="co-band-l">
         <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <span class="eyebrow co-on-dark">Your C&#8209;MORE ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">0 companies<br><span style="font-weight:600">share data with you.</span></h2>
-        </div>
-        <div class="co-sides">
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a supplier</span>
-            <div class="co-side-n">
-              <div><span class="co-stat co-stat-empty">0</span><span>clients connected</span></div>
-              <div><span class="co-stat co-stat-empty">0</span><span>requests</span></div>
-            </div>
-            <div class="co-bar co-bar-empty" style="height:8px"></div>
-          </div>
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a buyer</span>
-            <div class="co-side-n">
-              <div><span class="co-stat co-stat-empty">0</span><span>suppliers connected</span></div>
-              <div><span class="co-stat co-stat-empty">0</span><span>data in order</span></div>
-            </div>
-            <div class="co-bar co-bar-empty" style="height:8px"></div>
-          </div>
+          <span class="eyebrow co-on-dark">Your compliance</span>
+          <h2 class="co-h-xl" style="font-weight:300">No documents yet,<br><span style="font-weight:600">so nothing to chase.</span></h2>
         </div>
       </div>
-      <div class="co-net co-net-half">
-        <div class="co-half-wrap">
-        <div class="co-half co-half-empty" role="img" aria-label="No connections yet"><svg viewBox="0 0 220 116" fill="none" stroke-width="24" aria-hidden="true"><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-mid-beige)" stroke-dasharray="100.00 200" stroke-dashoffset="0.00"/></svg><div class="co-half-c"><span class="co-donut-n">0</span><span class="co-donut-t co-donut-tl">connections</span></div></div>
-        <div class="co-net-rows">
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 0</span><span>none yet</span></div>
-            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a client</a></div>
-          </div>
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 0</span><span>none yet</span></div>
-            <div class="co-avs co-avs-empty"><span></span><span></span><span></span><a href="#" onclick="return false">Invite a supplier</a></div>
-          </div>
-        </div>
-</div>
+      <!-- Three numbers, each a way into the documents -->
+      <div class="co-net co-kpis" role="list">
+          <a href="#" class="co-k co-k-attn is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Need your attention</span><span class="co-k-d">Once ALMA has your documents, anything overdue or pending shows here.</span></a>
+          <a href="#" class="co-k co-k-miss is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Missing</span><span class="co-k-d">What a client asked for that you have not given yet.</span></a>
+          <a href="#" class="co-k co-k-exp is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Expired</span><span class="co-k-d">Documents past their date.</span></a>
       </div>
       <div class="co-hero-acts">
           <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
@@ -1292,7 +1283,7 @@ body { transition: background-color .9s ease; }
     <a href="#" onclick="return false">Finish company profile</a>
   </div></div>
 
-  <!-- Hero: who you are, then your ecosystem -->
+  <!-- Hero: who you are, then where your compliance stands -->
   <section class="co-band co-hero">
     <div class="co-band-mesh" aria-hidden="true"></div>
     <div class="co-wrap co-hero-id">
@@ -1316,43 +1307,15 @@ body { transition: background-color .9s ease; }
     <div class="co-wrap co-band-in">
       <div class="co-band-l">
         <div style="display:flex;flex-direction:column;gap:0.75rem">
-          <span class="eyebrow co-on-dark">Your C&#8209;MORE ecosystem</span>
-          <h2 class="co-h-xl" style="font-weight:300">24 companies<br><span style="font-weight:600">share data with you.</span></h2>
-        </div>
-        <div class="co-sides">
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a supplier</span>
-            <div class="co-side-n">
-              <div><span class="co-stat">14</span><span>clients connected</span></div>
-              <div><span class="co-stat">26</span><span>requests · 22 yes, 4 pending</span></div>
-            </div>
-            <div class="co-bar" style="height:8px"><i style="width:85%;background:var(--color-clients)"></i><i style="width:15%;background:var(--color-clients-soft)"></i></div>
-          </div>
-          <div class="co-side">
-            <span class="eyebrow co-on-dark">As a buyer</span>
-            <div class="co-side-n">
-              <div><span class="co-stat" style="color:var(--color-coral)">10</span><span>suppliers connected</span></div>
-              <div><span class="co-stat">8<small>/10</small></span><span>papers in order · 2 pending</span></div>
-            </div>
-            <div class="co-bar" style="height:8px"><i style="width:80%;background:var(--color-coral)"></i><i style="width:20%;background:var(--color-coral-soft)"></i></div>
-          </div>
+          <span class="eyebrow co-on-dark">Your compliance</span>
+          <h2 class="co-h-xl" style="font-weight:300" id="co-k-head"><span id="co-k-head-n">4 documents</span><br><span style="font-weight:600">need your attention.</span></h2>
         </div>
       </div>
-      <!-- One ring for the whole network, one row per side -->
-      <div class="co-net co-net-half">
-        <div class="co-half-wrap">
-        <div class="co-half" role="img" aria-label="24 connections: 14 clients, 10 suppliers"><svg viewBox="0 0 220 116" fill="none" stroke-width="24" aria-hidden="true"><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-clients)" stroke-dasharray="49.50 200" stroke-dashoffset="0.00"/><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-clients-soft)" stroke-dasharray="7.83 200" stroke-dashoffset="-50.00"/><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-coral)" stroke-dasharray="32.84 200" stroke-dashoffset="-58.33"/><path d="M20 110 A90 90 0 0 1 200 110" pathLength="100" stroke="var(--color-coral-soft)" stroke-dasharray="7.83 200" stroke-dashoffset="-91.67"/></svg><div class="co-half-c"><span class="co-donut-n">24</span><span class="co-donut-t co-donut-tl">connections</span></div></div>
-        <div class="co-net-rows">
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-clients)"></i>Clients · 14</span><span>12 in order · 2 pending</span></div>
-            <div class="co-avs"><span>NF</span><span>BG</span><span>MH</span><span>RS</span><span class="is-out">PW</span><span class="is-more">+9</span><a href="#" onclick="return false">See all</a></div>
-          </div>
-          <div class="co-net-row">
-            <div class="co-net-k"><span><i style="background:var(--color-coral)"></i>Suppliers · 10</span><span>8 in order · 2 lagging</span></div>
-            <div class="co-avs is-coral"><span>DS</span><span>KE</span><span>CC</span><span class="is-out">VL</span><span class="is-more">+6</span><a href="ecosystem.html?show=mine">See all</a></div>
-          </div>
-        </div>
-</div>
+      <!-- Three numbers, each a way into the documents -->
+      <div class="co-net co-kpis" role="list">
+          <a href="#" class="co-k co-k-attn" data-go="docs" id="co-k-attn"><span class="co-k-n">4</span><span class="co-k-l">Need your attention</span><span class="co-k-d">Overdue, about to expire or still pending.</span></a>
+          <a href="#" class="co-k co-k-miss" data-go="docs" id="co-k-miss"><span class="co-k-n">3</span><span class="co-k-l">Missing</span><span class="co-k-d">I&#8209;9 attestations for your E&#8209;Verify enrolment.</span></a>
+          <a href="#" class="co-k co-k-exp" data-go="docs" id="co-k-exp"><span class="co-k-n">1</span><span class="co-k-l">Expired</span><span class="co-k-d">Business license, since 15 August.</span></a>
       </div>
       <div class="co-hero-acts">
           <a href="#" onclick="return false" class="btn co-hero-btn co-btn-light">Invite client</a>
@@ -1581,6 +1544,10 @@ body { transition: background-color .9s ease; }
         $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
         $c('co-ring').style.setProperty('--p', '87%'); $c('co-score').textContent = '87';
         $c('co-score-note').textContent = 'Good · up 9 with the new license';
+        // the hero's numbers: one fewer needing attention, nothing expired
+        $c('co-k-attn').querySelector('.co-k-n').textContent = '3';
+        $c('co-k-head-n').textContent = '3 documents';
+        const ex = $c('co-k-exp'); ex.classList.add('is-zero'); ex.querySelector('.co-k-n').textContent = '0'; ex.querySelector('.co-k-d').textContent = 'Nothing expired. The license is valid until 15 Aug 2027.';
       }, reducedMotion ? 0 : 2200);
     });
   }
@@ -1854,6 +1821,7 @@ body { transition: background-color .9s ease; }
     const t = target(key); if (!t) return;
     scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8, behavior: 'smooth' });
   }));
+  document.querySelectorAll('.co-k[data-go]').forEach((k) => k.addEventListener('click', (e) => { e.preventDefault(); const t = target(k.dataset.go); if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8, behavior: 'smooth' }); }));
   // the section in view is the one marked
   const spy = ['.co-proj-sec', 'docs', '.co-last-sec'];
   const mark = () => {
