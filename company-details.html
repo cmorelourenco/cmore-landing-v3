@@ -1071,14 +1071,18 @@ body { transition: background-color .9s ease; }
 
 /* ---- Company details: the identity hero, then the full documentation profile ---- */
 .page:has(#cdetails) { max-width: none; padding: 0; margin-left: 0; }
-.cd-crumb { padding-top: 2rem; }
-.cd-crumb-nav { display: flex; align-items: center; gap: 0.125rem; }
-.cd-crumb-btn { display: inline-flex; align-items: center; height: 2rem; padding: 0 0.625rem; border: 1px solid transparent; border-radius: 0.5rem;
-  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-subtle); text-decoration: none; }
-a.cd-crumb-btn:hover { background: var(--color-mid-beige); color: var(--color-ink); }
-.cd-crumb-btn.is-current { border-color: var(--color-line); background: var(--color-surface); color: var(--color-ink); font-weight: 700;
-  box-shadow: 0 1px 2px rgba(52, 52, 52, .06); cursor: default; }
-.cd-crumb-chev { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-sand-400); }
+.cd-crumb { padding-top: 2rem; display: flex; align-items: center; gap: 0.875rem; }
+/* the way back: a left chevron in its own rounded-rect button, same family as the pager's */
+.cd-crumb-back { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--color-line); border-radius: 0.625rem;
+  background: var(--color-surface); color: var(--color-ink); text-decoration: none; transition: border-color .14s ease, background-color .14s ease; }
+.cd-crumb-back:hover { border-color: var(--color-sand-400); background: var(--color-light-beige); }
+.cd-crumb-back svg { width: 1.125rem; height: 1.125rem; }
+/* the trail itself: each level in order, the one you're on in bold */
+.cd-crumb-trail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+.cd-crumb-trail a { color: var(--color-ink-subtle); text-decoration: none; }
+.cd-crumb-trail a:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); }
+.cd-crumb-trail span[aria-hidden] { color: var(--color-sand-400); }
+.cd-crumb-trail [aria-current] { color: var(--color-ink); font-weight: 700; }
 .cd-sec { padding-top: 1.5rem; padding-bottom: 4rem; }
 .cd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 0 0 1.5rem; }
 .cd-drop-gap { margin-bottom: 1.5rem; }
@@ -1208,10 +1212,11 @@ a.cd-crumb-btn:hover { background: var(--color-mid-beige); color: var(--color-in
 
   <!-- Already inside the company's own area: a way back, not the identity hero again -->
   <div class="co-wrap cd-crumb">
-    <nav class="cd-crumb-nav" aria-label="Breadcrumb">
-      <a class="cd-crumb-btn" href="my-company.html?filled">My company</a>
-      <svg class="cd-crumb-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>
-      <span class="cd-crumb-btn is-current" aria-current="page">Company details</span>
+    <a class="cd-crumb-back" href="my-company.html?filled" aria-label="Back to company overview"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></a>
+    <nav class="cd-crumb-trail" aria-label="Breadcrumb">
+      <a href="my-company.html?filled">My company</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Company details</span>
     </nav>
   </div>
 
