@@ -716,7 +716,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
   .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); }
   .page .co-hero .co-hero-link { justify-self: start; }
 }
-/* ---- Project view: two tables, the projects you run and the ones you supply ---- */
+/* ---- Project overview: every project you are on, as owner or as supplier ---- */
 .co-proj-sec { border-top: 1px solid var(--color-line); }
 .co-proj { display: grid; gap: 1.25rem; }
 /* the description sits under the title here, not across from it */
@@ -733,7 +733,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-sub-head-r { display: inline-flex; align-items: baseline; gap: 1.25rem; font-size: 0.9375rem; }
 .co-sub-head-r .co-link { font-size: 0.875rem; }
 /* My projects names the section first, above its title */
-.co-sub-head-top { margin-bottom: 0.5rem; }
+.co-sub-head-top { margin-bottom: 1.25rem; }
 /* the same column widths in both tables, so the two read as one view */
 .co-proj-tbl { table-layout: fixed; }
 .co-proj-tbl th:nth-child(1) { width: 22%; } .co-proj-tbl th:nth-child(2) { width: 19%; } .co-proj-tbl th:nth-child(3) { width: 24%; }
@@ -829,7 +829,7 @@ html[data-sn="drawer"] .who-chip { margin-right: 0; padding-right: 0.25rem; }
   background: var(--color-coral); border-color: var(--color-coral); color: var(--color-off-white); }
 @media (prefers-reduced-motion: reduce) { .sn, .sn-collapse svg, .top .hdr-in, .co-wrap { transition: none !important; } }
 /* the company's logo, beside its name: who this page is about, at a glance */
-.co-id-col { display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.co-id-col { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
 .co-id-main { display: flex; align-items: center; gap: 1.25rem; min-width: 0; }
 .co-logo { flex: none; width: 5.5rem; height: 5.5rem; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(52,52,52,.06), 0 8px 20px -10px rgba(52,52,52,.35); }
 .co-logo-empty { display: grid; place-items: center; align-content: center; gap: 0.125rem; padding: 0; cursor: pointer; box-shadow: none;
@@ -1175,7 +1175,7 @@ body { transition: background-color .9s ease; }
     </div>
     <div class="co-wrap co-band-in">
       <div class="co-band-l">
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
           <span class="eyebrow co-on-dark">Your compliance</span>
           <h2 class="co-h-xl" style="font-weight:300">No documents yet,<br><span style="font-weight:600">so nothing to chase.</span></h2>
         </div>
@@ -1189,10 +1189,10 @@ body { transition: background-color .9s ease; }
     </div>
   </section>
 
-  <!-- Project view: the projects you run, and the ones you supply -->
+  <!-- Project overview: every project you are on, as owner or as supplier -->
   <section class="co-sec co-proj-sec"><div class="co-wrap">
       <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My projects</h3><span class="co-sub-head-r"><span class="co-muted">0 projects</span><a href="#" onclick="return false" class="co-link">View all</a></span></div>
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project view</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
+    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project overview</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
     <div class="co-proj">
       <div class="co-proj-block">
       <div class="co-card co-tbl-card">
@@ -1295,7 +1295,7 @@ body { transition: background-color .9s ease; }
     </div>
     <div class="co-wrap co-band-in">
       <div class="co-band-l">
-        <div style="display:flex;flex-direction:column;gap:0.75rem">
+        <div style="display:flex;flex-direction:column;gap:1.25rem">
           <span class="eyebrow co-on-dark">Your compliance</span>
           <h2 class="co-h-xl" style="font-weight:300" id="co-k-head"><span id="co-k-head-n">4 documents</span><br><span style="font-weight:600">need your attention.</span></h2>
         </div>
@@ -1309,10 +1309,10 @@ body { transition: background-color .9s ease; }
     </div>
   </section>
 
-  <!-- Project view: the projects you run, and the ones you supply -->
+  <!-- Project overview: every project you are on, as owner or as supplier -->
   <section class="co-sec co-proj-sec"><div class="co-wrap">
       <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My projects</h3><span class="co-sub-head-r"><span class="co-muted">7 projects · 4 as owner, 3 as supplier</span><a href="#" onclick="return false" class="co-link">View all</a></span></div>
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project view</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
+    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project overview</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
     <div class="co-proj">
       <div class="co-proj-block">
       <div class="co-card co-tbl-card">
