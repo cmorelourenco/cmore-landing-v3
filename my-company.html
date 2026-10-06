@@ -645,22 +645,30 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-net-half .co-net-k { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
 @media (max-width: 40rem) { .co-half-wrap { width: 100%; } .co-hero .co-net-half .co-net-rows { grid-template-columns: minmax(0, 1fr); } }
 
-/* ---- The hero's compliance: three numbers, each a way into the documents ---- */
+/* ---- The hero's compliance: documents, consents and suppliers, each a way in ---- */
 .co-hero .co-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: stretch; justify-items: stretch; align-self: end; width: 100%; max-width: none; }
 /* the heading, then the three numbers across the column */
 .co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l" "n"; grid-template-columns: minmax(0, 1fr); }
-.co-k { display: flex; flex-direction: column; gap: 0.25rem; padding: 1.25rem 1.25rem 1.125rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
+.co-k { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem 1.25rem 1.125rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
   text-decoration: none; color: var(--color-ink); transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
 .co-k:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
-.co-k-n { font-size: 3.25rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; margin-bottom: 0.5rem; }
-.co-k-l { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 600; }
-.co-k-l::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; }
+.co-k-h { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 600; }
+.co-k-h svg { width: 1.125rem; height: 1.125rem; color: var(--color-ink-subtle); }
+.co-k-arrow { margin-left: auto; color: var(--color-ink-subtle); transition: transform .2s var(--ease-brand), color .14s ease; }
+.co-k:hover .co-k-arrow { transform: translateX(3px); color: var(--color-coral-deep); }
+.co-k-big { display: flex; align-items: baseline; gap: 0.625rem; margin-top: 0.5rem; }
+.co-k-n { font-size: 3.25rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--color-coral); }
+.co-k-nl { font-size: 0.9375rem; font-weight: 500; }
 .co-k-d { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
-.co-k-attn .co-k-n { color: var(--color-coral); } .co-k-attn .co-k-l::before { background: var(--color-coral); }
-.co-k-miss .co-k-n { color: var(--color-caution); } .co-k-miss .co-k-l::before { background: var(--color-caution); }
-.co-k-exp .co-k-n { color: var(--color-critical); } .co-k-exp .co-k-l::before { background: var(--color-critical); }
-.co-k.is-zero .co-k-n { color: var(--color-sand-400); } .co-k.is-zero .co-k-l::before { background: var(--color-sand-400); }
-@media (max-width: 40rem) { .co-hero .co-kpis { grid-template-columns: minmax(0, 1fr); } .co-k-n { font-size: 2.5rem; } }
+.co-k-chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--color-mid-beige); }
+.co-k-chip { display: inline-flex; align-items: center; gap: 0.3125rem; height: 1.625rem; padding: 0 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+.co-k-chip b { font-weight: 700; }
+.co-k-miss { background: var(--color-caution-subtle); color: var(--color-caution); }
+.co-k-exp { background: var(--color-critical-subtle); color: var(--color-critical); }
+.co-k-ok { background: var(--color-positive-subtle); color: var(--color-positive); }
+.co-k-chip.is-zero { background: var(--color-mid-beige); color: var(--color-ink-subtle); }
+.co-k.is-zero .co-k-n { color: var(--color-sand-400); }
+@media (max-width: 64rem) { .co-hero .co-kpis { grid-template-columns: minmax(0, 1fr); } .co-k-n { font-size: 2.5rem; } }
 
 /* ---- The hero: company, then the ecosystem, on the page's own light ground.
    It reuses the graphite band's layout, with every colour set for light. ------- */
@@ -1177,14 +1185,29 @@ body { transition: background-color .9s ease; }
       <div class="co-band-l">
         <div style="display:flex;flex-direction:column;gap:1.25rem">
           <span class="eyebrow co-on-dark">Your compliance</span>
-          <h2 class="co-h-xl" style="font-weight:300">No documents yet,<br><span style="font-weight:600">so nothing to chase.</span></h2>
+          <h2 class="co-h-xl" style="font-weight:300">Nothing to chase yet,<br><span style="font-weight:600">this is where it will show.</span></h2>
         </div>
       </div>
-      <!-- Three numbers, each a way into the documents -->
+      <!-- Documents, consents, suppliers: what needs you in each, and the way in -->
       <div class="co-net co-kpis" role="list">
-          <a href="#" class="co-k co-k-attn is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Need your attention</span><span class="co-k-d">Once ALMA has your documents, anything overdue or pending shows here.</span></a>
-          <a href="#" class="co-k co-k-miss is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Missing</span><span class="co-k-d">What a client asked for that you have not given yet.</span></a>
-          <a href="#" class="co-k co-k-exp is-zero" data-go="docs"><span class="co-k-n">0</span><span class="co-k-l">Expired</span><span class="co-k-d">Documents past their date.</span></a>
+          <a href="#" class="co-k is-zero" data-go="docs" role="listitem">
+            <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span>Documents</span><span class="co-k-arrow" aria-hidden="true">→</span></span>
+            <span class="co-k-big"><span class="co-k-n">0</span><span class="co-k-nl">need your attention</span></span>
+            <span class="co-k-d">Once ALMA has your documents, anything overdue or missing shows here.</span>
+            <span class="co-k-chips"><span class="co-k-chip co-k-miss is-zero"><b>0</b> missing</span><span class="co-k-chip co-k-exp is-zero"><b>0</b> expired</span></span>
+          </a>
+          <a href="#" class="co-k is-zero" data-go=".co-last-sec" role="listitem">
+            <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span>Consents</span><span class="co-k-arrow" aria-hidden="true">→</span></span>
+            <span class="co-k-big"><span class="co-k-n">0</span><span class="co-k-nl">waiting for your answer</span></span>
+            <span class="co-k-d">When a client asks to see your documents, the request lands here.</span>
+            <span class="co-k-chips"><span class="co-k-chip co-k-ok is-zero"><b>0</b> accepted</span><span class="co-k-chip co-k-exp is-zero"><b>0</b> expired</span></span>
+          </a>
+          <a href="ecosystem.html?show=mine" class="co-k is-zero" role="listitem">
+            <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg><span>My suppliers</span><span class="co-k-arrow" aria-hidden="true">→</span></span>
+            <span class="co-k-big"><span class="co-k-n">0</span><span class="co-k-nl">need your attention</span></span>
+            <span class="co-k-d">Connect your suppliers and see whose papers are behind.</span>
+            <span class="co-k-chips"><span class="co-k-chip co-k-miss is-zero"><b>0</b> papers missing</span><span class="co-k-chip co-k-exp is-zero"><b>0</b> expired</span></span>
+          </a>
       </div>
     </div>
   </section>
@@ -1297,14 +1320,29 @@ body { transition: background-color .9s ease; }
       <div class="co-band-l">
         <div style="display:flex;flex-direction:column;gap:1.25rem">
           <span class="eyebrow co-on-dark">Your compliance</span>
-          <h2 class="co-h-xl" style="font-weight:300" id="co-k-head"><span id="co-k-head-n">4 documents</span><br><span style="font-weight:600">need your attention.</span></h2>
+          <h2 class="co-h-xl" style="font-weight:300" id="co-k-head"><span id="co-k-head-n">8 things</span><br><span style="font-weight:600">need your attention.</span></h2>
         </div>
       </div>
-      <!-- Three numbers, each a way into the documents -->
+      <!-- Documents, consents, suppliers: what needs you in each, and the way in -->
       <div class="co-net co-kpis" role="list">
-          <a href="#" class="co-k co-k-attn" data-go="docs" id="co-k-attn"><span class="co-k-n">4</span><span class="co-k-l">Need your attention</span><span class="co-k-d">Overdue, about to expire or still pending.</span></a>
-          <a href="#" class="co-k co-k-miss" data-go="docs" id="co-k-miss"><span class="co-k-n">3</span><span class="co-k-l">Missing</span><span class="co-k-d">I&#8209;9 attestations for your E&#8209;Verify enrolment.</span></a>
-          <a href="#" class="co-k co-k-exp" data-go="docs" id="co-k-exp"><span class="co-k-n">1</span><span class="co-k-l">Expired</span><span class="co-k-d">Business license, since 15 August.</span></a>
+          <a href="#" class="co-k" data-go="docs" id="co-k-docs" role="listitem">
+            <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span>Documents</span><span class="co-k-arrow" aria-hidden="true">→</span></span>
+            <span class="co-k-big"><span class="co-k-n">4</span><span class="co-k-nl">need your attention</span></span>
+            <span class="co-k-d">Overdue, about to expire or still pending.</span>
+            <span class="co-k-chips"><span class="co-k-chip co-k-miss" id="co-k-docs-miss"><b>3</b> missing</span><span class="co-k-chip co-k-exp" id="co-k-docs-exp"><b>1</b> expired</span></span>
+          </a>
+          <a href="#" class="co-k" data-go=".co-last-sec" id="co-k-cons" role="listitem">
+            <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span>Consents</span><span class="co-k-arrow" aria-hidden="true">→</span></span>
+            <span class="co-k-big"><span class="co-k-n">2</span><span class="co-k-nl">waiting for your answer</span></span>
+            <span class="co-k-d">Northgate Facilities and Bramwell Group asked to see your insurance.</span>
+            <span class="co-k-chips"><span class="co-k-chip co-k-ok" id="co-k-cons-ok"><b>1</b> accepted</span><span class="co-k-chip co-k-exp is-zero" id="co-k-cons-exp"><b>0</b> expired</span></span>
+          </a>
+          <a href="ecosystem.html?show=mine" class="co-k" id="co-k-sup" role="listitem">
+            <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg><span>My suppliers</span><span class="co-k-arrow" aria-hidden="true">→</span></span>
+            <span class="co-k-big"><span class="co-k-n">2</span><span class="co-k-nl">need your attention</span></span>
+            <span class="co-k-d">Valley Lumber and Tri&#8209;State Fire Protection are behind on their papers.</span>
+            <span class="co-k-chips"><span class="co-k-chip co-k-miss" id="co-k-sup-miss"><b>3</b> papers missing</span><span class="co-k-chip co-k-exp" id="co-k-sup-exp"><b>1</b> expired</span></span>
+          </a>
       </div>
     </div>
   </section>
@@ -1521,10 +1559,10 @@ body { transition: background-color .9s ease; }
         $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
         $c('co-ring').style.setProperty('--p', '87%'); $c('co-score').textContent = '87';
         $c('co-score-note').textContent = 'Good · up 9 with the new license';
-        // the hero's numbers: one fewer needing attention, nothing expired
-        $c('co-k-attn').querySelector('.co-k-n').textContent = '3';
-        $c('co-k-head-n').textContent = '3 documents';
-        const ex = $c('co-k-exp'); ex.classList.add('is-zero'); ex.querySelector('.co-k-n').textContent = '0'; ex.querySelector('.co-k-d').textContent = 'Nothing expired. The license is valid until 15 Aug 2027.';
+        // the hero's documents card: one fewer needing attention, nothing expired
+        $c('co-k-docs').querySelector('.co-k-n').textContent = '3';
+        $c('co-k-head-n').textContent = '7 things';
+        const ex = $c('co-k-docs-exp'); ex.classList.add('is-zero'); ex.querySelector('b').textContent = '0';
       }, reducedMotion ? 0 : 2200);
     });
   }
