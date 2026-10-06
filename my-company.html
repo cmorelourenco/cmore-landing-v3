@@ -2010,8 +2010,8 @@ body { transition: background-color .9s ease; }
     };
     if (tools) {
       panel = tools.querySelector('[data-filt-panel]'); btn = tools.querySelector('[data-filt-btn]');
-      const open = (on) => { panel.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) paint(); };
-      btn.addEventListener('click', (e) => { e.stopPropagation(); open(panel.hidden); if (!panel.hidden && e.detail === 0) panel.querySelector('.co-menu-i').focus(); });
+      const open = (on) => { panel.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) { paint(); panel.scrollTop = 0; } }; // always opens at the top of its list
+      btn.addEventListener('click', (e) => { e.stopPropagation(); open(panel.hidden); if (!panel.hidden && e.detail === 0) panel.querySelector('.co-menu-i').focus({ preventScroll: true }); });
       panel.addEventListener('click', (e) => {
         e.stopPropagation();
         const i = e.target.closest('.co-menu-i'); if (!i || i.disabled) return;
