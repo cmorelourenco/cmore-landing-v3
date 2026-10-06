@@ -108,7 +108,9 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
 /* ---- Frame -------------------------------------------------------------- */
 .top { position: sticky; top: 0; z-index: 10; height: 4.5rem; background: color-mix(in oklab, var(--color-off-white) 88%, transparent);
-  backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-line); }
+  backdrop-filter: blur(12px); box-shadow: 0 0 0 0 transparent; transition: box-shadow .2s ease; }
+/* no hairline at rest; once the page has scrolled, a soft shadow carries the same separation */
+.top.is-scrolled { box-shadow: 0 1px 2px rgba(52, 52, 52, .05), 0 8px 24px -16px rgba(52, 52, 52, .18); }
 /* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
 .hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
@@ -1408,6 +1410,16 @@ body { transition: background-color .9s ease; }
 })();
 </script>
 <script src="js/company-details.js"></script>
+<script>
+/* The header carries no hairline at rest; once the page scrolls, a soft shadow takes over
+   the same job of separating it from the content sliding underneath. */
+(() => {
+  const top = document.querySelector('.top'); if (!top) return;
+  const sync = () => top.classList.toggle('is-scrolled', scrollY > 0);
+  addEventListener('scroll', sync, { passive: true });
+  sync();
+})();
+</script>
 <script src="js/lang.js"></script>
 </body>
 </html>
