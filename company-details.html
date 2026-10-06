@@ -1090,10 +1090,20 @@ body { transition: background-color .9s ease; }
 .cd-card.is-bad .cd-card-n { color: var(--color-critical); }
 @media (max-width: 52rem) { .cd-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 30rem) { .cd-cards { grid-template-columns: minmax(0, 1fr); } .cd-card-n { font-size: 1.875rem; } }
-.cd-tbl { table-layout: fixed; min-width: 46rem; }
-.cd-tbl th:nth-child(1) { width: 36%; } .cd-tbl th:nth-child(2) { width: 20%; } .cd-tbl th:nth-child(3) { width: 13%; }
-.cd-tbl th:nth-child(4) { width: 17%; } .cd-tbl th:nth-child(5) { width: 10%; } .cd-tbl th:nth-child(6) { width: 15%; text-align: right; }
-.cd-tbl td:nth-child(6) { text-align: right; }
+/* the documents, grouped by what they are rather than in one long table */
+.cd-groups { display: flex; flex-direction: column; gap: 1.5rem; }
+.cd-group-k { align-items: baseline; }
+.cd-group-k .co-muted { font-size: 0.875rem; }
+.cd-row { align-items: flex-start; gap: 1.5rem; flex-wrap: wrap; }
+.cd-row-r { flex: none; display: flex; align-items: center; gap: 0.75rem; margin-left: auto; padding-top: 0.125rem; }
+.cd-row-dates { font-size: 0.8125rem; color: var(--color-ink-subtle); white-space: nowrap; }
+.cd-row-r .co-badge { white-space: nowrap; }
+.cd-none { padding: 3rem 1.5rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem; }
+.cd-none .co-subtle { font-size: 0.9375rem; }
+@media (max-width: 40rem) {
+  .cd-row { flex-direction: column; gap: 0.625rem; }
+  .cd-row-r { margin-left: 0; flex-wrap: wrap; }
+}
 </style>
 </head>
 <body>
@@ -1238,15 +1248,7 @@ body { transition: background-color .9s ease; }
 
     <div class="co-pills" data-pills hidden aria-label="Applied filters"></div>
 
-    <div class="co-card co-tbl-card">
-      <table class="co-tbl cd-tbl" id="cd-tbl">
-        <thead><tr><th>Document</th><th class="c">Category</th><th class="c">Issued</th><th class="c">Valid until</th><th class="c">Sharing</th><th>Status</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="co-pager-row">
-      <nav class="co-pager" aria-label="Documents pages" data-pager-for="cd-tbl"></nav>
-    </div>
+    <div class="cd-groups" id="cd-groups"></div>
   </div></section>
 
 </div>

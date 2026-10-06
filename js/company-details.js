@@ -1,7 +1,8 @@
 /* Company details: every document on file, built from the C-MORE Subcontractor
    Documentation Profile (company, contributions & tax, insurance, health & safety,
-   workers, equipment, materials & waste) — a profile reused across every project,
-   rather than one table per site. Prototype data, kept here. */
+   workers, equipment, materials & waste) — grouped by what each document is, the
+   way the profile itself is organised, rather than one long table. Prototype data,
+   kept here. */
 (() => {
   const C = { ID: 'Company — identification & licensing', TAX: 'Company — tax & social security', INS: 'Company — insurance',
     SST: 'Company — health & safety', WRK: 'Workers', EQ: 'Equipment', MAT: 'Materials, waste & transport' };
@@ -46,11 +47,11 @@
   ].map(([code, name, cat, issued, valid, sharing, status, note], id) => ({ id, code, name, cat, issued, valid, sharing, status, note }));
 
   const STATUS = { ok: ['In conformity', 'b-ok'], pending: ['Pending', 'b-pend'], review: ['Pending approval', 'b-info'], bad: ['Non conform', 'b-over'] };
-  const CATS = [...new Set(DOCS.map((d) => d.cat))];
+  const CATS = [...new Set(DOCS.map((d) => d.cat))]; // in the profile's own order: company, then workers, equipment, materials
   const SHARES = ['Open', 'Restricted'];
   const STATUSES = Object.keys(STATUS);
 
-  // the counts up top, each a shortcut into the table below
+  // the counts up top, each a shortcut into the groups below
   document.getElementById('cd-total').textContent = DOCS.length;
   document.getElementById('cd-ok').textContent = DOCS.filter((d) => d.status === 'ok').length;
   document.getElementById('cd-pend').textContent = DOCS.filter((d) => d.status === 'pending' || d.status === 'review').length;
@@ -59,25 +60,23 @@
   const fold = (t) => t.replace(/<[^>]+>/g, '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const DATA = DOCS.map((d) => ({ ...d, text: fold(`${d.code} ${d.name} ${d.cat}`) }));
 
-  const PER = 10;
   const f = { q: '', cat: new Set(), sharing: new Set(), status: new Set() };
   const GROUPS = [['Category', 'cat', (d) => d.cat], ['Sharing', 'sharing', (d) => d.sharing], ['Status', 'status', (d) => STATUS[d.status][0]]];
   const vals = (d, fn) => [].concat(fn(d));
   const keep = (d, skip) => (!f.q || d.text.includes(f.q)) && GROUPS.every(([, k, fn]) => k === skip || !f[k].size || vals(d, fn).some((v) => f[k].has(v)));
   const nOn = () => GROUPS.reduce((n, [, k]) => n + f[k].size, 0);
 
-  const tbl = document.getElementById('cd-tbl'), body = tbl.tBodies[0];
+  const groupsEl = document.getElementById('cd-groups');
   const tools = document.querySelector('[data-tools-for="cd-tbl"]');
   const pills = document.querySelector('[data-pills]');
-  const nav = document.querySelector('[data-pager-for="cd-tbl"]');
   const q = tools.querySelector('[data-q]'), btn = tools.querySelector('[data-filt-btn]'), panel = tools.querySelector('[data-filt-panel]');
-  let page = 1;
 
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
-    const share = d.sharing === 'Restricted' ? '<span class="co-badge b-neu">Restricted</span>' : '<span class="co-subtle">Open</span>';
-    return `<tr><td><span class="n">${d.name}</span><span class="d">${d.code}${d.note ? ' · ' + d.note : ''}</span></td><td class="c co-subtle">${d.cat.replace(/^.*?— /, '')}</td>` +
-      `<td class="c">${d.issued}</td><td class="c">${d.valid}</td><td class="c">${share}</td><td><span class="co-badge ${cls}">${label}</span></td></tr>`;
+    const share = d.sharing === 'Restricted' ? '<span class="co-badge b-neu">Restricted</span>' : '';
+    const dates = d.valid.startsWith('—') || !/\d/.test(d.issued) ? d.valid : `${d.issued} – ${d.valid}`;
+    return `<div class="co-row cd-row" data-id="${d.id}"><div class="co-row-t"><span class="co-row-n">${d.name}</span><span class="co-subtle">${d.code}${d.note ? ' · ' + d.note : ''}</span></div>` +
+      `<div class="cd-row-r"><span class="cd-row-dates">${dates}</span>${share}<span class="co-badge ${cls}">${label}</span></div></div>`;
   };
 
   const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
@@ -97,7 +96,7 @@
     e.stopPropagation();
     const i = e.target.closest('.co-menu-i'); if (!i || i.disabled) return;
     if (i.hasAttribute('data-clear')) { clearAll(); panel.querySelector('.co-menu-i').focus(); return; }
-    const { k, v } = i.dataset, top = panel.firstElementChild.scrollTop; f[k].has(v) ? f[k].delete(v) : f[k].add(v); go(1); paintFilters();
+    const { k, v } = i.dataset, top = panel.firstElementChild.scrollTop; f[k].has(v) ? f[k].delete(v) : f[k].add(v); render(); paintFilters();
     panel.firstElementChild.scrollTop = top;
     const again = panel.querySelector(`[data-k="${k}"][data-v="${v}"]`); if (again) again.focus();
   });
@@ -109,60 +108,53 @@
   });
   document.addEventListener('click', (e) => { if (!tools.contains(e.target)) openFilt(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { openFilt(false); btn.focus(); } });
-  q.addEventListener('input', () => { f.q = fold(q.value.trim()); go(1); if (!panel.hidden) paintFilters(); });
+  q.addEventListener('input', () => { f.q = fold(q.value.trim()); render(); if (!panel.hidden) paintFilters(); });
 
   pills.addEventListener('click', (e) => {
     const p = e.target.closest('.co-pill'); if (!p) return;
-    f[p.dataset.k].delete(p.dataset.v); go(1); if (!panel.hidden) paintFilters();
+    f[p.dataset.k].delete(p.dataset.v); render(); if (!panel.hidden) paintFilters();
     const next = pills.querySelector('.co-pill'); (next || btn).focus();
   });
-  const clearAll = () => { f.q = ''; GROUPS.forEach(([, k]) => f[k].clear()); q.value = ''; go(1); if (!panel.hidden) paintFilters(); };
-  document.addEventListener('click', (e) => { const c = e.target.closest('[data-clear]'); if (c && (tools.contains(c) || body.contains(c))) clearAll(); });
+  const clearAll = () => { f.q = ''; GROUPS.forEach(([, k]) => f[k].clear()); q.value = ''; render(); if (!panel.hidden) paintFilters(); };
+  tools.querySelector('.co-tools-clear').addEventListener('click', clearAll);
+  groupsEl.addEventListener('click', (e) => { const c = e.target.closest('[data-clear]'); if (c) clearAll(); });
 
-  function go(to) {
+  // every category that still has a match, in the profile's own order; a category with
+  // nothing left simply drops out, rather than showing an empty card
+  function render() {
     if (typeof syncCards === 'function') syncCards();
     const shown = DATA.filter((d) => keep(d));
-    const pages = Math.max(1, Math.ceil(shown.length / PER));
-    page = Math.min(pages, Math.max(1, to));
-    body.innerHTML = shown.length
-      ? shown.slice((page - 1) * PER, page * PER).map(row).join('')
-      : '<tr><td colspan="6" class="co-tbl-none">No document matches that. <button type="button" class="link-btn" data-clear>Clear the search and filters</button></td></tr>';
+    groupsEl.innerHTML = shown.length
+      ? CATS.map((cat) => {
+          const docs = shown.filter((d) => d.cat === cat); if (!docs.length) return '';
+          return `<div class="co-card co-list cd-group"><div class="co-card-k co-list-k cd-group-k"><span class="eyebrow">${cat}</span><span class="co-muted">${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docs.map(row).join('')}</div>`;
+        }).join('')
+      : '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
     pills.hidden = !on.length;
     pills.innerHTML = on.map(([label, k, v]) => `<button type="button" class="co-pill" data-k="${k}" data-v="${v}" aria-label="Remove filter ${label}: ${v}"><span>${label}:</span><b>${v}</b><i aria-hidden="true">×</i></button>`).join('');
     const n = nOn(); btn.querySelector('[data-filt-n]').hidden = !n; btn.querySelector('[data-filt-n]').textContent = n;
     tools.querySelector('.co-tools-clear').hidden = !(n || f.q);
-    nav.hidden = pages < 2;
-    nav.innerHTML = pages > 1 ? '<span class="co-pager-btns">' +
-      `<button type="button" class="co-pager-arrow" data-to="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Previous page"><span aria-hidden="true">←</span> Previous</button>` +
-      Array.from({ length: pages }, (_, k) => `<button type="button" data-to="${k + 1}"${k + 1 === page ? ' aria-current="page"' : ''} aria-label="Page ${k + 1}">${k + 1}</button>`).join('') +
-      `<button type="button" class="co-pager-arrow" data-to="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="Next page">Next <span aria-hidden="true">→</span></button></span>` : '';
   }
-  nav.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-to]'); if (!b || b.disabled) return;
-    go(+b.dataset.to);
-    const top = tbl.closest('section').getBoundingClientRect().top;
-    if (top < 0) scrollTo({ top: top + scrollY - 80, behavior: 'smooth' });
-  });
+
   // each total is also a shortcut: a second click on the same one clears it again
   const cards = [...document.querySelectorAll('.cd-card')];
   const STATUS_SETS = { ok: ['In conformity'], pend: ['Pending', 'Pending approval'], bad: ['Non conform'] };
   cards.forEach((c) => c.addEventListener('click', () => {
     const key = c.dataset.status, was = c.classList.contains('is-on');
     clearAll();
-    if (key && !was) { f.status = new Set(STATUS_SETS[key]); go(1); if (!panel.hidden) paintFilters(); c.classList.add('is-on'); }
+    if (key && !was) { f.status = new Set(STATUS_SETS[key]); render(); if (!panel.hidden) paintFilters(); c.classList.add('is-on'); }
   }));
   const syncCards = () => cards.forEach((c) => { const want = c.dataset.status ? STATUS_SETS[c.dataset.status] : null;
     c.classList.toggle('is-on', want ? f.status.size === want.length && want.every((v) => f.status.has(v)) && !f.cat.size && !f.sharing.size && !f.q
       : f.status.size === 0 && f.cat.size === 0 && f.sharing.size === 0 && !f.q); });
 
-  // ALMA's drop: takes a file by drag or by browsing, then files it against the business
-  // license row (the one document already marked non conform), the same flow as the home
-  // page's Documents section. Prototype: the file never leaves the machine.
+  // ALMA's drop: takes a file by drag or by browsing, then files it against the contractor's
+  // license (the one document already marked non conform), the same flow as the home page's
+  // Documents section. Prototype: the file never leaves the machine.
   const drop = document.getElementById('cd-drop'), file = document.getElementById('cd-file');
   if (drop && file) {
     const t = document.getElementById('cd-drop-t'), sub = document.getElementById('cd-drop-s'), acts = document.getElementById('cd-drop-acts');
-    const idle = { t: t.textContent, s: sub.innerHTML };
     let picked = null, state = 'idle';
     const setState = (st) => { state = st; drop.classList.toggle('has-file', st === 'file'); drop.classList.toggle('is-reading', st === 'reading'); drop.classList.toggle('is-filed', st === 'filed'); };
     const took = (f) => {
@@ -190,18 +182,18 @@
       sub.textContent = 'Checking the issuer, the dates and the business it names.';
       setTimeout(() => {
         setState('filed');
-        t.textContent = 'Filed: your contractor\u2019s license, valid again.';
-        sub.textContent = 'City of Wilmington \u00b7 valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
+        t.textContent = 'Filed: your contractor’s license, valid again.';
+        sub.textContent = 'City of Wilmington · valid until 15 Aug 2027. Prototype: nothing was uploaded or saved.';
         const doc = DOCS.find((d) => d.code === 'E01');
         doc.status = 'ok'; doc.issued = '1 Oct 2026'; doc.valid = '15 Aug 2027'; doc.note = '';
         doc.text = fold(`${doc.code} ${doc.name} ${doc.cat}`);
         const live = DATA.find((d) => d.id === doc.id); Object.assign(live, doc);
         document.getElementById('cd-ok').textContent = DOCS.filter((d) => d.status === 'ok').length;
         document.getElementById('cd-bad').textContent = DOCS.filter((d) => d.status === 'bad').length;
-        go(page); syncCards();
+        render(); syncCards();
       }, 2200);
     });
   }
 
-  go(1);
+  render();
 })();
