@@ -347,7 +347,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
           <button type="button" class="btn btn-sso" data-login-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
         </div>
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
-        <p class="hint" style="margin-top:0.75rem;text-align:center">Prototype: any password works. New here? <a class="link-btn" href="register.html" data-to-signup>Get early access</a></p>
+        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button><br><button type="button" class="link-btn" data-login-try="f">Beatriz Nogueira</button></p>
+        <p class="hint" style="margin-top:0.5rem;text-align:center">New here? <a class="link-btn" href="register.html" data-to-signup>Get early access</a></p>
       </section>
 
       <!-- 1. Sign up: a provider, or a name and an email -->
@@ -379,7 +380,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
           <button type="button" class="btn btn-sso" data-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
         </div>
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
-        <p class="hint" style="margin-top:0.75rem;text-align:center">Prototype: try <button type="button" class="link-btn" data-try="m">Miguel Ferreira</button> or <button type="button" class="link-btn" data-try="f">Beatriz Nogueira</button></p>
+        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: try<br><button type="button" class="link-btn" data-try="m">Miguel Ferreira</button><br><button type="button" class="link-btn" data-try="f">Beatriz Nogueira</button></p>
       </section>
 
       <!-- 2. Code: verifies the email -->
@@ -796,7 +797,6 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   // Prototype: the dummy account and any password. It dissolves straight into the
   // company page in its completed state, the way the welcome does into the empty one.
   const toCompany = (href) => {
-    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...EXAMPLE, via: 'Email' })); } catch (e) {}
     if (reduced) { location.href = href; return; }
     const veil = document.createElement('div'); veil.className = 'to-company';
     document.body.appendChild(veil);
@@ -806,10 +806,19 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const liEmail = $('#login-email'), liPw = $('#login-password'), liGo = $('#login-go'), liErr = $('#login-email-err');
   const liReady = () => { liGo.disabled = !(liEmail.value.trim() && liPw.value); };
   ['input', 'change'].forEach((ev) => { liEmail.addEventListener(ev, () => { liErr.textContent = ''; liEmail.classList.remove('is-bad'); liReady(); }); liPw.addEventListener(ev, liReady); });
+  document.querySelectorAll('[data-login-try]').forEach((b) => b.addEventListener('click', () => {
+    liEmail.value = EXAMPLES[b.dataset.loginTry].email;
+    liErr.textContent = ''; liEmail.classList.remove('is-bad'); liReady(); liPw.focus();
+  }));
   $('#f-login').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(liEmail.value.trim())) { liErr.textContent = 'That does not look like an email address.'; liEmail.classList.add('is-bad'); liEmail.focus(); return; }
+    const typed = liEmail.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(typed)) { liErr.textContent = 'That does not look like an email address.'; liEmail.classList.add('is-bad'); liEmail.focus(); return; }
     liGo.disabled = true; liGo.textContent = 'Logging in…';
+    // the prototype only knows these two people; anything else still logs in as Miguel,
+    // the same account the rest of the demo assumes
+    const match = Object.values(EXAMPLES).find((ex) => ex.email.toLowerCase() === typed.toLowerCase()) || EXAMPLES.m;
+    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...match, via: 'Email' })); } catch (err) {}
     await wait(600);
     toCompany('my-company.html?filled');
   });
@@ -817,6 +826,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     document.querySelectorAll('[data-login-sso]').forEach((x) => (x.disabled = true));
     b.lastChild.textContent = 'Connecting to ' + b.dataset.loginSso + '…';
     await wait(900);
+    // a provider sign-in carries no typed email to match against, so it is always Miguel's
+    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...EXAMPLE, via: b.dataset.loginSso })); } catch (e) {}
     toCompany('my-company.html?filled');
   }));
   // the header's link and the tab title follow the mode: log in, or sign up
