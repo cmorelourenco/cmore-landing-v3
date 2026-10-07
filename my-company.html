@@ -2062,7 +2062,10 @@ body { transition: background-color .9s ease; }
     // as "above the line" and steal the highlight from whatever is actually on screen
     spy.forEach((k) => { const t = target(k); const r = t && t.getBoundingClientRect(); if (r && r.height && r.top < innerHeight * 0.4) on = k; });
     if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) on = spy[spy.length - 1]; // the last section can't scroll up to the line
-    items.forEach((a) => { const is = a.dataset.sn === on; a.classList.toggle('is-on', is); if (is) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+    // Beatriz's four menu items all point at the one Shipment overview section, so more
+    // than one shares a data-sn — only the first of them lights up, not all four at once
+    const first = items.find((a) => a.dataset.sn === on);
+    items.forEach((a) => { const is = a === first; a.classList.toggle('is-on', is); if (is) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
   };
   addEventListener('scroll', mark, { passive: true }); addEventListener('resize', mark);
   setTimeout(mark, 50);
