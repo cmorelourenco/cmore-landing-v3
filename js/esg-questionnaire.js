@@ -132,33 +132,29 @@
   ];
 
   let qid = 0;
-  const answered = new Set();
-  let total = 0;
-
-  const answerHtml = (q) => {
-    if (q.ty === 'yn' || q.ty === 'yn3') {
-      const id = 'q' + (++qid); total++;
-      const opts = q.ty === 'yn3' ? ['Yes', 'No', 'Not applicable'] : ['Yes', 'No'];
-      return `<div class="esgq-ans" role="group" data-qid="${id}">` + opts.map((o) => `<button type="button" class="esgq-opt" aria-pressed="false">${o}</button>`).join('') + `</div>`;
-    }
-    if (q.ty === 'choice') {
-      const id = 'q' + (++qid); total++;
-      return `<div class="esgq-ans" role="group" data-qid="${id}">` + q.opts.map((o) => `<button type="button" class="esgq-opt" aria-pressed="false">${esc(o)}</button>`).join('') + `</div>`;
-    }
-    const id = 'q' + (++qid); total++;
-    if (q.ty === 'number') return `<div class="esgq-field" data-qid="${id}"><input class="input" type="number" inputmode="numeric" placeholder="0" style="max-width:10rem"></div>`;
-    if (q.ty === 'long') return `<div class="esgq-field" data-qid="${id}"><textarea class="input" placeholder="Type your answer"></textarea></div>`;
-    return `<div class="esgq-field" data-qid="${id}"><input class="input" type="text" placeholder="Type your answer"></div>`;
+  const ICON = {
+    note: '<path d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/>',
+    clip: '<path d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13"/>',
+    assign: '<path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>',
   };
+  const tool = (k, label) => `<button type="button" class="esgq-tool" aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg></button>`;
 
-  const renderQ = (q, n) => {
-    let html = `<div class="esgq-q"><div class="esgq-q-main"><span class="esgq-q-n" aria-hidden="true">${n}</span><span class="esgq-q-t">${esc(q.t)}</span></div>${answerHtml(q)}`;
-    if (q.subs && q.subs.length) {
-      html += '<div class="esgq-subs">' + q.subs.map((s) => `<div class="esgq-sub"><span class="esgq-sub-t">${esc(s.t)}</span>${answerHtml(s)}</div>`).join('') + '</div>';
-    }
-    html += '</div>';
-    return html;
+  const field = (q, id) => {
+    const opts = q.ty === 'yn' ? ['Yes', 'No'] : q.ty === 'yn3' ? ['Yes', 'No', 'Not applicable'] : q.opts;
+    if (opts) return `<div class="esgq-ans" role="radiogroup" aria-labelledby="${id}-t" data-qid="${id}">`
+      + opts.map((o) => `<label class="esgq-radio"><input type="radio" name="${id}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('') + '</div>';
+    if (q.ty === 'number') return `<div class="esgq-field" data-qid="${id}"><input class="input esgq-num" type="number" min="0" inputmode="numeric" aria-labelledby="${id}-t" placeholder="0"></div>`;
+    if (q.ty === 'long') return `<div class="esgq-field" data-qid="${id}"><textarea class="input" aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
+    return `<div class="esgq-field" data-qid="${id}"><input class="input" type="text" aria-labelledby="${id}-t" placeholder="Type your answer"></div>`;
   };
+  const row = (q, badge) => {
+    const id = 'q' + (++qid);
+    return `<div class="esgq-row"><div class="esgq-q-main"><span class="esgq-q-n">${badge}</span><span class="esgq-q-t" id="${id}-t">${esc(q.t)}</span></div>${field(q, id)}</div>`;
+  };
+  // A follow-up only opens once its question is answered Yes; the card grows to make room.
+  const renderQ = (q, n) => '<div class="esgq-q">' + row(q, n)
+    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((s, i) => row(s, `${n}.${i + 1}`)).join('')}</div></div></div>` : '')
+    + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}</div></div>`;
 
   SECTIONS.forEach((sec) => {
     const card = document.querySelector(`[data-esgq="${sec.id}"]`); if (!card) return;
@@ -167,36 +163,23 @@
     if (count) count.textContent = sec.questions.length + (sec.questions.length === 1 ? ' question' : ' questions');
   });
 
+  // Progress counts what can be seen: a closed follow-up is not a question yet.
   const pctEl = document.getElementById('esgq-pct'), barEl = document.getElementById('esgq-bar');
+  const done = (f) => (f.classList.contains('esgq-ans') ? !!f.querySelector('input:checked') : !!f.querySelector('input, textarea').value.trim());
   const updateProgress = () => {
-    const pct = total ? Math.round((answered.size / total) * 100) : 0;
+    const shown = [...document.querySelectorAll('[data-qid]')].filter((f) => !f.closest('.esgq-subs:not(.is-open)'));
+    const pct = shown.length ? Math.round((shown.filter(done).length / shown.length) * 100) : 0;
     if (pctEl) pctEl.textContent = pct + '%';
     if (barEl) barEl.style.width = pct + '%';
   };
-
-  // The card itself shows whether anything inside it (its own field, or a sub's) has an answer.
-  const syncCard = (el) => {
-    const card = el.closest('.esgq-q'); if (!card) return;
-    const has = [...card.querySelectorAll('[data-qid]')].some((f) => answered.has(f.dataset.qid));
-    card.classList.toggle('is-answered', has);
-  };
-
-  // Yes/No/choice: single-select among the buttons in the same group.
-  document.querySelectorAll('.esgq-ans').forEach((group) => {
-    group.addEventListener('click', (e) => {
-      const btn = e.target.closest('.esgq-opt'); if (!btn) return;
-      group.querySelectorAll('.esgq-opt').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-      answered.add(group.dataset.qid); updateProgress(); syncCard(group);
-    });
+  const main = document.querySelector('.set-main');
+  main.addEventListener('change', (e) => {
+    const r = e.target; if (r.type !== 'radio') return;
+    const subs = r.closest('.esgq-q').querySelector(':scope > .esgq-subs');
+    if (subs && !r.closest('.esgq-subs')) { const open = r.value === 'Yes'; subs.classList.toggle('is-open', open); subs.inert = !open; }
+    updateProgress();
   });
-  // Text, number, long: answered once there is something in the field.
-  document.querySelectorAll('.esgq-field').forEach((field) => {
-    const input = field.querySelector('input, textarea'); if (!input) return;
-    input.addEventListener('input', () => {
-      if (input.value.trim()) answered.add(field.dataset.qid); else answered.delete(field.dataset.qid);
-      updateProgress(); syncCard(field);
-    });
-  });
+  main.addEventListener('input', updateProgress);
   updateProgress();
 
   // The section in view is the one marked on the left, same as Settings.
