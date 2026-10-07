@@ -27,17 +27,18 @@
     const pad = q.val === 'count' || q.val === 'year' ? ' inputmode="numeric"' : '';
     return `<div class="esgq-field"><textarea class="input" rows="1" data-for="${key}"${pad} aria-labelledby="${key}-t" aria-describedby="${key}-e" placeholder="Type your answer"></textarea></div>`;
   };
-  const row = (q, badge, key, sub) => {
+  const row = (q, badge, key) => {
     Q[key] = q;
     const help = q.help ? `<button type="button" class="esgq-help" aria-label="About this question" aria-describedby="${key}-h">${svg('info')}<span class="esgq-tip" role="tooltip" id="${key}-h">${esc(q.help)}</span></button>` : '';
     return `<div class="esgq-row" data-row="${key}"><div class="esgq-q-main"><span class="esgq-q-n">${badge}</span><span class="esgq-q-t"><span id="${key}-t">${esc(q.t)}</span>${help}</span></div>${field(q, key)}`
       + (q.na ? `<label class="esgq-na"><input type="checkbox" data-na-for="${key}"> Question not applicable</label>` : '')
       + `<p class="esgq-err" id="${key}-e" hidden></p><div class="esgq-note" data-note="${key}" hidden></div>`
-      + (sub ? `<div class="esgq-sub-foot" data-marks="${key}"></div>` : '') + '</div>';
+      // every question, parent or follow-up, has its own foot: the tools on the left, its tags on the right
+      + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-marks" data-marks="${key}"></span></div></div>`;
   };
   const card = (q, n, key) => `<div class="esgq-q" id="q-${key}" data-q="${key}">${row(q, n, key)}`
-    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((sq, i) => row(sq, `${n}.${i + 1}`, ESG.subKey(key, i), true)).join('')}</div></div></div>` : '')
-    + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-marks" data-marks="${key}"></span></div></div>`;
+    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((sq, i) => row(sq, `${n}.${i + 1}`, ESG.subKey(key, i))).join('')}</div></div></div>` : '')
+    + '</div>';
   DATA.sections.forEach((sec) => {
     const box = document.querySelector(`[data-esgq="${sec.id}"]`); if (!box) return;
     box.querySelector('[data-esgq-list]').innerHTML = sec.questions.map((q, i) => (q.g ? `<h3 class="esgq-group">${esc(q.g)}</h3>` : '') + card(q, i + 1, `${sec.id}-${i + 1}`)).join('');
