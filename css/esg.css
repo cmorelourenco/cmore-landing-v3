@@ -296,3 +296,11 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
   #up-dlg .up-or { padding: 0; }
   #up-dlg .up-results { top: 4.375rem; }
 }
+
+/* ---- a bar that is still working: the track runs a slow coral wave, and a light sheen crosses
+   the fill, so something visibly moves even when the percentage barely does ---- */
+.is-busy { background: linear-gradient(90deg, var(--color-mid-beige) 0%, var(--color-coral-tint) 22%, color-mix(in oklab, var(--color-coral) 38%, var(--color-mid-beige)) 50%, var(--color-coral-tint) 78%, var(--color-mid-beige) 100%) 0 0 / 200% 100%;
+  animation: bar-flow 1.8s linear infinite; }
+.is-busy i { background-color: var(--color-coral); background-image: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%); background-size: 200% 100%; animation: bar-flow 1.4s linear infinite; }
+@keyframes bar-flow { from { background-position: 200% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .is-busy, .is-busy i { animation: none; } .is-busy { background: var(--color-coral-tint); } }

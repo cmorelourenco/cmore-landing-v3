@@ -123,7 +123,7 @@ window.ESG_UPLOAD = (() => {
     $('#up-body').innerHTML = '';
     $('#up-foot').innerHTML = '';
     const wrap = document.createElement('div'); wrap.className = 'up-check';
-    wrap.innerHTML = '<small id="up-now" aria-live="polite">Reading the validity dates…</small><div class="up-bar"><i id="up-bar"></i></div>';
+    wrap.innerHTML = '<small id="up-now" aria-live="polite">Reading the validity dates…</small><div class="up-bar is-busy"><i id="up-bar"></i></div>';
     $('#up-body').after(wrap); $('#up-body').hidden = true;
     const list = good();
     list.forEach((d, i) => timers.push(setTimeout(() => {
