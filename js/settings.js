@@ -8,7 +8,8 @@
   try { person = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); photo = sessionStorage.getItem('cm-photo') || ''; } catch (e) {}
   person = Object.assign({ name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt', role: 'Owner', phone: '', cc: '' }, person || {});
   const demo = () => person.email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt';
-  if (!photo && demo() && !person.noPhoto) photo = 'images/profile-miguel.webp';
+  const demoF = () => person.email.toLowerCase() === 'beatriz@veridianharvest.com';
+  if (!photo && !person.noPhoto) { if (demo()) photo = 'images/profile-miguel.webp'; else if (demoF()) photo = 'images/profile-beatriz.webp'; }
   const save = () => { try { sessionStorage.setItem('cm-person', JSON.stringify(person)); if (photo && !photo.startsWith('images/')) sessionStorage.setItem('cm-photo', photo); else sessionStorage.removeItem('cm-photo'); } catch (e) {} };
   const ini = (n) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   // every picture of you on the page: this card's and the header's

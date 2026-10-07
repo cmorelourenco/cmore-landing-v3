@@ -1193,7 +1193,10 @@ body { transition: background-color .9s ease; }
   try { p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); photo = sessionStorage.getItem('cm-photo') || ''; } catch (e) {}
   const name = (p && p.name) || 'Miguel Ferreira', email = (p && p.email) || 'miguel@ferreiraconstrucoes.pt';
   // the demo account has its own picture; anyone else has their initials until they add one
-  if (!photo && email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt' && !(p && p.noPhoto)) photo = 'images/profile-miguel.webp';
+  if (!photo && !(p && p.noPhoto)) {
+    if (email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt') photo = 'images/profile-miguel.webp';
+    else if (email.toLowerCase() === 'beatriz@veridianharvest.com') photo = 'images/profile-beatriz.webp';
+  }
   const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   document.querySelectorAll('[data-who-name]').forEach((n) => (n.textContent = name));
   document.querySelectorAll('[data-who-email]').forEach((n) => (n.textContent = email));
