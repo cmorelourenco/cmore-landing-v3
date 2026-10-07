@@ -48,13 +48,14 @@
 
   // ---- what a row shows: its answer, its note, its tags -----------------------------------------
   const grow = (t) => { t.style.height = 'auto'; t.style.height = t.scrollHeight + (t.offsetHeight - t.clientHeight) + 'px'; };
-  const shown = new Set(); // whose sources are open
+  const shown = new Set(); // whose citations are open
   const chip = (text, cls, title) => `<span class="chip ${cls}"${title ? ` title="${esc(title)}"` : ''}>${text}</span>`;
   const cites = (q) => (q.a && q.a.cite) || [];
-  const quote = (c) => {
+  const OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 6H18v4.5M18 6l-7.5 7.5M16.5 13.5V18H6V7.5h4.5"/></svg>';
+  const quote = (c, key, n) => {
     const i = c.match ? c.quote.indexOf(c.match) : -1;
     const body = i < 0 ? esc(c.quote) : esc(c.quote.slice(0, i)) + '<mark>' + esc(c.match) + '</mark>' + esc(c.quote.slice(i + c.match.length));
-    return `<figure class="esgq-src"><figcaption><b>${esc(c.src)}</b><span>${esc(c.loc)}</span></figcaption><blockquote>“${body}”</blockquote></figure>`;
+    return `<figure class="esgq-src"><figcaption><b>${esc(c.src)}</b><span>${esc(c.loc)}</span></figcaption><blockquote>“${body}”</blockquote><button type="button" class="esgq-src-open" data-open="${key}" data-i="${n}">Open document${OPEN}</button></figure>`;
   };
   const syncRow = (key) => {
     const q = Q[key], rowEl = main.querySelector(`[data-row="${key}"]`); if (!rowEl) return;
@@ -73,7 +74,7 @@
       const open = shown.has(key);
       note.hidden = false;
       note.innerHTML = `<p><span class="esgq-note-k">ALMA</span>${esc(why)}</p>`
-        + (list.length ? `<button type="button" class="esgq-src-btn" data-src="${key}" aria-expanded="${open}">${open ? 'Hide' : 'View'} ${list.length > 1 ? `sources (${list.length})` : 'source'}</button>` + (open ? list.map(quote).join('') : '') : '');
+        + (list.length ? `<button type="button" class="esgq-src-btn" data-src="${key}" aria-expanded="${open}">${open ? 'Hide' : 'View'} ${list.length > 1 ? `citations (${list.length})` : 'citation'}</button>` + (open ? list.map((c, i) => quote(c, key, i)).join('') : '') : '');
     } else { note.hidden = true; note.innerHTML = ''; }
     // tags, and the pair of buttons for an answer she was unsure of
     const tags = [];
@@ -179,6 +180,8 @@
     syncRow(key); document.getElementById('q-' + top(key)).classList.toggle('is-needs', ESG.needs(s, Q[top(key)], top(key))); totals();
   });
   main.addEventListener('click', (e) => {
+    const o = e.target.closest('[data-open]');
+    if (o) { ESG_DOC.open(cites(Q[o.dataset.open]), +o.dataset.i); return; }
     const b = e.target.closest('[data-approve], [data-reject], [data-src]'); if (!b) return;
     if (b.dataset.src) { const k = b.dataset.src; shown.has(k) ? shown.delete(k) : shown.add(k); syncRow(k); return; }
     const key = b.dataset.approve || b.dataset.reject, m = s.meta[key];

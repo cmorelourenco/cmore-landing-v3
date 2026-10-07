@@ -310,3 +310,54 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .esgq-row > .esgq-foot { margin-top: 0.25rem; padding-top: 0; border-top: 0; }
 .esgq-subs-body { gap: 0; padding-top: 0; }
 .esgq-subs-body > .esgq-row { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--color-line); }
+
+/* ---- a citation's document, in a drawer on the right ---- */
+.docd { position: fixed; inset: 0; z-index: 110; }
+.docd[hidden] { display: none; }
+.docd-scrim { position: absolute; inset: 0; background: rgba(52, 52, 52, .45); backdrop-filter: blur(2px); opacity: 0; transition: opacity .3s ease; }
+.docd-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(44rem, 100vw); display: flex; flex-direction: column; background: var(--color-surface); outline: none;
+  box-shadow: -24px 0 64px -24px rgba(52, 52, 52, .45); transform: translateX(100%); transition: transform .32s var(--ease-brand); }
+.docd.is-open .docd-scrim { opacity: 1; }
+.docd.is-open .docd-panel { transform: none; }
+.docd-head { display: flex; align-items: center; gap: 0.875rem; padding: 1.125rem 1rem 1rem 1.5rem; border-bottom: 1px solid var(--color-line); }
+.docd-ico { flex: none; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.625rem; background: var(--color-light-beige); color: var(--color-ink); }
+.docd-ico svg { width: 1.25rem; height: 1.25rem; }
+.docd-t { flex: 1; min-width: 0; }
+.docd-t h3 { font-size: 1.0625rem; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.docd-t p { margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.docd-head .dlg-x { position: static; flex: none; }
+.docd-bar { display: flex; justify-content: space-between; gap: 1rem; padding: 0.625rem 1.5rem; font-size: 0.8125rem; color: var(--color-ink-subtle); border-bottom: 1px solid var(--color-line); }
+.docd-bar span:first-child { font-weight: 600; color: var(--color-ink); }
+.docd-body { flex: 1; min-height: 0; overflow-y: auto; padding: 1.5rem; background: var(--color-mid-beige); display: flex; flex-direction: column; gap: 1rem; scroll-behavior: smooth; }
+.docd-sheet { padding: 2.25rem 2.5rem 1.25rem; background: var(--color-surface); border-radius: 0.25rem; box-shadow: 0 1px 3px rgba(52, 52, 52, .12); font-size: 0.875rem; line-height: 1.65; color: var(--color-ink-muted); }
+.docd-sheet p { margin: 0 0 0.875rem; }
+.docd-kicker { font-size: 0.6875rem !important; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-sand-500); }
+.docd-sheet h4 { margin: 0 0 0.875rem; font-size: 1rem; font-weight: 600; color: var(--color-ink); }
+.docd-cited { padding: 0.625rem 0.875rem; margin-inline: -0.875rem !important; border-left: 3px solid var(--color-coral); border-radius: 0 0.375rem 0.375rem 0; background: color-mix(in oklab, var(--color-coral) 8%, var(--color-surface)); color: var(--color-ink); animation: docd-flash 1.6s ease .35s both; }
+.docd-cited mark, .docd-q mark { background: var(--color-coral-tint); color: inherit; padding: 0 0.125rem; border-radius: 2px; }
+@keyframes docd-flash { 0% { background: color-mix(in oklab, var(--color-coral) 30%, var(--color-surface)); } 100% { background: color-mix(in oklab, var(--color-coral) 8%, var(--color-surface)); } }
+.docd-rule { display: flex; justify-content: space-between; margin-top: 1.25rem; padding-top: 0.625rem; border-top: 1px solid var(--color-mid-beige); font-size: 0.6875rem; color: var(--color-sand-500); }
+.docd-none { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; margin: auto 0; padding: 2.5rem 2rem; text-align: center; background: var(--color-surface); border-radius: 0.75rem; }
+.docd-none h4 { font-size: 1.125rem; font-weight: 600; color: var(--color-ink); }
+.docd-none > p { max-width: 28rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-ink-muted); }
+.docd-q { width: 100%; margin-top: 0.75rem; padding: 0.875rem 1rem; text-align: left; border-left: 3px solid var(--color-coral); border-radius: 0 0.5rem 0.5rem 0; background: var(--color-light-beige); }
+.docd-q span { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.docd-q blockquote { margin: 0.375rem 0 0; font-size: 0.875rem; line-height: 1.55; color: var(--color-ink); }
+.docd-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.875rem 1.5rem; border-top: 1px solid var(--color-line); font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.docd-foot .btn { flex: none; }
+.docd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1.5rem 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.docd-nav[hidden] { display: none; }
+.docd-step { display: inline-flex; align-items: center; gap: 0.25rem; height: 2.25rem; padding: 0 0.75rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface);
+  font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink); cursor: pointer; }
+.docd-step:hover:not(:disabled) { border-color: var(--color-sand-400); }
+.docd-step:disabled { opacity: .4; cursor: default; }
+.docd-step svg { width: 1rem; height: 1rem; }
+.docd-step.is-next svg { transform: scaleX(-1); }
+@media (max-width: 40rem) { .docd-sheet { padding: 1.5rem 1.25rem 1rem; } .docd-body { padding: 1rem; } .docd-foot { flex-direction: column; align-items: stretch; } }
+@media (prefers-reduced-motion: reduce) { .docd-panel, .docd-scrim { transition: none; } .docd-cited { animation: none; } }
+
+/* a citation's own "Open document" */
+.esgq-src-open { margin-top: 0.5rem; padding: 0; border: 0; background: none; font: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink); cursor: pointer;
+  display: inline-flex; align-items: center; gap: 0.375rem; text-decoration: underline; text-decoration-color: var(--color-sand-400); text-underline-offset: 0.2em; }
+.esgq-src-open:hover { text-decoration-color: var(--color-coral); }
+.esgq-src-open svg { width: 0.875rem; height: 0.875rem; }
