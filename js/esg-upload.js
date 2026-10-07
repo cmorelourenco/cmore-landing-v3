@@ -17,7 +17,7 @@ window.ESG_UPLOAD = (() => {
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
     doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
     up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>',
-    search: '<svg class="up-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
     chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
   };
   // how far she trusts what she read off each one
@@ -37,7 +37,7 @@ window.ESG_UPLOAD = (() => {
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'up-h');
   el.innerHTML = `<div class="dlg-scrim" data-close></div><div class="dlg-card">
     <button type="button" class="dlg-x" data-close aria-label="Close">${ICON.x}</button>
-    <div class="dlg-head"><span class="dlg-alma" id="up-alma" aria-hidden="true">${ESG.SPHERES}</span><span class="eyebrow">ALMA</span><h2 id="up-h"></h2><p id="up-p"></p></div>
+    <div class="dlg-head is-row"><span class="dlg-alma" id="up-alma" aria-hidden="true">${ESG.SPHERES}</span><div class="dlg-head-t"><span class="eyebrow">ALMA</span><h2 id="up-h"></h2><p id="up-p"></p></div></div>
     <div class="dlg-body" id="up-body"></div><div class="dlg-foot" id="up-foot"></div></div>
     <input type="file" id="up-file" multiple hidden accept=".pdf,.xlsx,.docx,.txt,.jpg,.jpeg,.png">`;
   document.body.appendChild(el);
@@ -73,9 +73,9 @@ window.ESG_UPLOAD = (() => {
     const n = good().length;
     $('#up-body').innerHTML = `<div class="up-pick">
         <div><span class="up-k">From your computer</span>
-          <div class="up-zone" id="up-zone" role="button" tabindex="0" aria-label="Drag your documents here, or press to browse your computer">${ICON.up}<b>Drag your documents here</b><span>or <u>browse your computer</u></span><small>PDF, XLSX, DOCX, TXT, JPG, PNG · up to 10 MB each</small></div></div>
+          <div class="up-zone" id="up-zone" role="button" tabindex="0" aria-label="Drag your documents here, or press to browse your computer">${ICON.up}<span class="up-zone-t"><b>Drag your documents here</b><span>or <u>browse your computer</u></span><small>PDF, XLSX, DOCX, TXT, JPG, PNG · max 10 MB each</small></span></div></div>
         <span class="up-or">or</span>
-        <div class="up-lib"><label class="up-k" for="up-q">From your Documents</label>${ICON.search}<input class="up-search" id="up-q" type="search" autocomplete="off" placeholder="Search by file name">
+        <div class="up-lib"><span class="up-k" id="up-q-k">From your Documents</span><label class="co-search">${ICON.search}<input type="search" id="up-q" autocomplete="off" placeholder="Search by file name" aria-labelledby="up-q-k"></label>
           <div class="up-results" id="up-res" hidden></div><p>Everything you have already added to C&#8209;MORE is in Documents. Pick from there and nothing needs uploading again.</p></div>
       </div>
       <div class="up-sec"><span class="up-k">Selected</span>${picked.length ? `<div class="up-list">${picked.map(rowPick).join('')}</div>` : '<p class="co-subtle" style="font-size:.9375rem">Nothing selected yet.</p>'}</div>
