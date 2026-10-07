@@ -1457,8 +1457,8 @@ body { transition: background-color .9s ease; }
       </div>
       </div>
       <div class="co-score">
-        <div class="co-ring" id="co-ring" style="--p:78%"><div id="co-score">78</div></div>
-        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" id="co-score-note" style="font-size:0.8125rem">Good · +9 once the license is replaced</span></div>
+        <div class="co-ring" id="co-ring" style="--p:0%"><div id="co-score">—</div></div>
+        <div class="co-score-t"><span class="eyebrow">Company score</span><span class="co-muted" id="co-score-note" style="font-size:0.8125rem">Fill in a questionnaire to get your score</span></div>
       </div>
     </div>
     </div>
@@ -1768,8 +1768,8 @@ body { transition: background-color .9s ease; }
         $c('co-meter').firstElementChild.style.width = '91%'; $c('co-meter').setAttribute('aria-valuenow', '91');
         $c('co-pct').textContent = '91%';
         $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
-        $c('co-ring').style.setProperty('--p', '87%'); $c('co-score').textContent = '87';
-        $c('co-score-note').textContent = 'Good · up 9 with the new license';
+        // the company score comes from a questionnaire, not from a document — filing this
+        // one does not move it
         // the hero's documents card: one fewer needing attention, nothing expired
         $c('co-k-docs').querySelector('.co-k-n').textContent = '3';
         $c('co-k-head-n').textContent = '7 things';
