@@ -546,7 +546,15 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-drop-s { font-size: 0.9375rem; }
 .co-drop-h .co-drop-acts { flex-direction: row; margin: 0 0 0 auto; flex: none; }
 @media (max-width: 40rem) { .co-drop.co-drop-h { flex-direction: column; align-items: flex-start; } .co-drop-h .co-drop-acts { margin: 0; } }
-.esgq-drop { margin-bottom: 2.5rem; }
+/* ALMA stays in reach while the questions scroll: she keeps the same 1.5rem from the header
+   that she has from the questionnaire, on a band of the page's ground so nothing shows through,
+   and the section list sticks just under her. --esgq-band is her band's height, kept by script. */
+.esgq-stick { padding-block: 1.5rem; margin-top: -1.5rem; }
+.esgq-stick .co-drop.co-drop-h { margin-bottom: 0; }
+@media (min-width: 40rem) and (min-height: 36rem) {
+  .esgq-stick { position: sticky; top: 4.5rem; z-index: 5; background: var(--color-off-white); }
+  #questionnaires .set-nav { top: calc(4.5rem + var(--esgq-band, 12rem)); }
+}
 .esgq-drop.is-filed { border-style: solid; border-color: var(--color-line); }
 .esgq-by { margin-left: auto; align-self: center; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .esgq-q:not(.is-alma) .esgq-by { display: none; }
@@ -1203,7 +1211,7 @@ body { transition: background-color .9s ease; }
     </div>
   </div></section>
 
-  <div class="co-wrap">
+  <div class="co-wrap esgq-stick" id="qd-stick">
     <div class="co-drop co-drop-h esgq-drop" id="qd-drop" role="button" tabindex="0" aria-label="Drop documents on ALMA, or press to browse">
       <span class="alma-media" aria-hidden="true">
 <span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>

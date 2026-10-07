@@ -247,19 +247,26 @@
     });
   }
 
+  // ALMA's sticky band: its height places the section list under her and offsets the jumps below
+  const band = document.getElementById('qd-stick');
+  const stuck = () => band && getComputedStyle(band).position === 'sticky';
+  const below = () => (stuck() ? band.getBoundingClientRect().bottom : 72) + 24; // where content starts showing
+  if (band) new ResizeObserver(() => document.documentElement.style.setProperty('--esgq-band', band.offsetHeight + 'px')).observe(band);
+
   // The section in view is the one marked on the left, same as Settings.
   const links = [...document.querySelectorAll('.set-nav a')];
   const cards = links.map((a) => document.querySelector(a.getAttribute('href')));
   const mark = () => {
     let on = 0;
-    cards.forEach((c, i) => { if (c && c.getBoundingClientRect().top < innerHeight * 0.35) on = i; });
+    const line = Math.max(innerHeight * 0.35, below() + 40);
+    cards.forEach((c, i) => { if (c && c.getBoundingClientRect().top < line) on = i; });
     if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) on = cards.length - 1;
     links.forEach((a, i) => a.classList.toggle('is-on', i === on));
   };
   addEventListener('scroll', mark, { passive: true });
   links.forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault(); const t = document.querySelector(a.getAttribute('href'));
-    scrollTo({ top: t.getBoundingClientRect().top + scrollY - 96, behavior: 'smooth' }); history.replaceState(null, '', a.getAttribute('href'));
+    scrollTo({ top: t.getBoundingClientRect().top + scrollY - (72 + (stuck() ? band.offsetHeight : 0) + 24), behavior: 'smooth' }); history.replaceState(null, '', a.getAttribute('href'));
   }));
   setTimeout(mark, 120);
 })();
