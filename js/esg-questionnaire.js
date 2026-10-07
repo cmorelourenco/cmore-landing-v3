@@ -143,9 +143,9 @@
     const opts = q.ty === 'yn' ? ['Yes', 'No'] : q.ty === 'yn3' ? ['Yes', 'No', 'Not applicable'] : q.opts;
     if (opts) return `<div class="esgq-ans" role="radiogroup" aria-labelledby="${id}-t" data-qid="${id}">`
       + opts.map((o) => `<label class="esgq-radio"><input type="radio" name="${id}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('') + '</div>';
-    if (q.ty === 'number') return `<div class="esgq-field" data-qid="${id}"><input class="input" type="number" min="0" inputmode="numeric" aria-labelledby="${id}-t" placeholder="0"></div>`;
-    const long = q.ty === 'long';
-    return `<div class="esgq-field" data-qid="${id}"><textarea class="input${long ? ' esgq-long' : ''}" rows="${long ? 4 : 1}" aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
+    // one kind of box for every written answer; numbers only change the keypad on a phone
+    const pad = q.ty === 'number' ? ' inputmode="numeric"' : '';
+    return `<div class="esgq-field" data-qid="${id}"><textarea class="input" rows="1"${pad} aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
   };
   const row = (q, badge, key) => {
     const id = 'q' + (++qid);
