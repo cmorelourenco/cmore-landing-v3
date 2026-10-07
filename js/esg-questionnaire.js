@@ -147,18 +147,18 @@
     if (q.ty === 'long') return `<div class="esgq-field" data-qid="${id}"><textarea class="input" aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
     return `<div class="esgq-field" data-qid="${id}"><input class="input" type="text" aria-labelledby="${id}-t" placeholder="Type your answer"></div>`;
   };
-  const row = (q, badge) => {
+  const row = (q, badge, key) => {
     const id = 'q' + (++qid);
-    return `<div class="esgq-row"><div class="esgq-q-main"><span class="esgq-q-n">${badge}</span><span class="esgq-q-t" id="${id}-t">${esc(q.t)}</span></div>${field(q, id)}</div>`;
+    return `<div class="esgq-row" data-key="${key}"><div class="esgq-q-main"><span class="esgq-q-n">${badge}</span><span class="esgq-q-t" id="${id}-t">${esc(q.t)}</span></div>${field(q, id)}</div>`;
   };
   // A follow-up only opens once its question is answered Yes; the card grows to make room.
-  const renderQ = (q, n) => '<div class="esgq-q">' + row(q, n)
-    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((s, i) => row(s, `${n}.${i + 1}`)).join('')}</div></div></div>` : '')
-    + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}</div></div>`;
+  const renderQ = (q, n, sid) => '<div class="esgq-q">' + row(q, n, `${sid}-${n}`)
+    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((s, i) => row(s, `${n}.${i + 1}`, `${sid}-${n}.${i + 1}`)).join('')}</div></div></div>` : '')
+    + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-by">Answered by ALMA</span></div></div>`;
 
   SECTIONS.forEach((sec) => {
     const card = document.querySelector(`[data-esgq="${sec.id}"]`); if (!card) return;
-    card.querySelector('[data-esgq-list]').innerHTML = sec.questions.map((q, i) => renderQ(q, i + 1)).join('');
+    card.querySelector('[data-esgq-list]').innerHTML = sec.questions.map((q, i) => renderQ(q, i + 1, sec.id)).join('');
     const count = card.querySelector('[data-esgq-count]');
     if (count) count.textContent = sec.questions.length + (sec.questions.length === 1 ? ' question' : ' questions');
   });
@@ -177,10 +177,67 @@
     const r = e.target; if (r.type !== 'radio') return;
     const subs = r.closest('.esgq-q').querySelector(':scope > .esgq-subs');
     if (subs && !r.closest('.esgq-subs')) { const open = r.value === 'Yes'; subs.classList.toggle('is-open', open); subs.inert = !open; }
+    if (e.isTrusted) r.closest('.esgq-q').classList.remove('is-alma'); // changed by hand: it is your answer now
     updateProgress();
   });
-  main.addEventListener('input', updateProgress);
+  main.addEventListener('input', (e) => { if (e.isTrusted) e.target.closest('.esgq-q').classList.remove('is-alma'); updateProgress(); });
   updateProgress();
+
+  // ---- ALMA: drop documents on her and she answers what they cover ----------------
+  // Prototype: the files never leave the machine; the answers are what a typical Code of
+  // Ethics, sustainability report, licence and ISO certificate would let her fill in.
+  const FROM_DOCS = [
+    ['governance-1', 'Yes'], ['governance-1.1', '2024'], ['governance-1.2', 'Yes'], ['governance-1.3', 'The board of directors'],
+    ['governance-2', 'Yes'], ['governance-3', 'Yes'], ['governance-5', 'Yes'],
+    ['governance-14', 'Once a year'], ['governance-15', 'A compliance officer'],
+    ['social-1', 'Yes'], ['social-1.1', 'February 2025'], ['social-12', 'Yes'], ['social-12.1', 'Yes'],
+    ['environment-1', 'Yes'], ['environment-1.1', 'State environmental agency, valid to 31 March 2027'],
+    ['climate-1', 'Yes'], ['climate-1.1', '2021'], ['climate-6', 'The GHG Protocol'],
+    ['infosec-1', 'Yes'], ['infosec-1.1', 'March 2025'], ['infosec-1.2', 'On the intranet'],
+  ];
+  const answer = (key, v) => {
+    const r = document.querySelector(`.esgq-row[data-key="${key}"]`); if (!r) return;
+    const radio = [...r.querySelectorAll('input[type="radio"]')].find((i) => i.value === v);
+    if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); }
+    else { const f = r.querySelector('input, textarea'); f.value = v; f.dispatchEvent(new Event('input', { bubbles: true })); }
+    r.closest('.esgq-q').classList.add('is-alma');
+  };
+  const drop = document.getElementById('qd-drop'), file = document.getElementById('qd-file');
+  if (drop && file) {
+    const t = document.getElementById('qd-drop-t'), sub = document.getElementById('qd-drop-s'), acts = document.getElementById('qd-drop-acts');
+    let picked = [], state = 'idle';
+    const setState = (st) => { state = st; drop.classList.toggle('has-file', st === 'file'); drop.classList.toggle('is-reading', st === 'reading'); drop.classList.toggle('is-filed', st === 'filed'); };
+    const took = (files) => {
+      if (!files.length || state === 'reading' || state === 'filed') return;
+      picked = [...files];
+      t.textContent = picked.length === 1 ? 'Got it: ' + picked[0].name : `Got them: ${picked.length} documents`;
+      sub.textContent = 'Hand them over and I will read them and answer what they cover.';
+      acts.hidden = false; setState('file');
+      setTimeout(() => document.getElementById('qd-hand').focus({ preventScroll: true }), 50);
+    };
+    const browse = (e) => { e.preventDefault(); file.value = ''; file.click(); };
+    drop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
+    drop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === drop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
+    file.addEventListener('click', (e) => e.stopPropagation());
+    file.addEventListener('change', () => took(file.files));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') drop.classList.add('is-over'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
+    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); took(e.dataTransfer.files); });
+    document.getElementById('qd-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
+    document.getElementById('qd-hand').addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state !== 'file') return;
+      setState('reading'); acts.hidden = true;
+      t.textContent = picked.length === 1 ? 'Reading ' + picked[0].name + '…' : `Reading ${picked.length} documents…`;
+      sub.textContent = 'Looking for your policies, dates, licences and who signs off what.';
+      setTimeout(() => {
+        FROM_DOCS.forEach(([k, v]) => answer(k, v));
+        setState('filed');
+        t.textContent = `I answered ${FROM_DOCS.length} questions from your documents.`;
+        sub.textContent = 'They are marked “Answered by ALMA” below. Check each one before you submit; the rest are yours. Prototype: nothing was uploaded or saved.';
+      }, 2200);
+    });
+  }
 
   // The section in view is the one marked on the left, same as Settings.
   const links = [...document.querySelectorAll('.set-nav a')];
