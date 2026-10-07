@@ -965,8 +965,9 @@ html[data-sn="drawer"] .who-chip { margin-right: 0; padding-right: 0.25rem; }
 .co-logo-empty svg { width: 1.375rem; height: 1.375rem; }
 .co-logo-empty:hover { border-color: var(--color-coral); color: var(--color-coral-deep); }
 /* Beatriz's company has no uploaded mark yet, just a monogram in her brand's colour */
-.co-logo-mono { display: grid; place-items: center; background: var(--color-positive); color: var(--color-off-white); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
-@media (max-width: 52rem) { .co-logo { width: 4rem; height: 4rem; border-radius: 0.875rem; } .co-id-main { gap: 0.875rem; } .co-logo-mono { font-size: 1.25rem; } }
+.co-logo-mono { display: grid; place-items: center; background: linear-gradient(155deg, #4a9636, var(--color-positive) 60%, #2f5f23); }
+.co-logo-mono svg { width: 58%; height: 58%; }
+@media (max-width: 52rem) { .co-logo { width: 4rem; height: 4rem; border-radius: 0.875rem; } .co-id-main { gap: 0.875rem; } }
 /* ---- Notifications: the bell's panel ------------------------------------ */
 .nt { position: relative; }
 .nt-panel { position: absolute; right: -0.5rem; top: calc(100% + 0.5rem); z-index: 80; width: 25rem; max-height: min(34rem, calc(100vh - 6rem)); display: flex; flex-direction: column;
@@ -1448,7 +1449,7 @@ body { transition: background-color .9s ease; }
       <!-- Beatriz's company: a commodity exporter, not a contractor — a made-up name in
            the mould of an old-line industrial firm, not the construction company above -->
       <div class="co-id-main persona-beatriz-only">
-      <span class="co-logo co-logo-mono" aria-hidden="true">VH</span>
+      <span class="co-logo co-logo-mono" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg></span>
       <div class="co-id-l">
         <h1 class="co-name">Veridian Harvest Co.</h1>
         <span class="co-subtle" style="font-size:0.9375rem">Agricultural commodity exporter · 60 people · EIN 71&#8209;4482019 · Louisiana LLC · New Orleans, LA</span>
