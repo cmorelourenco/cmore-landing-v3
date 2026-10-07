@@ -1111,12 +1111,13 @@ body { transition: background-color .9s ease; }
 .esgq-radio input:checked { border-color: var(--color-graphite); }
 .esgq-radio input:checked::before { transform: scale(1); }
 .esgq-radio input:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
-.esgq-q .input { width: 100%; max-width: 32rem; height: 2.75rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem;
-  background: var(--color-off-white); font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; transition: border-color .14s ease, background-color .14s ease; }
+/* answers run the full width of the card and grow with what is typed: nothing is cut off or scrolled away */
+.esgq-q .input { display: block; width: 100%; max-width: none; min-height: 3.5rem; padding: 0.9375rem 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem;
+  background: var(--color-off-white); font: inherit; font-size: 1rem; line-height: 1.5; color: var(--color-ink); outline: none; transition: border-color .14s ease, background-color .14s ease; }
 .esgq-q .input:hover { border-color: var(--color-sand-400); }
 .esgq-q .input:focus { border-color: var(--color-graphite); background: var(--color-surface); }
-.esgq-q .esgq-num { max-width: 8rem; }
-.esgq-q textarea.input { max-width: 40rem; height: auto; min-height: 5.5rem; padding: 0.75rem 0.875rem; line-height: 1.5; resize: vertical; }
+.esgq-q textarea.input { height: auto; resize: none; overflow: hidden; overflow-wrap: anywhere; }
+.esgq-q textarea.esgq-long { min-height: 7.5rem; }
 /* follow-ups: closed until the question above is answered Yes, then the card grows to hold them */
 .esgq-subs { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s var(--ease-brand); }
 .esgq-subs.is-open { grid-template-rows: 1fr; }

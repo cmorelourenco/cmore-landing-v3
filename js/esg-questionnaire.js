@@ -143,9 +143,9 @@
     const opts = q.ty === 'yn' ? ['Yes', 'No'] : q.ty === 'yn3' ? ['Yes', 'No', 'Not applicable'] : q.opts;
     if (opts) return `<div class="esgq-ans" role="radiogroup" aria-labelledby="${id}-t" data-qid="${id}">`
       + opts.map((o) => `<label class="esgq-radio"><input type="radio" name="${id}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('') + '</div>';
-    if (q.ty === 'number') return `<div class="esgq-field" data-qid="${id}"><input class="input esgq-num" type="number" min="0" inputmode="numeric" aria-labelledby="${id}-t" placeholder="0"></div>`;
-    if (q.ty === 'long') return `<div class="esgq-field" data-qid="${id}"><textarea class="input" aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
-    return `<div class="esgq-field" data-qid="${id}"><input class="input" type="text" aria-labelledby="${id}-t" placeholder="Type your answer"></div>`;
+    if (q.ty === 'number') return `<div class="esgq-field" data-qid="${id}"><input class="input" type="number" min="0" inputmode="numeric" aria-labelledby="${id}-t" placeholder="0"></div>`;
+    const long = q.ty === 'long';
+    return `<div class="esgq-field" data-qid="${id}"><textarea class="input${long ? ' esgq-long' : ''}" rows="${long ? 4 : 1}" aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
   };
   const row = (q, badge, key) => {
     const id = 'q' + (++qid);
@@ -180,7 +180,15 @@
     if (e.isTrusted) r.closest('.esgq-q').classList.remove('is-alma'); // changed by hand: it is your answer now
     updateProgress();
   });
-  main.addEventListener('input', (e) => { if (e.isTrusted) e.target.closest('.esgq-q').classList.remove('is-alma'); updateProgress(); });
+  // a text answer is as tall as what is in it, so a long answer is never cut off or scrolled away
+  const grow = (t) => { t.style.height = 'auto'; t.style.height = t.scrollHeight + (t.offsetHeight - t.clientHeight) + 'px'; };
+  const growAll = () => main.querySelectorAll('textarea.input').forEach(grow);
+  main.addEventListener('input', (e) => {
+    if (e.target.tagName === 'TEXTAREA') grow(e.target);
+    if (e.isTrusted) e.target.closest('.esgq-q').classList.remove('is-alma');
+    updateProgress();
+  });
+  addEventListener('resize', growAll);
   updateProgress();
 
   // ---- ALMA: drop documents on her and she answers what they cover ----------------
