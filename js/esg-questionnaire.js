@@ -1,272 +1,313 @@
-/* The ESG Questionnaire: nine sections, each a plain list of its own questions, in
-   C-MORE's own card/pill/input shapes — no assistant, no citations, no confidence
-   scores. Answers live only in this tab (nothing is sent anywhere); each field just
-   tracks whether it has been answered, to drive the progress meter and the section
-   list on the left. */
+/* The ESG Questionnaire page. Nine sections of question cards, built from js/esg-data.js;
+   answers kept by js/esg-state.js so they survive moving between pages. ALMA sits above the
+   questions: hand her documents (js/esg-upload.js) and she reads them, answers what they
+   cover, and leaves the rest to you with a reason. Her answers say how sure she is and where
+   she read them; the ones she was unsure of wait for you to approve or turn down. When
+   everything has an answer and nothing is waiting on you, it can be submitted. */
 (() => {
-  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
-
-  // yn: Yes/No. yn3: Yes/No/Not applicable. choice: the given options. text/number/long: a field.
-  const SECTIONS = [
-    { id: 'governance', questions: [
-      { t: 'Does the company have a Code of Ethics and Conduct or formal procedures in place?', ty: 'yn', subs: [
-        { t: 'In which year was the Code last reviewed and approved?', ty: 'text' },
-        { t: 'Is the Code published externally, on the company website or a supplier portal?', ty: 'yn' },
-        { t: 'Who signs off changes to it?', ty: 'text' },
-      ] },
-      { t: 'Does the company have an Anti-Corruption, Bribery and Extortion Policy?', ty: 'yn' },
-      { t: 'Does the company have a policy for the protection of the personal data of its employees, third parties and stakeholders (suppliers, customers, shareholders, etc.)?', ty: 'yn' },
-      { t: 'Does the company provide regular training for employees on information security, data privacy or data protection?', ty: 'yn' },
-      { t: 'Does the company have a formal corporate governance structure, with a clear definition of the composition, roles and responsibilities of the governance bodies?', ty: 'yn3' },
-      { t: 'Does the company carry out Risk Management and Internal Controls?', ty: 'yn3' },
-      { t: 'Does the company have a formal process for the pre-qualification of suppliers?', ty: 'yn', subs: [
-        { t: 'How many suppliers were pre-qualified in the last 12 months?', ty: 'number' },
-        { t: 'Does the pre-qualification include ESG criteria?', ty: 'yn' },
-        { t: 'How often is a qualified supplier re-assessed?', ty: 'text' },
-      ] },
-      { t: 'Does the company require its suppliers and partners to commit to respecting human rights (e.g. prohibition of child labour, slave labour, forced labour, minimum working conditions, etc.) and labour standards?', ty: 'yn' },
-      { t: 'Do you have a system in place that enables you to identify your most critical suppliers in terms of social risks and human rights compliance?', ty: 'yn' },
-      { t: 'Does the company require its suppliers, either contractually or through other formal instruments, to adhere to ESG policies and standards in contracts or other instruments?', ty: 'yn' },
-      { t: 'Is the company located in, does it supply products/services to, or does it use in its supply chain items originating from regions classified as CAHRAs (Conflict-Affected or High-Risk Areas)?', ty: 'yn' },
-      { t: 'Is the company considered a "Sanctioned Person", understood as any entity or individual listed on official sanctions lists, including — but not limited to — lists published by agencies of the United States, the United Kingdom, the European Union and its Member States, the United Nations, or other relevant jurisdictions?', ty: 'yn' },
-      { t: 'Is the company headquartered, registered, incorporated or directly or indirectly controlled by any entity or government located in a country or region subject to international sanctions or embargoes, or included on a sanctions list issued by an authority such as the United States, the United Kingdom, the European Union, its Member States or the United Nations?', ty: 'yn' },
-      { t: 'How often is Code of Ethics training delivered to employees?', ty: 'choice', opts: ['On joining only', 'Once a year', 'Every two years', 'It is not delivered'] },
-      { t: 'Who is accountable for the compliance programme?', ty: 'choice', opts: ['The board', 'A compliance officer', 'The legal department', 'No one formally'] },
-    ] },
-    { id: 'social', questions: [
-      { t: 'Does the company have a Corporate Policy or similar formally established document setting out guidelines relating to the defence of human rights?', ty: 'yn', subs: [
-        { t: 'When was the policy last reviewed?', ty: 'text' },
-      ] },
-      { t: 'Does the company provide awareness-raising initiatives, training, skills development or engagement activities for its employees on issues relating to human rights?', ty: 'yn' },
-      { t: 'Does the company have a human rights risk assessment that it considers relevant to its business?', ty: 'yn' },
-      { t: 'Does the company fully comply with labour legislation and the applicable collective agreements relating to working hours, including limits on normal and overtime hours, time banks and statutory breaks?', ty: 'yn3', subs: [
-        { t: 'Explain how the legislation is fully complied with.', ty: 'long' },
-      ] },
-      { t: "Do the company's employees have the right to freedom of association and the right to collective bargaining?", ty: 'yn3' },
-      { t: 'Does the company comply with current legislation regarding child labour and forced labour?', ty: 'yn' },
-      { t: 'Does the company have a policy to prevent or mitigate risks of harassment — including psychological, sexual and electoral harassment, amongst others — at all hierarchical levels of the workplace?', ty: 'yn3' },
-      { t: 'Does the company have an anti-discrimination policy, covering the grounds it considers relevant to its workforce?', ty: 'yn', subs: [
-        { t: 'Describe the policies and practices adopted by the company.', ty: 'long' },
-      ] },
-      { t: 'Does the company have diversity and inclusion programmes in place for its employees?', ty: 'yn', subs: [
-        { t: 'Describe the programme adopted by the company.', ty: 'long' },
-      ] },
-      { t: 'Does the company have facilities or carry out activities that may have an impact on local communities, or involve traditional groups or people in socially vulnerable situations?', ty: 'yn' },
-      { t: 'Does the company support or carry out social projects in local communities?', ty: 'yn', subs: [
-        { t: 'Describe the projects supported or carried out by the company.', ty: 'long' },
-      ] },
-      { t: 'Does the company have a Health and Safety policy or practical rules in place?', ty: 'yn', subs: [
-        { t: 'Is there a named person or committee accountable for health and safety?', ty: 'yn' },
-        { t: 'How often are the rules reviewed with employees?', ty: 'text' },
-      ] },
-      { t: 'If there has been a workplace health and safety incident, state the reason and the corrective measures taken by the company.', ty: 'long' },
-      { t: 'How are health and safety incidents recorded?', ty: 'choice', opts: ['On paper forms', 'In a shared spreadsheet', 'In a dedicated system', 'They are not formally recorded'] },
-    ] },
-    { id: 'environment', questions: [
-      { t: 'Does the company hold a valid environmental operating licence and comply with all the legal environmental requirements applicable to the activity?', ty: 'yn', subs: [
-        { t: 'Which authority issued the licence, and when does it run to?', ty: 'text' },
-      ] },
-      { t: 'Does the company carry out internal environmental education initiatives and provide regular training for employees on topics related to the environment?', ty: 'yn' },
-      { t: 'Has the company, in the last 5 years, been found liable in any legal proceedings involving a breach of environmental legislation, or received a notice of infringement, a fine, a cease-and-desist order, an embargo or any other sanction relating to environmental issues?', ty: 'yn' },
-      { t: 'If so, describe the incident and the penalty imposed.', ty: 'long' },
-    ] },
-    { id: 'climate', questions: [
-      { t: 'Does the company measure and record its greenhouse gas emissions (Scope 1 and Scope 2)?', ty: 'yn', subs: [
-        { t: 'Which baseline year do the figures start from?', ty: 'text' },
-      ] },
-      { t: 'Does the company have a published target to reduce its greenhouse gas emissions?', ty: 'yn' },
-      { t: 'Does the company monitor its total energy consumption and the share that comes from renewable sources?', ty: 'yn3' },
-      { t: 'Does the company have an energy efficiency programme covering its main processes or facilities?', ty: 'yn' },
-      { t: 'Has the company assessed the physical and transition risks that climate change poses to its operations?', ty: 'yn' },
-      { t: 'Which greenhouse gas inventory standard does the company follow?', ty: 'choice', opts: ['The GHG Protocol', 'ISO 14064', 'A national methodology', 'None of these'] },
-    ] },
-    { id: 'water', questions: [
-      { t: 'Does the company measure its total water withdrawal and identify the sources it draws from?', ty: 'yn' },
-      { t: 'Does the company operate in or draw water from an area classified as water-stressed?', ty: 'yn' },
-      { t: "Does the company treat its effluents before discharge, in line with the conditions of its licence?", ty: 'yn3', subs: [
-        { t: 'Which parameters are monitored before discharge?', ty: 'text' },
-        { t: 'Are the results reported to the environmental authority?', ty: 'yn' },
-      ] },
-      { t: 'Describe the water reuse or recycling in place and the share of total water it covers.', ty: 'long' },
-    ] },
-    { id: 'waste', questions: [
-      { t: 'Does the company classify, segregate and record the waste it generates, including hazardous waste?', ty: 'yn', subs: [
-        { t: 'Who is the licensed operator that receives the hazardous waste?', ty: 'text' },
-      ] },
-      { t: 'Does the company send any waste to landfill or to another form of final disposal?', ty: 'yn3' },
-      { t: 'Describe the waste streams sent to final disposal and the volumes involved.', ty: 'long' },
-      { t: 'Does the company control and monitor the storage of tailings, slag or other process residues?', ty: 'yn3' },
-    ] },
-    { id: 'biodiversity', questions: [
-      { t: "Are any of the company's operations located in, or next to, a protected area or an area of high biodiversity value?", ty: 'yn' },
-      { t: 'Describe the area and the controls the company applies there.', ty: 'long' },
-      { t: 'Does the company carry out an environmental impact assessment before opening or expanding a site?', ty: 'yn', subs: [
-        { t: 'Which body reviews the assessment before work starts?', ty: 'text' },
-        { t: 'Is a monitoring programme kept in place afterwards?', ty: 'yn' },
-      ] },
-      { t: 'Does the company have a land rehabilitation or closure plan for the areas it uses?', ty: 'yn3' },
-    ] },
-    { id: 'infosec', questions: [
-      { t: 'Does the company have a formally established Information Security Policy?', ty: 'yn', subs: [
-        { t: 'When was the policy last approved?', ty: 'text' },
-        { t: 'Where is the policy published?', ty: 'choice', opts: ['On the intranet', 'On the supplier portal', 'On the public website', 'It is not published'] },
-      ] },
-      { t: "Is the company's information security management system certified to ISO/IEC 27001 or an equivalent standard?", ty: 'yn3' },
-      { t: 'Does the company have an incident response procedure for information security incidents?', ty: 'yn', subs: [
-        { t: 'Within how many hours must an incident be reported internally?', ty: 'number' },
-        { t: 'Has the procedure been tested in the last 12 months?', ty: 'yn' },
-      ] },
-      { t: 'If there has been a data security incident or breach, describe it and the measures taken afterwards.', ty: 'long' },
-      { t: 'Does the company have a business continuity or disaster recovery plan covering its critical systems?', ty: 'yn' },
-      { t: 'How often are user access rights reviewed?', ty: 'choice', opts: ['Monthly', 'Quarterly', 'Once a year', 'Only when someone leaves'] },
-    ] },
-    { id: 'product', questions: [
-      { t: 'Can the company trace the origin of the raw materials used in the products it supplies?', ty: 'yn', subs: [
-        { t: 'How far back can the material be traced — mine, smelter or first processor?', ty: 'text' },
-      ] },
-      { t: 'Does the company have a policy on conflict minerals or on responsibly sourced minerals?', ty: 'yn3' },
-      { t: 'Does the company require its own suppliers to declare the origin of the materials they provide?', ty: 'yn' },
-      { t: 'List the certifications held relating to the origin or chain of custody of materials, and the date each one runs to.', ty: 'long' },
-      { t: 'How far back can a batch be traced?', ty: 'text' },
-    ] },
-  ];
-
-  let qid = 0;
+  const DATA = window.ESG_DATA; if (!DATA) return;
+  let s = ESG.load();
+  const main = document.querySelector('.set-main');
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const Q = {}; // key -> question (top-level and follow-ups)
   const ICON = {
     note: '<path d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z"/>',
     clip: '<path d="m18.375 12.739-7.693 7.693a4.5 4.5 0 0 1-6.364-6.364l10.94-10.94A3 3 0 1 1 19.5 7.372L8.552 18.32m.009-.01-.01.01m5.699-9.941-7.81 7.81a1.5 1.5 0 0 0 2.112 2.13"/>',
     assign: '<path d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>',
+    info: '<path d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"/>',
   };
-  const tool = (k, label) => `<button type="button" class="esgq-tool" aria-label="${label}" title="${label}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg></button>`;
+  const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
+  const tool = (k, label) => `<button type="button" class="esgq-tool" aria-label="${label}" title="${label}">${svg(k)}</button>`;
+  const CONF = { high: ['High confidence', 'is-ok', 'The documents state this directly.'], medium: ['Medium confidence', 'is-mid', 'Reasonably evidenced — worth a glance.'], low: ['Low confidence', 'is-low', 'Thin evidence — please check this answer.'] };
 
-  const field = (q, id) => {
-    const opts = q.ty === 'yn' ? ['Yes', 'No'] : q.ty === 'yn3' ? ['Yes', 'No', 'Not applicable'] : q.opts;
-    if (opts) return `<div class="esgq-ans" role="radiogroup" aria-labelledby="${id}-t" data-qid="${id}">`
-      + opts.map((o) => `<label class="esgq-radio"><input type="radio" name="${id}" value="${esc(o)}"><span>${esc(o)}</span></label>`).join('') + '</div>';
-    // one kind of box for every written answer; numbers only change the keypad on a phone
-    const pad = q.ty === 'number' ? ' inputmode="numeric"' : '';
-    return `<div class="esgq-field" data-qid="${id}"><textarea class="input" rows="1"${pad} aria-labelledby="${id}-t" placeholder="Type your answer"></textarea></div>`;
+  // ---- building the cards ---------------------------------------------------------------------
+  const field = (q, key) => {
+    if (q.ty === 'choice') return `<div class="esgq-ans" role="radiogroup" aria-labelledby="${key}-t">`
+      + q.opts.map(([v, l]) => `<label class="esgq-radio"><input type="radio" name="${key}" value="${esc(v)}"><span>${esc(l)}</span></label>`).join('') + '</div>';
+    const pad = q.val === 'count' || q.val === 'year' ? ' inputmode="numeric"' : '';
+    return `<div class="esgq-field"><textarea class="input" rows="1" data-for="${key}"${pad} aria-labelledby="${key}-t" aria-describedby="${key}-e" placeholder="Type your answer"></textarea></div>`;
   };
-  const row = (q, badge, key) => {
-    const id = 'q' + (++qid);
-    return `<div class="esgq-row" data-key="${key}"><div class="esgq-q-main"><span class="esgq-q-n">${badge}</span><span class="esgq-q-t" id="${id}-t">${esc(q.t)}</span></div>${field(q, id)}</div>`;
+  const row = (q, badge, key, sub) => {
+    Q[key] = q;
+    const help = q.help ? `<button type="button" class="esgq-help" aria-label="About this question" aria-describedby="${key}-h">${svg('info')}<span class="esgq-tip" role="tooltip" id="${key}-h">${esc(q.help)}</span></button>` : '';
+    return `<div class="esgq-row" data-row="${key}"><div class="esgq-q-main"><span class="esgq-q-n">${badge}</span><span class="esgq-q-t"><span id="${key}-t">${esc(q.t)}</span>${help}</span></div>${field(q, key)}`
+      + (q.na ? `<label class="esgq-na"><input type="checkbox" data-na-for="${key}"> Question not applicable</label>` : '')
+      + `<p class="esgq-err" id="${key}-e" hidden></p><div class="esgq-note" data-note="${key}" hidden></div>`
+      + (sub ? `<div class="esgq-sub-foot" data-marks="${key}"></div>` : '') + '</div>';
   };
-  // A follow-up only opens once its question is answered Yes; the card grows to make room.
-  const renderQ = (q, n, sid) => '<div class="esgq-q">' + row(q, n, `${sid}-${n}`)
-    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((s, i) => row(s, `${n}.${i + 1}`, `${sid}-${n}.${i + 1}`)).join('')}</div></div></div>` : '')
-    + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-by">Answered by ALMA</span></div></div>`;
-
-  SECTIONS.forEach((sec) => {
-    const card = document.querySelector(`[data-esgq="${sec.id}"]`); if (!card) return;
-    card.querySelector('[data-esgq-list]').innerHTML = sec.questions.map((q, i) => renderQ(q, i + 1, sec.id)).join('');
-    const count = card.querySelector('[data-esgq-count]');
-    if (count) count.textContent = sec.questions.length + (sec.questions.length === 1 ? ' question' : ' questions');
+  const card = (q, n, key) => `<div class="esgq-q" id="q-${key}" data-q="${key}">${row(q, n, key)}`
+    + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((sq, i) => row(sq, `${n}.${i + 1}`, ESG.subKey(key, i), true)).join('')}</div></div></div>` : '')
+    + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-marks" data-marks="${key}"></span></div></div>`;
+  DATA.sections.forEach((sec) => {
+    const box = document.querySelector(`[data-esgq="${sec.id}"]`); if (!box) return;
+    box.querySelector('[data-esgq-list]').innerHTML = sec.questions.map((q, i) => (q.g ? `<h3 class="esgq-group">${esc(q.g)}</h3>` : '') + card(q, i + 1, `${sec.id}-${i + 1}`)).join('');
   });
+  const navLinks = [...document.querySelectorAll('.set-nav a')];
+  navLinks.forEach((a) => { a.innerHTML = `<span class="esgq-nav-l">${a.innerHTML}</span><span class="esgq-nav-p" data-nav-p></span>`; });
 
-  // Progress counts what can be seen: a closed follow-up is not a question yet.
-  const pctEl = document.getElementById('esgq-pct'), barEl = document.getElementById('esgq-bar');
-  const done = (f) => (f.classList.contains('esgq-ans') ? !!f.querySelector('input:checked') : !!f.querySelector('input, textarea').value.trim());
-  const updateProgress = () => {
-    const shown = [...document.querySelectorAll('[data-qid]')].filter((f) => !f.closest('.esgq-subs:not(.is-open)'));
-    const pct = shown.length ? Math.round((shown.filter(done).length / shown.length) * 100) : 0;
-    if (pctEl) pctEl.textContent = pct + '%';
-    if (barEl) barEl.style.width = pct + '%';
-  };
-  const main = document.querySelector('.set-main');
-  main.addEventListener('change', (e) => {
-    const r = e.target; if (r.type !== 'radio') return;
-    const subs = r.closest('.esgq-q').querySelector(':scope > .esgq-subs');
-    if (subs && !r.closest('.esgq-subs')) { const open = r.value === 'Yes'; subs.classList.toggle('is-open', open); subs.inert = !open; }
-    if (e.isTrusted) r.closest('.esgq-q').classList.remove('is-alma'); // changed by hand: it is your answer now
-    updateProgress();
-  });
-  // a text answer is as tall as what is in it, so a long answer is never cut off or scrolled away
+  // ---- what a row shows: its answer, its note, its tags -----------------------------------------
   const grow = (t) => { t.style.height = 'auto'; t.style.height = t.scrollHeight + (t.offsetHeight - t.clientHeight) + 'px'; };
-  const growAll = () => main.querySelectorAll('textarea.input').forEach(grow);
-  main.addEventListener('input', (e) => {
-    if (e.target.tagName === 'TEXTAREA') grow(e.target);
-    if (e.isTrusted) e.target.closest('.esgq-q').classList.remove('is-alma');
-    updateProgress();
-  });
-  addEventListener('resize', growAll);
-  updateProgress();
-
-  // ---- ALMA: drop documents on her and she answers what they cover ----------------
-  // Prototype: the files never leave the machine; the answers are what a typical Code of
-  // Ethics, sustainability report, licence and ISO certificate would let her fill in.
-  const FROM_DOCS = [
-    ['governance-1', 'Yes'], ['governance-1.1', '2024'], ['governance-1.2', 'Yes'], ['governance-1.3', 'The board of directors'],
-    ['governance-2', 'Yes'], ['governance-3', 'Yes'], ['governance-5', 'Yes'],
-    ['governance-14', 'Once a year'], ['governance-15', 'A compliance officer'],
-    ['social-1', 'Yes'], ['social-1.1', 'February 2025'], ['social-12', 'Yes'], ['social-12.1', 'Yes'],
-    ['environment-1', 'Yes'], ['environment-1.1', 'State environmental agency, valid to 31 March 2027'],
-    ['climate-1', 'Yes'], ['climate-1.1', '2021'], ['climate-6', 'The GHG Protocol'],
-    ['infosec-1', 'Yes'], ['infosec-1.1', 'March 2025'], ['infosec-1.2', 'On the intranet'],
-  ];
-  const answer = (key, v) => {
-    const r = document.querySelector(`.esgq-row[data-key="${key}"]`); if (!r) return;
-    const radio = [...r.querySelectorAll('input[type="radio"]')].find((i) => i.value === v);
-    if (radio) { radio.checked = true; radio.dispatchEvent(new Event('change', { bubbles: true })); }
-    else { const f = r.querySelector('input, textarea'); f.value = v; f.dispatchEvent(new Event('input', { bubbles: true })); }
-    r.closest('.esgq-q').classList.add('is-alma');
+  const shown = new Set(); // whose sources are open
+  const chip = (text, cls, title) => `<span class="chip ${cls}"${title ? ` title="${esc(title)}"` : ''}>${text}</span>`;
+  const cites = (q) => (q.a && q.a.cite) || [];
+  const quote = (c) => {
+    const i = c.match ? c.quote.indexOf(c.match) : -1;
+    const body = i < 0 ? esc(c.quote) : esc(c.quote.slice(0, i)) + '<mark>' + esc(c.match) + '</mark>' + esc(c.quote.slice(i + c.match.length));
+    return `<figure class="esgq-src"><figcaption><b>${esc(c.src)}</b><span>${esc(c.loc)}</span></figcaption><blockquote>“${body}”</blockquote></figure>`;
   };
-  const drop = document.getElementById('qd-drop'), file = document.getElementById('qd-file');
-  if (drop && file) {
-    const t = document.getElementById('qd-drop-t'), sub = document.getElementById('qd-drop-s'), acts = document.getElementById('qd-drop-acts');
-    let picked = [], state = 'idle';
-    const setState = (st) => { state = st; drop.classList.toggle('has-file', st === 'file'); drop.classList.toggle('is-reading', st === 'reading'); drop.classList.toggle('is-filed', st === 'filed'); };
-    const took = (files) => {
-      if (!files.length || state === 'reading' || state === 'filed') return;
-      picked = [...files];
-      t.textContent = picked.length === 1 ? 'Got it: ' + picked[0].name : `Got them: ${picked.length} documents`;
-      sub.textContent = 'Hand them over and I will read them and answer what they cover.';
-      acts.hidden = false; setState('file');
-      setTimeout(() => document.getElementById('qd-hand').focus({ preventScroll: true }), 50);
-    };
-    const browse = (e) => { e.preventDefault(); file.value = ''; file.click(); };
-    drop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
-    drop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === drop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
-    file.addEventListener('click', (e) => e.stopPropagation());
-    file.addEventListener('change', () => took(file.files));
-    drop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') drop.classList.add('is-over'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
-    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); took(e.dataTransfer.files); });
-    document.getElementById('qd-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
-    document.getElementById('qd-hand').addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (state !== 'file') return;
-      setState('reading'); acts.hidden = true;
-      t.textContent = picked.length === 1 ? 'Reading ' + picked[0].name + '…' : `Reading ${picked.length} documents…`;
-      sub.textContent = 'Looking for your policies, dates, licences and who signs off what.';
-      setTimeout(() => {
-        FROM_DOCS.forEach(([k, v]) => answer(k, v));
-        setState('filed');
-        t.textContent = `I answered ${FROM_DOCS.length} questions from your documents.`;
-        sub.textContent = 'They are marked “Answered by ALMA” below. Check each one before you submit; the rest are yours. Prototype: nothing was uploaded or saved.';
-      }, 2200);
+  const syncRow = (key) => {
+    const q = Q[key], rowEl = main.querySelector(`[data-row="${key}"]`); if (!rowEl) return;
+    const v = s.v[key] || '', na = !!s.na[key], m = s.meta[key], locked = !!s.submitted;
+    rowEl.querySelectorAll(`input[name="${CSS.escape(key)}"]`).forEach((r) => { r.checked = r.value === v; r.disabled = na || locked; });
+    const ta = rowEl.querySelector(`textarea[data-for="${CSS.escape(key)}"]`);
+    if (ta) { if (ta.value !== v) ta.value = v; ta.disabled = na || locked; grow(ta); }
+    const nb = rowEl.querySelector(`[data-na-for="${CSS.escape(key)}"]`); if (nb) { nb.checked = na; nb.disabled = locked; }
+    const err = rowEl.querySelector('.esgq-err'), p = na ? '' : ESG.problem(q, v);
+    err.hidden = !p; err.textContent = p; if (ta) ta.setAttribute('aria-invalid', String(!!p));
+    // her note: why she answered, or why she left it to you, and where she read it
+    const note = rowEl.querySelector('[data-note]');
+    const why = ESG.reason(q, key, s);
+    if (m && why) {
+      const list = m.by === 'alma' && !m.rejected ? cites(q) : [];
+      const open = shown.has(key);
+      note.hidden = false;
+      note.innerHTML = `<p><span class="esgq-note-k">ALMA</span>${esc(why)}</p>`
+        + (list.length ? `<button type="button" class="esgq-src-btn" data-src="${key}" aria-expanded="${open}">${open ? 'Hide' : 'View'} ${list.length > 1 ? `sources (${list.length})` : 'source'}</button>` + (open ? list.map(quote).join('') : '') : '');
+    } else { note.hidden = true; note.innerHTML = ''; }
+    // tags, and the pair of buttons for an answer she was unsure of
+    const tags = [];
+    const answeredRow = na || (ESG.has(v) && !p);
+    if (m && m.by === 'alma' && !m.rejected) {
+      tags.push(chip('Answered by ALMA', 'is-alma', 'Read from ' + ((q.a && q.a.src) || 'your documents')));
+      if (m.approved) tags.push(chip('Approved by you', 'is-you', 'You approved ALMA’s answer — she was unsure of it.'));
+      else { const c = CONF[m.conf] || CONF.medium; tags.push(chip(c[0], c[1], c[2])); }
+      if (m.edited) tags.push(chip('Edited by you', 'is-you', 'You changed ALMA’s answer.'));
+    } else if (m && m.rejected) tags.push(chip('Edited by you', 'is-you', 'You turned down ALMA’s answer.'));
+    if (answeredRow && s.alma && s.alma.applied && (!m || m.by === 'flag' || m.rejected)) tags.push(chip('Answered by you', 'is-you'));
+    if (ESG.rowNeeds(s, q, key)) tags.push(chip('Needs you', 'is-needs', m.rejected ? 'You turned down ALMA’s answer — this needs one from you.' : m.by === 'flag' ? why : CONF.low[2]));
+    const pending = m && m.by === 'alma' && m.conf === 'low' && !m.approved && !m.edited && !m.rejected && !locked;
+    const marks = main.querySelector(`[data-marks="${key}"]`);
+    marks.innerHTML = tags.join('') + (pending ? `<span class="esgq-review"><button type="button" class="btn btn-quiet btn-sm" data-approve="${key}">Approve</button><button type="button" class="btn btn-quiet btn-sm" data-reject="${key}">Reject</button></span>` : '');
+    marks.hidden = !marks.innerHTML;
+  };
+  const syncCard = (key) => {
+    const q = Q[key], c = document.getElementById('q-' + key);
+    syncRow(key);
+    if (q.subs) {
+      const sb = c.querySelector('.esgq-subs'), on = ESG.open(s, key);
+      sb.classList.toggle('is-open', on); sb.inert = !on;
+      q.subs.forEach((_, i) => syncRow(ESG.subKey(key, i)));
+    }
+    c.classList.toggle('is-needs', ESG.needs(s, q, key) && !s.submitted);
+  };
+  const syncAll = () => { ESG.each((q, key) => syncCard(key)); totals(); };
+
+  // ---- totals: the bar, the sections, the filters, Submit ------------------------------------------
+  const pctEl = document.getElementById('esgq-pct'), barEl = document.getElementById('esgq-bar'), numEl = document.getElementById('esgq-num');
+  const submitBtn = document.getElementById('esgq-submit'), tipEl = document.getElementById('esgq-tip');
+  const totals = () => {
+    const c = ESG.counts(s);
+    pctEl.textContent = c.pct + '%'; barEl.style.width = c.pct + '%';
+    numEl.textContent = `${c.answered} of ${c.total} answered`;
+    DATA.sections.forEach((sec, i) => {
+      const S = c.sections[sec.id], box = document.querySelector(`[data-esgq="${sec.id}"]`);
+      box.querySelector('[data-esgq-count]').textContent = `${S.answered} of ${S.total} answered`;
+      const a = navLinks[i]; if (!a) return;
+      a.querySelector('[data-nav-p]').textContent = Math.round((S.answered / S.total) * 100) + '%';
+      a.classList.toggle('has-needs', S.needs > 0 && !s.submitted);
+      a.title = S.needs && !s.submitted ? `${S.needs} need${S.needs === 1 ? 's' : ''} you` : '';
     });
-  }
+    const r = ESG.ready(s);
+    submitBtn.hidden = !!s.submitted;
+    document.getElementById('esgq-lead').textContent = s.submitted ? 'Submitted — your answers are locked while they are reviewed.' : 'Nothing here is shared until you choose to submit it.';
+    submitBtn.setAttribute('aria-disabled', String(!r.ok));
+    filterCounts(c);
+    panel();
+  };
 
-  // ALMA's sticky band: its height places the section list under her and offsets the jumps below
-  const band = document.getElementById('qd-stick');
-  const stuck = () => band && getComputedStyle(band).position === 'sticky';
-  const below = () => (stuck() ? band.getBoundingClientRect().bottom : 72) + 24; // where content starts showing
-  if (band) new ResizeObserver(() => document.documentElement.style.setProperty('--esgq-band', band.offsetHeight + 'px')).observe(band);
+  // filters: once ALMA has answered, you can look at just what she did, what you did, or what waits on you
+  const FILTERS = [['all', 'All'], ['needs', 'Needs you'], ['alma', 'Answered by ALMA'], ['you', 'Answered by you'], ['open', 'Unanswered']];
+  const filterBox = document.getElementById('esgq-filters');
+  let filter = 'all';
+  const inFilter = (q, key) => {
+    const a = ESG.answered(s, q, key), m = s.meta[key], alma = !!m && m.by === 'alma' && !m.rejected;
+    return filter === 'all' || (filter === 'needs' && ESG.needs(s, q, key)) || (filter === 'alma' && a && alma) || (filter === 'you' && a && !alma) || (filter === 'open' && !a);
+  };
+  const filterCounts = (c) => {
+    const show = !!(s.alma && s.alma.applied);
+    filterBox.hidden = !show; if (!show) return;
+    const n = { all: c.total, needs: c.needs, alma: c.alma, you: c.you, open: c.total - c.answered };
+    if (!filterBox.firstChild) filterBox.innerHTML = FILTERS.map(([k, l]) => `<button type="button" class="esgq-pill" data-filter="${k}" aria-pressed="${k === filter}">${l} <b data-fc="${k}"></b></button>`).join('');
+    FILTERS.forEach(([k]) => { filterBox.querySelector(`[data-fc="${k}"]`).textContent = n[k]; });
+  };
+  const applyFilter = () => {
+    filterBox.querySelectorAll('[data-filter]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
+    let any = false;
+    DATA.sections.forEach((sec) => {
+      const box = document.querySelector(`[data-esgq="${sec.id}"]`); let some = false;
+      sec.questions.forEach((q, i) => { const key = `${sec.id}-${i + 1}`, on = inFilter(q, key); document.getElementById('q-' + key).hidden = !on; some = some || on; });
+      box.querySelectorAll('.esgq-group').forEach((h) => { let n = h.nextElementSibling, vis = false; while (n && !n.matches('.esgq-group')) { if (!n.hidden) vis = true; n = n.nextElementSibling; } h.hidden = !vis; });
+      box.hidden = !some; any = any || some;
+    });
+    document.getElementById('esgq-none').hidden = any;
+    setTimeout(mark, 0);
+  };
+  const toList = () => scrollTo({ top: main.getBoundingClientRect().top + scrollY - 72 - (stuck() ? band.offsetHeight : 0), behavior: 'smooth' });
+  filterBox.addEventListener('click', (e) => { const b = e.target.closest('[data-filter]'); if (!b) return; filter = b.dataset.filter; applyFilter(); toList(); });
+  document.getElementById('esgq-show-all').addEventListener('click', () => { filter = 'all'; applyFilter(); });
 
-  // The section in view is the one marked on the left, same as Settings.
-  const links = [...document.querySelectorAll('.set-nav a')];
-  const cards = links.map((a) => document.querySelector(a.getAttribute('href')));
+  // ---- answering ----------------------------------------------------------------------------------
+  const top = (key) => key.split('.')[0];
+  const changed = (key) => {
+    const m = s.meta[key];
+    if (m && m.by === 'alma' && !m.rejected) m.edited = s.v[key] !== m.orig;
+    ESG.save(s); syncCard(top(key)); totals();
+  };
+  main.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.type === 'radio') { s.v[t.name] = t.value; changed(t.name); }
+    else if (t.dataset.naFor) { s.na[t.dataset.naFor] = t.checked; changed(t.dataset.naFor); }
+  });
+  main.addEventListener('input', (e) => {
+    const t = e.target; if (!t.dataset.for) return;
+    const key = t.dataset.for;
+    grow(t); s.v[key] = t.value;
+    const m = s.meta[key]; if (m && m.by === 'alma' && !m.rejected) m.edited = t.value !== m.orig;
+    ESG.save(s);
+    // the field keeps its caret: refresh around it, not the field itself
+    syncRow(key); document.getElementById('q-' + top(key)).classList.toggle('is-needs', ESG.needs(s, Q[top(key)], top(key))); totals();
+  });
+  main.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-approve], [data-reject], [data-src]'); if (!b) return;
+    if (b.dataset.src) { const k = b.dataset.src; shown.has(k) ? shown.delete(k) : shown.add(k); syncRow(k); return; }
+    const key = b.dataset.approve || b.dataset.reject, m = s.meta[key];
+    if (b.dataset.approve) m.approved = true;
+    else { m.rejected = true; s.v[key] = ''; shown.delete(key); }
+    ESG.save(s); syncCard(top(key)); totals();
+    if (b.dataset.reject) { const f = main.querySelector(`[data-row="${CSS.escape(key)}"] textarea, [data-row="${CSS.escape(key)}"] input`); if (f) f.focus({ preventScroll: true }); }
+  });
+  addEventListener('resize', () => main.querySelectorAll('textarea.input').forEach(grow));
+
+  // ---- Submit ---------------------------------------------------------------------------------------
+  let tipT;
+  submitBtn.addEventListener('click', () => {
+    const r = ESG.ready(s);
+    if (!r.ok) {
+      const parts = [];
+      if (r.gaps) parts.push(`${r.gaps} question${r.gaps === 1 ? '' : 's'} still need${r.gaps === 1 ? 's' : ''} an answer`);
+      if (r.review) parts.push(`${r.review} answer${r.review === 1 ? '' : 's'} need${r.review === 1 ? 's' : ''} your review`);
+      if (r.bad) parts.push(`${r.bad} answer${r.bad === 1 ? '' : 's'} need${r.bad === 1 ? 's' : ''} fixing`);
+      tipEl.innerHTML = `<b>Not ready yet.</b> ${parts.join(', ').replace(/, ([^,]*)$/, ' and $1').replace(/^./, (x) => x.toUpperCase())} before this can be submitted.`;
+      tipEl.hidden = false; clearTimeout(tipT); tipT = setTimeout(() => (tipEl.hidden = true), 3600);
+      if (!inFilter(Q[r.first], r.first)) { filter = 'all'; applyFilter(); }
+      const c = document.getElementById('q-' + r.first);
+      scrollTo({ top: c.getBoundingClientRect().top + scrollY - 72 - (stuck() ? band.offsetHeight : 0) - 24, behavior: 'smooth' });
+      return;
+    }
+    dialog({
+      h: 'Submit your ESG Questionnaire?',
+      p: 'Once it is submitted your answers are locked while they are reviewed, and the clients and buyers you share your profile with can see them.',
+      acts: [['Cancel', 'btn-quiet', null], ['Submit questionnaire', 'btn-primary', () => {
+        s.submitted = Date.now(); ESG.save(s); filter = 'all'; document.documentElement.classList.add('esgq-locked'); syncAll(); applyFilter();
+        scrollTo({ top: 0, behavior: 'smooth' });
+      }]],
+    });
+  });
+
+  // ---- a small dialog: the hand-over, and the last check before submitting --------------------------------
+  const dialog = ({ h, p, acts, alma }) => {
+    const d = document.createElement('div');
+    const last = document.activeElement;
+    d.className = 'dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'esgq-dlg-h');
+    d.innerHTML = `<div class="dlg-scrim" data-x></div><div class="dlg-card"><button type="button" class="dlg-x" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <div class="dlg-head">${alma ? `<span class="dlg-alma is-big" aria-hidden="true">${ESG.SPHERES}</span><span class="eyebrow">ALMA</span>` : ''}<h2 id="esgq-dlg-h">${h}</h2><p>${p}</p></div>
+      <div class="dlg-foot is-center">${acts.map(([l, c, f], i) => (typeof f === 'string' ? `<a class="btn ${c}" href="${f}">${l}</a>` : `<button type="button" class="btn ${c}" data-act="${i}">${l}</button>`)).join('')}</div></div>`;
+    document.body.appendChild(d); document.documentElement.classList.add('dlg-open');
+    const close = () => { d.remove(); document.documentElement.classList.remove('dlg-open'); if (last && last.focus) last.focus({ preventScroll: true }); };
+    d.addEventListener('click', (e) => { if (e.target.closest('[data-x]')) { close(); return; } const a = e.target.closest('[data-act]'); if (a) { close(); const f = acts[+a.dataset.act][2]; if (f) f(); } });
+    d.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+    setTimeout(() => { const f = d.querySelector('.dlg-foot .btn-primary'); if (f) f.focus(); }, 120);
+  };
+
+  // ---- ALMA, above the questions ------------------------------------------------------------------
+  const band = document.getElementById('qd-stick'), drop = document.getElementById('qd-drop');
+  const pt = document.getElementById('qd-t'), ps = document.getElementById('qd-s'), pm = document.getElementById('qd-m'), pa = document.getElementById('qd-acts');
+  let shownState = '', tick = null;
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const finish = () => { ESG.apply(s); s = ESG.load(); syncAll(); applyFilter(); markRead(); };
+  const panel = () => {
+    const st = ESG.status(s);
+    if (st === 'ready') { setTimeout(finish, 0); return; }
+    drop.classList.toggle('is-reading', st === 'reading');
+    drop.classList.toggle('is-done', st === 'review' || st === 'submitted');
+    drop.setAttribute('aria-label', ['new', 'started'].includes(st) ? 'Drop documents on ALMA, or press to choose them' : 'ALMA');
+    drop.tabIndex = ['new', 'started'].includes(st) ? 0 : -1;
+    if (st === 'reading') {
+      const docs = s.alma.docs, pct = ESG.almaPct(s), i = Math.min(docs.length - 1, Math.floor((pct / 100) * docs.length));
+      pt.textContent = 'Reading your documents';
+      ps.textContent = `${docs[i].name} · ${i + 1} of ${docs.length}. You can keep answering meanwhile — I won’t touch anything you have filled in.`;
+      pm.hidden = false; pm.querySelector('i').style.width = pct + '%';
+      if (shownState !== st) pa.innerHTML = '';
+      if (!tick) tick = setInterval(() => { if (ESG.status(s) !== 'reading') { clearInterval(tick); tick = null; finish(); } else panel(); }, 300);
+    } else if (st === 'review') {
+      const c = ESG.counts(s), n = s.alma.answered || 0;
+      pt.textContent = n ? `I answered ${n} question${n === 1 ? '' : 's'} from your documents.` : 'I read your documents, but found nothing I could answer from them.';
+      ps.textContent = c.needs ? `${c.needs} still need${c.needs === 1 ? 's' : ''} you — they’re marked below. Check my answers, then submit when everything is in.` : 'Nothing is waiting on you. Have a last look, then submit.';
+      pm.hidden = true;
+      const want = c.needs ? 'needs' : 'none';
+      if (pa.dataset.v !== want) { pa.dataset.v = want; pa.innerHTML = c.needs ? '<button type="button" class="btn btn-quiet btn-sm" id="qd-needs">Show what needs you</button>' : ''; }
+    } else if (st === 'submitted') {
+      const d = new Date(s.submitted);
+      pt.textContent = `Submitted on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}.`;
+      ps.textContent = 'Your answers are locked while they are reviewed. Clients and buyers you share your profile with can see them.';
+      pm.hidden = true; pa.innerHTML = ''; pa.dataset.v = '';
+    } else {
+      pt.textContent = 'Let me fill this in for you.';
+      ps.textContent = 'Drop your policy documents here and I’ll read them, find the answers and fill them in. You get the final say on every one before anything is submitted.';
+      pm.hidden = true;
+      if (pa.dataset.v !== 'up') { pa.dataset.v = 'up'; pa.innerHTML = '<button type="button" class="btn btn-primary btn-sm" id="qd-up">Upload documents</button><span class="qd-hint">or drop files anywhere here</span>'; }
+    }
+    shownState = st;
+  };
+  const canTake = () => ['new', 'started'].includes(ESG.status(s));
+  const upload = (files) => { if (canTake()) ESG_UPLOAD.open(files, handed); };
+  const handed = (docs) => {
+    s = ESG.load(); ESG.handTo(s, docs); panel();
+    dialog({ alma: true, h: 'I’ll take it from here', p: 'I have your documents and I’m reading them now. You don’t need to wait here — I’ll let you know the moment I’m done. You’ll see every answer, and what I read it from, before anything is submitted.',
+      acts: [['Stay here', 'btn-quiet', null], ['Back to Questionnaires', 'btn-primary', 'questionnaires.html']] });
+  };
+  drop.addEventListener('click', (e) => {
+    if (e.target.closest('#qd-needs')) { filter = 'needs'; applyFilter(); toList(); return; }
+    if (canTake()) upload();
+  });
+  drop.addEventListener('keydown', (e) => { if (e.target === drop && (e.key === 'Enter' || e.key === ' ') && canTake()) { e.preventDefault(); upload(); } });
+  drop.addEventListener('dragover', (e) => { if (!canTake()) return; e.preventDefault(); drop.classList.add('is-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
+  drop.addEventListener('drop', (e) => { if (!canTake()) return; e.preventDefault(); drop.classList.remove('is-over'); upload(e.dataTransfer.files); });
+  const markRead = () => { s.read = true; ESG.save(s); if (window.ESG_NOTIFY) ESG_NOTIFY.read(); };
+
+  // ---- the section in view is the one marked on the left ----------------------------------------------
+  const stuck = () => getComputedStyle(band).position === 'sticky';
+  new ResizeObserver(() => document.documentElement.style.setProperty('--esgq-band', band.offsetHeight + 'px')).observe(band);
+  const boxes = navLinks.map((a) => document.querySelector(a.getAttribute('href')));
   const mark = () => {
-    let on = 0;
-    const line = Math.max(innerHeight * 0.35, below() + 40);
-    cards.forEach((c, i) => { if (c && c.getBoundingClientRect().top < line) on = i; });
-    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) on = cards.length - 1;
-    links.forEach((a, i) => a.classList.toggle('is-on', i === on));
+    let on = 0; const line = Math.max(innerHeight * 0.35, (stuck() ? band.getBoundingClientRect().bottom : 72) + 64);
+    boxes.forEach((c, i) => { if (c && !c.hidden && c.getBoundingClientRect().top < line) on = i; });
+    if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) { const vis = boxes.map((b, i) => (b && !b.hidden ? i : -1)).filter((i) => i >= 0); if (vis.length) on = vis[vis.length - 1]; }
+    navLinks.forEach((a, i) => a.classList.toggle('is-on', i === on));
   };
   addEventListener('scroll', mark, { passive: true });
-  links.forEach((a) => a.addEventListener('click', (e) => {
+  navLinks.forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault(); const t = document.querySelector(a.getAttribute('href'));
+    if (t.hidden) { filter = 'all'; applyFilter(); }
     scrollTo({ top: t.getBoundingClientRect().top + scrollY - (72 + (stuck() ? band.offsetHeight : 0) + 24), behavior: 'smooth' }); history.replaceState(null, '', a.getAttribute('href'));
   }));
+
+  // ---- arriving ----------------------------------------------------------------------------------
+  if (ESG.status(s) === 'ready') { ESG.apply(s); s = ESG.load(); }
+  if (s.submitted) document.documentElement.classList.add('esgq-locked');
+  syncAll(); applyFilter();
+  if (ESG.status(s) === 'review') markRead();
+  if (/[?&]alma=start\b/.test(location.search) && canTake()) setTimeout(() => upload(), 450);
   setTimeout(mark, 120);
 })();
