@@ -226,8 +226,7 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .co-drop.is-reading, .co-drop.is-done { cursor: default; border-style: solid; border-color: var(--color-line); }
 .co-drop.is-reading .alma-media { animation: alma-read 1.4s var(--ease-brand) infinite alternate; }
 /* submitted: read only */
-.esgq-locked .esgq-tool { display: none; }
-.esgq-locked .esgq-foot:not(:has(.esgq-marks:not([hidden]))) { display: none; }
+.esgq-locked .esgq-tool:not([data-comment]) { display: none; } /* comments stay readable once it is in */
 @media (max-width: 40rem) { .esgq-top-r { width: 100%; justify-content: space-between; } .esgq-top-prog .co-meter { display: none; } }
 .qd-meter[hidden], #esgq-submit[hidden] { display: none; }
 /* room for a section's name, its % and its mark on one line */
@@ -361,3 +360,25 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
   display: inline-flex; align-items: center; gap: 0.375rem; text-decoration: underline; text-decoration-color: var(--color-sand-400); text-underline-offset: 0.2em; }
 .esgq-src-open:hover { text-decoration-color: var(--color-coral); }
 .esgq-src-open svg { width: 0.875rem; height: 0.875rem; }
+
+/* ---- comments under a question ---- */
+.esgq-tool { position: relative; }
+.esgq-tool.is-open { border-color: var(--color-graphite); color: var(--color-ink); }
+.esgq-tool-n { position: absolute; top: -0.4375rem; right: -0.4375rem; display: grid; place-items: center; min-width: 1rem; height: 1rem; padding: 0 0.25rem; border-radius: 9999px;
+  background: var(--color-coral); color: var(--color-graphite); font-size: 0.625rem; font-weight: 700; line-height: 1; }
+.esgq-tool-n[hidden] { display: none; }
+.esgq-comments { margin-top: 0.25rem; padding: 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-off-white); display: flex; flex-direction: column; gap: 0.875rem; }
+.esgq-comments[hidden] { display: none; }
+.esgq-c-list { display: flex; flex-direction: column; gap: 0.875rem; }
+.esgq-c { display: flex; align-items: flex-start; gap: 0.75rem; }
+.esgq-c .up-rm { margin-left: auto; width: 1.75rem; height: 1.75rem; }
+.esgq-c-pic { width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; }
+.esgq-c-main { min-width: 0; flex: 1; }
+.esgq-c-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.25rem 0.625rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.esgq-c-top b { font-weight: 600; color: var(--color-ink); }
+.esgq-c-text { margin-top: 0.125rem; font-size: 0.9375rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--color-ink); }
+.esgq-c-form { display: flex; flex-direction: column; gap: 0.625rem; }
+.esgq-q .esgq-c-form .input { min-height: 4.5rem; background: var(--color-surface); }
+.esgq-c-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.esgq-c-me { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; }
+.esgq-c-none { font-size: 0.875rem; color: var(--color-ink-subtle); }

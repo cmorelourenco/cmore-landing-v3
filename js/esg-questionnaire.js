@@ -34,7 +34,7 @@
       + (q.na ? `<label class="esgq-na"><input type="checkbox" data-na-for="${key}"> Question not applicable</label>` : '')
       + `<p class="esgq-err" id="${key}-e" hidden></p><div class="esgq-note" data-note="${key}" hidden></div>`
       // every question, parent or follow-up, has its own foot: the tools on the left, its tags on the right
-      + `<div class="esgq-foot">${tool('note', 'Add a note')}${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-marks" data-marks="${key}"></span></div></div>`;
+      + `<div class="esgq-foot"><button type="button" class="esgq-tool" data-comment="${key}" aria-expanded="false" aria-controls="${key}-c" aria-label="Comments" title="Comments">${svg('note')}<span class="esgq-tool-n" hidden></span></button>${tool('clip', 'Attach a document')}${tool('assign', 'Ask a colleague')}<span class="esgq-marks" data-marks="${key}"></span></div><section class="esgq-comments" id="${key}-c" aria-label="Comments" hidden></section></div>`;
   };
   const card = (q, n, key) => `<div class="esgq-q" id="q-${key}" data-q="${key}">${row(q, n, key)}`
     + (q.subs ? `<div class="esgq-subs" inert><div class="esgq-subs-in"><div class="esgq-subs-body">${q.subs.map((sq, i) => row(sq, `${n}.${i + 1}`, ESG.subKey(key, i))).join('')}</div></div></div>` : '')
@@ -84,14 +84,44 @@
       if (m.approved) tags.push(chip('Approved by you', 'is-you', 'You approved ALMA’s answer — she was unsure of it.'));
       else { const c = CONF[m.conf] || CONF.medium; tags.push(chip(c[0], c[1], c[2])); }
       if (m.edited) tags.push(chip('Edited by you', 'is-you', 'You changed ALMA’s answer.'));
+      else if (m.commented) tags.push(chip('Commented by you', 'is-you', 'You commented on ALMA’s answer.'));
     } else if (m && m.rejected) tags.push(chip('Edited by you', 'is-you', 'You turned down ALMA’s answer.'));
     if (answeredRow && s.alma && s.alma.applied && (!m || m.by === 'flag' || m.rejected)) tags.push(chip('Answered by you', 'is-you'));
     if (ESG.rowNeeds(s, q, key)) tags.push(chip('Needs you', 'is-needs', m.rejected ? 'You turned down ALMA’s answer — this needs one from you.' : m.by === 'flag' ? why : CONF.low[2]));
-    const pending = m && m.by === 'alma' && m.conf === 'low' && !m.approved && !m.edited && !m.rejected && !locked;
+    const pending = m && m.by === 'alma' && m.conf === 'low' && !m.approved && !m.edited && !m.commented && !m.rejected && !locked;
+    const n = (s.comments[key] || []).length, cb = rowEl.querySelector(`[data-comment="${CSS.escape(key)}"]`), cn = cb.querySelector('.esgq-tool-n');
+    cn.hidden = !n; cn.textContent = n; cb.classList.toggle('has-n', !!n); cb.setAttribute('aria-label', n ? `Comments, ${n}` : 'Comments');
+    const panelEl = document.getElementById(key + '-c'); if (!panelEl.hidden) thread(key);
     const marks = main.querySelector(`[data-marks="${key}"]`);
     marks.innerHTML = tags.join('') + (pending ? `<span class="esgq-review"><button type="button" class="btn btn-quiet btn-sm" data-approve="${key}">Approve</button><button type="button" class="btn btn-quiet btn-sm" data-reject="${key}">Reject</button></span>` : '');
     marks.hidden = !marks.innerHTML;
   };
+  // ---- comments: a thread under each question and each follow-up -------------------------------
+  const who = () => ({ name: (document.querySelector('[data-who-name]') || {}).textContent || 'You', pic: (document.querySelector('#who-btn [data-who-pic]') || {}).innerHTML || '' });
+  const when = (t) => { const d = new Date(t); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); };
+  const thread = (key) => {
+    const p = document.getElementById(key + '-c'), list = s.comments[key] || [], me = who(), locked = !!s.submitted;
+    const typed = p.querySelector('textarea') ? p.querySelector('textarea').value : '';
+    p.innerHTML = (list.length ? `<ul class="esgq-c-list">${list.map((c, i) => `<li class="esgq-c"><span class="who-pic esgq-c-pic" aria-hidden="true">${c.pic || ''}</span><div class="esgq-c-main"><p class="esgq-c-top"><b>${esc(c.name)}</b><span>${when(c.at)}</span></p><p class="esgq-c-text">${esc(c.text)}</p></div>${locked ? '' : `<button type="button" class="up-rm" data-uncomment="${key}|${i}" aria-label="Delete this comment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`}</li>`).join('')}</ul>` : '')
+      + (locked ? (list.length ? '' : '<p class="esgq-c-none">No comments.</p>') : `<form class="esgq-c-form" data-cform="${key}"><textarea class="input" rows="2" placeholder="Write a comment" aria-label="Write a comment"></textarea>
+        <div class="esgq-c-foot"><span class="esgq-c-me"><span class="who-pic esgq-c-pic" aria-hidden="true">${me.pic}</span>${esc(me.name)}</span><button type="submit" class="btn btn-primary btn-sm" disabled>Comment</button></div></form>`);
+    const t = p.querySelector('textarea'); if (t) { t.value = typed; grow(t); t.nextElementSibling.querySelector('button').disabled = !typed.trim(); }
+  };
+  main.addEventListener('submit', (e) => {
+    const f = e.target.closest('[data-cform]'); if (!f) return;
+    e.preventDefault();
+    const key = f.dataset.cform, t = f.querySelector('textarea'), text = t.value.trim(); if (!text) return;
+    const me = who();
+    (s.comments[key] = s.comments[key] || []).push({ text, at: Date.now(), name: me.name, pic: me.pic });
+    const m = s.meta[key]; if (m && m.by === 'alma' && !m.rejected) m.commented = true;
+    t.value = ''; ESG.save(s); syncCard(key.split('.')[0]); totals();
+    const again = document.getElementById(key + '-c').querySelector('textarea'); if (again) again.focus({ preventScroll: true });
+  });
+  main.addEventListener('keydown', (e) => {
+    const t = e.target.closest('.esgq-c-form textarea'); if (!t) return;
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); t.form.requestSubmit(); }
+  });
+
   const syncCard = (key) => {
     const q = Q[key], c = document.getElementById('q-' + key);
     syncRow(key);
@@ -171,7 +201,9 @@
     else if (t.dataset.naFor) { s.na[t.dataset.naFor] = t.checked; changed(t.dataset.naFor); }
   });
   main.addEventListener('input', (e) => {
-    const t = e.target; if (!t.dataset.for) return;
+    const t = e.target;
+    if (t.closest('.esgq-c-form')) { grow(t); t.form.querySelector('[type="submit"]').disabled = !t.value.trim(); return; }
+    if (!t.dataset.for) return;
     const key = t.dataset.for;
     grow(t); s.v[key] = t.value;
     const m = s.meta[key]; if (m && m.by === 'alma' && !m.rejected) m.edited = t.value !== m.orig;
@@ -180,6 +212,10 @@
     syncRow(key); document.getElementById('q-' + top(key)).classList.toggle('is-needs', ESG.needs(s, Q[top(key)], top(key))); totals();
   });
   main.addEventListener('click', (e) => {
+    const cm = e.target.closest('[data-comment]');
+    if (cm) { const k = cm.dataset.comment, p = document.getElementById(k + '-c'), opening = p.hidden; p.hidden = !opening; cm.setAttribute('aria-expanded', String(opening)); cm.classList.toggle('is-open', opening); if (opening) { thread(k); const t = p.querySelector('textarea'); if (t) t.focus({ preventScroll: true }); } return; }
+    const del = e.target.closest('[data-uncomment]');
+    if (del) { const [k, i] = del.dataset.uncomment.split('|'); (s.comments[k] || []).splice(+i, 1); if (!s.comments[k].length) { delete s.comments[k]; if (s.meta[k]) s.meta[k].commented = false; } ESG.save(s); syncCard(k.split('.')[0]); totals(); return; }
     const o = e.target.closest('[data-open]');
     if (o) { ESG_DOC.open(cites(Q[o.dataset.open]), +o.dataset.i); return; }
     const b = e.target.closest('[data-approve], [data-reject], [data-src]'); if (!b) return;
