@@ -174,12 +174,19 @@
     if (barEl) barEl.style.width = pct + '%';
   };
 
+  // The card itself shows whether anything inside it (its own field, or a sub's) has an answer.
+  const syncCard = (el) => {
+    const card = el.closest('.esgq-q'); if (!card) return;
+    const has = [...card.querySelectorAll('[data-qid]')].some((f) => answered.has(f.dataset.qid));
+    card.classList.toggle('is-answered', has);
+  };
+
   // Yes/No/choice: single-select among the buttons in the same group.
   document.querySelectorAll('.esgq-ans').forEach((group) => {
     group.addEventListener('click', (e) => {
       const btn = e.target.closest('.esgq-opt'); if (!btn) return;
       group.querySelectorAll('.esgq-opt').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-      answered.add(group.dataset.qid); updateProgress();
+      answered.add(group.dataset.qid); updateProgress(); syncCard(group);
     });
   });
   // Text, number, long: answered once there is something in the field.
@@ -187,7 +194,7 @@
     const input = field.querySelector('input, textarea'); if (!input) return;
     input.addEventListener('input', () => {
       if (input.value.trim()) answered.add(field.dataset.qid); else answered.delete(field.dataset.qid);
-      updateProgress();
+      updateProgress(); syncCard(field);
     });
   });
   updateProgress();
