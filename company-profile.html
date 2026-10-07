@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Documents · C-MORE</title>
+<title>Company profile · C-MORE</title>
 <meta name="robots" content="noindex">
 <script>
+  // the side menu starts open (a drawer on phones) unless the visitor closed it last time
   var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
   document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
   // which of our two demo people is signed in, Miguel (default) or Beatriz — a few things
@@ -537,17 +538,6 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-step.is-done h3 .co-badge { text-decoration: none; }
 .co-drop-t { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
 
-/* ALMA on her side, between the documents title and the table: her, the words, the buttons */
-.co-drop.co-drop-h { height: auto; flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 1.5rem; padding: 1.25rem 1.75rem; margin-bottom: 1.5rem; border-radius: 1.25rem; }
-.co-drop-h .alma-media { position: relative; left: auto; top: auto; translate: none; flex: none; width: 6.5rem; max-width: none; margin: 0 2.25rem 0 0.5rem; } /* her spheres orbit past her box: room on both sides */
-.co-drop-h.has-file .alma-media { transform: none; }
-.co-drop-w { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-.co-drop-h .co-drop-t { font-size: 1.25rem; }
-.co-drop-s { font-size: 0.9375rem; }
-.co-drop-h .co-drop-acts { flex-direction: row; margin: 0 0 0 auto; flex: none; }
-.co-docs-sec { border-top: 1px solid var(--color-line); }
-@media (max-width: 40rem) { .co-drop.co-drop-h { flex-direction: column; align-items: flex-start; } .co-drop-h .co-drop-acts { margin: 0; } }
-
 /* consents */
 .co-consents { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; } /* your own consents live in Settings */
 .co-list { padding: 0.5rem 1.5rem; gap: 0; }
@@ -658,31 +648,6 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-hero .co-net-half .co-net-k { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
 @media (max-width: 40rem) { .co-half-wrap { width: 100%; } .co-hero .co-net-half .co-net-rows { grid-template-columns: minmax(0, 1fr); } }
 
-/* ---- The hero's compliance: documents, consents and suppliers, each a way in ---- */
-.co-hero .co-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; align-items: stretch; justify-items: stretch; align-self: end; width: 100%; max-width: none; }
-/* the heading, then the three numbers across the column */
-.co-hero .co-band-in:has(.co-kpis) { grid-template-areas: "l" "n"; grid-template-columns: minmax(0, 1fr); }
-.co-k { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem 1.25rem 1.125rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
-  text-decoration: none; color: var(--color-ink); transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
-.co-k:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
-.co-k-h { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 600; }
-.co-k-h svg { width: 1.125rem; height: 1.125rem; color: var(--color-ink-subtle); }
-.co-k-arrow { margin-left: auto; color: var(--color-ink-subtle); transition: transform .2s var(--ease-brand), color .14s ease; }
-.co-k:hover .co-k-arrow { transform: translateX(3px); color: var(--color-coral-deep); }
-.co-k-big { display: flex; align-items: baseline; gap: 0.625rem; margin-top: 0.5rem; }
-.co-k-n { font-size: 3.25rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--color-coral); }
-.co-k-nl { font-size: 0.9375rem; font-weight: 500; }
-.co-k-d { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
-.co-k-chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--color-mid-beige); }
-.co-k-chip { display: inline-flex; align-items: center; gap: 0.3125rem; height: 1.625rem; padding: 0 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
-.co-k-chip b { font-weight: 700; }
-.co-k-miss { background: var(--color-caution-subtle); color: var(--color-caution); }
-.co-k-exp { background: var(--color-critical-subtle); color: var(--color-critical); }
-.co-k-ok { background: var(--color-positive-subtle); color: var(--color-positive); }
-.co-k-chip.is-zero { background: var(--color-mid-beige); color: var(--color-ink-subtle); }
-.co-k.is-zero .co-k-n { color: var(--color-sand-400); }
-@media (max-width: 64rem) { .co-hero .co-kpis { grid-template-columns: minmax(0, 1fr); } .co-k-n { font-size: 2.5rem; } }
-
 /* ---- The hero: company, then the ecosystem, on the page's own light ground.
    It reuses the graphite band's layout, with every colour set for light. ------- */
 .co-band.co-hero { border-top: 0; padding: 2rem 0 2.75rem; background: transparent; color: var(--color-ink); }
@@ -737,7 +702,7 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
   .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); }
   .page .co-hero .co-hero-link { justify-self: start; }
 }
-/* ---- Project overview: every project you are on, as owner or as supplier ---- */
+/* ---- Project view: two tables, the projects you run and the ones you supply ---- */
 .co-proj-sec { border-top: 1px solid var(--color-line); }
 .co-proj { display: grid; gap: 1.25rem; }
 /* the description sits under the title here, not across from it */
@@ -753,100 +718,19 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-sub-head { align-items: center; }
 .co-sub-head-r { display: inline-flex; align-items: baseline; gap: 1.25rem; font-size: 0.9375rem; }
 .co-sub-head-r .co-link { font-size: 0.875rem; }
-/* My projects names the section first, above its title */
-.co-sub-head-top { margin-bottom: 1.25rem; }
 /* the same column widths in both tables, so the two read as one view */
 .co-proj-tbl { table-layout: fixed; }
 .co-proj-tbl th:nth-child(1) { width: 22%; } .co-proj-tbl th:nth-child(2) { width: 19%; } .co-proj-tbl th:nth-child(3) { width: 24%; }
 .co-proj-tbl th:nth-child(4) { width: 8%; } .co-proj-tbl th:nth-child(5) { width: 10%; } .co-proj-tbl th:nth-child(6) { width: 10%; } .co-proj-tbl th:nth-child(7) { width: 7%; }
-/* My projects: the ID first, then whose project it is */
-.co-proj-dl th:nth-child(1) { width: 11%; } .co-proj-dl th:nth-child(2) { width: 19%; } .co-proj-dl th:nth-child(3) { width: 9%; } .co-proj-dl th:nth-child(4) { width: 15%; }
-.co-proj-dl th:nth-child(5) { width: 14%; } .co-proj-dl th:nth-child(6) { width: 8%; } .co-proj-dl th:nth-child(7) { width: 7%; } .co-proj-dl th:nth-child(8) { width: 11%; }
-.co-proj-dl th:nth-child(9) { width: 6%; }
-.co-proj-dl th:not(:first-child):not(:last-child), .co-proj-dl td:not(:first-child):not(:last-child) { padding-inline: 0.5rem; }
-.co-proj-dl td:nth-child(8) { white-space: nowrap; }
-/* the projects table's search and filters */
-.co-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.625rem; margin-bottom: 0.875rem; }
-.co-tools-r { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
-.co-search { position: relative; flex: 1 1 18rem; max-width: 26rem; }
-.co-search svg { position: absolute; left: 0.75rem; top: 50%; width: 1.0625rem; height: 1.0625rem; transform: translateY(-50%); color: var(--color-ink-subtle); pointer-events: none; }
-.co-search input { width: 100%; height: 2.5rem; padding: 0 0.875rem 0 2.375rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface);
-  font: inherit; font-size: 0.875rem; color: var(--color-ink); outline: none; }
-.co-search input:focus { border-color: var(--color-graphite); }
-.co-search input::placeholder { color: var(--color-sand-500); }
-.co-filt { position: relative; }
-/* The design system's filter: a ghost button opening a menu of checkbox items
-   (Flux's dropdown + menu.checkbox), headings between groups, floating shadow. */
-.co-filt-btn { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; background: transparent;
-  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); cursor: pointer; transition: background-color .14s ease; }
-.co-filt-btn:hover, .co-filt-btn[aria-expanded="true"] { background: var(--color-mid-beige); }
-.co-filt-btn > svg { width: 1rem; height: 1rem; color: var(--color-ink-subtle); }
-.co-filt-chev { transition: transform .2s var(--ease-brand); }
-.co-filt-btn[aria-expanded="true"] .co-filt-chev { transform: rotate(180deg); }
-.co-filt-n { display: grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3125rem; border-radius: 9999px; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.6875rem; font-weight: 700; }
-.co-filt-n[hidden] { display: none; }
-.co-filt-panel { position: absolute; right: 0; top: calc(100% + 0.375rem); z-index: 40; min-width: 20rem; overflow: hidden; padding: 0.375rem 0.5rem;
-  background: var(--color-surface); border-radius: 0.75rem;
-  /* it opens over the table, so it lifts clearly off it: a hairline, a close shadow and a wide soft one */
-  box-shadow: 0 0 0 1px var(--color-line), 0 4px 8px rgba(52, 52, 52, .08), 0 24px 48px -12px rgba(52, 52, 52, .28); }
-.co-filt-panel[hidden] { display: none; }
-.co-menu-h { padding: 0.5rem 0.5rem 0.25rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-subtle); }
-.co-menu-sep { height: 1px; margin: 0.5rem 0; background: var(--color-mid-beige); }
-/* the list scrolls inside the panel's padding, so options never run up to its edge */
-.co-filt-list { max-height: 24rem; overflow-y: auto; overscroll-behavior: contain; padding-block: 0.75rem; scroll-padding-block: 1rem;
-  /* rows fade out before they reach the panel's edge, top and bottom */
-  -webkit-mask-image: linear-gradient(transparent, #000 0.875rem, #000 calc(100% - 0.875rem), transparent);
-          mask-image: linear-gradient(transparent, #000 0.875rem, #000 calc(100% - 0.875rem), transparent); }
-.co-menu-i { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.5rem; border: 0; border-radius: 0.375rem; background: none; text-align: left;
-  font: inherit; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
-.co-menu-i { white-space: nowrap; }
-.co-menu-i:hover, .co-menu-i:focus-visible { background: var(--color-light-beige); outline: none; }
-/* the design system's checkbox: a square that fills graphite with a light tick */
-.co-menu-i .co-menu-c { flex: none; display: grid; place-items: center; width: 1.125rem; height: 1.125rem; margin-right: 0.25rem; border: 1.5px solid var(--color-sand-400); border-radius: 0.3125rem;
-  background: var(--color-surface); color: var(--color-off-white); transition: background-color .14s ease, border-color .14s ease; }
-.co-menu-i:hover .co-menu-c { border-color: var(--color-sand-500); }
-.co-menu-i .co-menu-c svg { width: 0.8125rem; height: 0.8125rem; visibility: hidden; }
-.co-menu-i[aria-checked="true"] .co-menu-c { background: var(--color-graphite); border-color: var(--color-graphite); }
-.co-menu-i[aria-checked="true"] .co-menu-c svg { visibility: visible; }
-.co-menu-i[data-clear] .co-menu-c, .co-menu-i[data-dclear] .co-menu-c { border: 0; background: none; color: var(--color-ink-subtle); }
-.co-tools .co-tools-clear { font-size: 0.875rem; }
-.co-tools .co-tools-clear[hidden] { display: none; }
-.co-menu-i small { margin-left: auto; padding-left: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
-.co-menu-i:disabled { color: var(--color-sand-400); cursor: not-allowed; background: none; }
-.co-tbl td.co-tbl-none { padding: 2.5rem 0.75rem; text-align: center; color: var(--color-ink-subtle); cursor: default; }
-.co-tbl tbody tr:has(.co-tbl-none), .co-tbl tbody tr:has(.co-tbl-none):hover { cursor: default; background: none; }
-/* the filters that are on, as pills you can take off one by one */
-.co-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: -0.25rem 0 0.875rem; }
-.co-pills[hidden] { display: none; }
-.co-pill { display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.375rem 0 0.75rem; border: 1px solid color-mix(in oklab, var(--color-blue) 22%, transparent); border-radius: 9999px;
-  background: var(--color-informative-subtle); font: inherit; font-size: 0.8125rem; color: var(--color-blue); cursor: pointer; transition: border-color .14s ease, background-color .14s ease; }
-.co-pill span { color: color-mix(in oklab, var(--color-blue) 75%, transparent); }
-.co-pill b { font-weight: 600; }
-.co-pill i { display: grid; place-items: center; width: 1.25rem; height: 1.25rem; border-radius: 50%; font-style: normal; font-size: 0.9375rem; line-height: 1; color: var(--color-blue); }
-.co-pill:hover { border-color: var(--color-blue); }
-.co-pill:hover i { background: var(--color-blue); color: var(--color-off-white); }
-/* under the table: the pages centred, View all on the right of the same line */
-.co-pager-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; margin-top: 1rem; }
-.co-pager-row .co-pager { grid-column: 2; margin-top: 0; }
-.co-pager-row .co-pager-all { grid-column: 3; justify-self: end; font-size: 0.875rem; }
-/* Company documentation: four columns, the status last */
-.co-docs-tbl { table-layout: fixed; min-width: 40rem; }
-.co-docs-tbl th:last-child, .co-docs-tbl td:last-child { text-align: right; } /* the status lines up on the card's right edge */
-.co-docs-tbl th:nth-child(1) { width: 46%; } .co-docs-tbl th:nth-child(2) { width: 16%; } .co-docs-tbl th:nth-child(3) { width: 18%; } .co-docs-tbl th:nth-child(4) { width: 20%; }
-/* the projects table, ten to a page */
-.co-pager { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-.co-pager[hidden] { display: none; }
-.co-pager-btns { display: flex; align-items: center; gap: 0.25rem; }
-.co-pager button { min-width: 2.25rem; height: 2.25rem; padding: 0 0.625rem; border: 1px solid transparent; border-radius: 0.5rem; background: none;
-  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); cursor: pointer; font-variant-numeric: tabular-nums; }
-.co-pager button:hover:not(:disabled) { background: var(--color-mid-beige); }
-.co-pager button[aria-current="page"] { background: var(--color-surface); border-color: var(--color-line); font-weight: 700; box-shadow: 0 1px 2px rgba(52, 52, 52, .06); }
-.co-pager button:disabled { color: var(--color-sand-400); cursor: not-allowed; }
-.co-pager .co-pager-arrow { display: inline-flex; align-items: center; gap: 0.375rem; }
-/* ownership is a fact, not a state: neutral pills, filled grey for owner, outlined for supplier */
-.co-own { background: var(--color-dark-beige); color: var(--color-ink); }
-.co-sup { background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-sand-400); }
-.co-pid { font-variant-numeric: tabular-nums; font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.01em; color: var(--color-ink-subtle); white-space: nowrap; }
+/* My projects carries a delivery deadline: a countdown, or a delayed badge once it has passed */
+.co-proj-dl th:nth-child(1) { width: 19%; } .co-proj-dl th:nth-child(2) { width: 16%; } .co-proj-dl th:nth-child(3) { width: 19%; }
+.co-proj-dl th:nth-child(4) { width: 8%; } .co-proj-dl th:nth-child(5) { width: 10%; } .co-proj-dl th:nth-child(6) { width: 10%; } .co-proj-dl th:nth-child(7) { width: 12%; } .co-proj-dl th:nth-child(8) { width: 6%; }
+.co-dl { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.co-dl-t { display: inline-flex; align-items: baseline; gap: 0.3125rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.co-dl-t b { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
+.co-dl-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.co-dl-t.is-soon b, .co-dl-t.is-soon small { color: var(--color-critical); }
+.co-dl .d { white-space: nowrap; }
 .co-proj-tbl .co-alert { min-width: 1.75rem; justify-content: center; }
 /* ---- Side menu ----------------------------------------------------------
    A white column down the left under the header. The header and the page keep the
@@ -935,7 +819,7 @@ html[data-sn="drawer"] .who-chip { margin-right: 0; padding-right: 0.25rem; }
   background: var(--color-coral); border-color: var(--color-coral); color: var(--color-off-white); }
 @media (prefers-reduced-motion: reduce) { .sn, .sn-collapse svg, .top .hdr-in, .co-wrap { transition: none !important; } }
 /* the company's logo, beside its name: who this page is about, at a glance */
-.co-id-col { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.co-id-col { display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
 .co-id-main { display: flex; align-items: center; gap: 1.25rem; min-width: 0; }
 .co-logo { flex: none; width: 5.5rem; height: 5.5rem; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(52,52,52,.06), 0 8px 20px -10px rgba(52,52,52,.35); }
 .co-logo-empty { display: grid; place-items: center; align-content: center; gap: 0.125rem; padding: 0; cursor: pointer; box-shadow: none;
@@ -1074,98 +958,99 @@ body { transition: background-color .9s ease; }
   .alma-sphere .b{opacity:0}
 }
 
-/* ---- Dividers and the rhythm between sections ---------------------------
-   Every divider is the same line as the one under the company: the width of the
-   page's column, not the window. And the same air on both sides of each:
-   section, 3rem, line, 3rem, next section. */
-:root { --sec-gap: 3rem; }
-.co-hero-id { padding-bottom: var(--sec-gap); margin-bottom: var(--sec-gap); }
-.co-band.co-hero { padding-bottom: var(--sec-gap); }
-.co-proj-sec, .co-docs-sec, .co-last-sec { border-top: 0; padding-top: 0; padding-bottom: var(--sec-gap); }
-.co-proj-sec > .co-wrap, .co-docs-sec > .co-wrap, .co-last-sec > .co-wrap { border-top: 1px solid var(--color-line); padding-top: var(--sec-gap); }
-.co-last-sec { padding-bottom: 4rem; }
-
-/* ---- Company details: the identity hero, then the full documentation profile ---- */
-.page:has(#cdetails) { max-width: none; padding: 0; margin-left: 0; }
-.cd-crumb { padding-top: 2rem; display: flex; align-items: center; gap: 0.875rem; }
-/* the way back: a left chevron in its own rounded-rect button, same family as the pager's */
-.cd-crumb-back { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--color-line); border-radius: 0.625rem;
+/* ---- Settings ------------------------------------------------------------- */
+.page:has(#settings) { max-width: none; padding: 0; margin-left: 0; }
+.eco-head { padding: 2rem 0 2rem; }
+.eco-crumbs { display: flex; align-items: center; gap: 0.875rem; margin-bottom: 1.75rem; }
+.eco-crumbs-back { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--color-line); border-radius: 0.625rem;
   background: var(--color-surface); color: var(--color-ink); text-decoration: none; transition: border-color .14s ease, background-color .14s ease; }
-.cd-crumb-back:hover { border-color: var(--color-sand-400); background: var(--color-light-beige); }
-.cd-crumb-back svg { width: 1.125rem; height: 1.125rem; }
-/* the trail itself: each level in order, the one you're on in bold */
-.cd-crumb-trail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; flex-wrap: wrap; }
-.cd-crumb-trail a, .cd-crumb-trail button { border: 0; background: none; padding: 0; margin: 0; font: inherit; color: var(--color-ink-subtle); text-decoration: none; cursor: pointer; }
-.cd-crumb-trail a:hover, .cd-crumb-trail button:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); }
-.cd-crumb-trail span[aria-hidden] { color: var(--color-sand-400); }
-.cd-crumb-trail [aria-current] { color: var(--color-ink); font-weight: 700; }
-#cd-hero[hidden] { display: none; }
-.cd-sec { padding-top: 1.5rem; padding-bottom: 4rem; }
-.cd-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin: 0 0 1.5rem; }
-.cd-drop-gap { margin-bottom: 1.5rem; }
-.cd-card { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.125rem 1.25rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
-  text-align: left; font: inherit; color: var(--color-ink); cursor: pointer; transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
-.cd-card:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
-.cd-card.is-on { border-color: var(--color-graphite); box-shadow: 0 0 0 1px var(--color-graphite); }
-.cd-card-h { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; }
-.cd-card-h svg { width: 1.0625rem; height: 1.0625rem; color: var(--color-ink-subtle); }
-.cd-card-n { font-size: 2.25rem; font-weight: 500; letter-spacing: -0.025em; line-height: 1; color: var(--color-ink); }
-.cd-card-d { font-size: 0.8125rem; line-height: 1.4; color: var(--color-ink-subtle); }
-.cd-card.is-ok .cd-card-n { color: var(--color-positive); }
-.cd-card.is-pend .cd-card-n { color: var(--color-caution); }
-.cd-card.is-bad .cd-card-n { color: var(--color-critical); }
-@media (max-width: 52rem) { .cd-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 30rem) { .cd-cards { grid-template-columns: minmax(0, 1fr); } .cd-card-n { font-size: 1.875rem; } }
-/* the documents: four areas first, each opening to its own documents (grouped further
-   when an area holds more than one category), a roster behind a row that covers several
-   people or machines */
-.cd-groups { display: flex; flex-direction: column; gap: 1.5rem; }
-.cd-areas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
-.cd-area { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.5rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
-  text-align: left; font: inherit; color: var(--color-ink); cursor: pointer; transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
-.cd-area:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
-.cd-area-h { display: flex; align-items: center; gap: 0.625rem; font-size: 1.0625rem; font-weight: 600; }
-.cd-area-h svg { width: 1.25rem; height: 1.25rem; color: var(--color-ink-subtle); }
-.cd-area-alert { display: grid; place-items: center; min-width: 1.375rem; height: 1.375rem; padding: 0 0.375rem; border-radius: 9999px;
-  background: var(--color-critical-subtle); color: var(--color-critical); font-size: 0.75rem; font-weight: 700; }
-.cd-area-arrow { margin-left: auto; color: var(--color-ink-subtle); transition: transform .2s var(--ease-brand), color .14s ease; }
-.cd-area:hover .cd-area-arrow { transform: translateX(3px); color: var(--color-coral-deep); }
-.cd-area-n { font-size: 2.25rem; font-weight: 500; letter-spacing: -0.025em; line-height: 1; }
-.cd-area-n small { margin-left: 0.5rem; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink-subtle); }
-.cd-area-d { font-size: 0.875rem; line-height: 1.4; color: var(--color-ink-subtle); }
-.cd-area-head { margin-bottom: 1.5rem; }
-.cd-area-head p { margin-top: 0.375rem; }
-.cd-group-k { align-items: baseline; margin-bottom: 0.5rem; }
-.cd-group-k .co-muted { font-size: 0.875rem; }
-/* every table in the documents section shares this shape: name, uploaded, expires, status —
-   a fixed layout so a long name truncates instead of wrapping and throwing off row heights */
-.cd-tbl { table-layout: fixed; }
-.cd-tbl th:nth-child(1) { width: 44%; } .cd-tbl th:nth-child(2) { width: 15%; } .cd-tbl th:nth-child(3) { width: 21%; } .cd-tbl th:nth-child(4) { width: 20%; }
-.cd-tbl th:last-child, .cd-tbl td:last-child { text-align: right; }
-.cd-tbl .n { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cd-tbl td:nth-child(2), .cd-tbl td:nth-child(3) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cd-tbl td:last-child { white-space: nowrap; }
-.cd-tbl tbody tr { cursor: default; }
-.cd-tbl tbody tr.is-rosterable { cursor: pointer; transition: background-color .14s ease; }
-.cd-tbl tbody tr.is-rosterable:hover, .cd-tbl tbody tr.is-rosterable:focus-visible { background: var(--color-light-beige); }
-.cd-tbl tbody tr.is-rosterable:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
-/* the open-roster chevron, right of the status badge, nudges forward on hover */
-.cd-row-open { display: inline-grid; place-items: center; margin-left: 0.5rem; vertical-align: -3px; color: var(--color-ink-subtle); transition: transform .2s var(--ease-brand), color .14s ease; }
-.cd-tbl tbody tr.is-rosterable:hover .cd-row-open { transform: translateX(3px); color: var(--color-coral-deep); }
-.cd-row-chev { width: 1.125rem; height: 1.125rem; }
-/* the count of people or machines that need attention, right beside the document's name */
-.cd-row-alert { display: inline-grid; place-items: center; min-width: 1.125rem; height: 1.125rem; margin-left: 0.5rem; padding: 0 0.3125rem; border-radius: 9999px;
-  background: var(--color-critical-subtle); color: var(--color-critical); font-size: 0.6875rem; font-weight: 700; vertical-align: 1px; }
-/* arriving straight at one document from elsewhere: a brief glow so it's easy to spot */
-.cd-tbl tbody tr.is-arrived { animation: cd-arrive 2.4s var(--ease-brand); }
-@keyframes cd-arrive { 0%, 55% { background: var(--color-light-beige); } 100% { background: none; } }
-/* a document's own page: everyone or everything behind it, searchable, not a dropdown */
-.cd-detail-tools { justify-content: space-between; margin-bottom: 0.875rem; } /* same gap to the list as the main toolbar, everywhere */
-.cd-detail-count { font-size: 0.8125rem; white-space: nowrap; }
-.cd-none { padding: 3rem 1.5rem; text-align: center; display: flex; flex-direction: column; gap: 0.5rem; }
-.cd-none .co-subtle { font-size: 0.9375rem; }
+.eco-crumbs-back:hover { border-color: var(--color-sand-400); background: var(--color-light-beige); }
+.eco-crumbs-back svg { width: 1.125rem; height: 1.125rem; }
+.eco-crumbs-trail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; flex-wrap: wrap; }
+.eco-crumbs-trail a { color: var(--color-ink-subtle); text-decoration: none; }
+.eco-crumbs-trail a:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); }
+.eco-crumbs-trail span[aria-hidden] { color: var(--color-sand-400); }
+.eco-crumbs-trail [aria-current] { color: var(--color-ink); font-weight: 700; }
+.eco-head-t { display: flex; flex-direction: column; gap: 0.875rem; max-width: 44rem; }
+.eco-head .co-h-xl { font-size: clamp(2.25rem, 3vw, 3.25rem); }
+.eco-lead { font-size: 1.0625rem; max-width: 38rem; }
+.set-body { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 2.5rem; align-items: start; padding-bottom: 5rem; }
+.set-nav { position: sticky; top: 6rem; display: flex; flex-direction: column; gap: 0.125rem; }
+.set-nav a { position: relative; display: block; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink-subtle); text-decoration: none; }
+.set-nav a:hover { background: var(--color-mid-beige); color: var(--color-ink); }
+.set-nav a.is-on { color: var(--color-ink); font-weight: 600; }
+.set-nav a.is-on::before { content: ""; position: absolute; left: 0; top: 0.5rem; bottom: 0.5rem; width: 3px; border-radius: 3px; background: var(--color-coral); }
+.set-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.set-card { padding: 1.75rem; gap: 1.25rem; scroll-margin-top: 6rem; }
+.set-card-h { display: flex; flex-direction: column; gap: 0.25rem; }
+.set-card-h h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; }
+.set-card-h p { font-size: 0.9375rem; max-width: 40rem; }
+.set-sub { font-size: 1rem; font-weight: 600; }
+.set-sep { height: 1px; background: var(--color-mid-beige); }
+.set-photo { display: flex; align-items: center; gap: 1.25rem; }
+.set-pic { flex: none; display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 50%; overflow: hidden; background: var(--color-graphite); color: var(--color-off-white); font-size: 1.5rem; font-weight: 600; }
+.set-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.set-photo-t { display: flex; flex-direction: column; gap: 0.375rem; }
+.set-photo-t .co-subtle { font-size: 0.8125rem; }
+.set-photo-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.set-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+#language .set-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.set-f { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+.set-f-wide { grid-column: 1 / -1; }
+.set-f label { font-size: 0.8125rem; font-weight: 600; }
+.set-opt { font-weight: 400; color: var(--color-sand-500); }
+.set-card .input { width: 100%; height: 2.875rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-off-white);
+  font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; transition: border-color .14s ease, background-color .14s ease; }
+.set-card .input:hover { border-color: var(--color-sand-400); }
+.set-card .input:focus { border-color: var(--color-graphite); background: var(--color-surface); }
+.set-card .input.is-bad { border-color: var(--color-critical); }
+.set-card select.input { appearance: none; padding-right: 2.25rem; cursor: pointer;
+  background: var(--color-off-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 0.75rem center / 1rem no-repeat; }
+.set-phone { display: flex; gap: 0.5rem; }
+.set-phone select.input { width: 7.5rem; flex: none; }
+.set-hint { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.set-err { font-size: 0.8125rem; color: var(--color-critical); }
+.set-err:empty { display: none; }
+.set-pw { position: relative; display: block; }
+.set-pw .input { padding-right: 2.75rem; }
+.set-eye { position: absolute; right: 0.375rem; top: 50%; transform: translateY(-50%); width: 2.125rem; height: 2.125rem; border: 0; border-radius: 0.5rem; background: none; cursor: pointer; color: var(--color-ink-subtle);
+  display: grid; place-items: center; }
+.set-eye:hover { background: var(--color-light-beige); color: var(--color-ink); }
+.set-eye svg { width: 1.125rem; height: 1.125rem; }
+.set-rules { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+.set-rules li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.set-rules li::before { content: ""; width: 0.875rem; height: 0.875rem; border-radius: 50%; border: 1.5px solid var(--color-sand-400); }
+.set-rules li.is-ok { color: var(--color-ink); }
+.set-rules li.is-ok::before { border-color: var(--color-positive); background: var(--color-positive) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center / 0.625rem no-repeat; }
+.set-foot { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
+.set-foot-l { justify-content: flex-start; gap: 0.75rem; }
+.set-saved { font-size: 0.875rem; color: var(--color-positive); font-weight: 500; }
+/* a button with nothing to do looks it */
+.set-card .btn:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
+.set-list { padding: 0; }
+.set-row { padding: 0.25rem 0; border-bottom: 0; }
+.set-sessions { display: flex; flex-direction: column; }
+.set-sessions li { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.set-sessions li:last-child { border-bottom: 0; }
+.set-dev { flex: none; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.625rem; background: var(--color-light-beige); color: var(--color-ink); }
+.set-dev svg { width: 1.25rem; height: 1.25rem; }
+.set-dev-t { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.set-dev-t b { font-weight: 500; font-size: 0.9375rem; }
+.set-dev-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.set-danger { border: 1px solid var(--color-critical-subtle); background: var(--color-critical-subtle); color: var(--color-critical); }
+.set-danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
+@media (max-width: 64rem) {
+  .set-body { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .set-nav { position: static; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 0.25rem; padding-bottom: 0.25rem; }
+  .set-nav a { white-space: nowrap; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 9999px; padding: 0.375rem 0.875rem; font-size: 0.875rem; }
+  .set-nav a.is-on { border-color: var(--color-graphite); }
+  .set-nav a.is-on::before { display: none; }
+}
 @media (max-width: 40rem) {
-  .cd-areas { grid-template-columns: minmax(0, 1fr); }
+  .set-grid, #language .set-grid { grid-template-columns: minmax(0, 1fr); }
+  .set-card { padding: 1.25rem; }
+  .set-photo { align-items: flex-start; }
 }
 </style>
 <link rel="stylesheet" href="css/esg.css">
@@ -1209,7 +1094,7 @@ body { transition: background-color .9s ease; }
     <a class="sn-item" href="my-company.html?filled" data-sn="go" title="Company overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg><span class="sn-l">Company overview</span></a>
     <div class="sn-sep" role="separator"></div>
     <a class="sn-item persona-miguel-only sn-proj" href="my-company.html?filled#projects" data-sn="go" title="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg><span class="sn-l">Projects</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="Batch / Shipment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg><span class="sn-l">Batch / Shipment</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="Origin parcel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg><span class="sn-l">Origin parcel</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="Supplier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg><span class="sn-l">Supplier</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="EU importer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5"/></svg><span class="sn-l">EU importer</span></a>
-    <a class="sn-item is-on" href="#" data-sn="here" aria-current="page" title="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span class="sn-l">Documents</span></a>
+    <a class="sn-item" href="company-details.html" data-sn="go" title="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span class="sn-l">Documents</span></a>
     <a class="sn-item" href="my-company.html?filled#consents" data-sn="go" title="Consents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span class="sn-l">Consents</span></a>
     <a class="sn-item" href="questionnaires.html" data-sn="go" title="Questionnaires"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg><span class="sn-l">Questionnaires</span></a>
     <div class="sn-sep" role="separator"></div>
@@ -1229,80 +1114,93 @@ body { transition: background-color .9s ease; }
 <div class="sn-scrim" id="sn-scrim" hidden></div>
 
 <main class="page">
-<div id="cdetails">
+<div id="settings" class="cp">
 
-  <!-- Already inside the company's own area: a way back, not the identity hero again.
-       The trail grows a level for every area or document opened; the back button always
-       pops exactly one. Both are filled in by script, state after state. -->
-  <div class="co-wrap cd-crumb">
-    <button type="button" class="cd-crumb-back" id="cd-crumb-back" aria-label="Back"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></button>
-    <nav class="cd-crumb-trail" id="cd-crumb-trail" aria-label="Breadcrumb"></nav>
-  </div>
-
-  <!-- The documentation profile: every document the company or ALMA has on file, built the
-       way the C-MORE Subcontractor Documentation Profile groups them — company, workers,
-       equipment, materials — so the same set can be read by any client without re-asking. -->
-  <section class="co-sec cd-sec"><div class="co-wrap">
-    <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Documentation profile</h3></div>
-    <div class="cd-hero" id="cd-hero">
-    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l" id="cd-h2">All company documents</h2><p class="co-muted" id="cd-sub">Everything you or ALMA have uploaded, kept in one profile so any client finds the same set. Reused across every project &mdash; only what a specific site needs gets added to it.</p></div>
-
-    <div class="co-drop co-drop-h cd-drop-gap" id="cd-drop" role="button" tabindex="0" aria-label="Drop documents on ALMA, or press to browse">
-      <span class="alma-media" aria-hidden="true">
-<span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>
-      </span>
-      <span class="co-drop-w">
-        <span class="eyebrow">ALMA</span>
-        <span class="co-drop-t" id="cd-drop-t">Drop new or renewed documents on me.</span>
-        <span class="co-muted co-drop-s" id="cd-drop-s">PDF, scan, a photo of it on the wall. I read each one, date it and file it in the profile below. <a href="#" id="cd-browse">Or browse on your device</a></span>
-      </span>
-      <span class="co-drop-acts" id="cd-drop-acts" hidden>
-        <button type="button" class="btn btn-primary" id="cd-hand">Hand it to ALMA</button>
-        <button type="button" class="link-btn" id="cd-again">Choose another</button>
-      </span>
-      <input type="file" id="cd-file" hidden>
+  <section class="eco-head set-head"><div class="co-wrap">
+    <nav class="eco-crumbs" aria-label="Breadcrumb">
+      <a class="eco-crumbs-back" href="my-company.html?filled" aria-label="Back to My company"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></a>
+      <span class="eco-crumbs-trail"><a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><span aria-current="page">Company profile</span></span>
+    </nav>
+    <div class="eco-head-t">
+      <span class="eyebrow">Company profile</span>
+      <h1 class="co-h-xl" style="font-weight:300">Your company,<br><span style="font-weight:600">as clients see it.</span></h1>
+      <p class="co-muted eco-lead">Its name, logo and address, how to reach it, and which clients may see its documents. What you change here shows on your company page.</p>
     </div>
-
-    <div class="cd-cards" role="list">
-      <button type="button" class="cd-card" data-status="" role="listitem">
-        <span class="cd-card-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span>On file</span></span>
-        <span class="cd-card-n" id="cd-total">0</span>
-        <span class="cd-card-d" id="cd-card-total-d">Every document uploaded for the company.</span>
-      </button>
-      <button type="button" class="cd-card is-ok" data-status="ok" role="listitem">
-        <span class="cd-card-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span>In conformity</span></span>
-        <span class="cd-card-n" id="cd-ok">0</span>
-        <span class="cd-card-d">Current, and nothing to do.</span>
-      </button>
-      <button type="button" class="cd-card is-pend" data-status="pend" role="listitem">
-        <span class="cd-card-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/></svg><span>Pending</span></span>
-        <span class="cd-card-n" id="cd-pend">0</span>
-        <span class="cd-card-d">Waiting on a review or a renewal.</span>
-      </button>
-      <button type="button" class="cd-card is-bad" data-status="bad" role="listitem">
-        <span class="cd-card-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v3.75m0 3.75h.008v.008H12v-.008ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg><span>Non conform</span></span>
-        <span class="cd-card-n" id="cd-bad">0</span>
-        <span class="cd-card-d">Expired, or missing what it needs.</span>
-      </button>
-    </div>
-
-    <div class="co-tools" data-tools-for="cd-tbl">
-      <label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by code, document or category" aria-label="Search documents" data-q></label>
-      <div class="co-tools-r">
-        <button type="button" class="link-btn co-tools-clear" data-clear hidden>Clear filters</button>
-        <div class="co-filt">
-          <button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="false" data-filt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n" data-filt-n hidden></span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button>
-          <div class="co-filt-panel" role="menu" aria-label="Filter documents" data-filt-panel hidden></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="co-pills" data-pills hidden aria-label="Applied filters"></div>
-    </div>
-
-    <div class="cd-groups" id="cd-groups"></div>
   </div></section>
 
+  <div class="co-wrap set-body">
+    <nav class="set-nav" aria-label="Company profile sections">
+      <a href="#company" class="is-on">Company</a>
+      <a href="#address">Address</a>
+      <a href="#contacts">Contacts</a>
+      <a href="#consents">Consents</a>
+    </nav>
+
+    <div class="set-main">
+
+      <!-- Company -->
+      <section class="co-card set-card" id="company" aria-labelledby="h-company">
+        <div class="set-card-h"><h2 id="h-company">Company</h2><p class="co-subtle">How your company appears to clients and suppliers on C&#8209;MORE.</p></div>
+        <div class="set-photo">
+          <span class="set-pic cp-logo" id="cp-logo" aria-hidden="true"></span>
+          <div class="set-photo-t">
+            <div class="set-photo-acts"><button type="button" class="btn co-btn-light btn-sm" id="cp-logo-up">Upload a logo</button><button type="button" class="link-btn" id="cp-logo-rm">Remove</button></div>
+            <span class="co-subtle">PNG or JPG. A square logo works best.</span>
+          </div>
+          <input type="file" id="cp-logo-file" accept="image/png,image/jpeg,image/webp" hidden>
+        </div>
+        <form class="set-form" data-cp novalidate>
+          <div class="set-grid">
+            <div class="set-f"><label for="cp-name">Legal name</label><input class="input" id="cp-name" data-k="name" autocomplete="organization" required></div>
+            <div class="set-f"><label for="cp-trading">Trading name <span class="set-opt">(optional)</span></label><input class="input" id="cp-trading" data-k="trading" placeholder="If clients know you by another name"></div>
+            <div class="set-f"><label for="cp-activity">What you do</label><input class="input" id="cp-activity" data-k="activity" placeholder="General contractor, exporter…"></div>
+            <div class="set-f"><label for="cp-people">People</label><input class="input" id="cp-people" data-k="people" inputmode="numeric" placeholder="24"></div>
+            <div class="set-f"><label for="cp-form">Legal form</label><input class="input" id="cp-form" data-k="form" placeholder="Delaware LLC"></div>
+            <div class="set-f"><label for="cp-tax">Tax number (EIN)</label><input class="input" id="cp-tax" data-k="tax" placeholder="12-3456789"></div>
+          </div>
+          <p class="set-err" role="alert"></p>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <!-- Address -->
+      <section class="co-card set-card" id="address" aria-labelledby="h-address">
+        <div class="set-card-h"><h2 id="h-address">Address</h2><p class="co-subtle">Where the company is registered. The city and state show on your company page.</p></div>
+        <form class="set-form" data-cp novalidate>
+          <div class="set-grid">
+            <div class="set-f set-f-wide"><label for="cp-street">Street</label><input class="input" id="cp-street" data-k="street" autocomplete="street-address"></div>
+            <div class="set-f"><label for="cp-city">City</label><input class="input" id="cp-city" data-k="city" autocomplete="address-level2"></div>
+            <div class="set-f"><label for="cp-region">State or region</label><input class="input" id="cp-region" data-k="region" autocomplete="address-level1"></div>
+            <div class="set-f"><label for="cp-postcode">Postcode</label><input class="input" id="cp-postcode" data-k="postcode" autocomplete="postal-code"></div>
+            <div class="set-f"><label for="cp-country">Country</label><select class="input" id="cp-country" data-k="country" autocomplete="country-name"></select></div>
+          </div>
+          <p class="set-err" role="alert"></p>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <!-- Contacts -->
+      <section class="co-card set-card" id="contacts" aria-labelledby="h-contacts">
+        <div class="set-card-h"><h2 id="h-contacts">Contacts</h2><p class="co-subtle">How clients and suppliers reach the company — not you personally; your own details are in <a href="settings.html#profile">Settings</a>.</p></div>
+        <form class="set-form" data-cp novalidate>
+          <div class="set-grid">
+            <div class="set-f set-f-wide"><label for="cp-email">Company email</label><input class="input" id="cp-email" data-k="email" type="email" autocomplete="email"></div>
+            <div class="set-f set-f-wide"><label for="cp-phone">Phone</label><div class="set-phone"><select class="input" id="cp-cc" data-k="cc" aria-label="Country code"></select><input class="input" id="cp-phone" data-k="phone" type="tel" inputmode="tel" autocomplete="tel-national"></div></div>
+            <div class="set-f set-f-wide"><label for="cp-website">Website <span class="set-opt">(optional)</span></label><input class="input" id="cp-website" data-k="website" inputmode="url" placeholder="yourcompany.com"></div>
+          </div>
+          <p class="set-err" role="alert"></p>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <!-- Consents -->
+      <section class="co-card set-card" id="consents" aria-labelledby="h-consents">
+        <div class="set-card-h"><h2 id="h-consents">Consents</h2><p class="co-subtle">Clients who asked to see your documents. Nothing is shared until you say yes, and you can stop sharing at any time. What C&#8209;MORE itself may do with your information is in <a href="settings.html#consents">Settings</a>.</p></div>
+        <div class="co-list set-list" id="cp-consents"></div>
+      </section>
+
+    </div>
+  </div>
 </div>
 </main>
 
@@ -1350,7 +1248,7 @@ body { transition: background-color .9s ease; }
 })();
 </script>
 <script>
-/* Side menu: jump to this page's sections and mark the one in view; a drawer on phones. */
+/* Side menu: the company page's places, a drawer on phones. */
 (() => {
   const sn = document.getElementById('sn'); if (!sn) return;
   const items = [...sn.querySelectorAll('.sn-item')];
@@ -1358,7 +1256,7 @@ body { transition: background-color .9s ease; }
   const page = () => document.querySelector('#filled:not([hidden])') || document.querySelector('#empty:not([hidden])');
   const target = (key) => {
     const p = page(); if (!p) return null;
-    if (key === 'docs') return p.querySelector('.co-docs-sec');
+    if (key === 'docs') { const h = [...p.querySelectorAll('h2')].find((e) => e.textContent.trim() === 'Documents'); return h && h.closest('section'); }
     return key.startsWith('.') ? p.querySelector(key) : null;
   };
   const root = document.documentElement, collapseBtn = document.getElementById('sn-collapse');
@@ -1386,8 +1284,7 @@ body { transition: background-color .9s ease; }
     e.preventDefault();
     const key = a.dataset.sn;
     if (key === 'go') { location.href = a.getAttribute('href'); return; }
-    if (key === 'here') { drawer(false); return; }
-    if (key === 'go') { location.href = a.getAttribute('href'); return; }
+    if (key === 'here') { drawer(false); scrollTo({ top: 0, behavior: 'smooth' }); return; }
     if (key === 'logout') { const out = document.getElementById('who-logout'); if (out) out.click(); return; }
     if (key === 'soon') { drawer(false); return; } // prototype: not built yet
     drawer(false);
@@ -1395,9 +1292,19 @@ body { transition: background-color .9s ease; }
     const t = target(key); if (!t) return;
     scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8, behavior: 'smooth' });
   }));
-  document.querySelectorAll('.co-k[data-go]').forEach((k) => k.addEventListener('click', (e) => { e.preventDefault(); const t = target(k.dataset.go); if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8, behavior: 'smooth' }); }));
   // the section in view is the one marked
   const spy = ['.co-proj-sec', 'docs', '.co-last-sec'];
+  const mark = () => {
+    if (!page()) return; // not the company page: the marked item is set in the markup
+    let on = 'top';
+    spy.forEach((k) => { const t = target(k); if (t && t.getBoundingClientRect().top < innerHeight * 0.4) on = k; });
+    items.forEach((a) => { const is = a.dataset.sn === on; a.classList.toggle('is-on', is); if (is) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+  };
+  addEventListener('scroll', mark, { passive: true }); addEventListener('resize', mark);
+  setTimeout(mark, 50);
+  // arriving from another page at one of these sections (#projects, #documents, #consents)
+  const jump = { '#projects': '.co-proj-sec', '#documents': 'docs', '#consents': '.co-last-sec' }[location.hash];
+  if (jump) setTimeout(() => { const t = target(jump); if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8 }); }, 80);
   // the counts are kept by the notifications panel's script (what is unread, and none on the empty company)
 })();
 </script>
@@ -1405,7 +1312,7 @@ body { transition: background-color .9s ease; }
 <script src="js/esg-notify.js"></script>
 <script>
 /* Notifications: the bell opens its panel (so does the menu's Notifications); a notification
-   goes to its section on this page and is marked read; the counts follow what is unread. */
+   opens its section on the company page and is marked read; the counts follow what is unread. */
 (() => {
   const nt = document.getElementById('nt'), bell = document.getElementById('hdr-bell'); if (!nt) return;
   const items = [...nt.querySelectorAll('.nt-item')];
@@ -1431,7 +1338,8 @@ body { transition: background-color .9s ease; }
   count();
 })();
 </script>
-<script src="js/company-details.js"></script>
+<script src="js/co-profile.js"></script>
+<script src="js/company-profile.js"></script>
 <script>
 /* The header carries no hairline at rest; once the page scrolls, a soft shadow takes over
    the same job of separating it from the content sliding underneath. */

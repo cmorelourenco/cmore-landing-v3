@@ -382,3 +382,7 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .esgq-c-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .esgq-c-me { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; }
 .esgq-c-none { font-size: 0.875rem; color: var(--color-ink-subtle); }
+
+/* ---- the company's logo: square-cornered on its profile, initials when there is none ---- */
+.cp-logo { border-radius: 1.25rem; font-size: 1.5rem; letter-spacing: -0.02em; }
+.co-logo-ini { display: grid; place-items: center; background: var(--color-graphite); color: var(--color-off-white); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
