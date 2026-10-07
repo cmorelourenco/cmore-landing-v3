@@ -73,7 +73,7 @@ window.ESG_UPLOAD = (() => {
     const n = good().length;
     $('#up-body').innerHTML = `<div class="up-pick">
         <div><span class="up-k">From your computer</span>
-          <div class="up-zone" id="up-zone" role="button" tabindex="0" aria-label="Drag your documents here, or press to browse your computer">${ICON.up}<span class="up-zone-t"><b>Drag your documents here</b><span>or <u>browse your computer</u></span><small>PDF, XLSX, DOCX, TXT, JPG, PNG · max 10 MB each</small></span></div></div>
+          <div class="up-zone" id="up-zone" role="button" tabindex="0" aria-label="Drag your documents here, or press to browse your computer">${ICON.up}<span class="up-zone-t"><b>Drag your documents here</b><span>or <u>browse your computer</u></span><small>PDF, XLSX, DOCX, TXT, JPG, PNG<br>Up to 10 MB each</small></span></div></div>
         <span class="up-or">or</span>
         <div class="up-lib"><span class="up-k" id="up-q-k">From your Documents</span><label class="co-search">${ICON.search}<input type="search" id="up-q" autocomplete="off" placeholder="Search by file name" aria-labelledby="up-q-k"></label>
           <div class="up-results" id="up-res" hidden></div><p>Everything you have already added to C&#8209;MORE is in Documents. Pick from there and nothing needs uploading again.</p></div>

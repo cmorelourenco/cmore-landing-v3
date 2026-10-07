@@ -262,15 +262,15 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 #up-dlg .dlg-card { max-width: 50rem; }
 #up-dlg .dlg-body { padding: 1.25rem 1.5rem 0.25rem; }
 #up-dlg .dlg-foot { padding: 1rem 1.5rem; border-top: 1px solid var(--color-line); margin-top: 1rem; }
-#up-dlg .up-pick { gap: 1rem; align-items: end; }
-#up-dlg .up-zone { flex-direction: row; justify-content: flex-start; gap: 0.875rem; min-height: 4.5rem; height: auto; padding: 0.625rem 1rem; text-align: left; border-radius: 0.75rem; }
-#up-dlg .up-zone svg { flex: none; width: 1.5rem; height: 1.5rem; margin: 0; }
-.up-zone-t { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+#up-dlg .up-pick { gap: 1.25rem; align-items: start; }
+#up-dlg .up-zone { flex-direction: row; justify-content: flex-start; gap: 1.125rem; min-height: 6.5rem; height: auto; padding: 1.25rem 1.5rem; text-align: left; border-radius: 0.875rem; }
+#up-dlg .up-zone svg { flex: none; box-sizing: content-box; width: 1.25rem; height: 1.25rem; padding: 0.75rem; margin: 0; border-radius: 50%; background: var(--color-light-beige); color: var(--color-ink); }
+.up-zone-t { display: flex; flex-direction: column; gap: 0.1875rem; min-width: 0; line-height: 1.45; }
 .up-zone-t b { font-size: 0.9375rem; }
 .up-zone-t span, .up-zone-t small { font-size: 0.8125rem; }
-.up-zone-t small { margin-top: 0.125rem; font-size: 0.75rem; }
-#up-dlg .up-or { padding-bottom: 1.625rem; }
-#up-dlg .up-lib p { margin-top: 0.5rem; min-height: 2.25rem; font-size: 0.75rem; }
+.up-zone-t small { margin-top: 0.375rem; font-size: 0.75rem; }
+#up-dlg .up-or { align-self: center; padding-top: 1.5rem; }
+#up-dlg .up-lib p { margin-top: 0.75rem; font-size: 0.8125rem; line-height: 1.5; }
 #up-dlg .up-results { position: absolute; left: 0; right: 0; top: 4.375rem; z-index: 3; margin: 0; background: var(--color-surface); box-shadow: 0 12px 32px -12px rgba(52, 52, 52, .3); }
 #up-dlg .up-sec { margin-top: 1.25rem; }
 #up-dlg .up-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
