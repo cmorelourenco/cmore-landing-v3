@@ -779,7 +779,10 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-ship-tbl th:nth-child(1) { width: 15%; } .co-ship-tbl th:nth-child(2) { width: 27%; } .co-ship-tbl th:nth-child(3) { width: 21%; }
 .co-ship-tbl th:nth-child(4) { width: 23%; } .co-ship-tbl th:nth-child(5) { width: 14%; }
 .co-prod-tbl th:last-child, .co-prod-tbl td:last-child, .co-ship-tbl th:last-child, .co-ship-tbl td:last-child { text-align: right; }
-.co-prod-tbl td, .co-ship-tbl td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* every column truncates a long value rather than wrapping it — except Status, whose
+   badge is short and fixed-width and should never be cut down to an ellipsis */
+.co-prod-tbl td:not(:last-child), .co-ship-tbl td:not(:last-child) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.co-prod-tbl td:last-child, .co-ship-tbl td:last-child { white-space: nowrap; }
 .co-prod-tbl .n, .co-ship-tbl .n { font-weight: 500; }
 /* the projects table's search and filters */
 .co-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.625rem; margin-bottom: 0.875rem; }
