@@ -379,7 +379,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
           <button type="button" class="btn btn-sso" data-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
         </div>
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
-        <p class="hint" style="margin-top:0.75rem;text-align:center">Prototype: try <button type="button" class="link-btn" data-try>Miguel Ferreira</button></p>
+        <p class="hint" style="margin-top:0.75rem;text-align:center">Prototype: try <button type="button" class="link-btn" data-try="m">Miguel Ferreira</button> or <button type="button" class="link-btn" data-try="f">Beatriz Nogueira</button></p>
       </section>
 
       <!-- 2. Code: verifies the email -->
@@ -486,6 +486,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt' };
+  const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@ferreiraconstrucoes.pt' } };
   const initials = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
 
   let person = null; // { name, email, via }
@@ -502,10 +503,11 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     emailIn.addEventListener(ev, () => { clear(emailIn, emailErr); ready(); });
   });
   addEventListener('pageshow', ready); // a restored page or the browser's autofill can fill them without an input event
-  $('[data-try]').addEventListener('click', () => {
-    nameIn.value = EXAMPLE.name; emailIn.value = EXAMPLE.email;
+  document.querySelectorAll('[data-try]').forEach((b) => b.addEventListener('click', () => {
+    const ex = EXAMPLES[b.dataset.try];
+    nameIn.value = ex.name; emailIn.value = ex.email;
     clear(nameIn, nameErr); clear(emailIn, emailErr); ready(); emailIn.focus();
-  });
+  }));
   $('#f-signup').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = nameIn.value.trim(), email = emailIn.value.trim();
