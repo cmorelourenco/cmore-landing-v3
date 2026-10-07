@@ -332,7 +332,11 @@
     tools.hidden = !!detail;
     pills.hidden = !!detail;
     if (detail) { renderDetail(detail); return; }
-    if (!area && !filtering()) renderHome(); else renderGroups();
+    // the four area cards aren't a list to filter — Filter only earns its place once
+    // there's an actual document table on screen, grouped or not
+    const onHome = !area && !filtering();
+    tools.querySelector('.co-filt').hidden = onHome;
+    if (onHome) renderHome(); else renderGroups();
 
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
     pills.hidden = !on.length;
