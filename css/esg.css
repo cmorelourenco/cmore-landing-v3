@@ -386,3 +386,30 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* ---- the company's logo: square-cornered on its profile, initials when there is none ---- */
 .cp-logo { border-radius: 1.25rem; font-size: 1.5rem; letter-spacing: -0.02em; }
 .co-logo-ini { display: grid; place-items: center; background: var(--color-graphite); color: var(--color-off-white); font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+
+/* ---- a later batch of documents: what she has read, and what to redo ---- */
+.up-read summary { text-transform: none; letter-spacing: 0; font-size: 0.875rem; color: var(--color-ink); }
+.up-read-n { margin-left: 0.5rem; margin-right: auto; font-weight: 500; color: var(--color-ink-subtle); }
+.up-read-list { display: flex; flex-direction: column; gap: 0.375rem; padding: 0 0.875rem 0.875rem; }
+.up-read-list li { display: flex; align-items: center; gap: 0.625rem; font-size: 0.875rem; }
+.up-read-list li b { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+.up-read-list li.is-unused b { color: var(--color-ink-subtle); }
+.up-read-list .up-ico { width: 1.75rem; height: 1.75rem; }
+.up-redo { margin-top: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.up-redo h3 { font-size: 1rem; font-weight: 600; }
+.up-redo > p { font-size: 0.875rem; color: var(--color-ink-subtle); margin-bottom: 0.25rem; }
+.up-choice { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.875rem 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; cursor: pointer; transition: border-color .14s ease, background-color .14s ease; }
+.up-choice:hover { border-color: var(--color-sand-400); }
+.up-choice.is-on { border-color: var(--color-graphite); background: var(--color-off-white); }
+.up-choice input { flex: none; margin: 0.1875rem 0 0; width: 1rem; height: 1rem; accent-color: var(--color-graphite); }
+.up-choice > span { display: flex; flex-direction: column; gap: 0.125rem; }
+.up-choice b { font-size: 0.9375rem; font-weight: 600; }
+.up-choice > span > span { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.up-tags { margin: -0.125rem 0 0.25rem 1.75rem; padding: 0.75rem 0.875rem; border: 1px solid var(--color-line); border-radius: 0.75rem; }
+.up-tags-h { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.up-tags ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.25rem 1rem; }
+.up-tags label { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0; cursor: pointer; }
+.up-tags label.is-empty { opacity: .5; cursor: default; }
+.up-tags input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--color-graphite); }
+.up-tags-n { margin-left: auto; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+@media (max-width: 40rem) { .up-tags { margin-left: 0; } .up-tags ul { grid-template-columns: 1fr; } }

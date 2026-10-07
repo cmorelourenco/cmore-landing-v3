@@ -50,7 +50,7 @@
   const grow = (t) => { t.style.height = 'auto'; t.style.height = t.scrollHeight + (t.offsetHeight - t.clientHeight) + 'px'; };
   const shown = new Set(); // whose citations are open
   const chip = (text, cls, title) => `<span class="chip ${cls}"${title ? ` title="${esc(title)}"` : ''}>${text}</span>`;
-  const cites = (q) => (q.a && q.a.cite) || [];
+  const cites = (q, key) => (key && s.meta[key] && s.meta[key].cite) || (q.a && q.a.cite) || [];
   const OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 6H18v4.5M18 6l-7.5 7.5M16.5 13.5V18H6V7.5h4.5"/></svg>';
   const quote = (c, key, n) => {
     const i = c.match ? c.quote.indexOf(c.match) : -1;
@@ -70,7 +70,7 @@
     const note = rowEl.querySelector('[data-note]');
     const why = ESG.reason(q, key, s);
     if (m && why) {
-      const list = m.by === 'alma' && !m.rejected ? cites(q) : [];
+      const list = m.by === 'alma' && !m.rejected ? cites(q, key) : [];
       const open = shown.has(key);
       note.hidden = false;
       note.innerHTML = `<p><span class="esgq-note-k">ALMA</span>${esc(why)}</p>`
@@ -80,7 +80,7 @@
     const tags = [];
     const answeredRow = na || (ESG.has(v) && !p);
     if (m && m.by === 'alma' && !m.rejected) {
-      tags.push(chip('Answered by ALMA', 'is-alma', 'Read from ' + ((q.a && q.a.src) || 'your documents')));
+      tags.push(chip('Answered by ALMA', 'is-alma', 'Read from ' + (m.src || (q.a && q.a.src) || 'your documents')));
       if (m.approved) tags.push(chip('Approved by you', 'is-you', 'You approved ALMA’s answer — she was unsure of it.'));
       else { const c = CONF[m.conf] || CONF.medium; tags.push(chip(c[0], c[1], c[2])); }
       if (m.edited) tags.push(chip('Edited by you', 'is-you', 'You changed ALMA’s answer.'));
@@ -217,7 +217,7 @@
     const del = e.target.closest('[data-uncomment]');
     if (del) { const [k, i] = del.dataset.uncomment.split('|'); (s.comments[k] || []).splice(+i, 1); if (!s.comments[k].length) { delete s.comments[k]; if (s.meta[k]) s.meta[k].commented = false; } ESG.save(s); syncCard(k.split('.')[0]); totals(); return; }
     const o = e.target.closest('[data-open]');
-    if (o) { ESG_DOC.open(cites(Q[o.dataset.open]), +o.dataset.i); return; }
+    if (o) { ESG_DOC.open(cites(Q[o.dataset.open], o.dataset.open), +o.dataset.i); return; }
     const b = e.target.closest('[data-approve], [data-reject], [data-src]'); if (!b) return;
     if (b.dataset.src) { const k = b.dataset.src; shown.has(k) ? shown.delete(k) : shown.add(k); syncRow(k); return; }
     const key = b.dataset.approve || b.dataset.reject, m = s.meta[key];
@@ -283,19 +283,22 @@
     drop.setAttribute('aria-label', ['new', 'started'].includes(st) ? 'Drop documents on ALMA, or press to choose them' : 'ALMA');
     drop.tabIndex = ['new', 'started'].includes(st) ? 0 : -1;
     if (st === 'reading') {
-      const docs = s.alma.docs, pct = ESG.almaPct(s), i = Math.min(docs.length - 1, Math.floor((pct / 100) * docs.length));
+      const docs = ESG.reading(s).docs, pct = ESG.almaPct(s), i = Math.min(docs.length - 1, Math.floor((pct / 100) * docs.length));
       pt.textContent = 'Reading your documents';
-      ps.textContent = `${docs[i].name} · ${i + 1} of ${docs.length}. You can keep answering meanwhile — I won’t touch anything you have filled in.`;
+      ps.textContent = `${docs[i].name} · ${i + 1} of ${docs.length}. ` + (s.alma.pending ? 'I’ll tell you what changed when I’m done.' : 'You can keep answering meanwhile — I won’t touch anything you have filled in.');
       pm.hidden = false; pm.querySelector('i').style.width = pct + '%';
-      if (shownState !== st) pa.innerHTML = '';
+      if (shownState !== st) { pa.innerHTML = ''; pa.dataset.v = ''; }
       if (!tick) tick = setInterval(() => { if (ESG.status(s) !== 'reading') { clearInterval(tick); tick = null; finish(); } else panel(); }, 300);
     } else if (st === 'review') {
-      const c = ESG.counts(s), n = s.alma.answered || 0;
-      pt.textContent = n ? `I answered ${n} question${n === 1 ? '' : 's'} from your documents.` : 'I read your documents, but found nothing I could answer from them.';
+      const c = ESG.counts(s), n = s.alma.answered || 0, L = s.alma.last, pl = (k, w) => `${k} ${w}${k === 1 ? '' : 's'}`;
+      pt.textContent = !L ? (n ? `I answered ${pl(n, 'question')} from your documents.` : 'I read your documents, but found nothing I could answer from them.')
+        : L.mode === 'gaps' ? (L.n ? `I answered ${L.n} of the ${pl(L.m, 'question')} that were still empty.` : 'The new documents don’t answer any of the questions still empty.')
+        : L.mode === 'pick' ? `I looked again at ${pl(L.n, 'answer')} with the new documents; everything else is untouched.`
+        : `I started over and answered ${pl(L.n, 'question')} from all ${L.docs} documents.`;
       ps.textContent = c.needs ? `${c.needs} still need${c.needs === 1 ? 's' : ''} you — they’re marked below. Check my answers, then submit when everything is in.` : 'Nothing is waiting on you. Have a last look, then submit.';
       pm.hidden = true;
       const want = c.needs ? 'needs' : 'none';
-      if (pa.dataset.v !== want) { pa.dataset.v = want; pa.innerHTML = c.needs ? '<button type="button" class="btn btn-quiet btn-sm" id="qd-needs">Show what needs you</button>' : ''; }
+      if (pa.dataset.v !== want) { pa.dataset.v = want; pa.innerHTML = '<button type="button" class="btn btn-quiet btn-sm" id="qd-more">Add documents</button>' + (c.needs ? '<button type="button" class="btn btn-quiet btn-sm" id="qd-needs">Show what needs you</button>' : ''); }
     } else if (st === 'submitted') {
       const d = new Date(s.submitted);
       pt.textContent = `Submitted on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}.`;
@@ -309,18 +312,35 @@
     }
     shownState = st;
   };
-  const canTake = () => ['new', 'started'].includes(ESG.status(s));
-  const upload = (files) => { if (canTake()) ESG_UPLOAD.open(files, handed); };
-  const handed = (docs) => {
-    s = ESG.load(); ESG.handTo(s, docs); panel();
+  const canTake = () => ['new', 'started', 'review'].includes(ESG.status(s));
+  // once she has answered, the dialog needs what she has read and the answers a new batch could redo
+  const more = () => {
+    const used = {}, groups = { needs: [], low: [], medium: [], high: [], you: [], approved: [] };
+    ESG.each((q, key) => {
+      const m = s.meta[key]; if (!m || m.by !== 'alma' || m.rejected) return;
+      new Set([m.src || (q.a && q.a.src)].concat(cites(q, key).map((c) => c.src)).filter(Boolean)).forEach((n) => { used[n] = (used[n] || 0) + 1; });
+      if (ESG.needs(s, q, key)) groups.needs.push(key);
+      if (!m.approved && groups[m.conf]) groups[m.conf].push(key);
+      if (m.edited || m.commented) groups.you.push(key);
+      if (m.approved) groups.approved.push(key);
+    });
+    const G = [['needs', 'Needs you', 'is-needs'], ['low', 'Low confidence', 'is-low'], ['medium', 'Medium confidence', 'is-mid'], ['high', 'High confidence', 'is-ok'], ['you', 'Edited by you', 'is-you'], ['approved', 'Approved by you', 'is-you']];
+    let gaps = 0; ESG.each((q, key) => { if (!ESG.answered(s, q, key)) gaps++; });
+    return { read: s.alma.docs.map((d) => ({ name: d.name, used: used[d.name] || 0 })), groups: G.map(([key, label, cls]) => ({ key, label, cls, keys: groups[key] })), gaps };
+  };
+  const upload = (files) => { if (canTake()) ESG_UPLOAD.open(files, handed, ESG.status(s) === 'review' ? more() : null); };
+  const handed = (docs, how) => {
+    s = ESG.load();
+    if (how) { ESG.handMore(s, docs, how.mode, how.keys); panel(); return; } // she reads them here, and says what changed
+    ESG.handTo(s, docs); panel();
     dialog({ alma: true, h: 'I’ll take it from here', p: 'I have your documents and I’m reading them now. You don’t need to wait here — I’ll let you know the moment I’m done. You’ll see every answer, and what I read it from, before anything is submitted.',
       acts: [['Stay here', 'btn-quiet', null], ['Back to Questionnaires', 'btn-primary', 'questionnaires.html']] });
   };
   drop.addEventListener('click', (e) => {
     if (e.target.closest('#qd-needs')) { filter = 'needs'; applyFilter(); toList(); return; }
-    if (canTake()) upload();
+    if (e.target.closest('#qd-more') || ['new', 'started'].includes(ESG.status(s))) upload();
   });
-  drop.addEventListener('keydown', (e) => { if (e.target === drop && (e.key === 'Enter' || e.key === ' ') && canTake()) { e.preventDefault(); upload(); } });
+  drop.addEventListener('keydown', (e) => { if (e.target === drop && (e.key === 'Enter' || e.key === ' ') && ['new', 'started'].includes(ESG.status(s))) { e.preventDefault(); upload(); } });
   drop.addEventListener('dragover', (e) => { if (!canTake()) return; e.preventDefault(); drop.classList.add('is-over'); });
   drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
   drop.addEventListener('drop', (e) => { if (!canTake()) return; e.preventDefault(); drop.classList.remove('is-over'); upload(e.dataTransfer.files); });

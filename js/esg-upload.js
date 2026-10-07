@@ -31,6 +31,17 @@ window.ESG_UPLOAD = (() => {
   };
 
   let picked = [], stage = 'pick', seeded = false, onHand = null, lastFocus = null, uid = 0, editing = null;
+  // a later batch, once she has answered: what she has read, and what the new documents should redo
+  let second = null, scope = 'pick', ticked = new Set(), readOpen = false;
+  const chosen = () => { const out = new Set(); second.groups.forEach((g) => { if (ticked.has(g.key)) g.keys.forEach((k) => out.add(k)); }); return [...out]; };
+  const pl = (n, one, many) => `${n} ${n === 1 ? one : many || one + 's'}`;
+  const action = () => {
+    if (!second) return 'Hand to ALMA';
+    if (scope === 'all') return 'Start over';
+    if (scope === 'gaps') return second.gaps ? `Complete ${second.gaps} unanswered` : 'Nothing to complete';
+    const n = chosen().length; return n ? `Redo ${pl(n, 'answer')}` : 'Redo selected';
+  };
+  const ready = () => !second || scope === 'all' || (scope === 'gaps' ? second.gaps > 0 : chosen().length > 0);
   const open = new Set();
   const el = document.createElement('div');
   el.className = 'dlg dlg-wide'; el.id = 'up-dlg'; el.hidden = true;
@@ -67,8 +78,9 @@ window.ESG_UPLOAD = (() => {
     <span class="up-name"><b>${esc(d.name)}</b><small>${d.bad ? esc(d.bad) : size(d.size) + (d.source === 'library' ? ' · From Documents' : '')}</small></span>
     <button type="button" class="up-rm" data-rm="${d.id}" aria-label="Remove ${esc(d.name)}">${ICON.x}</button></div>`;
   const pickStage = () => {
-    $('#up-h').textContent = 'Let me fill in your questionnaire';
-    $('#up-p').textContent = 'Give me your company’s policy documents and I’ll find the answers in them. You review every one before anything is submitted.';
+    $('#up-h').textContent = second ? 'Give me more to read' : 'Let me fill in your questionnaire';
+    $('#up-p').textContent = second ? 'Add documents and tell me what to do with them — fill what is still empty, look again at some answers, or start over. You review every change.'
+      : 'Give me your company’s policy documents and I’ll find the answers in them. You review every one before anything is submitted.';
     $('#up-alma').classList.remove('is-reading');
     const n = good().length;
     $('#up-body').innerHTML = `<div class="up-pick">
@@ -78,14 +90,15 @@ window.ESG_UPLOAD = (() => {
         <div class="up-lib"><span class="up-k" id="up-q-k">From your Documents</span><label class="co-search">${ICON.search}<input type="search" id="up-q" autocomplete="off" placeholder="Search by file name" aria-labelledby="up-q-k"></label>
           <div class="up-results" id="up-res" hidden></div><p>Everything you have already added to C&#8209;MORE is in Documents. Pick from there and nothing needs uploading again.</p></div>
       </div>
-      <div class="up-sec"><span class="up-k">Selected</span>${picked.length ? `<div class="up-list">${picked.map(rowPick).join('')}</div>` : '<p class="co-subtle" style="font-size:.9375rem">Nothing selected yet.</p>'}</div>
+      <div class="up-sec"><span class="up-k">${second ? 'New documents' : 'Selected'}</span>${picked.length ? `<div class="up-list">${picked.map(rowPick).join('')}</div>` : `<p class="co-subtle" style="font-size:.9375rem">${second ? 'Add a document to have me look again.' : 'Nothing selected yet.'}</p>`}</div>
+      ${second ? readBox() + (n ? redoBox() : '') : ''}
       <details class="up-help"><summary>What helps me most ${ICON.chev}</summary><div class="up-help-in">
         Send documents that contain the information you’re answering about — not just cover pages or table-of-contents summaries. The most useful are usually:
         <ul><li><b>Health, safety &amp; environment</b> policies, manuals and risk assessments</li><li><b>Ethics &amp; compliance</b>: code of conduct, anti-corruption, whistleblowing</li><li><b>Insurance &amp; safety record</b>: certificates of insurance, liability</li>
         <li><b>Company records</b>: registration, financial statements</li><li><b>Quality &amp; certifications</b>: quality manual, ISO certificates, licences</li><li><b>Training &amp; people</b>: training matrices, org charts, handbooks</li></ul>
         <p class="up-tip">Descriptive file names help me match each document to the right questions.</p></div></details>`;
-    $('#up-foot').innerHTML = `<span class="dlg-note" aria-live="polite">${n ? `<b>${n}</b> document${n === 1 ? '' : 's'} ready to check` : 'Nothing selected yet'}</span>
-      <button type="button" class="btn btn-quiet btn-sm" data-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="up-verify"${n ? '' : ' disabled'}>Verify files</button>`;
+    $('#up-foot').innerHTML = `<span class="dlg-note" aria-live="polite">${footNote(n)}</span>
+      <button type="button" class="btn btn-quiet btn-sm" data-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="up-verify"${n && ready() ? '' : ' disabled'}>Verify files</button>`;
     const zone = $('#up-zone'), q = $('#up-q');
     zone.addEventListener('click', () => { file.value = ''; file.click(); });
     zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); zone.click(); } });
@@ -110,6 +123,31 @@ window.ESG_UPLOAD = (() => {
       fromLib(b.dataset.lib); const v = q.value; render(); const q2 = $('#up-q'); q2.value = v; q2.dispatchEvent(new Event('input')); q2.focus();
     });
     $('#up-verify').addEventListener('click', check);
+  };
+
+  // ---- a later batch: what she has read, and what to redo --------------------------------------------
+  const footNote = (n) => {
+    if (!second) return n ? `<b>${n}</b> document${n === 1 ? '' : 's'} ready to check` : 'Nothing selected yet';
+    if (!n) return 'Add a document to have me look again';
+    const docs = `<b>${n}</b> new document${n === 1 ? '' : 's'}`;
+    if (scope === 'all') return `${docs} · answering everything again`;
+    if (scope === 'gaps') return `${docs} · ${second.gaps ? `completing ${pl(second.gaps, 'unanswered question')}` : 'every question already has an answer'}`;
+    const k = chosen().length; return `${docs}${k ? ` · redoing ${pl(k, 'answer')}` : ''}`;
+  };
+  const readBox = () => `<details class="up-help up-read"${readOpen ? ' open' : ''}><summary>Documents I’ve already read <span class="up-read-n">${second.read.length}</span> ${ICON.chev}</summary>
+    <ul class="up-read-list">${second.read.map((d) => `<li class="${d.used ? '' : 'is-unused'}"><span class="up-ico">${ICON.doc}</span><b>${esc(d.name)}</b><span class="chip">${d.used ? `Used for ${pl(d.used, 'answer')}` : 'Not used'}</span></li>`).join('')}</ul></details>`;
+  const CHOICES = [
+    ['gaps', 'Complete unanswered questions only', 'Answer the questions that are still empty from the new documents. Every answer already in, mine or yours, stays exactly as it is.'],
+    ['pick', 'Redo the answers with these tags', 'Tick a tag and every answer of mine carrying it is redone from the new documents. Everything else stays exactly as it is, including your own answers.'],
+    ['all', 'Start over', 'Clear the questionnaire and answer it again from every document. Your own answers and edits go too.'],
+  ];
+  const redoBox = () => {
+    const total = new Set(second.groups.flatMap((g) => g.keys)).size, k = chosen().length;
+    return `<section class="up-redo" aria-labelledby="up-redo-h"><h3 id="up-redo-h">New documents — what should I redo?</h3><p>I’ll read the new documents either way. This is about the answers that are already in.</p>
+      ${CHOICES.map(([v, t, d]) => `<label class="up-choice${scope === v ? ' is-on' : ''}"><input type="radio" name="up-scope" value="${v}"${scope === v ? ' checked' : ''}><span><b>${t}</b><span>${d}</span></span></label>`
+        + (v === 'pick' && scope === 'pick' ? `<div class="up-tags"><div class="up-tags-h"><span>${k ? `${k} of ${pl(total, 'answer')} selected` : 'Nothing selected — tick the tags whose answers I should redo'}</span><span><button type="button" class="link-btn" data-tags="all">Select all</button> · <button type="button" class="link-btn" data-tags="none">Clear</button></span></div>
+          <ul>${second.groups.map((g) => `<li><label class="${g.keys.length ? '' : 'is-empty'}"><input type="checkbox" data-tag="${g.key}"${ticked.has(g.key) ? ' checked' : ''}${g.keys.length ? '' : ' disabled'}><span class="chip ${g.cls}">${g.label}</span><span class="up-tags-n">${g.keys.length ? pl(g.keys.length, 'answer') : 'none'}</span></label></li>`).join('')}</ul></div>` : '')).join('')}
+    </section>`;
   };
 
   // ---- checking ---------------------------------------------------------------------------
@@ -184,10 +222,10 @@ window.ESG_UPLOAD = (() => {
     }
     $('#up-h').textContent = h; $('#up-p').textContent = p;
     $('#up-body').innerHTML = `<div class="vd-list">${list.map(rowVerdict).join('')}</div>`;
-    const blocked = !!ex.length || !!checking.length || !read.length;
+    const blocked = !!ex.length || !!checking.length || !read.length || !ready();
     $('#up-foot').innerHTML = `<span class="dlg-note">${read.length ? `<b>${read.length}</b> to read` : ''}</span>
       <button type="button" class="btn btn-quiet btn-sm" id="up-back">Back to uploads</button><button type="button" class="btn btn-quiet btn-sm" id="up-more">Add documents</button>
-      <button type="button" class="btn btn-primary btn-sm" id="up-hand"${blocked ? ' disabled' : ''}>Hand to ALMA</button>`;
+      <button type="button" class="btn btn-primary btn-sm" id="up-hand"${blocked ? ' disabled' : ''}>${action()}</button>`;
     $('#up-back').addEventListener('click', () => { stage = 'pick'; render(); });
     $('#up-more').addEventListener('click', () => { file.value = ''; file.click(); });
     $('#up-hand').addEventListener('click', hand);
@@ -207,7 +245,9 @@ window.ESG_UPLOAD = (() => {
     const docs = readable().map((d) => ({ name: d.name, source: d.source, until: (until(d) || '') && until(d).toISOString().slice(0, 10) }));
     if (!docs.length) return;
     close(true);
-    if (onHand) onHand(docs);
+    const how = second ? { mode: scope, keys: scope === 'pick' ? chosen() : [] } : null;
+    picked = [];
+    if (onHand) onHand(docs, how);
   };
 
   const render = () => (stage === 'verdict' ? verdictStage() : stage === 'pick' ? pickStage() : null);
@@ -220,10 +260,17 @@ window.ESG_UPLOAD = (() => {
     if (rm) { picked = picked.filter((d) => d.id !== +rm.dataset.rm); open.delete(+rm.dataset.rm); render(); return; }
     const more = t.closest('[data-more]');
     if (more) { const id = +more.dataset.more; open.has(id) ? open.delete(id) : open.add(id); render(); return; }
+    const tags = t.closest('[data-tags]');
+    if (tags) { ticked = tags.dataset.tags === 'all' ? new Set(second.groups.filter((g) => g.keys.length).map((g) => g.key)) : new Set(); render(); return; }
+    const sum = t.closest('.up-read summary');
+    if (sum) { e.preventDefault(); readOpen = !readOpen; render(); return; }
     const dt = t.closest('[data-date]');
     if (dt) { const id = +dt.dataset.date; open.add(id); editing = id; render(); }
   });
   el.addEventListener('change', (e) => {
+    if (e.target.name === 'up-scope') { scope = e.target.value; render(); return; }
+    const tg = e.target.closest('[data-tag]');
+    if (tg) { tg.checked ? ticked.add(tg.dataset.tag) : ticked.delete(tg.dataset.tag); render(); const again = $(`[data-tag="${tg.dataset.tag}"]`); if (again) again.focus(); return; }
     const na = e.target.closest('[data-na]');
     if (na) { const d = picked.find((x) => x.id === +na.dataset.na); d.na = na.checked; editing = null; render(); }
   });
@@ -246,9 +293,12 @@ window.ESG_UPLOAD = (() => {
 
   return {
     // seed: the demo opens with documents already picked the first time, so the flow can be walked without files to hand
-    open(files, handler) {
+    // more: { read: [{name, used}], groups: [{key, label, cls, keys}], gaps } once she has answered
+    open(files, handler, more) {
       onHand = handler || onHand;
-      if (!seeded) { seeded = true; D.seed.forEach((d) => picked.push({ id: ++uid, name: d.name, size: d.size, source: d.source === 'library' ? 'library' : 'files' })); }
+      if (more && !second) { picked = []; ticked = new Set(); scope = 'pick'; }
+      second = more || null;
+      if (!seeded && !second) { seeded = true; D.seed.forEach((d) => picked.push({ id: ++uid, name: d.name, size: d.size, source: d.source === 'library' ? 'library' : 'files' })); }
       if (files && files.length) add(files);
       stage = 'pick'; lastFocus = document.activeElement;
       el.hidden = false; document.documentElement.classList.add('dlg-open');

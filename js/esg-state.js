@@ -11,18 +11,26 @@ window.ESG = (() => {
   const SPHERES = '<span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>';
 
   // ---- ALMA's reading: a start time and a length, so any page can tell how far she is ----
-  const almaPct = (s) => (s.alma ? Math.max(0, Math.min(100, Math.round(((Date.now() - s.alma.started) / s.alma.dur) * 100))) : 0);
-  const almaLeft = (s) => (s.alma ? Math.max(0, s.alma.started + s.alma.dur - Date.now()) : 0);
+  // the reading under way: the first one, or a later batch of documents (s.alma.pending)
+  const run = (s) => s.alma && (s.alma.pending || s.alma);
+  const almaPct = (s) => { const r = run(s); return r ? Math.max(0, Math.min(100, Math.round(((Date.now() - r.started) / r.dur) * 100))) : 0; };
+  const almaLeft = (s) => { const r = run(s); return r ? Math.max(0, r.started + r.dur - Date.now()) : 0; };
+  const reading = (s) => (s.alma ? (s.alma.pending || (!s.alma.applied ? s.alma : null)) : null);
   const filledAny = (s) => Object.values(s.v).some((x) => x !== '' && x != null) || Object.values(s.na).some(Boolean);
   const status = (s) => {
     if (s.submitted) return 'submitted';
-    if (s.alma && !s.alma.applied) return almaPct(s) >= 100 ? 'ready' : 'reading';
+    if (reading(s)) return almaPct(s) >= 100 ? 'ready' : 'reading';
     if (s.alma) return 'review';
     return filledAny(s) ? 'started' : 'new';
   };
   const handTo = (s, docs) => {
     s.alma = { started: Date.now(), dur: 3500 + 2200 * docs.length, docs, applied: false };
     s.read = false; save(s);
+  };
+  // more documents once she has answered: mode is 'gaps' (complete what is empty), 'pick' (redo these keys) or 'all' (start over)
+  const handMore = (s, docs, mode, keys) => {
+    s.alma.pending = { started: Date.now(), dur: 2500 + 1800 * docs.length, docs, mode, keys: keys || [] };
+    save(s);
   };
 
   // ---- what counts as an answer -------------------------------------------------------------
@@ -77,27 +85,71 @@ window.ESG = (() => {
   // ---- ALMA's answers go in where nothing is there yet; what you already answered stays yours ----
   const DECLARE = 'This is a declaration about your own operations — it isn’t something I can read from documents.';
   const NOT_FOUND = 'I found the Yes above, but not this detail in the documents — it needs you.';
-  const apply = (s) => {
-    if (!s.alma || s.alma.applied) return;
+  // her planned answer goes in (follow-ups too, where empty or forced); a redone answer is hers again, review and all
+  const entry = (s, q, key, force) => {
+    const a = q.a; if (!a || a.by !== 'alma') return false;
+    s.v[key] = a.v; s.na[key] = false; s.meta[key] = { by: 'alma', conf: a.conf, orig: a.v };
+    if (q.subs && a.v === 'yes') q.subs.forEach((sq, i) => {
+      const k = subKey(key, i); if (has(s.v[k]) && !force) return;
+      if (sq.a) { s.v[k] = sq.a.v; s.meta[k] = { by: 'alma', conf: sq.a.conf, orig: sq.a.v }; }
+      else { if (force) s.v[k] = ''; s.meta[k] = { by: 'flag' }; }
+    });
+    return true;
+  };
+  const firstPass = (s) => {
     let n = 0;
     each((q, key) => {
       const a = q.a; if (!a || s.na[key] || has(s.v[key])) return;
-      if (a.by === 'alma') {
-        s.v[key] = a.v; s.meta[key] = { by: 'alma', conf: a.conf, orig: a.v }; n++;
-        if (q.subs && a.v === 'yes') q.subs.forEach((sq, i) => {
-          const k = subKey(key, i); if (has(s.v[k])) return;
-          if (sq.a) { s.v[k] = sq.a.v; s.meta[k] = { by: 'alma', conf: sq.a.conf, orig: sq.a.v }; }
-          else s.meta[k] = { by: 'flag' };
-        });
-      } else s.meta[key] = { by: 'flag' };
+      if (entry(s, q, key)) n++; else s.meta[key] = { by: 'flag' };
     });
-    s.alma.applied = true; s.alma.answered = n; save(s);
+    return n;
+  };
+  // complete what is empty: where she has an answer for it, it goes in, read from the newest document;
+  // where she has none, it stays empty and she says the new documents did not cover it either
+  const fillGaps = (s, file) => {
+    let n = 0, m = 0;
+    each((q, key) => {
+      if (answered(s, q, key)) return;
+      m++;
+      const a = q.a, v = a && (a.by === 'alma' || a.by === 'user') ? a.v : null;
+      if (has(s.v[key]) || !v || (q.ty === 'text' && problem(q, v))) {
+        if (!has(s.v[key])) s.meta[key] = { by: 'flag', why: `I looked again in ${file}, and it doesn’t cover this one either — it still needs you.` };
+        return;
+      }
+      if (a.by === 'alma') entry(s, q, key);
+      else s.meta[key] = { by: 'alma', conf: 'medium', orig: v, src: file,
+        why: `This question was still unanswered. ${file} covers it, so I’ve answered it from there — please check I read it the way you meant.`,
+        cite: [{ src: file, loc: 'New document', quote: 'The new document addresses what this question asks and states that it is in place.', match: 'states that it is in place' }] };
+      s.v[key] = v; s.na[key] = false; n++;
+    });
+    return { n, m };
+  };
+  const apply = (s) => {
+    if (!s.alma) return;
+    if (!s.alma.applied) { s.alma.answered = firstPass(s); s.alma.applied = true; save(s); return; }
+    const p = s.alma.pending; if (!p || almaPct(s) < 100) return;
+    const names = new Set(s.alma.docs.map((d) => d.name));
+    p.docs.forEach((d) => { if (!names.has(d.name)) s.alma.docs.push(d); });
+    const newest = p.docs[p.docs.length - 1].name;
+    if (p.mode === 'all') {
+      s.v = {}; s.na = {}; s.meta = {};
+      s.alma.last = { mode: 'all', n: firstPass(s), docs: s.alma.docs.length };
+    } else if (p.mode === 'gaps') {
+      s.alma.last = Object.assign({ mode: 'gaps', docs: p.docs.length }, fillGaps(s, newest));
+    } else {
+      let n = 0;
+      const byKey = {}; each((q, key) => { byKey[key] = q; });
+      p.keys.forEach((key) => { const q = byKey[key]; if (q && entry(s, q, key, true)) n++; });
+      s.alma.last = { mode: 'pick', n, docs: p.docs.length };
+    }
+    delete s.alma.pending; s.read = false; save(s);
   };
   const reason = (q, key, s) => {
     const m = s.meta[key]; if (!m) return '';
+    if (m.why) return m.why;
     if (m.by === 'flag') return (q.a && q.a.by === 'flag' && q.a.why) || (key.includes('.') ? NOT_FOUND : DECLARE);
     return (q.a && q.a.why) || '';
   };
 
-  return { KEY, load, save, blank, status, almaPct, almaLeft, handTo, each, subKey, open, answered, needs, rowNeeds, counts, ready, apply, problem, reason, has, SPHERES };
+  return { KEY, load, save, blank, status, almaPct, almaLeft, handTo, handMore, reading, each, subKey, open, answered, needs, rowNeeds, counts, ready, apply, problem, reason, has, SPHERES };
 })();

@@ -30,7 +30,7 @@ window.ESG_NOTIFY = (() => {
   const toast = () => {
     const s = ESG.load();
     let line = 'She answered what your documents cover. Have a look before anything is submitted.';
-    if (window.ESG_DATA) { ESG.apply(s); const c = ESG.counts(ESG.load()); line = `She answered ${s.alma.answered} questions from your documents; ${c.needs} need you.`; }
+    if (window.ESG_DATA) { ESG.apply(s); const c = ESG.counts(ESG.load()); line = s.alma.last ? `She has read your new documents; ${c.needs} question${c.needs === 1 ? '' : 's'} need you.` : `She answered ${s.alma.answered} questions from your documents; ${c.needs} need you.`; }
     const t = document.createElement('div');
     t.className = 'alma-toast'; t.setAttribute('role', 'status');
     t.innerHTML = `<span class="dlg-alma" aria-hidden="true">${ESG.SPHERES}</span><span class="alma-toast-t"><b>ALMA has finished your ESG Questionnaire</b>${line}<a href="esg-questionnaire.html">Review her answers</a></span>

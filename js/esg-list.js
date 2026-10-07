@@ -21,7 +21,7 @@
     if (st === 'ready') { ESG.apply(s); s = ESG.load(); }
     const c = ESG.counts(s);
     if (st === 'reading') {
-      show('Reading', ESG.almaPct(s), `ALMA is reading your documents <span>· ${s.alma.docs.length} of them</span>`, 'is-reading');
+      show('Reading', ESG.almaPct(s), `ALMA is reading your documents <span>· ${ESG.reading(s).docs.length} of them</span>`, 'is-reading');
       if (!tick) tick = setInterval(paint, 300);
       return;
     }
