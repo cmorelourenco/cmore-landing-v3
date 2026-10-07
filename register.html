@@ -608,7 +608,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   // it at register.html#done once the payment is through.
   function toPayment() {
     done(false);
-    try { sessionStorage.setItem('cm-person', JSON.stringify(person)); } catch (e) {}
+    // a new demo session starts with an empty ESG Questionnaire, and so no company score
+    try { sessionStorage.setItem('cm-person', JSON.stringify(person)); sessionStorage.removeItem('cm-esg'); } catch (e) {}
     location.href = 'payment.html';
   }
 
@@ -622,7 +623,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     const first = person.name.split(/\s+/)[0];
     try {
       sessionStorage.setItem('cm-done', JSON.stringify({ first, pic: $('#d-pic').innerHTML, mono: $('#d-mono').textContent, ready: $('#ready').innerHTML }));
-      sessionStorage.setItem('cm-person', JSON.stringify(person));
+      sessionStorage.setItem('cm-person', JSON.stringify(person)); sessionStorage.removeItem('cm-esg');
     } catch (e) {}
   };
   // The phone is always a field: optional, kept as you type, checked when you leave it.
@@ -818,7 +819,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     // the prototype only knows these two people; anything else still logs in as Miguel,
     // the same account the rest of the demo assumes
     const match = Object.values(EXAMPLES).find((ex) => ex.email.toLowerCase() === typed.toLowerCase()) || EXAMPLES.m;
-    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...match, via: 'Email' })); } catch (err) {}
+    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...match, via: 'Email' })); sessionStorage.removeItem('cm-esg'); } catch (err) {}
     await wait(600);
     toCompany('my-company.html?filled');
   });
@@ -827,7 +828,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     b.lastChild.textContent = 'Connecting to ' + b.dataset.loginSso + '…';
     await wait(900);
     // a provider sign-in carries no typed email to match against, so it is always Miguel's
-    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...EXAMPLE, via: b.dataset.loginSso })); } catch (e) {}
+    try { sessionStorage.setItem('cm-person', JSON.stringify({ ...EXAMPLE, via: b.dataset.loginSso })); sessionStorage.removeItem('cm-esg'); } catch (e) {}
     toCompany('my-company.html?filled');
   }));
   // the header's link and the tab title follow the mode: log in, or sign up
