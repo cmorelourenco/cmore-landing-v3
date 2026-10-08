@@ -60,7 +60,9 @@
   // ---- pieces --------------------------------------------------------------------------------------------
   const card = (key, title, sub, reg, body, tag) => `<section class="co-card pd-card" id="pd-${key}" aria-labelledby="pd-${key}-h">
     <header class="pd-card-h"><div><h2 class="res-h" id="pd-${key}-h">${title}${tag ? ` <span class="chip is-you">${tag}</span>` : ''}</h2>${sub ? `<p class="co-subtle">${sub}</p>` : ''}</div>
-      ${reg ? `<div class="pd-pct"><span class="co-meter"><i style="width:${pct(reg)}%"></i></span><b>${pct(reg)}%</b></div>` : ''}</header>${body}</section>`;
+      ${reg ? `<div class="pd-pct">${meter(pct(reg))}<b>${pct(reg)}%</b></div>` : ''}</header>${body}</section>`;
+  // a progress bar: coral while there is something left to do, green once it is all done
+  const meter = (v, cls = '') => `<span class="co-meter pd-meter ${cls}${v >= 100 ? ' is-full' : ''}"><i style="width:${v}%"></i></span>`;
   const kv = (k, v) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`;
   const tbl = (head, rows) => `<div class="pd-tbl-w"><table class="co-tbl pd-tbl"><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
   const sub = (t) => `<h3 class="pd-sub">${t}</h3>`;
@@ -76,7 +78,7 @@
 
   // compliance at a glance
   html += `<div class="pd-top">${REGS.map(([k, l]) => { const v = pct(k);
-    return `<a class="co-card pd-reg" href="#pd-result"><span class="res-k">${l}</span><b>${v}%</b><span class="co-meter pd-meter ${v === 100 ? 'is-full' : ''}"><i style="width:${v}%"></i></span><span class="co-subtle">${items.filter((i) => i.reg === k && i.state !== 'ok').length || 'No'} gap${items.filter((i) => i.reg === k && i.state !== 'ok').length === 1 ? '' : 's'}</span></a>`; }).join('')}</div>`;
+    return `<a class="co-card pd-reg" href="#pd-result"><span class="res-k">${l}</span><b>${v}%</b>${meter(v)}<span class="co-subtle">${items.filter((i) => i.reg === k && i.state !== 'ok').length || 'No'} gap${items.filter((i) => i.reg === k && i.state !== 'ok').length === 1 ? '' : 's'}</span></a>`; }).join('')}</div>`;
 
   // ---- identification (always) -------------------------------------------------------------------------------
   html += card('id', 'Identification', 'Always shown. The HS/CN code is checked against Annex I of the EUDR.', null, `<dl class="pd-grid">
@@ -133,7 +135,7 @@
   const mine = gaps.filter((g) => /^You/.test(g.who));
   const day = (n) => { const d = new Date(Date.now() - n * 864e5); return `${d.getDate()} ${d.toLocaleString('en', { month: 'short' })}`; };
   html += card('result', 'Result', 'What all of the above adds up to.', null, `
-    <div class="pd-res">${REGS.map(([k, l]) => `<div class="pd-res-r"><span>${l}</span><span class="co-meter pd-meter ${pct(k) === 100 ? 'is-full' : ''}"><i style="width:${pct(k)}%"></i></span><b>${pct(k)}%</b></div>`).join('')}</div>
+    <div class="pd-res">${REGS.map(([k, l]) => `<div class="pd-res-r"><span>${l}</span>${meter(pct(k))}<b>${pct(k)}%</b></div>`).join('')}</div>
     ${sub(`Gaps <span class="res-n">${gaps.length}</span>`)}${gaps.length ? `<ul class="pd-gaps">${gaps.map((g) => `<li><span class="pd-gap-t">${esc(g.what)}</span><span class="pd-gap-m">${chip(g.state)}<span class="co-subtle">${g.reg} · ${esc(g.who)}</span></span></li>`).join('')}</ul>` : '<p class="co-subtle">No gaps. Everything that applies to this product is met.</p>'}
     ${sub(`Requests to suppliers <span class="res-n">${reqs.length}</span>`)}${reqs.length ? `<p class="co-subtle pd-sub-p">Sent automatically for every gap a supplier has to close.${mine.length ? ` The other ${mine.length} ${mine.length === 1 ? 'is' : 'are'} yours.` : ''}</p>
       <ul class="pd-gaps">${reqs.map((g, i) => { const late = g.state === 'bad' || i % 3 === 2;

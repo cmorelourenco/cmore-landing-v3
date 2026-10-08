@@ -716,3 +716,6 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
   .pd-res-r { grid-template-columns: 1fr 3rem; }
   .pd-res-r .pd-meter { grid-column: 1 / -1; grid-row: 2; }
 }
+
+/* any progress bar that reaches 100% turns green: done is good news, not a warning */
+.co-meter[aria-valuenow="100"] i { background: var(--color-ok-deep); }
