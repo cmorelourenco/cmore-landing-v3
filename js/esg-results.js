@@ -13,12 +13,12 @@
   $('res-co-name').textContent = p ? p.trading || p.name : 'Your company';
   $('res-year').textContent = new Date(s.submitted || Date.now()).getFullYear();
   $('res-print').addEventListener('click', () => print());
-  // the report as a PDF, laid out like C-MORE's sustainability reports (js/esg-report.js)
+  // the report as a PDF, laid out like C-MORE's sustainability reports (js/esg-report.js), opened in a new tab
   $('res-download').addEventListener('click', async (e) => {
     const b = e.currentTarget; if (b.disabled) return;
     const lab = b.getAttribute('aria-label');
     b.disabled = true; b.classList.add('is-busy-icon');
-    try { await ESG_REPORT.download((n, of) => b.setAttribute('aria-label', `Preparing your report, page ${n} of ${of}`)); }
+    try { await ESG_REPORT.open((n, of) => b.setAttribute('aria-label', `Preparing your report, page ${n} of ${of}`)); }
     catch (err) { print(); } // no PDF maker to hand: the print dialog can still save one
     finally { b.disabled = false; b.classList.remove('is-busy-icon'); b.setAttribute('aria-label', lab); }
   });

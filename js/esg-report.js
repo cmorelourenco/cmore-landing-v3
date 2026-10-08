@@ -315,7 +315,8 @@ window.ESG_REPORT = (() => {
 
   return {
     // onStep(done, total) reports progress while the pages are drawn
-    async download(onStep) {
+    // the report as a jsPDF document, with the file name it should have
+    async make(onStep) {
       for (const src of LIBS) if (!(src.includes('html2canvas') ? window.html2canvas : window.jspdf)) await load(src);
       const D = gather(), A = await assets();
       const host = document.createElement('div');
@@ -333,10 +334,21 @@ window.ESG_REPORT = (() => {
           pdf.addImage(cv.toDataURL('image/jpeg', 0.86), 'JPEG', 0, 0, W, H, undefined, 'FAST');
           if (onStep) onStep(i + 1, pages.length);
         }
-        const name = (D.p.trading || D.p.name || 'Company').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
-        pdf.save(`${name}-ESG-report-${D.when.getFullYear()}.pdf`);
-        return pdf;
+        const co = D.p.trading || D.p.name || 'Company', name = `${co.replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')}-ESG-report-${D.when.getFullYear()}.pdf`;
+        pdf.setProperties({ title: `${co} · ESG report ${D.when.getFullYear()}`, author: co, creator: 'C-MORE' });
+        return { pdf, name };
       } finally { host.remove(); }
+    },
+    // opened in a tab of its own, in the browser's PDF viewer (which has its own download and print).
+    // The tab is opened on the click itself, before the pages are drawn, so no popup blocker stops it.
+    async open(onStep) {
+      const w = window.open('', '_blank');
+      if (w) w.document.write('<!doctype html><title>ESG report</title><body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;font:15px Figtree,Arial,sans-serif;color:#6e6e6a;background:#f2f1ed">Preparing your report…</body>');
+      try {
+        const { pdf, name } = await this.make(onStep);
+        if (w && !w.closed) w.location.href = URL.createObjectURL(pdf.output('blob'));
+        else pdf.save(name); // no tab to show it in: download it instead
+      } catch (err) { if (w) w.close(); throw err; }
     },
     // for checking what would be drawn, without downloading anything
     async preview() {
