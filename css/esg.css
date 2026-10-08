@@ -446,3 +446,8 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* in a modal the main action is graphite, so it outweighs Cancel beside it */
 .dlg .btn-primary:not(:disabled):not([aria-disabled="true"]) { background: var(--color-graphite); border-color: var(--color-graphite); color: var(--color-off-white); }
 .dlg .btn-primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in oklab, var(--color-graphite) 82%, #000); border-color: color-mix(in oklab, var(--color-graphite) 82%, #000); color: var(--color-off-white); box-shadow: 0 8px 24px -12px rgba(52, 52, 52, .5); }
+
+/* the questionnaire's own main actions match its modals: graphite, off-white text */
+#questionnaires .btn-primary:not(:disabled):not([aria-disabled="true"]) { background: var(--color-graphite); border-color: var(--color-graphite); color: var(--color-off-white); }
+#questionnaires .btn-primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in oklab, var(--color-graphite) 82%, #000); border-color: color-mix(in oklab, var(--color-graphite) 82%, #000); color: var(--color-off-white); box-shadow: 0 8px 24px -12px rgba(52, 52, 52, .5); }
+#questionnaires .btn-primary:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; }
