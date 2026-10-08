@@ -214,6 +214,7 @@
     submitBtn.hidden = !!s.submitted;
     document.getElementById('esgq-lead').textContent = s.submitted ? 'Submitted — your answers are locked while they are reviewed.' : 'Nothing here is shared until you choose to submit it.';
     submitBtn.setAttribute('aria-disabled', String(!r.ok));
+    const end = document.getElementById('esgq-submit-end'); end.hidden = !!s.submitted; end.setAttribute('aria-disabled', String(!r.ok));
     filterCounts(c);
     panel();
   };
@@ -291,6 +292,42 @@
 
   // ---- Submit ---------------------------------------------------------------------------------------
   let tipT;
+  const missing = (r) => {
+    const parts = [];
+    if (r.gaps) parts.push(`${r.gaps} question${r.gaps === 1 ? '' : 's'} still need${r.gaps === 1 ? 's' : ''} an answer`);
+    if (r.review) parts.push(`${r.review} answer${r.review === 1 ? '' : 's'} need${r.review === 1 ? 's' : ''} your review`);
+    if (r.bad) parts.push(`${r.bad} answer${r.bad === 1 ? '' : 's'} need${r.bad === 1 ? 's' : ''} fixing`);
+    return parts.join(', ').replace(/, ([^,]*)$/, ' and $1').replace(/^./, (x) => x.toUpperCase());
+  };
+  const toFirst = (r) => {
+    if (!inFilter(Q[r.first], r.first)) { filter = 'all'; applyFilter(); }
+    const c = document.getElementById('q-' + r.first);
+    scrollTo({ top: c.getBoundingClientRect().top + scrollY - 72 - (stuck() ? band.offsetHeight : 0) - 24, behavior: 'smooth' });
+  };
+  const confirmSubmit = () => dialog({
+    h: 'Submit your ESG Questionnaire?',
+    p: 'Once it is submitted your answers are locked while they are reviewed, and the clients and buyers you share your profile with can see them.',
+    acts: [['Cancel', 'btn-quiet', null], ['Submit questionnaire', 'btn-primary', () => {
+      s.submitted = Date.now(); ESG.save(s); filter = 'all'; document.documentElement.classList.add('esgq-locked'); syncAll(); applyFilter();
+      scrollTo({ top: 0, behavior: 'smooth' });
+    }]],
+  });
+  const endSubmit = document.getElementById('esgq-submit-end');
+  endSubmit.addEventListener('click', () => {
+    const r = ESG.ready(s);
+    if (r.ok) { confirmSubmit(); return; }
+    dialog({ h: 'Not ready to submit yet', p: `${missing(r)} before this can be submitted.`,
+      acts: [['Close', 'btn-quiet', null], ['Show me', 'btn-primary', () => toFirst(r)]] });
+  });
+  // prototype only: back to an empty questionnaire, as if nothing had happened
+  document.getElementById('esgq-restart').addEventListener('click', () => dialog({
+    h: 'Restart the questionnaire?',
+    p: 'Prototype only. This clears every answer, comment and note, and everything ALMA has read, and opens the questionnaire empty again. It can’t be undone.',
+    acts: [['Cancel', 'btn-quiet', null], ['Restart questionnaire', 'btn-primary', () => {
+      try { sessionStorage.removeItem(ESG.KEY); } catch (e) {}
+      location.href = 'esg-questionnaire.html';
+    }]],
+  }));
   submitBtn.addEventListener('click', () => {
     const r = ESG.ready(s);
     if (!r.ok) {
@@ -305,14 +342,7 @@
       scrollTo({ top: c.getBoundingClientRect().top + scrollY - 72 - (stuck() ? band.offsetHeight : 0) - 24, behavior: 'smooth' });
       return;
     }
-    dialog({
-      h: 'Submit your ESG Questionnaire?',
-      p: 'Once it is submitted your answers are locked while they are reviewed, and the clients and buyers you share your profile with can see them.',
-      acts: [['Cancel', 'btn-quiet', null], ['Submit questionnaire', 'btn-primary', () => {
-        s.submitted = Date.now(); ESG.save(s); filter = 'all'; document.documentElement.classList.add('esgq-locked'); syncAll(); applyFilter();
-        scrollTo({ top: 0, behavior: 'smooth' });
-      }]],
-    });
+    confirmSubmit();
   });
 
   // ---- a small dialog: the hand-over, and the last check before submitting --------------------------------
