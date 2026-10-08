@@ -308,7 +308,7 @@
   const confirmSubmit = () => dialog({
     h: 'Submit your ESG Questionnaire?',
     p: 'Once it is submitted your answers are locked while they are reviewed, and the clients and buyers you share your profile with can see them.',
-    acts: [['Cancel', 'btn-quiet', null], ['Submit questionnaire', 'btn-primary', () => {
+    acts: [['Cancel', 'btn-quiet', null], ['Submit questionnaire', 'btn-primary btn-good', () => {
       s.submitted = Date.now(); ESG.save(s); filter = 'all'; document.documentElement.classList.add('esgq-locked'); syncAll(); applyFilter();
       scrollTo({ top: 0, behavior: 'smooth' });
     }]],

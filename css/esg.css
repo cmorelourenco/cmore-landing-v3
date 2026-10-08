@@ -537,3 +537,7 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .res-ring b { color: var(--color-positive); }
 .res-sec .res-bar-m { background: var(--color-positive-subtle); }
 .res-sec .res-bar-m i { background: var(--color-positive); }
+
+/* submitting is a good thing: it is the "ok" green, wherever it is offered */
+#questionnaires .btn.btn-good:not(:disabled):not([aria-disabled="true"]), .dlg .btn.btn-good:not(:disabled):not([aria-disabled="true"]) { background: var(--color-positive); border-color: var(--color-positive); color: #fff; }
+#questionnaires .btn.btn-good:not(:disabled):not([aria-disabled="true"]):hover, .dlg .btn.btn-good:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in oklab, var(--color-positive) 82%, #000); border-color: color-mix(in oklab, var(--color-positive) 82%, #000); color: #fff; box-shadow: 0 8px 24px -12px color-mix(in oklab, var(--color-positive) 60%, transparent); }
