@@ -570,3 +570,7 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .esgq-pill { border-radius: 0.5rem; }
 .chip { border-radius: 0.375rem; }
 .esgq-submit-w { display: inline-flex; gap: 0.5rem; }
+
+/* Social in coral rather than the caution amber, which read brown next to the pastel green and the blue */
+.is-s { --g-c: var(--color-coral); --g-bg: var(--color-coral-tint); }
+.res-plan-g.is-s h3 { color: var(--color-coral-deep); }
