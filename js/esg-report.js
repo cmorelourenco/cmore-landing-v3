@@ -2,17 +2,17 @@
    produces — a cover, contents, a statement, highlights, then General disclosures, Environmental,
    Social and Governance, each in its own colour, and a declaration. Built from the submitted ESG
    Questionnaire, its score and the company profile. Pages are laid out off screen, drawn with
-   html2canvas and put together with jsPDF (both from cdnjs, loaded on first use). The artwork is
-   drawn here: contour lines in each section's colour, and the brand mesh on the dividers. Only
-   plain colours are used, because html2canvas cannot read newer colour functions. */
+   html2canvas and put together with jsPDF (both from cdnjs, loaded on first use). The photographs
+   are in images/report. Only plain colours are used, because html2canvas cannot read newer colour
+   functions. */
 window.ESG_REPORT = (() => {
   const W = 1334, H = 750;
   const LIBS = ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'];
   const C = {
-    gen: { name: 'General Disclosures', main: '#7d7a70', fill: '#96958e', soft: '#f3f2ee', ink: '#ffffff', art: ['#e9e7e2', '#c9c5bb', '#8f8b80'] },
-    env: { name: 'Environmental', main: '#4f8f49', fill: '#a6d8a0', soft: '#eef6ec', ink: '#2f4d2c', art: ['#dcefd8', '#a6d8a0', '#4f8f49'] },
-    soc: { name: 'Social', main: '#e0603f', fill: '#f46d4f', soft: '#fdf0ec', ink: '#ffffff', art: ['#fbe0d8', '#f4a28d', '#e0603f'] },
-    gov: { name: 'Governance', main: '#4e638b', fill: '#4e638b', soft: '#eceff5', ink: '#ffffff', art: ['#dfe4ef', '#909db6', '#4e638b'] },
+    gen: { name: 'General Disclosures', main: '#7d7a70', fill: '#96958e', soft: '#f3f2ee', ink: '#ffffff' },
+    env: { name: 'Environmental', main: '#4f8f49', fill: '#a6d8a0', soft: '#eef6ec', ink: '#2f4d2c' },
+    soc: { name: 'Social', main: '#e0603f', fill: '#f46d4f', soft: '#fdf0ec', ink: '#ffffff' },
+    gov: { name: 'Governance', main: '#4e638b', fill: '#4e638b', soft: '#eceff5', ink: '#ffffff' },
   };
   const GROUP = { governance: 'gov', infosec: 'gov', product: 'gov', social: 'soc', environment: 'env', climate: 'env', water: 'env', waste: 'env', biodiversity: 'env' };
   const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -22,24 +22,12 @@ window.ESG_REPORT = (() => {
   const text = (url) => fetch(url).then((r) => r.text());
   const dateLong = (d) => `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 
-  // ---- artwork: flowing contour lines, like sand or water seen close up ----------------------------
-  const rng = (seed) => () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  const art = (w, h, [bg1, line, deep], seed, dark) => {
-    const r = rng(seed), n = 54, amp = 26 + r() * 30, f = 0.004 + r() * 0.004, tilt = (r() - 0.5) * 0.5;
-    let paths = '';
-    for (let i = 0; i < n; i++) {
-      const base = -h * 0.25 + (h * 1.5 * i) / n, ph = r() * 0.6 + i * 0.09;
-      let d = '';
-      for (let x = -40; x <= w + 40; x += 18) {
-        const y = base + x * tilt + Math.sin(x * f + ph) * amp + Math.sin(x * f * 2.3 + ph * 1.7) * amp * 0.35;
-        d += (d ? ' L' : 'M') + x.toFixed(0) + ' ' + y.toFixed(1);
-      }
-      paths += `<path d="${d}" fill="none" stroke="${i % 5 === 0 ? deep : line}" stroke-width="${i % 5 === 0 ? 1.8 : dark ? 1 : 1.3}" stroke-opacity="${(dark ? 0.35 + r() * 0.45 : 0.55 + r() * 0.45).toFixed(2)}"/>`;
-    }
-    const bg = dark ? `<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b2b2b"/><stop offset="1" stop-color="#1c1c1c"/></linearGradient>`
-      : `<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="${bg1}"/></linearGradient>`;
-    return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${bg}</defs><rect width="${w}" height="${h}" fill="url(#g)"/>${paths}</svg>`);
-  };
+  // ---- photographs: people at work, fields and forests (Unsplash, free licence; images/report) -------
+  // each is cropped to the slot it fills, so it needs no scaling the PDF maker might get wrong
+  const photo = (name) => `<img class="rp-art" src="images/report/${name}.jpg" width="588" height="666" alt="">`;
+  const MORE = { env: ['env-field', 'env-forest', 'env-water'], soc: ['soc-talk', 'soc-scaffold'], gov: ['gov-team'] };
+  let turn = {};
+  const next = (k) => { const l = MORE[k], i = turn[k] || 0; turn[k] = i + 1; return l[i % l.length]; };
 
   // ---- charts, as images ---------------------------------------------------------------------------
   const ring = (pct, color, size = 220) => {
@@ -133,9 +121,9 @@ window.ESG_REPORT = (() => {
   }).join('')}</span></div>`;
   const page = (A, active, inner) => `<section class="rp-page">${top(A, active)}<div class="rp-body">${inner}</div></section>`;
 
-  const cover = (A, D) => `<section class="rp-page" style="background:#222">
-    <img src="${art(W, H, C.gen.art, 7, true).replace('%23e9e7e2', '%23e9e7e2')}" width="${W}" height="${H}" style="position:absolute;inset:0" alt="">
-    <img src="${art(W, H, ['#000', '#f46d4f', '#a6d8a0'], 11, true)}" width="${W}" height="${H}" style="position:absolute;inset:0;opacity:.55" alt="">
+  const cover = (A, D) => `<section class="rp-page" style="background:#2b2b2b">
+    <img src="images/report/cover.jpg" width="${W}" height="${H}" style="position:absolute;left:0;top:0" alt="">
+    <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(24,24,24,.86) 0%,rgba(24,24,24,.62) 45%,rgba(24,24,24,.12) 100%)"></div>
     <div style="position:absolute;left:60px;top:60px;width:150px;height:84px;border-radius:42px;background:#fafafa;display:flex;align-items:center;justify-content:center"><img src="${A.logo}" width="104" height="19" alt=""></div>
     <div style="position:absolute;left:60px;top:250px;color:#fafafa">
       <div class="rp-h" style="font-size:92px;letter-spacing:4px;font-weight:300">ESG REPORT</div>
@@ -167,7 +155,7 @@ window.ESG_REPORT = (() => {
       <p style="margin-top:12px;font-size:13.5px;line-height:1.7;color:#4a4a4a">${n} of ${D.c.total} questions were answered. ${alma} of those answers were drafted by ALMA, C&#8209;MORE's assistant, from ${D.docs.length} document${D.docs.length === 1 ? '' : 's'} the company provided, each with the passage it was read from; the company reviewed every one of them before submitting, and answered the rest itself.</p>
       <p style="margin-top:12px;font-size:13.5px;line-height:1.7;color:#4a4a4a">The ESG score of ${D.sc.global} out of 100 weighs how good the answers are, not only how many there are: having a policy in place counts for more than not having one, and a sanction or a fine counts against. The red flags and the action plan at the end of the report show where the company can improve, one action for every gap.</p>
       <div style="margin-top:24px;font-size:14px;color:#4a4a4a">${esc(D.person)}</div><div style="font-size:14px;color:#96958e;margin-top:2px">On behalf of ${esc(D.p.name)}</div></div>
-      <img class="rp-art" src="${art(588, 666, C.gen.art, 23)}" width="588" height="666" alt="">`);
+      ${photo('about')}`);
   };
 
   const highlights = (A, D) => {
@@ -184,9 +172,8 @@ window.ESG_REPORT = (() => {
       </div>`);
   };
 
-  const divider = (A, k, title, items, seed) => page(A, k, `
-    <img src="${A.mesh[k]}" width="620" height="620" style="position:absolute;right:-40px;top:-84px" alt=""><img src="${A.mesh[k]}" width="620" height="620" style="position:absolute;right:-40px;top:536px" alt="">
-    <div style="position:absolute;right:0;top:0;bottom:0;width:780px;background:linear-gradient(90deg,#ffffff 0%,rgba(255,255,255,.92) 30%,rgba(255,255,255,0) 100%)"></div>
+  const PHOTO = { gen: 'general', env: 'environmental', soc: 'social', gov: 'governance' };
+  const divider = (A, k, title, items) => page(A, k, `${photo(PHOTO[k])}<div style="position:absolute;left:746px;top:0;bottom:0;width:6px;background:${C[k].fill}"></div>
     <div style="position:absolute;left:66px;top:96px;width:640px"><div class="rp-h" style="font-size:92px;color:${C[k].main}">${title}</div>
       <div style="margin-top:34px">${items.map((t) => `<div class="rp-li" style="color:${C[k].main};font-size:16px"><i style="background:${C[k].main}"></i>${esc(t)}</div>`).join('')}</div></div>`);
 
@@ -225,7 +212,7 @@ window.ESG_REPORT = (() => {
         <tr><th style="color:#7d7a70">Document</th><th style="color:#7d7a70">Source</th><th style="color:#7d7a70">Valid until</th><th style="color:#7d7a70">Answers</th></tr>
         ${(D.docs.length ? D.docs : [{ name: 'No documents were handed to ALMA', source: '', until: '', used: '' }]).map((d) => `<tr><td style="color:#7d7a70">${esc(d.name)}</td><td>${d.source === 'library' ? 'Company documents' : d.source ? 'Uploaded' : ''}</td><td>${d.until ? dateLong(new Date(d.until + 'T12:00:00')) : d.source ? '—' : ''}</td><td>${d.used === '' ? '' : d.used}</td></tr>`).join('')}
       </table></div>
-    <img class="rp-art" src="${art(588, 666, C.gen.art, 31)}" width="588" height="666" alt="">`);
+    ${photo('documents')}`);
 
   const coverage = (A, D) => page(A, 'gen', `<div style="position:absolute;left:66px;top:50px;right:66px">
       <div class="rp-h" style="font-size:40px;color:#96958e">Questionnaire coverage</div>
@@ -236,7 +223,7 @@ window.ESG_REPORT = (() => {
       </table></div>`);
 
   const qa = (it, k) => `<div class="rp-qa"><div class="q">${esc(it.q)}</div><div class="a${it.written ? ' w' : ''}" style="${it.written ? '' : 'color:' + C[k].main}">${it.written ? '' : icon(it.kind, it.kind === 'bad' ? '#e0603f' : it.kind === 'mid' ? '#96958e' : C[k].main)}${esc(it.text)}</div></div>`;
-  const sectionPages = (A, D, x, seed) => {
+  const sectionPages = (A, D, x) => {
     const k = x.group, first = x.items.slice(0, 5), rest = x.items.slice(5), out = [];
     const sub = (v, l) => `<div style="flex:1;padding-right:12px;border-right:1px solid #e0ded7;margin-right:18px"><div class="rp-big" style="font-size:40px;color:${C[k].main}">${v}</div><div style="font-size:15px;margin-top:8px;color:#4a4a4a">${l}</div></div>`;
     out.push(page(A, k, `<div class="rp-panel" style="background:${C[k].soft}">
@@ -249,7 +236,7 @@ window.ESG_REPORT = (() => {
       const chunk = rest.slice(i, i + 10), L = chunk.slice(0, 5), R = chunk.slice(5);
       out.push(page(A, k, `<div style="position:absolute;left:74px;top:56px;width:552px"><div style="font-size:15px;font-weight:600;color:${C[k].main};margin-bottom:22px">${esc(x.title)} <span style="font-weight:400;color:#96958e">— answers ${i + 6} to ${i + 5 + chunk.length}</span></div>${L.map((it) => qa(it, k)).join('')}</div>
         <div style="position:absolute;left:708px;top:98px;width:552px">${R.map((it) => qa(it, k)).join('')}</div>
-        ${R.length ? '' : `<img class="rp-art" src="${art(588, 666, C[k].art, seed + i)}" width="588" height="666" alt="">`}`));
+        ${R.length ? '' : photo(next(k))}`));
     }
     return out;
   };
@@ -277,7 +264,7 @@ window.ESG_REPORT = (() => {
       <p style="margin-top:28px;font-size:14px;line-height:1.65;color:#343434">I, on behalf of <b>${esc((D.p.name || '').toUpperCase())}</b>, declare that the information and answers submitted in this ESG Questionnaire for ${D.when.getFullYear()} are accurate and complete, and have been given in good faith. Answers drafted by ALMA from the company's documents were reviewed before submission. I acknowledge responsibility for the content of this report.</p>
       <div style="margin-top:22px;font-size:14px;font-weight:600">${esc(D.person)}</div>
       <div style="font-size:14px;color:#7d7a70;margin-top:3px">Submitted digitally on ${D.when.getDate()} ${MONTHS[D.when.getMonth()].slice(0, 3)} ${D.when.getFullYear()} ${String(D.when.getUTCHours()).padStart(2, '0')}:${String(D.when.getUTCMinutes()).padStart(2, '0')} UTC</div></div>
-    <img class="rp-art" src="${art(588, 666, C.gen.art, 47)}" width="588" height="666" alt="">`);
+    ${photo('declaration')}`);
 
   const back = (A) => `<section class="rp-page"><div style="position:absolute;left:0;right:0;top:170px;display:flex;justify-content:center"><img src="${A.logo}" width="260" height="48" alt=""></div>
     <div style="position:absolute;left:50px;right:50px;top:330px;font-size:11.5px;line-height:1.55;color:#4a4a4a">
@@ -289,13 +276,14 @@ window.ESG_REPORT = (() => {
     <div style="position:absolute;left:0;right:0;bottom:52px;text-align:center;font-size:12px;color:#4a4a4a">Software developed by C&#8209;MORE.</div></section>`;
 
   const build = (A, D) => {
+    turn = {};
     const env = D.sections.filter((x) => x.group === 'env'), soc = D.sections.filter((x) => x.group === 'soc'), gov = D.sections.filter((x) => x.group === 'gov');
     return [cover(A, D), contents(A, D), statement(A, D), highlights(A, D),
       divider(A, 'gen', 'General<br>Disclosures', ['Company profile', 'ESG score', 'Documents ALMA read', 'Questionnaire coverage', 'Red flags', 'Action plan']),
       profile(A, D), scorePage(A, D), evidence(A, D), coverage(A, D), flagsPage(A, D), planPage(A, D),
-      divider(A, 'env', 'Environmental<br>Metrics', env.map((x) => x.title)), ...env.flatMap((x, i) => sectionPages(A, D, x, 60 + i * 7)),
-      divider(A, 'soc', 'Social<br>Metrics', soc.flatMap((x) => x.groups)), ...soc.flatMap((x, i) => sectionPages(A, D, x, 120 + i * 7)),
-      divider(A, 'gov', 'Governance<br>Metrics', gov.map((x) => x.title)), ...gov.flatMap((x, i) => sectionPages(A, D, x, 180 + i * 7)),
+      divider(A, 'env', 'Environmental<br>Metrics', env.map((x) => x.title)), ...env.flatMap((x) => sectionPages(A, D, x)),
+      divider(A, 'soc', 'Social<br>Metrics', soc.flatMap((x) => x.groups)), ...soc.flatMap((x) => sectionPages(A, D, x)),
+      divider(A, 'gov', 'Governance<br>Metrics', gov.map((x) => x.title)), ...gov.flatMap((x) => sectionPages(A, D, x)),
       declaration(A, D), back(A)];
   };
 
@@ -307,10 +295,7 @@ window.ESG_REPORT = (() => {
     im.src = svgUrl(/<svg[^>]*\swidth=/.test(svg) ? svg : svg.replace(/<svg\b/, `<svg width="${w}" height="${h}"`));
   });
   const assets = async () => {
-    const [logoSvg, meshSvg] = await Promise.all([text('images/cmore-logo.svg'), text('images/mesh-tile.svg')]);
-    const A = { logo: await png(logoSvg, 284.58, 52.4), mesh: {} };
-    for (const k of Object.keys(C)) A.mesh[k] = await png(meshSvg.replace(/#fff\b/g, C[k].main), 620, 620, 1.5);
-    return A;
+    return { logo: await png(await text('images/cmore-logo.svg'), 284.58, 52.4) };
   };
 
   return {
