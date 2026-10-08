@@ -406,7 +406,7 @@
       pt.textContent = `Submitted on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}.`;
       ps.textContent = 'Your answers are locked while they are reviewed. Clients and buyers you share your profile with can see them.';
       pm.hidden = true;
-      if (pa.dataset.v !== 'done') { pa.dataset.v = 'done'; pa.innerHTML = '<a class="btn btn-primary btn-sm" href="esg-results.html">View results</a>'; }
+      pa.innerHTML = ''; pa.dataset.v = '';
     } else {
       pt.textContent = 'Let me fill this in for you.';
       ps.textContent = 'Drop your policy documents here and I’ll read them, find the answers and fill them in. You get the final say on every one before anything is submitted.';

@@ -27,7 +27,7 @@
     }
     clearInterval(tick); tick = null;
     cardEl.href = s.submitted ? 'esg-results.html' : 'esg-questionnaire.html';
-    if (s.submitted) { const d = new Date(s.submitted); show('ESG score', ESG.score(s).global, `Submitted <span>· ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} · View results</span>`, 'is-done'); cardEl.setAttribute('aria-label', 'ESG Questionnaire, submitted. View results'); }
+    if (s.submitted) { const d = new Date(s.submitted); show('ESG score', ESG.score(s).global, `Submitted <span>· ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} · View dashboard</span>`, 'is-done'); cardEl.setAttribute('aria-label', 'ESG Questionnaire, submitted. View dashboard'); }
     else if (s.alma) show('Progress', c.pct, c.needs ? `Ready for your review <span>· ${c.needs} need${c.needs === 1 ? 's' : ''} you</span>` : 'Ready to submit', c.needs ? 'is-needs' : 'is-done');
     else show('Progress', c.pct, st === 'started' ? 'In progress' : '', '');
   };

@@ -531,3 +531,9 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 #esgq-results[hidden], #esgq-results-end[hidden] { display: none; }
 .esgq-q.is-arrived { animation: esgq-arrive 1.8s ease .2s both; }
 @keyframes esgq-arrive { 0%, 40% { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-coral) 55%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+
+/* the dashboard's charts in the "ok" green: calmer than graphite, and it reads as how well it is going */
+.res-ring { background: conic-gradient(var(--color-positive) 0 var(--p), var(--color-positive-subtle) var(--p) 100%); }
+.res-ring b { color: var(--color-positive); }
+.res-sec .res-bar-m { background: var(--color-positive-subtle); }
+.res-sec .res-bar-m i { background: var(--color-positive); }
