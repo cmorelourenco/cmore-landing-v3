@@ -47,7 +47,7 @@
   if (f.alerts.length) add('FLR', 'Alerts found have actions with evidence', f.actions.length >= f.alerts.length && p.status !== 'bad' ? 'ok' : 'review', owner);
   if (P4) (p.pack || []).forEach(([code, name, st]) => add('PPWR', `${code} · ${name}`, st, 'You'));
   const docs = p.docs.map((k) => ({ code: k, ...D.DOCS[k] })).filter((d) => d.for !== 'PPWR' || P4);
-  docs.forEach((d) => add(d.for, `${d.code} · ${d.name}`, d.state, 'You (company level)'));
+  docs.forEach((d) => add(d.for, d.name, d.state, 'You (company level)'));
   const REGS = [['EUDR', 'Deforestation (EUDR)', P1], ['FLR', 'Forced labour (FLR)', true], ['PPWR', 'Packaging (PPWR)', P4]].filter((r) => r[2]);
   const pct = (reg) => { const l = items.filter((i) => i.reg === reg); return l.length ? Math.round((l.reduce((s, i) => s + PTS[i.state], 0) / l.length) * 100) : 100; };
   const gaps = items.filter((i) => i.state !== 'ok');
@@ -116,7 +116,7 @@
 
   // ---- company documents (inherited) ---------------------------------------------------------------------------
   html += card('docs', 'Company documents', 'Uploaded once at company level and inherited by every product. They count towards this product with no new upload.', null,
-    tbl(['Document', 'Counts towards', 'Valid', 'Status'], docs.map((d) => `<tr data-go="company-details.html"><td><span class="n">${d.code} · ${esc(d.name)}</span><span class="d">Inherited</span></td><td>${d.for}</td><td>${esc(d.until)}</td><td>${chip(d.state, d.state === 'ok' ? 'Valid' : 'In review')}</td></tr>`)));
+    tbl(['Document', 'Counts towards', 'Valid', 'Status'], docs.map((d) => `<tr data-go="company-details.html"><td><span class="n">${esc(d.name)}</span></td><td>${d.for}</td><td>${esc(d.until)}</td><td>${chip(d.state, d.state === 'ok' ? 'Valid' : 'In review')}</td></tr>`)));
 
   // ---- the result ---------------------------------------------------------------------------------------------------
   const reqs = gaps.filter((g) => !/^You/.test(g.who));
