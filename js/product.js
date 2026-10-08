@@ -85,6 +85,12 @@
     ${kv('Country of manufacture', esc(p.made))}${kv('EU markets', p.markets.map(esc).join(', '))}
     ${kv('Clients and importers', p.clients.map(([n, r]) => `${esc(n)} <span class="co-subtle">${r}</span>`).join('<br>'))}</dl>`);
 
+  // ---- suppliers ----------------------------------------------------------------------------------------------
+  const sups = p.suppliers || [];
+  html += card('sup', 'Suppliers', `Everyone who supplies this product or what goes into it.${sups.some((s) => s[3].length) ? ` ${sups.filter((s) => s[3].length).length} with open alerts.` : ' No open alerts.'}`, null,
+    tbl(['Supplier', 'Country', 'Product supplied', 'Alerts'], sups.map(([n, cty, what, al]) => `<tr><td><span class="n">${esc(n)}</span></td><td>${esc(cty)}</td><td>${esc(what)}</td>
+      <td class="pd-alerts">${al.length ? al.map(([st, txt]) => `<span class="pd-alert">${chip(st, st === 'bad' ? 'Alert' : st === 'missing' ? 'Missing' : 'In review')}<span>${esc(txt)}</span></span>`).join('') : '<span class="co-subtle">None</span>'}</td></tr>`)));
+
   // ---- EUDR (P1) -------------------------------------------------------------------------------------------------
   if (P1) {
     const n = p.lots.length, ok = p.lots.filter((l) => l.state === 'ok').length, alert = p.lots.filter((l) => l.state === 'bad').length, rest = n - ok - alert;
