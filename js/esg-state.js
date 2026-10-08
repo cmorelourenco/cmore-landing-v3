@@ -232,7 +232,7 @@ window.ESG = (() => {
     s.v[key] = planned != null ? planned : q.ty === 'choice' ? (q.opts.some(([v]) => v === 'no') ? 'no' : q.opts[0][0]) : (FILL[q.val] || FILL.text);
   };
   const complete = (s, docs) => {
-    if (!s.alma) s.alma = { started: 0, dur: 1, docs, applied: false };
+    if (!s.alma) s.alma = { started: 0, dur: 1, docs: docs || ((window.ESG_DATA && ESG_DATA.docs.seed) || []).map((d) => ({ ...d })), applied: false };
     if (s.alma.pending) s.alma.pending.started = 0;
     if (!s.alma.applied) s.alma.started = 0;
     apply(s); apply(s);
