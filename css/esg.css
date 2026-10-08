@@ -574,3 +574,19 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* Social in coral rather than the caution amber, which read brown next to the pastel green and the blue */
 .is-s { --g-c: var(--color-coral); --g-bg: var(--color-coral-tint); }
 .res-plan-g.is-s h3 { color: var(--color-coral-deep); }
+
+/* download and print, as icons beside Open the questionnaire */
+.res-acts { align-items: center; }
+.res-icon { display: grid; place-items: center; width: 2.375rem; height: 2.375rem; padding: 0; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface);
+  color: var(--color-ink); cursor: pointer; transition: border-color .14s ease, background-color .14s ease, color .14s ease; }
+.res-icon:hover { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
+.res-icon svg { width: 1.125rem; height: 1.125rem; }
+.res-icon.is-busy-icon { cursor: progress; opacity: .6; }
+.res-co b::after { display: none; }
+.res-co #res-year::before { content: "·"; margin-right: 0.625rem; color: var(--color-sand-400); }
+/* what the PDF leaves out: the bar's buttons, show-all and back to top */
+.res-pdf .res-acts, .res-pdf .res-end, .res-pdf .res-more { display: none !important; }
+/* the PDF is laid out at A4 width: one column on top, so nothing overlaps */
+.res-pdf .res-top { grid-template-columns: 1fr; }
+.res-pdf .res-sec { grid-template-columns: 8.5rem minmax(0, 1fr) 2.75rem; }
+.res-pdf .res-item-s { min-width: 7.5rem; }

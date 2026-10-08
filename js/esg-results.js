@@ -13,6 +13,48 @@
   $('res-co-name').textContent = p ? p.trading || p.name : 'Your company';
   $('res-year').textContent = new Date(s.submitted || Date.now()).getFullYear();
   $('res-print').addEventListener('click', () => print());
+  // The PDF maker reads only plain colours and cannot draw a conic gradient, so for the moment it
+  // takes its picture every newer colour is written out as rgb, and the score ring becomes an image.
+  const forPdf = (root) => {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 1; const cx = cv.getContext('2d', { willReadFrequently: true });
+    const rgb = (c) => { cx.clearRect(0, 0, 1, 1); cx.fillStyle = '#000'; cx.fillStyle = c; cx.fillRect(0, 0, 1, 1); const [r, g, bl, al] = cx.getImageData(0, 0, 1, 1).data; return `rgba(${r}, ${g}, ${bl}, ${(al / 255).toFixed(3)})`; };
+    const PROPS = ['color', 'background-color', 'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color', 'outline-color', 'text-decoration-color'];
+    const kept = [];
+    [root, ...root.querySelectorAll('*')].forEach((el) => {
+      const cs = getComputedStyle(el);
+      PROPS.forEach((pr) => { const v = cs.getPropertyValue(pr); if (/okl|lab\(|color\(|color-mix/.test(v)) { kept.push([el, pr, el.style.getPropertyValue(pr)]); el.style.setProperty(pr, rgb(v)); } });
+      if (/okl|lab\(|color-mix/.test(cs.boxShadow)) { kept.push([el, 'box-shadow', el.style.getPropertyValue('box-shadow')]); el.style.setProperty('box-shadow', 'none'); }
+    });
+    // icons drawn in currentColor: the PDF maker needs the colour itself
+    root.querySelectorAll('svg').forEach((svg) => {
+      ['stroke', 'fill'].forEach((at) => {
+        if (svg.getAttribute(at) === 'currentColor') { kept.push([svg, '__attr_' + at, 'currentColor']); svg.setAttribute(at, rgb(getComputedStyle(svg).color)); }
+      });
+      // sized only by CSS, an icon has no size of its own when it is turned into a picture
+      ['width', 'height'].forEach((at) => { if (!svg.hasAttribute(at)) { kept.push([svg, '__attr_' + at, null]); svg.setAttribute(at, Math.round(svg.getBoundingClientRect()[at])); } });
+    });
+    const ring = $('res-ring'), p = parseFloat(ring.style.getPropertyValue('--p')) || 0, c = 2 * Math.PI * 87;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><circle cx="96" cy="96" r="87" fill="none" stroke="${rgb(getComputedStyle(document.documentElement).getPropertyValue('--color-mid-beige'))}" stroke-width="18"/><circle cx="96" cy="96" r="87" fill="none" stroke="${rgb(getComputedStyle(document.documentElement).getPropertyValue('--color-ok'))}" stroke-width="18" stroke-dasharray="${(c * p) / 100} ${c}" transform="rotate(-90 96 96)"/></svg>`;
+    kept.push([ring, 'background', ring.style.getPropertyValue('background')]);
+    ring.style.setProperty('background', `url("data:image/svg+xml,${encodeURIComponent(svg)}") center / 100% 100% no-repeat`);
+    return () => kept.reverse().forEach(([el, pr, v]) => (pr.startsWith('__attr_') ? (v == null ? el.removeAttribute(pr.slice(7)) : el.setAttribute(pr.slice(7), v)) : v ? el.style.setProperty(pr, v) : el.style.removeProperty(pr)));
+  };
+  // a PDF of the dashboard itself, made in the browser (the library loads only when asked for)
+  $('res-download').addEventListener('click', async (e) => {
+    const b = e.currentTarget; if (b.disabled) return;
+    let undo = null;
+    b.disabled = true; b.classList.add('is-busy-icon');
+    try {
+      if (!window.html2pdf) await new Promise((ok, no) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+      const name = ($('res-co-name').textContent || 'Company').replace(/[^\w]+/g, '-').replace(/^-|-$/g, '');
+      document.documentElement.classList.add('res-pdf');
+      undo = forPdf($('res-wrap'));
+      await html2pdf().set({ margin: [10, 10, 12, 10], filename: `${name}-ESG-dashboard-${$('res-year').textContent}.pdf`, image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, backgroundColor: '#f2f1ed', useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'avoid-all'], avoid: '.res-card, .res-plan-g' } })
+        .from($('res-wrap')).save();
+    } catch (err) { print(); } // no PDF maker to hand: the print dialog can still save one
+    finally { if (undo) undo(); document.documentElement.classList.remove('res-pdf'); b.disabled = false; b.classList.remove('is-busy-icon'); }
+  });
   $('res-top').addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
   if (!s.submitted) { $('res-none').hidden = false; return; }
 
