@@ -413,3 +413,19 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .up-tags input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--color-graphite); }
 .up-tags-n { margin-left: auto; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 @media (max-width: 40rem) { .up-tags { margin-left: 0; } .up-tags ul { grid-template-columns: 1fr; } }
+
+/* ---- comments as a chat: replies under each comment, and its own actions ---- */
+.esgq-c-list, .esgq-c-replies { display: flex; flex-direction: column; gap: 0.875rem; }
+.esgq-c-replies { margin: 0.75rem 0 0 2.375rem; padding-left: 0.875rem; border-left: 2px solid var(--color-line); }
+.esgq-c-replies .esgq-c-form { margin-top: 0; }
+.esgq-c-acts, .esgq-c-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.875rem; margin-top: 0.25rem; }
+.esgq-c-acts .link-btn, .esgq-c-confirm .link-btn { font-size: 0.8125rem; text-decoration: none; color: var(--color-ink-subtle); font-weight: 500; }
+.esgq-c-acts .link-btn:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); }
+.esgq-c-confirm { font-size: 0.8125rem; color: var(--color-ink); }
+.esgq-c-confirm .link-btn.is-bad { color: var(--color-critical); font-weight: 600; }
+.esgq-c.is-gone .esgq-c-text { font-style: italic; color: var(--color-ink-subtle); }
+.esgq-c.is-gone .esgq-c-pic { background: var(--color-mid-beige); }
+.esgq-c-main .esgq-c-form { margin-top: 0.375rem; }
+.esgq-c-btns { display: inline-flex; gap: 0.5rem; }
+.esgq-c-add { align-self: flex-start; font-size: 0.875rem; }
+.esgq-c-list + .esgq-c-form { padding-top: 0.875rem; border-top: 1px solid var(--color-line); }

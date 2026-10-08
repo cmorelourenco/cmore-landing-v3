@@ -89,9 +89,9 @@
     if (answeredRow && s.alma && s.alma.applied && (!m || m.by === 'flag' || m.rejected)) tags.push(chip('Answered by you', 'is-you'));
     if (ESG.rowNeeds(s, q, key)) tags.push(chip('Needs you', 'is-needs', m.rejected ? 'You turned down ALMA’s answer — this needs one from you.' : m.by === 'flag' ? why : CONF.low[2]));
     const pending = m && m.by === 'alma' && m.conf === 'low' && !m.approved && !m.edited && !m.commented && !m.rejected && !locked;
-    const n = (s.comments[key] || []).length, cb = rowEl.querySelector(`[data-comment="${CSS.escape(key)}"]`), cn = cb.querySelector('.esgq-tool-n');
+    const n = talk(key), cb = rowEl.querySelector(`[data-comment="${CSS.escape(key)}"]`), cn = cb.querySelector('.esgq-tool-n');
     cn.hidden = !n; cn.textContent = n; cb.classList.toggle('has-n', !!n); cb.setAttribute('aria-label', n ? `Comments, ${n}` : 'Comments');
-    const panelEl = document.getElementById(key + '-c'); if (!panelEl.hidden) thread(key);
+    thread(key);
     const marks = main.querySelector(`[data-marks="${key}"]`);
     marks.innerHTML = tags.join('') + (pending ? `<span class="esgq-review"><button type="button" class="btn btn-quiet btn-sm" data-approve="${key}">Approve</button><button type="button" class="btn btn-quiet btn-sm" data-reject="${key}">Reject</button></span>` : '');
     marks.hidden = !marks.innerHTML;
@@ -99,28 +99,89 @@
   // ---- comments: a thread under each question and each follow-up -------------------------------
   const who = () => ({ name: (document.querySelector('[data-who-name]') || {}).textContent || 'You', pic: (document.querySelector('#who-btn [data-who-pic]') || {}).innerHTML || '' });
   const when = (t) => { const d = new Date(t); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); };
-  const thread = (key) => {
-    const p = document.getElementById(key + '-c'), list = s.comments[key] || [], me = who(), locked = !!s.submitted;
-    const typed = p.querySelector('textarea') ? p.querySelector('textarea').value : '';
-    p.innerHTML = (list.length ? `<ul class="esgq-c-list">${list.map((c, i) => `<li class="esgq-c"><span class="who-pic esgq-c-pic" aria-hidden="true">${c.pic || ''}</span><div class="esgq-c-main"><p class="esgq-c-top"><b>${esc(c.name)}</b><span>${when(c.at)}</span></p><p class="esgq-c-text">${esc(c.text)}</p></div>${locked ? '' : `<button type="button" class="up-rm" data-uncomment="${key}|${i}" aria-label="Delete this comment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`}</li>`).join('')}</ul>` : '')
-      + (locked ? (list.length ? '' : '<p class="esgq-c-none">No comments.</p>') : `<form class="esgq-c-form" data-cform="${key}"><textarea class="input" rows="2" placeholder="Write a comment" aria-label="Write a comment"></textarea>
-        <div class="esgq-c-foot"><span class="esgq-c-me"><span class="who-pic esgq-c-pic" aria-hidden="true">${me.pic}</span>${esc(me.name)}</span><button type="submit" class="btn btn-primary btn-sm" disabled>Comment</button></div></form>`);
-    const t = p.querySelector('textarea'); if (t) { t.value = typed; grow(t); t.nextElementSibling.querySelector('button').disabled = !typed.trim(); }
+  // A thread per question, like a chat: comments, each with its replies under it. Your own can be
+  // edited or deleted; deleting one that has replies leaves a note in its place so the replies still
+  // make sense. The box to write in closes itself once you post, cancel or press Esc.
+  const cid = () => 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const list = (key) => {
+    const l = s.comments[key] || [];
+    l.forEach((c) => { c.id = c.id || cid(); c.replies = c.replies || []; }); // comments from before replies existed
+    return l;
   };
+  const talk = (key) => list(key).reduce((n, c) => n + (c.deleted ? 0 : 1) + c.replies.length, 0);
+  const ui = { compose: new Set(), reply: {}, edit: {}, confirm: {} }, drafts = {};
+  const DEL = (c, key, reply) => `<span class="esgq-c-confirm">Delete this ${reply ? 'reply' : 'comment'}?<button type="button" class="link-btn is-bad" data-ca="del-yes" data-k="${key}" data-id="${c.id}">Delete</button><button type="button" class="link-btn" data-ca="del-no" data-k="${key}">Keep</button></span>`;
+  const form = (key, mode, id, text, label, cta) => `<form class="esgq-c-form" data-cform="${key}" data-mode="${mode}"${id ? ` data-id="${id}"` : ''}>
+      <textarea class="input" rows="2" placeholder="${label}" aria-label="${label}">${esc(text || '')}</textarea>
+      <div class="esgq-c-foot">${mode === 'new' ? `<span class="esgq-c-me"><span class="who-pic esgq-c-pic" aria-hidden="true">${who().pic}</span>${esc(who().name)}</span>` : '<span></span>'}
+        <span class="esgq-c-btns"><button type="button" class="btn btn-quiet btn-sm" data-ca="cancel" data-k="${key}" data-mode="${mode}">Cancel</button><button type="submit" class="btn btn-primary btn-sm"${(text || '').trim() ? '' : ' disabled'}>${cta}</button></span></div></form>`;
+  const one = (c, key, parent) => {
+    const me = who(), mine = c.name === me.name, locked = !!s.submitted, reply = !!parent;
+    if (c.deleted) return `<div class="esgq-c is-gone"><span class="who-pic esgq-c-pic" aria-hidden="true"></span><p class="esgq-c-text">This comment was deleted.</p></div>`;
+    const editing = ui.edit[key] === c.id;
+    const acts = locked ? '' : ui.confirm[key] === c.id ? DEL(c, key, reply)
+      : `<span class="esgq-c-acts"><button type="button" class="link-btn" data-ca="reply" data-k="${key}" data-id="${parent ? parent.id : c.id}">Reply</button>${mine ? `<button type="button" class="link-btn" data-ca="edit" data-k="${key}" data-id="${c.id}">Edit</button><button type="button" class="link-btn" data-ca="del" data-k="${key}" data-id="${c.id}">Delete</button>` : ''}</span>`;
+    return `<div class="esgq-c"><span class="who-pic esgq-c-pic" aria-hidden="true">${c.pic || ''}</span><div class="esgq-c-main">
+      <p class="esgq-c-top"><b>${esc(c.name)}</b><span>${when(c.at)}${c.edited ? ' · edited' : ''}</span></p>
+      ${editing ? form(key, 'edit', c.id, drafts[`${key}|edit|${c.id}`] ?? c.text, 'Edit your comment', 'Save') : `<p class="esgq-c-text">${esc(c.text)}</p>${acts}`}</div></div>`;
+  };
+  const thread = (key) => {
+    const p = document.getElementById(key + '-c'), l = list(key), locked = !!s.submitted, composing = ui.compose.has(key) && !locked;
+    p.hidden = !l.length && !composing;
+    const cb = main.querySelector(`[data-comment="${CSS.escape(key)}"]`); if (cb) { cb.setAttribute('aria-expanded', String(composing)); cb.classList.toggle('is-open', composing); }
+    if (p.hidden) { p.innerHTML = ''; return; }
+    p.innerHTML = (l.length ? `<ul class="esgq-c-list">${l.map((c) => `<li>${one(c, key)}`
+      + (c.replies.length || ui.reply[key] === c.id ? `<ul class="esgq-c-replies">${c.replies.map((r) => `<li>${one(r, key, c)}</li>`).join('')}`
+        + (ui.reply[key] === c.id && !locked ? `<li>${form(key, 'reply', c.id, drafts[`${key}|reply|${c.id}`], `Reply to ${c.deleted ? 'this thread' : c.name}`, 'Reply')}</li>` : '') + '</ul>' : '') + '</li>').join('')}</ul>` : '')
+      + (composing ? form(key, 'new', '', drafts[`${key}|new|`], 'Write a comment', 'Comment') : locked || !l.length ? '' : `<button type="button" class="link-btn esgq-c-add" data-ca="new" data-k="${key}">Add a comment</button>`);
+  };
+  const focusForm = (key, mode) => setTimeout(() => { const t = document.querySelector(`#${CSS.escape(key)}-c [data-mode="${mode}"] textarea`); if (t) { grow(t); t.focus({ preventScroll: true }); t.setSelectionRange(t.value.length, t.value.length); } }, 0);
+  // a comment on one of ALMA's answers means someone looked at it
+  const looked = (key) => { const m = s.meta[key]; if (m && m.by === 'alma' && !m.rejected) m.commented = talk(key) > 0; };
+  const after = (key) => { looked(key); ESG.save(s); syncCard(key.split('.')[0]); totals(); };
+  const find = (key, id) => { for (const c of list(key)) { if (c.id === id) return { c, in: list(key) }; const r = c.replies.find((x) => x.id === id); if (r) return { c: r, in: c.replies, parent: c }; } return null; };
   main.addEventListener('submit', (e) => {
     const f = e.target.closest('[data-cform]'); if (!f) return;
     e.preventDefault();
-    const key = f.dataset.cform, t = f.querySelector('textarea'), text = t.value.trim(); if (!text) return;
-    const me = who();
-    (s.comments[key] = s.comments[key] || []).push({ text, at: Date.now(), name: me.name, pic: me.pic });
-    const m = s.meta[key]; if (m && m.by === 'alma' && !m.rejected) m.commented = true;
-    t.value = ''; ESG.save(s); syncCard(key.split('.')[0]); totals();
-    const again = document.getElementById(key + '-c').querySelector('textarea'); if (again) again.focus({ preventScroll: true });
+    const key = f.dataset.cform, mode = f.dataset.mode, id = f.dataset.id, text = f.querySelector('textarea').value.trim(); if (!text) return;
+    const me = who(), mk = () => ({ id: cid(), text, at: Date.now(), name: me.name, pic: me.pic });
+    if (mode === 'new') { (s.comments[key] = s.comments[key] || []).push(Object.assign(mk(), { replies: [] })); ui.compose.delete(key); }
+    else if (mode === 'reply') { const hit = find(key, id); if (hit) hit.c.replies.push(mk()); delete ui.reply[key]; }
+    else { const hit = find(key, id); if (hit && hit.c.text !== text) { hit.c.text = text; hit.c.edited = Date.now(); } delete ui.edit[key]; }
+    delete drafts[`${key}|${mode}|${id || ''}`];
+    after(key);
   });
   main.addEventListener('keydown', (e) => {
     const t = e.target.closest('.esgq-c-form textarea'); if (!t) return;
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); t.form.requestSubmit(); }
+    else if (e.key === 'Escape') { e.preventDefault(); t.form.querySelector('[data-ca="cancel"]').click(); }
   });
+  // what the thread's own buttons do
+  const commentAct = (b) => {
+    const key = b.dataset.k, id = b.dataset.id, a = b.dataset.ca;
+    if (a === 'new') { ui.compose.add(key); thread(key); focusForm(key, 'new'); }
+    else if (a === 'reply') { ui.reply[key] = id; delete ui.edit[key]; thread(key); focusForm(key, 'reply'); }
+    else if (a === 'edit') { ui.edit[key] = id; delete ui.reply[key]; thread(key); focusForm(key, 'edit'); }
+    else if (a === 'cancel') {
+      const mode = b.dataset.mode;
+      if (mode === 'new') ui.compose.delete(key); else if (mode === 'reply') delete ui.reply[key]; else delete ui.edit[key];
+      Object.keys(drafts).filter((d) => d.startsWith(`${key}|${mode}|`)).forEach((d) => delete drafts[d]);
+      thread(key);
+      const back = main.querySelector(`[data-comment="${CSS.escape(key)}"]`); if (back && mode === 'new') back.focus({ preventScroll: true });
+    }
+    else if (a === 'del') { ui.confirm[key] = id; thread(key); const y = document.querySelector(`#${CSS.escape(key)}-c [data-ca="del-yes"]`); if (y) y.focus({ preventScroll: true }); }
+    else if (a === 'del-no') { delete ui.confirm[key]; thread(key); }
+    else if (a === 'del-yes') {
+      const hit = find(key, id); delete ui.confirm[key];
+      if (hit) {
+        if (!hit.parent && hit.c.replies.length) { hit.c.deleted = true; hit.c.text = ''; } // its replies stay, under a note
+        else hit.in.splice(hit.in.indexOf(hit.c), 1);
+        if (hit.parent && hit.parent.deleted && !hit.parent.replies.length) list(key).splice(list(key).indexOf(hit.parent), 1);
+      }
+      if (!list(key).length) delete s.comments[key];
+      after(key);
+    }
+  };
 
   const syncCard = (key) => {
     const q = Q[key], c = document.getElementById('q-' + key);
@@ -202,7 +263,7 @@
   });
   main.addEventListener('input', (e) => {
     const t = e.target;
-    if (t.closest('.esgq-c-form')) { grow(t); t.form.querySelector('[type="submit"]').disabled = !t.value.trim(); return; }
+    if (t.closest('.esgq-c-form')) { grow(t); t.form.querySelector('[type="submit"]').disabled = !t.value.trim(); const f = t.form; drafts[`${f.dataset.cform}|${f.dataset.mode}|${f.dataset.id || ''}`] = t.value; return; }
     if (!t.dataset.for) return;
     const key = t.dataset.for;
     grow(t); s.v[key] = t.value;
@@ -213,9 +274,9 @@
   });
   main.addEventListener('click', (e) => {
     const cm = e.target.closest('[data-comment]');
-    if (cm) { const k = cm.dataset.comment, p = document.getElementById(k + '-c'), opening = p.hidden; p.hidden = !opening; cm.setAttribute('aria-expanded', String(opening)); cm.classList.toggle('is-open', opening); if (opening) { thread(k); const t = p.querySelector('textarea'); if (t) t.focus({ preventScroll: true }); } return; }
-    const del = e.target.closest('[data-uncomment]');
-    if (del) { const [k, i] = del.dataset.uncomment.split('|'); (s.comments[k] || []).splice(+i, 1); if (!s.comments[k].length) { delete s.comments[k]; if (s.meta[k]) s.meta[k].commented = false; } ESG.save(s); syncCard(k.split('.')[0]); totals(); return; }
+    if (cm) { const k = cm.dataset.comment; if (s.submitted) return; if (ui.compose.has(k)) { ui.compose.delete(k); thread(k); } else { ui.compose.add(k); thread(k); focusForm(k, 'new'); } return; }
+    const ca = e.target.closest('[data-ca]');
+    if (ca) { commentAct(ca); return; }
     const o = e.target.closest('[data-open]');
     if (o) { ESG_DOC.open(cites(Q[o.dataset.open], o.dataset.open), +o.dataset.i); return; }
     const b = e.target.closest('[data-approve], [data-reject], [data-src]'); if (!b) return;
