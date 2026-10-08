@@ -30,6 +30,7 @@ window.ESG_UPLOAD = (() => {
     return ['High confidence', 'is-ok', 'Text read cleanly, and the document carries its own validity date.'];
   };
 
+  let placed = null; // the verdict's row order
   let picked = [], stage = 'pick', seeded = false, onHand = null, lastFocus = null, uid = 0, editing = null;
   // a later batch, once she has answered: what she has read, and what the new documents should redo
   let second = null, scope = 'pick', ticked = new Set(), readOpen = false;
@@ -168,7 +169,7 @@ window.ESG_UPLOAD = (() => {
       $('#up-now').textContent = 'Checking ' + d.name;
       $('#up-bar').style.width = Math.round(((i + 1) / list.length) * 100) + '%';
     }, 500 + 850 * i)));
-    timers.push(setTimeout(() => { wrap.remove(); $('#up-body').hidden = false; stage = 'verdict'; render(); }, 500 + 850 * list.length + 480));
+    timers.push(setTimeout(() => { wrap.remove(); $('#up-body').hidden = false; stage = 'verdict'; placed = null; render(); }, 500 + 850 * list.length + 480));
   };
 
   // ---- the verdict ------------------------------------------------------------------------
@@ -204,8 +205,11 @@ window.ESG_UPLOAD = (() => {
   const verdictStage = () => {
     const docs = good();
     if (!docs.length) { stage = 'pick'; return pickStage(); }
-    const order = (d) => (expired(d) ? 0 : d.checking ? 1 : d.na ? 4 : d.source === 'library' ? 3 : 2);
-    const list = [...picked].sort((a, b) => (a.bad ? 5 : order(a)) - (b.bad ? 5 : order(b)));
+    // sorted once, when the check ends (expired first); after that a row keeps its place whatever you do to it,
+    // and anything added later goes to the end
+    if (!placed) { const order = (d) => (d.bad ? 5 : expired(d) ? 0 : d.na ? 4 : d.source === 'library' ? 3 : 2); placed = [...picked].sort((a, b) => order(a) - order(b)).map((d) => d.id); }
+    picked.forEach((d) => { if (!placed.includes(d.id)) placed.push(d.id); });
+    const list = placed.map((id) => picked.find((d) => d.id === id)).filter(Boolean);
     const ex = docs.filter(expired), checking = docs.filter((d) => d.checking), na = docs.filter((d) => d.na), read = readable();
     $('#up-alma').classList.toggle('is-reading', !!checking.length);
     let h, p;
