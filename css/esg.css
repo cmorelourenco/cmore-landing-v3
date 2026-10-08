@@ -677,7 +677,8 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .pd-list li { position: relative; padding-left: 1rem; }
 .pd-list li::before { content: ""; position: absolute; left: 0; top: 0.55em; width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--color-sand-400, #b9b4a8); }
 .pd-list.is-ok li::before { background: var(--color-ok-deep, var(--color-ok)); }
-.pd-list.is-flat li { padding-left: 0; display: flex; gap: 0.5rem; }
+.pd-list.is-flat li { padding-left: 0; display: flex; gap: 0.5rem; align-items: flex-start; }
+.pd-list.is-flat .pd-no { flex: none; height: 1.5em; }
 .pd-list.is-flat li::before { display: none; }
 .pd-yes, .pd-no { display: inline-flex; align-items: center; gap: 0.375rem; font-weight: 600; }
 .pd-yes svg, .pd-no svg { flex: none; width: 1.125rem; height: 1.125rem; }
