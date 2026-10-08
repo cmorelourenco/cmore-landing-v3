@@ -477,6 +477,25 @@
     scrollTo({ top: t.getBoundingClientRect().top + scrollY - (72 + (stuck() ? band.offsetHeight : 0) + 24), behavior: 'smooth' }); history.replaceState(null, '', a.getAttribute('href'));
   }));
 
+  // ---- the hint on a greyed-out button: why it can't be used yet, or why not any more -------------------
+  const hint = Object.assign(document.createElement('div'), { className: 'esgq-hint', role: 'tooltip', id: 'esgq-hint' });
+  document.body.appendChild(hint);
+  let hinted = null;
+  const showHint = (el) => {
+    hinted = el; hint.textContent = el.dataset.tip; el.setAttribute('aria-describedby', 'esgq-hint');
+    const r = el.getBoundingClientRect(), h = hint.offsetHeight, w = hint.offsetWidth, gap = 8;
+    const below = r.top - h - gap < 72; // not enough room above, under the header: show it below
+    hint.style.top = (below ? r.bottom + gap : r.top - h - gap) + 'px';
+    hint.style.left = Math.max(12, Math.min(innerWidth - w - 12, r.right - w)) + 'px';
+    hint.classList.add('is-on');
+  };
+  const hideHint = () => { if (hinted) hinted.removeAttribute('aria-describedby'); hinted = null; hint.classList.remove('is-on'); };
+  document.addEventListener('pointerover', (e) => { const el = e.target.closest('[data-tip]'); if (el && el !== hinted) showHint(el); else if (!el && hinted) hideHint(); });
+  document.addEventListener('focusin', (e) => { const el = e.target.closest('[data-tip]'); if (el) showHint(el); else hideHint(); });
+  document.addEventListener('focusout', hideHint);
+  addEventListener('scroll', hideHint, { passive: true });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideHint(); });
+
   // ---- arriving ----------------------------------------------------------------------------------
   if (ESG.status(s) === 'ready') { ESG.apply(s); s = ESG.load(); }
   if (s.submitted) document.documentElement.classList.add('esgq-locked');

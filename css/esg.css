@@ -561,12 +561,10 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* ---- Submit and View dashboard side by side: greyed out when they can't be used, with a tooltip saying why ---- */
 .esgq-end-btns { display: inline-flex; gap: 0.625rem; flex-wrap: wrap; }
 #questionnaires .btn[aria-disabled="true"] { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; opacity: 1; transform: none; }
-#questionnaires .btn[data-tip] { position: relative; }
-#questionnaires .btn[data-tip]::after { content: attr(data-tip); position: absolute; right: 0; bottom: calc(100% + 0.5rem); z-index: 7; width: max-content; max-width: 17rem; padding: 0.625rem 0.75rem;
-  border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.8125rem; font-weight: 400; line-height: 1.45; text-align: left; white-space: normal;
-  opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .14s ease, transform .18s var(--ease-brand), visibility .18s; pointer-events: none; }
-#questionnaires .btn[data-tip]:hover::after, #questionnaires .btn[data-tip]:focus-visible::after { opacity: 1; visibility: visible; transform: none; }
-.esgq-top .btn[data-tip]::after { bottom: auto; top: calc(100% + 0.5rem); transform: translateY(-4px); }
+/* the hint a greyed-out button gives: one floating element over the whole page, so nothing can clip or cover it */
+.esgq-hint { position: fixed; z-index: 120; max-width: 17rem; padding: 0.625rem 0.75rem; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white);
+  font-size: 0.8125rem; line-height: 1.45; box-shadow: 0 12px 32px -12px rgba(52, 52, 52, .5); pointer-events: none; opacity: 0; transition: opacity .14s ease; }
+.esgq-hint.is-on { opacity: 1; }
 
 /* ---- pills and tags: squarer than a button, so they read as filters and labels, not actions ---- */
 .esgq-pill { border-radius: 0.5rem; }
