@@ -88,6 +88,13 @@
     tbl(['Supplier', 'Country', 'Product supplied', 'Alerts'], sups.map(([n, cty, what, al]) => `<tr><td><span class="n">${esc(n)}</span></td><td>${esc(cty)}</td><td>${esc(what)}</td>
       <td class="pd-alerts">${al.length ? al.map(([st, txt]) => `<span class="pd-alert">${chip(st, st === 'bad' ? 'Alert' : st === 'missing' ? 'Missing' : 'In review')}<span>${esc(txt)}</span></span>`).join('') : '<span class="co-subtle">None</span>'}</td></tr>`)));
 
+  // ---- shipments: this product's lots, each from its origin parcel to the EU importer ---------------------------
+  const SHIP = { ok: ['In conformity', 'b-ok'], review: ['Pending approval', 'b-info'], missing: ['Pending', 'b-pend'], bad: ['Non conform', 'b-over'] };
+  html += card('ship', 'Shipments', 'Every batch of this product, from the parcel it came from to the importer who receives it in the EU.', null,
+    tbl(['Batch / shipment', 'Origin parcel', 'Supplier', 'EU importer', 'Status'], p.lots.map((l) => `<tr><td><span class="n">${l.code}</span></td>
+      <td><span class="n">${esc(l.parcel)}</span>${l.region !== '—' ? `<span class="d">${esc(l.region)}</span>` : ''}</td><td>${esc(l.supplier)}</td><td>${esc(l.importer)}</td>
+      <td><span class="co-badge ${SHIP[l.state][1]}">${SHIP[l.state][0]}</span></td></tr>`)));
+
   // ---- EUDR (P1) -------------------------------------------------------------------------------------------------
   if (P1) {
     const n = p.lots.length, ok = p.lots.filter((l) => l.state === 'ok').length, alert = p.lots.filter((l) => l.state === 'bad').length, rest = n - ok - alert;
@@ -95,8 +102,7 @@
     html += card('eudr', 'Deforestation · EUDR', 'Shown because the triage marks it as an EUDR commodity (P1).', 'EUDR', `
       <dl class="pd-grid">${kv('Commodity', esc(c.commodity))}${kv('Country of production', regionsTxt.map(esc).join('<br>'))}
         ${kv('Risk level', `<span class="chip is-mid">Standard risk</span>`)}</dl>
-      ${sub('Lots and parcels')}<p class="pd-sum">${sumTxt}. <span class="co-subtle">Kept with the shipments (F5) and parcels (F4); summed up here.</span></p>
-      ${tbl(['Lot', 'Origin parcel', 'Region', 'Status'], p.lots.map((l) => `<tr data-go="my-company.html?filled#shipments"><td><span class="n">${l.code}</span></td><td>${esc(l.parcel)}</td><td>${esc(l.region)}</td><td>${chip(l.state, l.state === 'bad' ? 'Parcel on alert' : l.state === 'ok' ? 'In conformity' : l.state === 'missing' ? 'Parcel missing' : 'In review')}</td></tr>`))}
+      ${sub('Lots and parcels')}<p class="pd-sum">${sumTxt}. <a href="#pd-ship">See the shipments</a></p>
       ${sub('Legality checklist')}<p class="co-subtle pd-sub-p">The eight areas of law of the country of production (P07). Each has a document or a justification.</p>
       ${tbl(['Area', 'Evidence', 'Status'], legal.map((l) => `<tr><td><span class="n">${esc(l.dom)}</span></td><td>${l.st === 'missing' ? '<span class="co-subtle">Nothing yet</span>' : `${l.just ? '<span class="pd-just">Justification</span>' : ''}${esc(l.ev)}`}</td><td>${chip(l.st)}</td></tr>`))}`);
   }
