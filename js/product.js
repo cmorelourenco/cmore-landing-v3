@@ -38,9 +38,7 @@
     if (P1) add('EUDR', `Legality: ${dom.toLowerCase()}`, st, owner);
     return { dom, ev: just ? ev.replace(/^Justification:\s*/, '') : ev, just, st };
   });
-  const seg = p.segregation === false ? 'missing' : 'ok';
   if (P1) {
-    add('EUDR', 'Segregation from non-verified material confirmed', seg, owner);
     p.lots.forEach((l) => add('EUDR', `${l.code}: ${l.state === 'bad' ? 'parcel on deforestation alert' : l.state === 'missing' ? 'origin parcel not yet linked' : 'parcel evidence to approve'}`, l.state, owner));
     if (risk !== 'low') add('EUDR', 'Risk assessment and mitigation', p.negligible === false ? 'review' : 'ok', 'You');
     add('EUDR', 'Due diligence conclusion', p.negligible === false ? 'bad' : p.negligible === null ? 'missing' : (p.status === 'ok' ? 'ok' : 'review'), 'You');
@@ -103,8 +101,7 @@
       : ['review', 'Pending', 'Evidence is in, but some of it is still being reviewed. The conclusion will be confirmed once the open items are approved.'];
     html += card('eudr', 'Deforestation · EUDR', 'Shown because the triage marks it as an EUDR commodity (P1).', 'EUDR', `
       <dl class="pd-grid">${kv('Commodity', esc(c.commodity))}${kv('Country of production', regionsTxt.map(esc).join('<br>'))}
-        ${kv('Risk level', `<span class="chip is-mid">Standard risk</span> <span class="co-subtle">Automatic, from the EU country benchmarking</span>`)}
-        ${kv('Segregation', seg === 'ok' ? `<span class="pd-yes">${ICO.ok}Confirmed</span> <span class="co-subtle">kept apart from non-verified material at every step</span>` : `<span class="pd-no">${ICO.bad}Not confirmed</span> <span class="co-subtle">requested from ${esc(owner)}</span>`)}</dl>
+        ${kv('Risk level', `<span class="chip is-mid">Standard risk</span>`)}</dl>
       ${sub('Lots and parcels')}<p class="pd-sum">${sumTxt}. <span class="co-subtle">Kept with the shipments (F5) and parcels (F4); summed up here.</span></p>
       ${tbl(['Lot', 'Origin parcel', 'Region', 'Status'], p.lots.map((l) => `<tr data-go="my-company.html?filled#shipments"><td><span class="n">${l.code}</span></td><td>${esc(l.parcel)}</td><td>${esc(l.region)}</td><td>${chip(l.state, l.state === 'bad' ? 'Parcel on alert' : l.state === 'ok' ? 'In conformity' : l.state === 'missing' ? 'Parcel missing' : 'In review')}</td></tr>`))}
       ${sub('Legality checklist')}<p class="co-subtle pd-sub-p">The eight areas of law of the country of production (P07). Each has a document or a justification.</p>
