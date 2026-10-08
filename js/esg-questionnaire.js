@@ -353,10 +353,8 @@
       if (r.review) parts.push(`${r.review} answer${r.review === 1 ? '' : 's'} need${r.review === 1 ? 's' : ''} your review`);
       if (r.bad) parts.push(`${r.bad} answer${r.bad === 1 ? '' : 's'} need${r.bad === 1 ? 's' : ''} fixing`);
       tipEl.innerHTML = `<b>Not ready yet.</b> ${parts.join(', ').replace(/, ([^,]*)$/, ' and $1').replace(/^./, (x) => x.toUpperCase())} before this can be submitted.`;
+      // greyed out, it only says why: nothing moves on the page
       tipEl.hidden = false; clearTimeout(tipT); tipT = setTimeout(() => (tipEl.hidden = true), 3600);
-      if (!inFilter(Q[r.first], r.first)) { filter = 'all'; applyFilter(); }
-      const c = document.getElementById('q-' + r.first);
-      scrollTo({ top: c.getBoundingClientRect().top + scrollY - 72 - (stuck() ? band.offsetHeight : 0) - 24, behavior: 'smooth' });
       return;
     }
     confirmSubmit();
