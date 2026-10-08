@@ -553,3 +553,7 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .res-sec .res-bar-m i { background: var(--color-ok); }
 .res-g.is-e .res-bar-m i, .res-g.is-e .res-g-t i, .res-plan-g.is-e h3 i { background: var(--color-ok); }
 .res-g.is-e .res-bar-m { background: var(--color-mid-beige); }
+
+/* the close button never crowds the title: as much room either side as the × takes, so a centred title stays centred */
+.dlg-head:not(.is-row) h2 { padding-inline: 2.25rem; }
+@media (max-width: 40rem) { .dlg-head:not(.is-row) h2 { padding-inline: 3rem; } }
