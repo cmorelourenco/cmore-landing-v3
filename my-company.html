@@ -868,9 +868,9 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-pager-row .co-pager { grid-column: 2; margin-top: 0; }
 .co-pager-row .co-pager-all { grid-column: 3; justify-self: end; font-size: 0.875rem; }
 /* Company documentation: four columns, the status last */
-.co-docs-tbl { table-layout: fixed; min-width: 40rem; }
+.co-docs-tbl { table-layout: fixed; min-width: 50rem; }
 .co-docs-tbl th:last-child, .co-docs-tbl td:last-child { text-align: right; } /* the status lines up on the card's right edge */
-.co-docs-tbl th:nth-child(1) { width: 46%; } .co-docs-tbl th:nth-child(2) { width: 16%; } .co-docs-tbl th:nth-child(3) { width: 18%; } .co-docs-tbl th:nth-child(4) { width: 20%; }
+.co-docs-tbl th:nth-child(1) { width: 36%; } .co-docs-tbl th:nth-child(2) { width: 18%; } .co-docs-tbl th:nth-child(3) { width: 13%; } .co-docs-tbl th:nth-child(4) { width: 15%; } .co-docs-tbl th:nth-child(5) { width: 18%; }
 /* the projects table, ten to a page */
 .co-pager { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin-top: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .co-pager[hidden] { display: none; }
@@ -1390,9 +1390,9 @@ body { transition: background-color .9s ease; }
     </div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl co-docs-tbl">
-        <thead><tr><th>Document name</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
+        <thead><tr><th>Document name</th><th>Source</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
         <tbody>
-          <tr><td colspan="4" class="co-tbl-empty">
+          <tr><td colspan="5" class="co-tbl-empty">
             <span class="n">No documents yet</span>
             <span class="d">Drop them on ALMA and they appear here, sorted, dated and flagged before they expire.</span>
           </td></tr>
@@ -1586,17 +1586,19 @@ body { transition: background-color .9s ease; }
     </div>
     <div class="co-card co-tbl-card">
       <table class="co-tbl co-docs-tbl">
-        <thead><tr><th>Document name</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
+        <thead><tr><th>Document name</th><th>Source</th><th class="c">Category</th><th class="c">Expiry date</th><th class="c">Status</th></tr></thead>
         <tbody class="persona-miguel-only">
-          <tr id="co-row-license" data-code="E01"><td><span class="n">Contractor&rsquo;s license (IMPIC certificate)</span><span class="d">Expired 15 August &mdash; drop the renewed one on ALMA.</span></td><td class="c">Company</td><td class="c">15 Aug 2026</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
-          <tr data-code="E18"><td><span class="n">Health &amp; safety organisation &amp; risk assessment</span><span class="d">E&#8209;Verify enrolment incomplete.</span></td><td class="c">Company</td><td class="c">3 I&#8209;9 attestations missing</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
-          <tr data-code="E12"><td><span class="n">Social security payment receipt</span><span class="d">September&rsquo;s receipt is in review.</span></td><td class="c">Company</td><td class="c">Due monthly</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
-          <tr data-code="E10"><td><span class="n">Public liability insurance</span><span class="d">18 of 22 vehicles on the schedule.</span></td><td class="c">Company</td><td class="c">3 Nov 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
-          <tr data-code="EQ03"><td><span class="n">Periodic safety inspection reports</span><span class="d">Crane inspection awaiting sign&#8209;off.</span></td><td class="c">Equipment</td><td class="c">20 Oct 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
-          <tr data-code="T05"><td><span class="n">Special&#8209;risk training (height, confined spaces)</span><span class="d">2 workers due for refresher.</span></td><td class="c">Worker</td><td class="c">9 Jun 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
-          <tr data-code="T07"><td><span class="n">Foreign workers&rsquo; residence &amp; work authorization</span><span class="d">None on payroll this quarter.</span></td><td class="c">Worker</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr>
+          <tr id="co-row-license" data-code="E01"><td><span class="n">Contractor&rsquo;s license (IMPIC certificate)</span><span class="d">Expired 15 August &mdash; drop the renewed one on ALMA.</span></td><td>Your company</td><td class="c">Company</td><td class="c">15 Aug 2026</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
+          <tr data-code="E18"><td><span class="n">Health &amp; safety organisation &amp; risk assessment</span><span class="d">E&#8209;Verify enrolment incomplete.</span></td><td>Your company</td><td class="c">Company</td><td class="c">3 I&#8209;9 attestations missing</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
+          <tr data-code="E12"><td><span class="n">Social security payment receipt</span><span class="d">September&rsquo;s receipt is in review.</span></td><td>Your company</td><td class="c">Company</td><td class="c">Due monthly</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="E10"><td><span class="n">Public liability insurance</span><span class="d">18 of 22 vehicles on the schedule.</span></td><td>Your company</td><td class="c">Company</td><td class="c">3 Nov 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="EQ03"><td><span class="n">Periodic safety inspection reports</span><span class="d">Crane inspection awaiting sign&#8209;off.</span></td><td>Your company</td><td class="c">Equipment</td><td class="c">20 Oct 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="T05"><td><span class="n">Special&#8209;risk training (height, confined spaces)</span><span class="d">2 workers due for refresher.</span></td><td>Your company</td><td class="c">Worker</td><td class="c">9 Jun 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr>
+          <tr data-code="T07"><td><span class="n">Foreign workers&rsquo; residence &amp; work authorization</span><span class="d">None on payroll this quarter.</span></td><td>Your company</td><td class="c">Worker</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr>
+          <tr><td><span class="n">Certificate of insurance (general liability)</span><span class="d">Expired 30 September &mdash; asked for the renewed one.</span></td><td>Supplier<span class="d">Valley Lumber</span></td><td class="c">Company</td><td class="c">30 Sep 2026</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr>
+          <tr><td><span class="n">Fire protection contractor licence</span><span class="d">Renewal sent, waiting for the state&rsquo;s stamp.</span></td><td>Supplier<span class="d">Tri&#8209;State Fire Protection</span></td><td class="c">Company</td><td class="c">12 Nov 2026</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr>
         </tbody>
-        <tbody class="persona-beatriz-only"><tr><td><span class="n">EUDR due diligence statement</span><span class="d">Palm oil shipment flagged for deforestation risk &mdash; LOT&#8209;2026&#8209;121.</span></td><td class="c">Shipment</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr><tr><td><span class="n">Geolocation polygons</span><span class="d">3 cocoa origin parcels missing GPS coordinates.</span></td><td class="c">Product</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr><tr><td><span class="n">Supplier code of conduct</span><span class="d">Kuapa Kokoo Union &mdash; awaiting countersignature.</span></td><td class="c">Supplier</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr><tr><td><span class="n">Deforestation risk assessment</span><span class="d">Annual review due for rubber origin, Thailand.</span></td><td class="c">Shipment</td><td class="c">Due yearly</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr><tr><td><span class="n">Phytosanitary certificate</span><span class="d">Natural rubber sheets, LOT&#8209;2026&#8209;130.</span></td><td class="c">Shipment</td><td class="c">12 Nov 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr><tr><td><span class="n">Legality verification</span><span class="d">Sawn tropical hardwood &mdash; country of harvest documentation.</span></td><td class="c">Product</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr><tr><td><span class="n">Carbon footprint audit</span><span class="d">Third&#8209;party verification of PCF figures, batch 2026&#8209;Q3.</span></td><td class="c">Product</td><td class="c">30 Sep 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr></tbody>
+        <tbody class="persona-beatriz-only"><tr><td><span class="n">EUDR due diligence statement</span><span class="d">Palm oil shipment flagged for deforestation risk &mdash; LOT&#8209;2026&#8209;121.</span></td><td>Your company</td><td class="c">Shipment</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr><tr><td><span class="n">Geolocation polygons</span><span class="d">3 cocoa origin parcels missing GPS coordinates.</span></td><td>Supplier<span class="d">Coop&eacute;rative Agricole Soubr&eacute;</span></td><td class="c">Product</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-over">Non conform</span></td></tr><tr><td><span class="n">Supplier code of conduct</span><span class="d">Kuapa Kokoo Union &mdash; awaiting countersignature.</span></td><td>Supplier<span class="d">Kuapa Kokoo Union</span></td><td class="c">Supplier</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr><tr><td><span class="n">Deforestation risk assessment</span><span class="d">Annual review due for rubber origin, Thailand.</span></td><td>Your company</td><td class="c">Shipment</td><td class="c">Due yearly</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr><tr><td><span class="n">Phytosanitary certificate</span><span class="d">Natural rubber sheets, LOT&#8209;2026&#8209;130.</span></td><td>Supplier<span class="d">Thai Rubber Estates Ltd</span></td><td class="c">Shipment</td><td class="c">12 Nov 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr><tr><td><span class="n">Legality verification</span><span class="d">Sawn tropical hardwood &mdash; country of harvest documentation.</span></td><td>Supplier<span class="d">Madeireira Floresta Norte</span></td><td class="c">Product</td><td class="c">&mdash;</td><td class="c"><span class="co-badge b-pend">Pending</span></td></tr><tr><td><span class="n">Carbon footprint audit</span><span class="d">Third&#8209;party verification of PCF figures, batch 2026&#8209;Q3.</span></td><td>Your company</td><td class="c">Product</td><td class="c">30 Sep 2026</td><td class="c"><span class="co-badge b-info">Pending approval</span></td></tr></tbody>
       </table>
     </div>
       <div class="co-pager-row">
@@ -1779,8 +1781,8 @@ body { transition: background-color .9s ease; }
         // the page catches up
         const row = $c('co-row-license'), cells = row.querySelectorAll('td');
         cells[0].querySelector('.d').textContent = 'Replaced today.';
-        cells[2].textContent = '15 Aug 2027';
-        cells[3].innerHTML = '<span class="co-badge b-ok">In conformity</span>';
+        cells[3].textContent = '15 Aug 2027';
+        cells[4].innerHTML = '<span class="co-badge b-ok">In conformity</span>';
         $c('co-meter').firstElementChild.style.width = '91%'; $c('co-meter').setAttribute('aria-valuenow', '91');
         $c('co-pct').textContent = '91%';
         $c('co-left').textContent = ' · one thing left: a diversity certificate, if you hold one.';
