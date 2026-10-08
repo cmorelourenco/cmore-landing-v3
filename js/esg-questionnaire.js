@@ -352,7 +352,7 @@
     d.className = 'dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'esgq-dlg-h');
     d.innerHTML = `<div class="dlg-scrim" data-x></div><div class="dlg-card"><button type="button" class="dlg-x" data-x aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
       <div class="dlg-head">${alma ? `<span class="dlg-alma is-big" aria-hidden="true">${ESG.SPHERES}</span><span class="eyebrow">ALMA</span>` : ''}<h2 id="esgq-dlg-h">${h}</h2><p>${p}</p></div>
-      <div class="dlg-foot is-center">${acts.map(([l, c, f], i) => (typeof f === 'string' ? `<a class="btn ${c}" href="${f}">${l}</a>` : `<button type="button" class="btn ${c}" data-act="${i}">${l}</button>`)).join('')}</div></div>`;
+      <div class="dlg-foot is-center"><span class="dlg-btns">${acts.map(([l, c, f], i) => (typeof f === 'string' ? `<a class="btn ${c}" href="${f}">${l}</a>` : `<button type="button" class="btn ${c}" data-act="${i}">${l}</button>`)).join('')}</span></div></div>`;
     document.body.appendChild(d); document.documentElement.classList.add('dlg-open');
     const close = () => { d.remove(); document.documentElement.classList.remove('dlg-open'); if (last && last.focus) last.focus({ preventScroll: true }); };
     d.addEventListener('click', (e) => { if (e.target.closest('[data-x]')) { close(); return; } const a = e.target.closest('[data-act]'); if (a) { close(); const f = acts[+a.dataset.act][2]; if (f) f(); } });

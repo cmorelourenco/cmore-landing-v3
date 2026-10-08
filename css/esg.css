@@ -437,3 +437,12 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 #esgq-submit-end[aria-disabled="true"] { background: var(--color-mid-beige); color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; }
 #esgq-submit-end[hidden] { display: none; }
 .esgq-end:has(#esgq-submit-end[hidden]) { justify-content: flex-start; }
+
+/* a modal's buttons are one size: each as wide as the widest, side by side, stacked on a phone */
+.dlg-btns { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0.625rem; }
+.dlg-btns .btn { width: 100%; min-width: 8.5rem; padding-inline: 1.25rem; }
+@media (max-width: 34rem) { .dlg-foot .dlg-btns { grid-auto-flow: row; width: 100%; } .dlg-foot .dlg-note { width: 100%; } }
+
+/* in a modal the main action is graphite, so it outweighs Cancel beside it */
+.dlg .btn-primary:not(:disabled):not([aria-disabled="true"]) { background: var(--color-graphite); border-color: var(--color-graphite); color: var(--color-off-white); }
+.dlg .btn-primary:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in oklab, var(--color-graphite) 82%, #000); border-color: color-mix(in oklab, var(--color-graphite) 82%, #000); color: var(--color-off-white); box-shadow: 0 8px 24px -12px rgba(52, 52, 52, .5); }

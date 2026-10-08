@@ -99,7 +99,7 @@ window.ESG_UPLOAD = (() => {
         <li><b>Company records</b>: registration, financial statements</li><li><b>Quality &amp; certifications</b>: quality manual, ISO certificates, licences</li><li><b>Training &amp; people</b>: training matrices, org charts, handbooks</li></ul>
         <p class="up-tip">Descriptive file names help me match each document to the right questions.</p></div></details>`;
     $('#up-foot').innerHTML = `<span class="dlg-note" aria-live="polite">${footNote(n)}</span>
-      <button type="button" class="btn btn-quiet btn-sm" data-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="up-verify"${n && ready() ? '' : ' disabled'}>Verify files</button>`;
+      <span class="dlg-btns"><button type="button" class="btn btn-quiet btn-sm" data-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="up-verify"${n && ready() ? '' : ' disabled'}>Verify files</button></span>`;
     const zone = $('#up-zone'), q = $('#up-q');
     zone.addEventListener('click', () => { file.value = ''; file.click(); });
     zone.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); zone.click(); } });
@@ -228,8 +228,8 @@ window.ESG_UPLOAD = (() => {
     $('#up-body').innerHTML = `<div class="vd-list">${list.map(rowVerdict).join('')}</div>`;
     const blocked = !!ex.length || !!checking.length || !read.length || !ready();
     $('#up-foot').innerHTML = `<span class="dlg-note">${read.length ? `<b>${read.length}</b> to read` : ''}</span>
-      <button type="button" class="btn btn-quiet btn-sm" id="up-back">Back to uploads</button><button type="button" class="btn btn-quiet btn-sm" id="up-more">Add documents</button>
-      <button type="button" class="btn btn-primary btn-sm" id="up-hand"${blocked ? ' disabled' : ''}>${action()}</button>`;
+      <span class="dlg-btns"><button type="button" class="btn btn-quiet btn-sm" id="up-back">Back to uploads</button><button type="button" class="btn btn-quiet btn-sm" id="up-more">Add documents</button>
+      <button type="button" class="btn btn-primary btn-sm" id="up-hand"${blocked ? ' disabled' : ''}>${action()}</button></span>`;
     $('#up-back').addEventListener('click', () => { stage = 'pick'; render(); });
     $('#up-more').addEventListener('click', () => { file.value = ''; file.click(); });
     $('#up-hand').addEventListener('click', hand);
