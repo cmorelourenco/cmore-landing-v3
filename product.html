@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Product sheet · C-MORE</title>
+<meta name="robots" content="noindex">
+<script>
+  // the side menu starts open (a drawer on phones) unless the visitor closed it last time
+  var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
+  document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
+  // which of our two demo people is signed in, Miguel (default) or Beatriz — a few things
+  // on the company page and in this menu change shape depending on who is looking
+  try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); } catch (e) {}
+  document.documentElement.dataset.persona = (cmPerson && /beatriz/i.test(cmPerson.name || '')) ? 'beatriz' : 'miguel';
+  // whether the company has any data in it yet — ?filled, or a prior visit that finished
+  // (or skipped) ALMA's intake — decides whether Projects/Shipments has anything to show
+  var cmFilled = /[?&]filled\b/.test(location.search);
+  try { if (!cmFilled) cmFilled = sessionStorage.getItem('cm-company') === 'filled'; } catch (e) {}
+  document.documentElement.dataset.company = cmFilled ? 'filled' : 'empty';
+</script>
+<style>
+/* Figtree, the brand face — same self-hosted files as the landing. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300; font-display: swap; src: url("fonts/figtree-300.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/figtree-400.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/figtree-500.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/figtree-600.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/figtree-700.woff2") format('woff2'); }
+
+/* The design system's tokens, the subset this page uses. Same block as the
+   sign-up page, so the two stay in step. */
+:root {
+  --color-graphite: #343434;
+  --color-coral: #f46d4f;
+  --color-coral-deep: #f44e29;
+  --color-coral-tint: #f9e7e3;
+  /* the pending/lagging share in the hero: coral at 45% over the ground, visible where the tint is not */
+  --color-coral-soft: color-mix(in oklab, var(--color-coral) 45%, var(--color-light-beige));
+  /* The clients' side of the ecosystem: light greys from the sand ramp, so the coral
+     (suppliers) stays the one accent. */
+  --color-clients: var(--color-sand-400);
+  --color-clients-soft: var(--color-dark-beige);
+  --color-blue: #4e638b;
+  --color-mid-blue: #909db6;
+  --color-off-white: #fafafa;
+  --color-light-beige: #f2f1ed;
+  --color-mid-beige: #e9e7e2;
+  --color-dark-beige: #e0ded7;
+  --color-sand-400: #c3c0b8;
+  --color-sand-500: #96958e;
+  --color-sand-600: #6e6e6a;
+  --color-positive: #3f7d2e;
+  --color-caution: #a8690a;
+  --color-critical: #b3261e;
+  --color-informative: var(--color-blue);
+  --color-positive-subtle: #e7f2e0;
+  --color-caution-subtle: #fbf0dc;
+  --color-critical-subtle: #fbe9e7;
+  --color-informative-subtle: #eaeef6;
+
+  --color-ground: var(--color-light-beige);
+  --color-surface: #ffffff;
+  --color-surface-sunken: var(--color-mid-beige);
+  --color-ink: var(--color-graphite);
+  --color-ink-muted: var(--color-blue);
+  --color-ink-subtle: var(--color-sand-600);
+  --color-line: var(--color-dark-beige);
+  --color-activation: var(--color-coral);
+  --color-activation-hover: var(--color-coral-deep);
+  --color-activation-foreground: var(--color-graphite);
+
+  --font-sans: 'Figtree', Arial, ui-sans-serif, system-ui, sans-serif;
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-md: 0.75rem;
+  --radius-pill: 9999px;
+  --shadow-activate: 0 8px 28px -10px rgba(244, 109, 79, 0.55);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+/* ALMA's spheres orbit past her box; on a phone that reached the screen edge and made the
+   page scroll sideways. clip, not hidden: it trims without making a scroll container, so the
+   sticky header keeps working. */
+html { -webkit-text-size-adjust: 100%; overflow-x: clip; }
+body { overflow-x: clip; }
+/* The arriving state: off-white, and nothing of the page yet. */
+html.intake-first, html.intake-first body { background: var(--color-off-white); }
+html.intake-first .top, html.intake-first .page { opacity: 0; visibility: hidden; }
+.top, .page { transition: opacity .55s var(--ease-brand); }
+body {
+  margin: 0; min-height: 100vh; background: var(--color-off-white); color: var(--color-ink);
+  font-family: var(--font-sans); font-size: 1rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-synthesis-weight: none;
+}
+h1, h2, h3, p, ul { margin: 0; }
+h1, h2 { text-wrap: balance; }
+ul { list-style: none; padding: 0; }
+a { color: var(--color-ink); text-decoration-color: var(--color-activation); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; border-radius: 0.5rem; }
+::selection { background: var(--color-coral); color: var(--color-graphite); }
+
+/* ---- The web behind the page -------------------------------------------
+   The landing's mesh, the same 620px tile used as a mask over a flat fill.
+   There it is off-white on graphite at 0.07; here it is the other way up, so
+   it runs at 0.045 — dark on light at the same alpha reads far heavier, and
+   this is meant to be felt rather than seen.
+
+   Fixed rather than absolute: the page scrolls past it instead of dragging
+   it along, which is what makes it sit behind the page rather than on it. */
+.mesh { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.mesh__web { position: absolute; inset: 0; background-color: var(--color-ink);
+  -webkit-mask-image: url("images/mesh-tile.svg"); mask-image: url("images/mesh-tile.svg");
+  -webkit-mask-repeat: repeat; mask-repeat: repeat;
+  -webkit-mask-size: 620px 620px; mask-size: 620px 620px;
+  -webkit-mask-position: center top; mask-position: center top;
+  opacity: 0.045; }
+/* Everything real sits over it. */
+.top, .page { position: relative; z-index: 1; }
+
+/* ---- Frame -------------------------------------------------------------- */
+.top { position: sticky; top: 0; z-index: 10; height: 4.5rem; background: color-mix(in oklab, var(--color-off-white) 88%, transparent);
+  backdrop-filter: blur(12px); box-shadow: 0 0 0 0 transparent; transition: box-shadow .2s ease; }
+/* no hairline at rest; once the page has scrolled, a soft shadow carries the same separation */
+.top.is-scrolled { box-shadow: 0 1px 2px rgba(52, 52, 52, .05), 0 8px 24px -16px rgba(52, 52, 52, .18); }
+/* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
+.hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
+
+/* the logo file, at the landing header's size; the link carries the accessible name */
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
+.brand img { display: block; width: 6.8rem; height: 1.25rem; }
+.top-right { display: flex; align-items: center; gap: 0.75rem; }
+.who-chip { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+@media (max-width: 30rem) { .who-chip .who-name { display: none; } }
+
+/* the header's column, so the page's left edge sits under the logo */
+.page { max-width: 78rem; margin-inline: auto; padding: 2.5rem 2rem 5rem; }
+@media (min-width: 64rem) { .page { padding: 3.5rem 2.5rem 6rem; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.eyebrow::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.title { margin-top: 1rem; font-size: clamp(2.25rem, 5.5vw, 3.25rem); line-height: 1.04; letter-spacing: -0.028em; font-weight: 600; }
+.title .soft { font-weight: 300; }
+.lead { margin-top: 1.125rem; max-width: 46ch; font-size: 1.125rem; line-height: 1.55; font-weight: 300; color: var(--color-ink-muted); }
+
+/* ---- Buttons, from the sign-up page ------------------------------------- */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3rem; padding-inline: 1.5rem;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; font-size: 1rem;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap; text-decoration: none; color: var(--color-ink);
+  transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand), border-color .14s var(--ease-brand); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn-primary { background: var(--color-activation); color: var(--color-activation-foreground); }
+.btn-primary:hover { background: var(--color-activation-hover); box-shadow: var(--shadow-activate); color: var(--color-activation-foreground); }
+.btn-quiet { border-color: var(--color-line); background: var(--color-surface); }
+.btn-quiet:hover { border-color: var(--color-sand-400); }
+.btn-sm { height: 2.375rem; padding-inline: 1rem; font-size: 0.875rem; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 0.875rem; color: var(--color-ink-subtle);
+  cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; }
+.link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
+
+/* Nothing on this page can be done until the company exists. The actions are
+   drawn anyway — seeing what is waiting is the point of an empty state — but
+   they are visibly parked rather than quietly broken. */
+.btn[aria-disabled="true"] { opacity: .75; cursor: not-allowed; }
+.btn[aria-disabled="true"]:hover { background: var(--color-surface); box-shadow: none; border-color: var(--color-line); }
+
+/* ---- ALMA, and the ask -------------------------------------------------- */
+/* One shape for "ALMA is asking you something", used by the intake step and
+   by the company page's empty state. It was a two-column bordered card here
+   and a centred column there; there is no reason for two. */
+.alma-ask { display: grid; justify-items: center; text-align: center; }
+.alma-media { display: block; position: relative; width: 100%; max-width: 20rem; aspect-ratio: 0.9598; margin-inline: auto; pointer-events: none; }
+
+/* ---- First step: ALMA takes the screen ----------------------------------
+   Arriving here, the company page behind washes out to off-white and ALMA
+   comes up in its place. She is the only thing on the screen, the way the
+   last page of sign-up is the only thing on its screen.
+
+   The overlay is `hidden` in the markup and shown by script, so a visitor
+   without JavaScript simply gets the page underneath rather than a blank
+   off-white field. */
+/* Her spheres orbit outside their box on purpose, and on a phone that overhang
+   was enough to make the step scroll sideways. `hidden` rather than `clip`:
+   next to `overflow-y: auto` a `clip` computes to `hidden` anyway, so this
+   says what the browser actually does. */
+.intake { position: fixed; inset: 0; z-index: 50; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  background: var(--color-off-white); }
+.intake[hidden] { display: none; }
+/* Over the empty company page: the page stays faintly behind her, and she fades in on top. */
+.intake.over-page { background: color-mix(in oklab, var(--color-off-white) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); animation: over-in .5s var(--ease-brand) both; }
+@keyframes over-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .intake.over-page { animation: none; } }
+html.intake-open, html.intake-open body { overflow: hidden; }
+
+.intake-inner { min-height: 100%; display: grid; align-content: start; justify-items: center;
+  gap: 0; max-width: 56rem; margin-inline: auto; padding: 0 1.25rem 4rem; text-align: center; }
+/* A whole viewport to herself, so the list underneath starts below the fold
+   however tall the screen is.
+
+   `safe center` matters: on a short screen this block is taller than the
+   viewport, and a plain `center` would push ALMA off the top of the scroll
+   container where you could never scroll back to her. */
+.intake-screen { width: 100%; min-height: 100svh; display: grid; align-content: safe center;
+  justify-items: center; padding: 3rem 0 5.5rem; }
+@media (min-width: 40rem) { .intake-inner { padding-inline: 2rem; } }
+
+/* Each piece arrives after her, in reading order. */
+.intake .rise { animation: rise .7s var(--ease-brand) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.intake .d1 { animation-delay: .95s; }
+.intake .d2 { animation-delay: 1.10s; }
+.intake .d3 { animation-delay: 1.30s; }
+.intake .d4 { animation-delay: 1.50s; }
+
+/* ALMA, and the target. She is what you drop onto. */
+/* Sized off the viewport height as well as its width, so she never crowds
+   out the words she is saying on a short screen. */
+.drop { position: relative; display: block; width: min(22rem, 74vw, 40svh); border: 0; background: none; padding: 0;
+  cursor: pointer; border-radius: 50%; animation: alma-arrive 1.2s var(--ease-brand) .45s both; }
+@keyframes alma-arrive { from { opacity: 0; transform: scale(.84); } to { opacity: 1; transform: none; } }
+.drop .alma-media { max-width: none; }
+/* The ring is the invitation: dashed and quiet until something is over her. */
+.drop::before { content: ""; position: absolute; inset: 6%; border-radius: 50%;
+  border: 2px dashed color-mix(in oklab, var(--color-graphite) 22%, transparent);
+  transition: border-color .2s var(--ease-brand), transform .3s var(--ease-brand), background-color .2s var(--ease-brand); }
+.drop:hover::before, .drop:focus-visible::before { border-color: color-mix(in oklab, var(--color-graphite) 40%, transparent); }
+.drop.is-over::before { border-color: var(--color-coral); border-style: solid;
+  background: color-mix(in oklab, var(--color-coral) 7%, transparent); transform: scale(1.06); }
+.drop.is-over { transform: scale(1.02); }
+.drop-hint { position: absolute; left: 50%; bottom: 8%; translate: -50% 0; white-space: nowrap; font-size: 0.8125rem;
+  font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-subtle); pointer-events: none; }
+/* You cannot drag a file on a phone, so she asks for a tap there instead. */
+.drop-hint .narrow { display: none; }
+@media (pointer: coarse), (max-width: 34rem) {
+  .drop-hint .wide { display: none; }
+  .drop-hint .narrow { display: inline; }
+}
+.drop.is-over .drop-hint { color: var(--color-coral-deep); }
+
+.alma-ask .says { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem; font-size: 0.8125rem;
+  font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.alma-ask .says::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.alma-ask :is(h1, h2) { margin-top: 0.875rem; font-size: clamp(1.875rem, 5vw, 2.75rem); line-height: 1.06;
+  letter-spacing: -0.028em; font-weight: 600; }
+.alma-ask :is(h1, h2) .soft { font-weight: 300; }
+/* Full width of the column and tight under the heading: at a 42ch measure it
+   ran to four lines and pushed the button off the first screen. */
+.alma-ask .lead { margin-top: 0.75rem; margin-inline: auto; max-width: none; }
+/* A phone has no width to spend, so the same sentences buy their room back
+   from the type size and from her. */
+@media (max-width: 34rem) {
+  .alma-ask .lead { font-size: 1rem; line-height: 1.5; }
+  .intake-screen { padding: 2rem 0 5rem; }
+  .drop { width: min(22rem, 74vw, 32svh); }
+}
+.alma-ask .actions { margin-top: 1.75rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+
+/* Folding her pitch away: a grid row from 1fr to 0fr collapses to exactly the
+   height of the content, with nothing to measure or hard-code. */
+.say { width: 100%; display: grid; grid-template-rows: 1fr; opacity: 1;
+  transition: grid-template-rows .55s var(--ease-brand), opacity .35s ease; }
+.say > div { overflow: hidden; min-height: 0; }
+.has-files .say { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+/* With the words gone the buttons sit right under her, so they need less air
+   above them than they did under a paragraph. */
+.has-files .actions { margin-top: 1.25rem; }
+
+/* The forward action only exists once there is something to hand over. */
+#hand { display: none; }
+.has-files #hand { display: inline-flex; animation: rise .5s var(--ease-brand) .15s both; }
+/* Stacked, the two read as a pair, so they are cut to one width rather than
+   to their labels. */
+.alma-ask .actions .btn { min-width: 15rem; }
+/* Each button keeps one treatment for the whole step. Adding files is the
+   quiet one throughout — on this screen the thing you are meant to do is drop
+   them on her, and the button is the way round that for anyone who cannot
+   drag. The coral belongs to the action that carries the step forward, and
+   only appears when there is something to carry. */
+
+@media (prefers-reduced-motion: reduce) {
+  .say { transition: none; }
+  .has-files #hand { animation: none; }
+}
+
+/* What matters most. Grouped, because ten loose names is a list to fail at
+   and four groups is something you can recognise your own paperwork in. */
+.cues { margin-top: 1.5rem; width: 100%; text-align: left; border-top: 1px solid var(--color-line); padding-top: 1.75rem; }
+.cues > .k { font-size: 0.875rem; color: var(--color-ink-subtle); text-align: center; }
+.cue-grid { margin-top: 1.5rem; display: grid; gap: 1.25rem 2rem; grid-template-columns: 1fr; }
+@media (min-width: 40rem) { .cue-grid { grid-template-columns: 1fr 1fr; } }
+.cue h2 { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-muted); }
+.cue ul { margin-top: 0.625rem; display: grid; gap: 0.375rem; }
+.cue li { position: relative; padding-left: 1rem; font-size: 0.9375rem; color: var(--color-ink); }
+.cue li::before { content: ""; position: absolute; left: 0; top: 0.6em; width: 6px; height: 6px; border-radius: 1px; background: var(--color-coral); }
+.cue li i { font-style: normal; color: var(--color-ink-subtle); }
+.cue.is-optional li::before { background: var(--color-sand-400); }
+
+/* What she took. */
+.took { margin-top: 1.5rem; width: 100%; max-width: 30rem; text-align: left; }
+.took[hidden] { display: none; }
+.took ul { display: grid; gap: 0.375rem; margin-top: 0.75rem; }
+.took li { display: flex; gap: 0.625rem; align-items: baseline; font-size: 0.9375rem; }
+.took li::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 1px; background: var(--color-positive); transform: translateY(-1px); }
+.took .more { color: var(--color-ink-subtle); font-size: 0.875rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .intake, .intake .rise, .drop { animation: none; }
+}
+
+/* ---- The cue to what she is asking for ---------------------------------
+   The list of documents is below the fold on purpose — the step is "give me
+   what you have", not "work through a checklist". This floats over the first
+   screen to say the list is there, bobs so it is noticed, and takes itself
+   away once you have reached it.
+
+   Two elements: the wrapper is fixed and handles arriving and leaving, the
+   button inside does the bobbing. One animated property each, so they never
+   fight over `transform`. */
+.faq-cue-wrap { position: fixed; left: 0; right: 0; bottom: 1.5rem; z-index: 60;
+  display: flex; justify-content: center; padding-inline: 1.25rem; pointer-events: none;
+  opacity: 0; visibility: hidden; transform: translateY(10px);
+  transition: opacity .5s var(--ease-brand), transform .5s var(--ease-brand), visibility .5s; }
+.faq-cue-wrap.is-in { opacity: 1; visibility: visible; transform: none; }
+/* The landing's scroll cue, word for word in form: 0.7rem uppercase at
+   ink-subtle with a 2px coral rule the width of the label. No pill, no
+   shadow — the landing does not have one and neither should this. */
+.faq-cue { pointer-events: auto; position: relative; display: inline-block; border: 0; background: none;
+  padding: 0 0 0.5rem; font: inherit; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--color-ink-subtle); cursor: pointer; white-space: nowrap;
+  animation: bob 2.6s ease-in-out infinite; transition: color .14s var(--ease-brand); }
+.faq-cue::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--color-coral); }
+.faq-cue:hover { color: var(--color-ink); }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .faq-cue { animation: none; }
+  .faq-cue-wrap { transition: none; }
+}
+
+/* ---- Handed over: she reads, everything else goes ----------------------
+   The screen empties to the off-white it arrived on and she grows into the
+   middle of it, then says what she is doing, one thing at a time.
+
+   The pitch folds and fades as one piece — a grid row from 1fr to 0fr, so it
+   collapses to exactly its own height over the same three quarters of a
+   second that it fades. Nothing is switched to display:none part-way, which
+   is what made the old version snap. */
+.pitch { width: 100%; display: grid; grid-template-rows: 1fr; opacity: 1;
+  transition: grid-template-rows .75s var(--ease-brand), opacity .6s ease; }
+.pitch-in { overflow: hidden; min-height: 0; display: grid; justify-items: center; }
+.is-working .pitch { grid-template-rows: 0fr; opacity: 0; pointer-events: none; }
+/* The list below the fold goes with it; nothing above it moves, so this one
+   can simply fade. */
+.intake-screen.is-working ~ .cues { opacity: 0; pointer-events: none; transition: opacity .7s ease; }
+
+.is-working .drop { cursor: default; }
+.is-working .drop::before, .is-working .drop-hint { opacity: 0; transition: opacity .5s ease; }
+/* The scale goes on the composition, not the button: the button carries the
+   arrival animation, and an animation's fill would win over this. */
+.is-working .drop .alma-media { transform: scale(1.35); }
+.drop .alma-media { transition: transform 1.2s var(--ease-brand), opacity .7s var(--ease-brand); }
+
+/* One line at a time, centred, with the mark's own square beside it. The
+   square takes a quarter-turn with every new line — the brand's Turn, a
+   click into place rather than a spin, and proof she is still going. */
+/* Low on the screen, and off the flow entirely. In the flow it sat right
+   under her box — but her spheres orbit well past that box, so the line was
+   printed over them. Fixed near the foot of the viewport it never meets her,
+   whatever size she is.
+
+   The square is inline rather than a flex item: a long filename wraps to two
+   lines on a phone, and as a flex item the square was left stranded at the
+   edge of the row. Inline, it stays against the first word. */
+.working { position: fixed; left: 0; right: 0; bottom: clamp(2.5rem, 12svh, 7rem); z-index: 55;
+  display: block; text-align: center; max-width: 34rem; margin-inline: auto;
+  padding-inline: 1.25rem; min-height: 2rem; font-size: 1.0625rem; color: var(--color-ink);
+  opacity: 0; transition: opacity .6s var(--ease-brand); }
+.working.is-in { opacity: 1; }
+.working[hidden] { display: none; }
+.doing-sq { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 1px;
+  margin-right: 0.625rem; background: var(--color-coral);
+  transition: transform .45s var(--ease-brand); }
+.working.is-done .doing-sq { background: var(--color-positive); }
+/* Each line goes out before the next comes in, at the same pace, so the
+   change reads as one breath rather than a swap. */
+#doing-text { display: inline; transition: opacity .4s var(--ease-brand); }
+#doing-text b { font-weight: 600; }
+.working.is-done { color: var(--color-ink-subtle); font-size: 1rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pitch, .drop .alma-media, .doing-sq, #doing-text, .working { transition: none; }
+}
+
+/* ---- The company page once there is a company in it (direction D) -------
+   Full-bleed bands on the landing's light-beige ground, each with its content
+   in the header's column so every left edge sits under the logo. */
+body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: var(--color-light-beige); }
+.page:has(#filled:not([hidden])), .page:has(#empty:not([hidden])) { max-width: none; padding: 0; }
+/* The site's column, the same as the landing header's: 78rem, 2rem in on phones and
+   2.5rem from 64rem. The logo therefore sits in one place on every page. */
+.co-wrap { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; }
+@media (min-width: 64rem) { .co-wrap { padding-inline: 2.5rem; } }
+.co-muted { color: var(--color-ink-muted); }
+.co-subtle { color: var(--color-ink-subtle); }
+:is(#filled, #empty) a:not(.btn) { font-weight: 500; }
+:is(#filled, #empty) a:not(.btn):hover { color: var(--color-coral-deep); }
+
+/* header: founding badge, a round avatar, the menu */
+.co-founder { background: var(--color-graphite); color: var(--color-light-beige); }
+/* the founding star in gold: a warm metallic that reads on the graphite (not a design-system token yet) */
+.co-founder-star { color: #e3b341; }
+.who { position: relative; }
+.who-chip { color: var(--color-ink); border: 0; background: none; font: inherit; font-size: 0.875rem; cursor: pointer;
+  padding: 0.25rem 0.5rem 0.25rem 0.25rem; margin-right: -0.5rem; border-radius: 9999px; transition: background-color .14s var(--ease-brand); }
+.who-chip:hover, .who.is-open .who-chip { background: var(--color-mid-beige); }
+.who-chev { width: 0.875rem; height: 0.875rem; color: var(--color-ink-subtle); transition: transform .2s var(--ease-brand); }
+.who.is-open .who-chev { transform: rotate(180deg); }
+.who-menu { position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 80; min-width: 16rem; padding: 0.375rem;
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.75rem;
+  box-shadow: 0 12px 32px rgba(52, 52, 52, 0.12), 0 2px 6px rgba(52, 52, 52, 0.06);
+  opacity: 0; transform: translateY(-4px); pointer-events: none; visibility: hidden;
+  transition: opacity .16s ease, transform .2s var(--ease-brand), visibility .2s; }
+.who.is-open .who-menu { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
+.who-head { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem 0.75rem; margin-bottom: 0.25rem; border-bottom: 1px solid var(--color-mid-beige); }
+.who-head .who-id { display: flex; flex-direction: column; min-width: 0; }
+.who-head b { font-weight: 600; font-size: 0.9375rem; }
+.who-head small { font-size: 0.8125rem; color: var(--color-ink-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.who-menu a { display: flex; align-items: center; gap: 0.75rem; padding: 0.5625rem 0.75rem; border-radius: 0.5rem; text-decoration: none;
+  font-size: 0.9375rem; font-weight: 500; color: var(--color-ink); outline: none; }
+.who-menu a:hover, .who-menu a:focus-visible { background: var(--color-light-beige); color: var(--color-ink); }
+.who-menu a svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-ink-subtle); }
+.who-sep { height: 1px; margin: 0.25rem; background: var(--color-mid-beige); }
+@media (prefers-reduced-motion: reduce) { .who-menu, .who-chev { transition: none; } }
+.who-pic { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; overflow: hidden;
+  background: var(--color-graphite); color: var(--color-off-white); font-size: 0.75rem; font-weight: 600; letter-spacing: -0.02em; }
+.who-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.who-pic.who-pic-lg { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
+.top-right { gap: 1.25rem; }
+@media (max-width: 40rem) { .co-founder .co-founder-t { display: none; } .top-right { gap: 0.75rem; } }
+/* The founding badge runs on under the avatar, so badge and person read as one piece:
+   the pill is as tall as the avatar and long enough for it to sit in its right end. */
+/* The avatar is the larger shape and the badge a slimmer stripe that comes out from
+   behind it: the pill ends under the avatar's centre. */
+.top-right .co-founder { height: 1.625rem; padding: 0 1.75rem 0 0.75rem; font-size: 0.8125rem; }
+.top-right .co-founder + .who { margin-left: -2.75rem; }
+@media (max-width: 40rem) { .top-right .co-founder { padding-left: 0.625rem; } .top-right .co-founder + .who { margin-left: -2.25rem; } }
+#who-btn .who-pic { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; box-shadow: 0 0 0 2px var(--color-off-white); position: relative; z-index: 1; }
+
+/* badges and buttons, the design system's */
+.co-badge { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.75rem; padding: 0.25rem 0.5rem; border-radius: var(--radius-pill);
+  font-size: 0.875rem; font-weight: 600; line-height: 1.25rem; white-space: nowrap; letter-spacing: 0; }
+.b-ok { background: var(--color-positive-subtle); color: var(--color-positive); }
+.b-pend { background: var(--color-caution-subtle); color: var(--color-caution); }
+.b-over { background: var(--color-critical-subtle); color: var(--color-critical); }
+.b-info { background: var(--color-informative-subtle); color: var(--color-informative); }
+.b-neu { background: var(--color-mid-beige); color: var(--color-ink-subtle); }
+.co-btn-sm { height: 2rem; padding-inline: 0.75rem; font-size: 0.875rem; }
+.co-btn-ghost { background: transparent; }
+.co-btn-ghost:hover { background: var(--color-mid-beige); }
+.co-num { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; color: var(--color-coral); }
+
+/* profile completion */
+.co-strip { background: var(--color-surface); border-bottom: 1px solid var(--color-line); font-size: 0.875rem; color: var(--color-ink-muted); }
+.co-strip .co-wrap { min-height: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.5rem; }
+.co-strip-l { display: flex; align-items: center; gap: 0.875rem; min-width: 0; }
+.co-strip b { font-weight: 600; color: var(--color-ink); }
+.co-strip a { flex: none; font-size: 0.875rem; }
+.co-meter { flex: none; display: block; width: 11.25rem; height: 6px; border-radius: 3px; background: var(--color-mid-beige); overflow: hidden; }
+.co-meter i { display: block; height: 100%; background: var(--color-coral); }
+
+/* sections */
+.co-sec { padding: 3.5rem 0; }
+.co-pad-top-0 { padding-top: 0; }
+.co-last-sec { padding-bottom: 4rem; } /* the section just before the graphite band */
+.co-head { padding: 2.5rem 0 3rem; }
+.co-head .co-wrap { display: flex; flex-direction: column; gap: 1.75rem; }
+.co-attn-sec { border-top: 1px solid var(--color-line); }
+.co-h-xl { font-size: clamp(2.5rem, 3.6vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.co-h-l { font-size: 2.5rem; line-height: 1.08; letter-spacing: -0.025em; font-weight: 500; }
+.co-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem 2rem; margin-bottom: 1.5rem; }
+.co-sec-head .co-muted { font-size: 1rem; }
+.co-sec-head .co-link { font-size: 0.875rem; }
+.co-sec-r { display: flex; align-items: center; gap: 1.25rem; }
+
+.co-card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 1rem; padding: 1.5rem;
+  display: flex; flex-direction: column; gap: 0.875rem; }
+
+/* the company, and its score */
+.co-id { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; }
+.co-id-l { display: flex; flex-direction: column; gap: 0.625rem; }
+.co-name { font-size: 3.25rem; line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.co-score { flex: none; display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem 1.125rem 0.75rem 0.75rem;
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 1rem; }
+.co-ring { width: 3.5rem; height: 3.5rem; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--color-graphite) 0 var(--p), var(--color-mid-beige) var(--p) 100%); }
+.co-ring > div { width: 2.625rem; height: 2.625rem; border-radius: 50%; background: var(--color-surface); display: grid; place-items: center;
+  font-size: 1.125rem; font-weight: 600; letter-spacing: -0.03em; }
+.co-score-t { display: flex; flex-direction: column; gap: 1px; }
+
+/* invitations */
+.co-invites { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; }
+.co-invite { gap: 0.375rem; box-shadow: 0 1px 2px rgba(52, 52, 52, .05), 0 4px 12px -6px rgba(52, 52, 52, .12); /* graphite */ }
+.co-card-k { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.co-card-k a { font-size: 0.875rem; }
+.co-big { font-size: 4.25rem; font-weight: 500; letter-spacing: -0.035em; line-height: 0.96; }
+.co-invite .co-muted { font-size: 0.9375rem; line-height: 1.5; }
+.co-invite-btn { align-self: flex-start; margin-top: 0.875rem; height: 3rem; padding-inline: 1.5rem; font-size: 1.0625rem; }
+
+/* needs your attention */
+.co-attn { display: grid; grid-template-columns: minmax(0, 1fr) 27rem; gap: 3.5rem; align-items: center; }
+.co-attn-l { display: flex; flex-direction: column; gap: 1.5rem; }
+.co-steps { display: flex; flex-direction: column; margin-top: 0.5rem; }
+.co-step { display: flex; flex-direction: column; gap: 0.375rem; padding: 1.125rem 0; border-top: 1px solid var(--color-line); }
+.co-step:last-child { border-bottom: 1px solid var(--color-line); }
+.co-step h3 { display: flex; align-items: center; flex-wrap: wrap; gap: 0.625rem; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+.co-step p { font-size: 0.9375rem; line-height: 1.5; color: var(--color-ink-muted); }
+
+/* ALMA, taking the license */
+.co-drop { position: relative; height: 26.25rem; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  text-align: center; gap: 0.5rem; padding: 1.75rem; border: 2px dashed var(--color-sand-400); border-radius: 1.5rem; cursor: pointer;
+  transition: border-color .2s var(--ease-brand), background-color .2s var(--ease-brand); }
+.co-drop:hover { border-color: color-mix(in oklab, var(--color-graphite) 40%, transparent); }
+.co-drop.is-over { border-style: solid; border-color: var(--color-coral); background: color-mix(in oklab, var(--color-coral) 6%, transparent); }
+.co-drop .alma-media { position: absolute; left: 50%; top: 1.5rem; translate: -50% 0; width: 15rem; max-width: 60%; }
+#co-browse, #ce-browse { white-space: nowrap; }
+.co-drop-acts { display: flex; flex-direction: column; align-items: center; gap: 0.625rem; margin-top: 0.875rem; }
+.co-drop-acts[hidden] { display: none; }
+.co-drop.has-file, .co-drop.is-reading, .co-drop.is-filed { cursor: default; }
+.co-drop.has-file { border-style: solid; border-color: var(--color-coral); }
+.co-drop.is-filed { border-style: solid; border-color: var(--color-positive); }
+.co-drop .alma-media { transform-origin: 50% 0; transition: transform .5s var(--ease-brand); }
+.co-drop.has-file .alma-media { transform: scale(.74); } /* room for the button under her */
+.co-drop.is-reading .alma-media { animation: alma-read 1.4s var(--ease-brand) infinite alternate; }
+@keyframes alma-read { from { transform: scale(1); } to { transform: scale(1.06); } }
+.co-step.is-done h3 { color: var(--color-ink-subtle); text-decoration: line-through; text-decoration-color: var(--color-sand-400); }
+.co-step.is-done h3 .co-badge { text-decoration: none; }
+.co-drop-t { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
+
+/* consents */
+.co-consents { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; } /* your own consents live in Settings */
+.co-list { padding: 0.5rem 1.5rem; gap: 0; }
+.co-list-k { padding: 1rem 0 0.25rem; }
+.co-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.co-row:last-child { border-bottom: 0; }
+.co-row-t { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+.co-row-n { display: block; font-weight: 500; font-size: 1rem; line-height: 1.75rem; }
+.co-row-n .co-num { margin-right: 0.5rem; }
+.co-row-n .co-badge { margin-left: 0.5rem; vertical-align: middle; }
+.co-row .co-subtle { font-size: 0.875rem; line-height: 1.45; }
+.co-acts { flex: none; display: flex; gap: 0.5rem; }
+.co-sw { flex: none; width: 2.75rem; height: 1.5rem; border-radius: 0.75rem; border: 0; padding: 2px; display: flex;
+  background: var(--color-graphite); cursor: pointer; transition: background-color .2s var(--ease-brand); }
+.co-sw i { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--color-surface); margin-left: calc(100% - 1.25rem); transition: margin-left .2s var(--ease-brand); }
+.co-sw[aria-checked="false"] { background: var(--color-sand-400); }
+.co-sw[aria-checked="false"] i { margin-left: 0; }
+/* Required consents cannot be revoked here: the switch stays on, faded, and refuses the pointer. */
+.co-sw:disabled { cursor: not-allowed; opacity: .4; }
+
+/* documents */
+/* the table runs to the card's edges, so a hovered row is grey from side to side;
+   the card's inset moves into the first and last cells */
+.co-tbl-card { padding: 0; overflow-x: auto; }
+.co-tbl th:first-child, .co-tbl td:first-child { padding-left: 1.5rem; }
+.co-tbl th:last-child, .co-tbl td:last-child { padding-right: 1.5rem; }
+.co-tbl thead th { padding-top: 0.875rem; }
+.co-tbl { width: 100%; min-width: 60rem; border-collapse: collapse; font-size: 0.875rem; line-height: 1.4; }
+.co-tbl th { text-align: left; font-weight: 500; color: var(--color-ink-subtle); padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--color-line); white-space: nowrap; }
+.co-tbl td { padding: 0.875rem 0.75rem; border-bottom: 1px solid var(--color-mid-beige); vertical-align: middle; }
+.co-tbl tr:last-child td { border-bottom: 0; }
+.co-tbl .c { text-align: center; }
+/* every data row opens its record: the hand cursor and a light ground say so */
+.co-tbl tbody tr:not(:has(.co-tbl-empty)) { cursor: pointer; transition: background-color .12s ease; }
+.co-tbl tbody tr:not(:has(.co-tbl-empty)):hover, .co-tbl tbody tr:not(:has(.co-tbl-empty)):focus-visible { background: var(--color-light-beige); }
+.co-tbl tbody tr:not(:has(.co-tbl-empty)):focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
+
+.co-tbl .n { display: block; font-weight: 500; font-size: 0.9375rem; }
+.co-tbl .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.co-exp { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; white-space: nowrap; }
+.co-exp .co-badge { width: 6.5rem; justify-content: center; }
+
+/* the graphite band, with the landing's mesh over it */
+.co-band { position: relative; overflow: hidden; background: var(--color-graphite); color: var(--color-light-beige);
+  border-top: 3px solid var(--color-coral); padding: 4rem 0 4.5rem; }
+.co-band-mesh { position: absolute; inset: 0; pointer-events: none; background-color: var(--color-off-white);
+  -webkit-mask: url("images/mesh-tile.svg") center top / 620px 620px repeat; mask: url("images/mesh-tile.svg") center top / 620px 620px repeat; opacity: 0.07; }
+.co-band-in { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40rem; gap: 4rem; align-items: center; }
+.co-band h2 { color: var(--color-light-beige); }
+.co-on-dark { color: var(--color-sand-400); }
+.co-band-l { display: flex; flex-direction: column; gap: 2rem; }
+.co-sides { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.co-side { display: flex; flex-direction: column; gap: 0.875rem; padding: 1.25rem 0; border-top: 1px solid rgba(242, 241, 237, .18); }
+.co-side > .co-bar { margin-top: auto; } /* the two sides stretch to the taller one, so their bars share a line */
+.co-side-n { display: flex; gap: 1.75rem; }
+.co-side-n > div { display: flex; flex-direction: column; }
+.co-side-n > div > span:last-child { font-size: 0.875rem; color: var(--color-sand-400); }
+.co-stat { font-size: 3.25rem; font-weight: 500; letter-spacing: -0.03em; line-height: 1; }
+.co-stat small { font-size: 1.5rem; font-weight: 300; color: var(--color-sand-400); }
+.co-bar { display: flex; gap: 2px; border-radius: 4px; overflow: hidden; }
+.co-bar i { display: block; }
+.co-map-btn { align-self: flex-start; height: 2.5rem; padding-inline: 1rem; }
+
+.co-net { width: 100%; display: grid; grid-template-columns: 12.5rem minmax(0, 1fr); gap: 2rem; align-items: center; }
+.co-donut { width: 12.5rem; height: 12.5rem; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--color-light-beige) 0 44.4%, var(--color-sand-400) 44.4% 55.5%, var(--color-coral) 55.5% 88.9%, var(--color-coral-tint) 88.9% 100%); }
+.co-donut > div { width: 8.25rem; height: 8.25rem; border-radius: 50%; background: var(--color-graphite); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px; }
+.co-fc { width: 2.75rem; height: 2.75rem; border-radius: 0.5rem; background: var(--color-light-beige); color: var(--color-graphite);
+  display: grid; place-items: center; font-size: 0.9375rem; font-weight: 700; }
+.co-donut-t { margin-top: 0.375rem; font-size: 0.75rem; color: var(--color-sand-400); }
+/* the count, large, in the middle of the chart */
+.co-donut-n { font-size: 2.75rem; font-weight: 500; letter-spacing: -0.035em; line-height: 0.9; color: var(--color-sand-600); }
+.co-donut-tl { margin: 0.25rem 0 0; font-size: 0.8125rem; font-weight: 700; }
+.co-hero .co-donut .co-donut-tl { color: var(--color-ink); }
+.co-net-rows { display: flex; flex-direction: column; gap: 1.375rem; min-width: 0; }
+.co-net-row { display: flex; flex-direction: column; gap: 0.625rem; }
+.co-net-row + .co-net-row { padding-top: 1.375rem; border-top: 1px solid rgba(242, 241, 237, .18); }
+.co-net-k { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.co-net-k > span:first-child { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9375rem; font-weight: 500; }
+.co-net-k > span:first-child i { width: 0.75rem; height: 0.75rem; border-radius: 50%; }
+.co-net-k > span:last-child { font-size: 0.8125rem; color: var(--color-sand-400); }
+.co-avs { display: flex; align-items: center; }
+.co-avs span { width: 2.25rem; height: 2.25rem; border-radius: 50%; display: grid; place-items: center; font-size: 0.6875rem; font-weight: 700;
+  background: var(--color-light-beige); color: var(--color-graphite); border: 2px solid var(--color-graphite); }
+.co-avs span + span { margin-left: -0.5rem; }
+.co-avs.is-coral span { background: var(--color-coral); }
+.co-avs span.is-out { background: var(--color-graphite); color: var(--color-light-beige); border-color: var(--color-sand-400); }
+.co-avs.is-coral span.is-out { border-color: var(--color-coral-tint); }
+.page .co-avs a { margin-left: 0.75rem; font-size: 0.8125rem; font-weight: 400; color: var(--color-sand-400); }
+.page .co-avs a:hover { color: var(--color-light-beige); }
+.co-legend { font-size: 0.75rem; color: var(--color-sand-400); }
+
+/* ---- Ecosystem as a half ring: the arc carries the split (solid = in order, light =
+   pending or lagging), the two sides sit under it with their people, no second set of bars */
+.co-half { position: relative; width: 100%; max-width: 21rem; margin-inline: auto; contain: inline-size; } /* sized by the people under it, not by itself */
+.co-half svg { display: block; width: 100%; height: auto; overflow: visible; }
+.co-half-c { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; }
+.co-half-empty .co-donut-n { color: var(--color-sand-400); }
+.co-hero .co-half .co-donut-tl { color: var(--color-ink); }
+/* the ring sits right over the two sides and is centred on them; the block lines up with
+   the ecosystem link under it (right edge side by side, left edge when stacked) */
+.co-hero .co-net.co-net-half { display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-end; }
+.co-half-wrap { display: flex; flex-direction: column; gap: 0.875rem; width: max-content; max-width: 100%; }
+.co-hero .co-net-half .co-net-rows { display: grid; grid-template-columns: repeat(2, auto); gap: 1.5rem 3rem; }
+@media (max-width: 76rem) { .co-hero .co-net.co-net-half { align-items: flex-start; } }
+.co-hero .co-net-half .co-net-row + .co-net-row { padding-top: 0; border-top: 0; }
+.co-hero .co-net-half .co-net-k { flex-direction: column; align-items: flex-start; gap: 0.125rem; }
+@media (max-width: 40rem) { .co-half-wrap { width: 100%; } .co-hero .co-net-half .co-net-rows { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- The hero: company, then the ecosystem, on the page's own light ground.
+   It reuses the graphite band's layout, with every colour set for light. ------- */
+.co-band.co-hero { border-top: 0; padding: 2rem 0 2.75rem; background: transparent; color: var(--color-ink); }
+.co-hero .co-band-mesh { display: none; }
+.co-hero .co-band-l { gap: 1.5rem; }
+.co-hero .co-side { padding: 1rem 0; border-top-color: var(--color-line); }
+.co-hero-id { position: relative; padding-bottom: 1.5rem; margin-bottom: 1.75rem; border-bottom: 1px solid var(--color-line); }
+.co-band.co-hero h2 { color: var(--color-ink); }
+.co-hero .co-on-dark { color: var(--color-ink-muted); }
+.co-hero .co-side-n > div > span:last-child, .co-hero .co-stat small, .co-hero .co-net-k > span:last-child,
+.co-hero .co-legend, .co-hero .co-donut-t { color: var(--color-ink-subtle); }
+.co-hero .co-stat-empty { color: var(--color-sand-400); }
+/* two families: clients in light sand greys, suppliers in coral;
+   the lighter shade of each marks what is pending or lagging */
+.co-hero .co-bar-empty, .co-hero .co-donut-empty { background: var(--color-mid-beige); }
+.co-hero .co-donut:not(.co-donut-empty) { background: conic-gradient(var(--color-clients) 0 50%, var(--color-clients-soft) 50% 58.3%, var(--color-coral) 58.3% 91.7%, var(--color-coral-soft) 91.7% 100%); }
+.co-hero .co-donut > div { background: var(--color-light-beige); }
+.co-hero .co-fc { background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-line); }
+.co-hero .co-donut-empty .co-fc { background: transparent; color: var(--color-sand-500); border-color: var(--color-sand-400); }
+.co-hero .co-avs span { background: var(--color-clients); color: var(--color-graphite); border-color: var(--color-light-beige); }
+.co-hero .co-avs.is-coral span { background: var(--color-coral); color: var(--color-graphite); }
+.co-hero .co-avs span.is-out { background: var(--color-surface); color: var(--color-ink); border-color: var(--color-clients); }
+.co-hero .co-avs.is-coral span.is-out { border-color: var(--color-coral); }
+.co-hero .co-avs-empty span { background: transparent; border: 1.5px dashed var(--color-sand-400); }
+/* the rest of the side, counted in a plain chip */
+.co-hero .co-avs span.is-more, .co-hero .co-avs.is-coral span.is-more { background: var(--color-surface); color: var(--color-ink-subtle); border-color: var(--color-line); font-weight: 600; }
+.page .co-hero .co-avs a { color: var(--color-ink); }
+.page .co-hero .co-avs a:hover { color: var(--color-coral-deep); }
+.co-hero .co-net-row + .co-net-row { border-top-color: var(--color-line); }
+.co-hero-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.625rem 0.75rem; }
+.co-hero-btn { height: 2.5rem; padding-inline: 1.125rem; font-size: 0.9375rem; }
+.co-btn-light { background: var(--color-off-white); border: 1px solid var(--color-line); color: var(--color-ink); }
+.co-btn-light:hover { border-color: var(--color-sand-400); color: var(--color-ink); }
+.page .co-hero-link { margin-left: 0.25rem; white-space: nowrap; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); text-underline-offset: 0.2em; }
+.page .co-hero-link:hover { color: var(--color-coral-deep); }
+@media (max-width: 34rem) { .co-hero-acts { flex-direction: column; align-items: stretch; } .co-hero-btn { width: 100%; } .page .co-hero-link { margin: 0.25rem 0 0; text-align: center; } }
+/* the band's grid: figures and network on top, the invite row and the ecosystem link
+   sharing the line under them */
+.co-hero .co-band-in { grid-template-areas: "l n" "a k"; row-gap: 1.5rem; grid-template-columns: minmax(0, 1fr) minmax(0, 36rem); gap: 1.5rem 3rem; }
+/* beside the side menu the column is narrower, so the big headings scale with it */
+.co-hero .co-h-xl { font-size: clamp(2.25rem, 3vw, 3.25rem); }
+.co-hero .co-band-l { grid-area: l; } .co-hero .co-net { grid-area: n; }
+.co-hero .co-hero-acts { grid-area: a; align-self: center; }
+.page .co-hero .co-hero-link { grid-area: k; justify-self: end; align-self: center; margin: 0; }
+/* side by side, the network fills the height of the figures beside it */
+@media (min-width: 76.0625rem) {
+  .co-hero .co-band-in { row-gap: 1.5rem; }
+  .co-hero .co-net { align-self: stretch; }
+  .co-hero .co-net-half .co-net-rows { padding-bottom: 1rem; } /* the figures' bars sit 1rem above their column's foot */
+}
+@media (max-width: 76rem) {
+  .co-hero .co-band-in { grid-template-areas: "l" "n" "a" "k"; grid-template-columns: minmax(0, 1fr); }
+  .page .co-hero .co-hero-link { justify-self: start; }
+}
+/* ---- Project view: two tables, the projects you run and the ones you supply ---- */
+.co-proj-sec { border-top: 1px solid var(--color-line); }
+.co-proj { display: grid; gap: 1.25rem; }
+/* the description sits under the title here, not across from it */
+.co-sec-head-stack { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 2rem; }
+.co-sec-head-stack .co-muted { font-size: 1.0625rem; }
+/* title with its description under it, the count and View all across from them */
+.co-sec-head-desc { align-items: flex-end; margin-bottom: 1.5rem; }
+.co-sec-t { display: flex; flex-direction: column; gap: 0.5rem; }
+.co-sec-t .co-muted { font-size: 1.0625rem; }
+/* each table's title sits above its card, like the section heads */
+.co-proj { gap: 2rem !important; }
+.co-sub-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+.co-sub-head { align-items: center; }
+.co-sub-head-r { display: inline-flex; align-items: baseline; gap: 1.25rem; font-size: 0.9375rem; }
+.co-sub-head-r .co-link { font-size: 0.875rem; }
+/* the same column widths in both tables, so the two read as one view */
+.co-proj-tbl { table-layout: fixed; }
+.co-proj-tbl th:nth-child(1) { width: 22%; } .co-proj-tbl th:nth-child(2) { width: 19%; } .co-proj-tbl th:nth-child(3) { width: 24%; }
+.co-proj-tbl th:nth-child(4) { width: 8%; } .co-proj-tbl th:nth-child(5) { width: 10%; } .co-proj-tbl th:nth-child(6) { width: 10%; } .co-proj-tbl th:nth-child(7) { width: 7%; }
+/* My projects carries a delivery deadline: a countdown, or a delayed badge once it has passed */
+.co-proj-dl th:nth-child(1) { width: 19%; } .co-proj-dl th:nth-child(2) { width: 16%; } .co-proj-dl th:nth-child(3) { width: 19%; }
+.co-proj-dl th:nth-child(4) { width: 8%; } .co-proj-dl th:nth-child(5) { width: 10%; } .co-proj-dl th:nth-child(6) { width: 10%; } .co-proj-dl th:nth-child(7) { width: 12%; } .co-proj-dl th:nth-child(8) { width: 6%; }
+.co-dl { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.co-dl-t { display: inline-flex; align-items: baseline; gap: 0.3125rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.co-dl-t b { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
+.co-dl-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.co-dl-t.is-soon b, .co-dl-t.is-soon small { color: var(--color-critical); }
+.co-dl .d { white-space: nowrap; }
+.co-proj-tbl .co-alert { min-width: 1.75rem; justify-content: center; }
+/* ---- Side menu ----------------------------------------------------------
+   A white column down the left under the header. The header and the page keep the
+   site's column (the same 78rem as every other page); the menu sits in the margin.
+   Three ways it can be, set on <html data-sn>:
+     full    the whole menu (the default; the visitor can close it, and that is remembered)
+     rail    icons only
+     drawer  hidden, slides in from the header's menu button (phones)
+   The header and the page share one column; where the margin beside it is too narrow for
+   the menu, both step in by the same amount, so the logo always sits over the content. */
+:root { --sn-w: 15rem; --sn-rail: 4.5rem; }
+.sn { position: fixed; z-index: 9; top: 4.5rem; bottom: 0; left: 0; width: var(--sn-w); background: var(--color-surface);
+  border-right: 1px solid var(--color-line); overflow-y: auto; overflow-x: hidden; transition: width .25s var(--ease-brand), transform .3s var(--ease-brand), box-shadow .25s ease; }
+html.intake-first .sn { opacity: 0; visibility: hidden; }
+.sn-in { display: flex; flex-direction: column; gap: 0.125rem; padding: 0.75rem 0.75rem 1.25rem; min-height: 100%; }
+/* Miguel and Beatriz are two different demo companies sharing one set of pages — whichever
+   one isn't signed in has their bits of markup hidden rather than removed */
+html[data-persona="beatriz"] .persona-miguel-only { display: none; }
+html[data-company="empty"] .sn-proj { display: none; }
+html:not([data-persona="beatriz"]) .persona-beatriz-only { display: none; }
+.sn-item { position: relative; display: flex; align-items: center; gap: 0.75rem; height: 2.625rem; padding: 0 0.75rem; border-radius: 0.5rem; white-space: nowrap;
+  text-decoration: none; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink-subtle); transition: background-color .14s var(--ease-brand), color .14s var(--ease-brand); }
+.sn-item svg { flex: none; width: 1.25rem; height: 1.25rem; }
+.sn-item:hover { background: var(--color-light-beige); color: var(--color-ink); }
+.sn-item.is-on { background: var(--color-light-beige); color: var(--color-ink); font-weight: 600; }
+.sn-item.is-on::before { content: ""; position: absolute; left: -0.75rem; top: 0.5rem; bottom: 0.5rem; width: 3px; border-radius: 0 3px 3px 0; background: var(--color-coral); }
+.sn-item.is-on svg { color: var(--color-coral); }
+.sn-item:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
+/* counts: a coral ring around dark figures, readable at a glance */
+.sn-count, .bell-count { min-width: 1.375rem; height: 1.375rem; padding: 0 0.3125rem; border-radius: 9999px; display: grid; place-items: center;
+  background: var(--color-surface); border: 1.5px solid var(--color-coral); color: var(--color-ink); font-size: 0.75rem; font-weight: 700; line-height: 1; }
+.sn-count { margin-left: auto; }
+.sn-count[hidden], .bell-count[hidden] { display: none; }
+.sn-sep { height: 1px; margin: 0.75rem 0.5rem; background: var(--color-line); }
+.sn-foot { margin-top: auto; display: flex; flex-direction: column; gap: 0.125rem; }
+.sn-foot .sn-sep { margin-top: 0; }
+/* open/close */
+.sn-collapse { display: flex; align-items: center; justify-content: flex-end; height: 2.25rem; margin-bottom: 0.375rem; }
+.sn-collapse button { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink-subtle); cursor: pointer; }
+.sn-collapse button:hover { background: var(--color-light-beige); color: var(--color-ink); }
+.sn-collapse svg { width: 1.125rem; height: 1.125rem; transition: transform .25s var(--ease-brand); }
+/* The page keeps the header's column whatever the menu does. Only where the margin
+   beside that column is narrower than the rail does it step in, by just enough. */
+:root { --wrap-pad: 2rem;
+  /* how far the column's content must step in to clear the rail: the rail and a little air,
+     less the column's own side margin and inner padding */
+  --sn-now: var(--sn-w);
+  --sn-clear: max(0px, calc(var(--sn-now) + 0.75rem - var(--wrap-pad) - max(0px, (100vw - 78rem) / 2))); }
+html[data-sn="rail"] { --sn-now: var(--sn-rail); }
+@media (min-width: 64rem) { :root { --wrap-pad: 2.5rem; } }
+.page:has(#filled:not([hidden])), .page:has(#empty:not([hidden])) { margin-left: 0; }
+/* the header and every section column step in by the same amount, so the logo stays over the content */
+html:not([data-sn="drawer"]) .top .hdr-in, html:not([data-sn="drawer"]) .co-wrap { padding-left: calc(var(--wrap-pad) + var(--sn-clear)); transition: padding-left .25s var(--ease-brand); }
+/* rail */
+html[data-sn="rail"] .sn { width: var(--sn-rail); }
+html[data-sn="rail"] .sn-in { padding-inline: 0.625rem; }
+html[data-sn="rail"] .sn-item { justify-content: center; padding: 0; }
+html[data-sn="rail"] .sn-item .sn-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+html[data-sn="rail"] .sn-item.is-on::before { left: -0.625rem; }
+html[data-sn="rail"] .sn-count { position: absolute; top: 0.0625rem; right: 0.0625rem; min-width: 1.125rem; height: 1.125rem; padding: 0 0.25rem; font-size: 0.625rem; margin: 0; }
+html[data-sn="rail"] .sn-collapse { justify-content: center; }
+html[data-sn="rail"] .sn-collapse svg { transform: rotate(180deg); }
+/* drawer: phones */
+.sn-toggle { display: none; place-items: center; width: 2.5rem; height: 2.5rem; margin-left: -0.5rem; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink); cursor: pointer; }
+.sn-toggle:hover { background: var(--color-mid-beige); }
+.sn-toggle svg { width: 1.375rem; height: 1.375rem; }
+html[data-sn="drawer"] .sn-toggle { display: grid; }
+html[data-sn="drawer"] .top .hdr-in > .brand { margin-right: auto; margin-left: 0.25rem; }
+html[data-sn="drawer"] .sn { width: 16rem; transform: translateX(-100%); box-shadow: 0 0 40px rgba(52,52,52,.18); z-index: 30; }
+html[data-sn="drawer"] .sn.is-open { transform: none; }
+html[data-sn="drawer"] .sn-collapse { display: none; }
+/* phones: the header holds the menu button, logo, language, bell and avatar; the founding badge waits for more room */
+html[data-sn="drawer"] .top .co-founder { display: none; }
+html[data-sn="drawer"] .top-right { gap: 0.5rem; }
+html[data-sn="drawer"] .top-right .co-founder + .who { margin-left: 0; }
+html[data-sn="drawer"] .who-chev { display: none; }
+html[data-sn="drawer"] .who-chip { margin-right: 0; padding-right: 0.25rem; }
+
+.sn-scrim { position: fixed; inset: 4.5rem 0 0 0; z-index: 29; background: rgba(52,52,52,.28); }
+.sn-scrim[hidden] { display: none; }
+/* the header's bell */
+.hdr-bell { position: relative; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 0; border-radius: 9999px; background: none; color: var(--color-ink); cursor: pointer; }
+.hdr-bell:hover { background: var(--color-mid-beige); }
+.hdr-bell svg { width: 1.375rem; height: 1.375rem; }
+.hdr-bell .bell-count { position: absolute; top: 0.125rem; right: 0; min-width: 1.125rem; height: 1.125rem; padding: 0 0.25rem; font-size: 0.625rem;
+  background: var(--color-coral); border-color: var(--color-coral); color: var(--color-off-white); }
+@media (prefers-reduced-motion: reduce) { .sn, .sn-collapse svg, .top .hdr-in, .co-wrap { transition: none !important; } }
+/* the company's logo, beside its name: who this page is about, at a glance */
+.co-id-col { display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.co-id-main { display: flex; align-items: center; gap: 1.25rem; min-width: 0; }
+.co-logo { flex: none; width: 5.5rem; height: 5.5rem; border-radius: 1.25rem; box-shadow: 0 1px 2px rgba(52,52,52,.06), 0 8px 20px -10px rgba(52,52,52,.35); }
+.co-logo-empty { display: grid; place-items: center; align-content: center; gap: 0.125rem; padding: 0; cursor: pointer; box-shadow: none;
+  border: 2px dashed var(--color-sand-400); background: transparent; color: var(--color-sand-500); font: inherit; font-size: 0.75rem; font-weight: 500; }
+.co-logo-empty svg { width: 1.375rem; height: 1.375rem; }
+.co-logo-empty:hover { border-color: var(--color-coral); color: var(--color-coral-deep); }
+@media (max-width: 52rem) { .co-logo { width: 4rem; height: 4rem; border-radius: 0.875rem; } .co-id-main { gap: 0.875rem; } }
+/* ---- Notifications: the bell's panel ------------------------------------ */
+.nt { position: relative; }
+.nt-panel { position: absolute; right: -0.5rem; top: calc(100% + 0.5rem); z-index: 80; width: 25rem; max-height: min(34rem, calc(100vh - 6rem)); display: flex; flex-direction: column;
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.875rem; overflow: hidden;
+  box-shadow: 0 16px 40px rgba(52,52,52,.14), 0 2px 6px rgba(52,52,52,.06);
+  opacity: 0; transform: translateY(-4px); pointer-events: none; visibility: hidden; transition: opacity .16s ease, transform .2s var(--ease-brand), visibility .2s; }
+.nt.is-open .nt-panel { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
+.nt.is-open .hdr-bell { background: var(--color-mid-beige); }
+.nt-head { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem 0.75rem 1.125rem; border-bottom: 1px solid var(--color-mid-beige); }
+.nt-head b { font-size: 0.9375rem; font-weight: 600; }
+.nt-head .link-btn { font-size: 0.8125rem; color: var(--color-ink); text-decoration-color: var(--color-activation); }
+.nt-list { list-style: none; margin: 0; padding: 0.375rem; overflow-y: auto; }
+.nt-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; border-radius: 0.625rem; text-decoration: none; color: var(--color-ink); }
+.nt-item:hover, .nt-item:focus-visible { background: var(--color-light-beige); outline: none; }
+.nt-mark { flex: none; width: 0.625rem; height: 0.625rem; margin-top: 0.375rem; border-radius: 2px; }
+.nt-over { background: var(--color-critical); } .nt-pend { background: var(--color-caution); } .nt-info { background: var(--color-informative); }
+.nt-body { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; flex: 1; }
+.nt-body b { font-size: 0.875rem; font-weight: 600; line-height: 1.35; }
+.nt-body span { font-size: 0.8125rem; line-height: 1.4; color: var(--color-ink-muted); }
+.nt-body small { font-size: 0.75rem; color: var(--color-ink-subtle); margin-top: 0.125rem; }
+.nt-dot { flex: none; width: 0.5rem; height: 0.5rem; margin-top: 0.4375rem; border-radius: 50%; background: var(--color-coral); }
+.nt-item:not(.is-unread) .nt-dot { visibility: hidden; }
+.nt-item:not(.is-unread) .nt-body b { font-weight: 500; }
+.nt-foot { padding: 0.75rem 1.125rem; border-top: 1px solid var(--color-mid-beige); text-align: center; }
+.nt-foot a { font-size: 0.875rem; font-weight: 500; }
+html[data-sn="drawer"] .nt-panel { position: fixed; left: 0.75rem; right: 0.75rem; top: 4.75rem; width: auto; }
+@media (prefers-reduced-motion: reduce) { .nt-panel { transition: none; } }
+/* ---- The same page, empty ---------------------------------------------- */
+.co-name-empty, .co-big-empty { color: var(--color-sand-400); }
+.co-tbl td.co-tbl-empty { padding: 2.75rem 0.75rem; text-align: center; }
+.co-tbl-empty .d { margin-top: 0.25rem; }
+.co-list-empty { display: flex; flex-direction: column; gap: 0.25rem; padding: 1rem 0 1.5rem; }
+.co-list-empty .co-subtle { font-size: 0.875rem; line-height: 1.45; }
+.co-stat-empty { color: rgba(242, 241, 237, .35); }
+.co-bar-empty { background: rgba(242, 241, 237, .14); }
+.co-donut-empty { background: rgba(242, 241, 237, .14); }
+.co-donut-empty .co-fc { background: transparent; border: 1.5px dashed var(--color-sand-400); color: var(--color-sand-400); }
+.co-avs-empty span { background: transparent; border: 1.5px dashed rgba(242, 241, 237, .35); }
+.co-avs-empty span + span { margin-left: 0.375rem; }
+
+/* narrower screens: the design is drawn at 1440; these keep it whole below that */
+@media (max-width: 76rem) {
+  .co-attn { grid-template-columns: minmax(0, 1fr) 26rem; gap: 3rem; }
+  .co-band-in { grid-template-columns: 1fr; gap: 3rem; }
+  .co-net { max-width: 40rem; }
+}
+@media (max-width: 60rem) {
+  .co-attn { grid-template-columns: 1fr; }
+  .co-consents { grid-template-columns: 1fr; }
+  .co-id { flex-direction: column; align-items: flex-start; gap: 1.25rem; }
+  .co-strip-more { display: none; }
+}
+@media (max-width: 52rem) {
+  .co-invites { grid-template-columns: 1fr; }
+  .co-name, .co-h-xl { font-size: 2.5rem; }
+  .co-h-l { font-size: 2rem; }
+  .co-sec-head { flex-direction: column; align-items: flex-start; }
+  .co-sec-r { flex-wrap: wrap; }
+  .co-sides { grid-template-columns: 1fr; }
+  .co-sec { padding: 2.75rem 0; }
+  .co-pad-top-0 { padding-top: 0; }
+}
+@media (max-width: 34rem) {
+  .co-name, .co-h-xl { font-size: 2.125rem; }
+  .co-big { font-size: 3.5rem; }
+  .co-meter { width: 5rem; }
+  .co-strip .eyebrow { display: none; }
+  .co-strip .co-wrap { gap: 1.25rem; }
+  .co-drop { height: 22rem; }
+  .co-net { grid-template-columns: 1fr; justify-items: center; }
+  .co-net-rows { width: 100%; }
+  .co-row.co-req { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .co-list { padding-inline: 1.125rem; }
+  .co-stat { font-size: 2.75rem; }
+}
+
+/* The hand-off: she and her last line go out to the off-white, and the page
+   comes up through it. The body's own colour travels the same way, so the
+   two halves of the change are one movement. */
+/* Her fade goes on the composition, not the button, for the same reason the
+   scale does: the button's arrival animation holds opacity at 1 and would
+   win over a plain declaration here. */
+.is-finishing .drop .alma-media { opacity: 0; }
+.is-finishing .working { opacity: 0; transition: opacity .7s var(--ease-brand); }
+body { transition: background-color .9s ease; }
+
+/* ---- Welcome, between ALMA and the company page -------------------------
+   She fades to the off-white; this comes up through the same colour over the
+   landing's own sphere, holds for a breath, and hands over to the company page
+   the same way. The sphere's one distinct point is coral here and beats: the
+   company, now on the network. */
+.welcome { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; overflow: hidden;
+  background: var(--color-off-white); opacity: 0; transition: opacity .9s var(--ease-brand); }
+.welcome.is-in { opacity: 1; }
+.welcome[hidden] { display: none; }
+.welcome canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.welcome-in { position: relative; z-index: 1; width: 100%; max-width: 46rem; padding: 2rem 1.25rem; text-align: center;
+  transform: translateY(14px); transition: transform 1.1s var(--ease-brand); }
+.welcome.is-in .welcome-in { transform: none; }
+.welcome h1 { font-size: clamp(2.25rem, 6vw, 4.25rem); line-height: 1.02; letter-spacing: -0.032em; font-weight: 600; }
+/* the landing's activation underline, drawn in once the screen has settled */
+.welcome .w-mark { background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 0% 0.28em; padding-inline: 0.08em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+  transition: background-size 1s var(--ease-brand) .55s; }
+.welcome.is-in .w-mark { background-size: 100% 0.28em; }
+.welcome .w-lead { margin: 1.25rem auto 0; max-width: 34rem; font-size: clamp(1.125rem, 2.2vw, 1.375rem); line-height: 1.5;
+  font-weight: 300; color: var(--color-ink-muted); }
+.welcome .w-lead b { font-weight: 600; color: var(--color-ink); }
+.welcome .w-go { margin-top: 2.25rem; }
+@media (prefers-reduced-motion: reduce) { .welcome, .welcome-in, .welcome .w-mark { transition: none; } }
+
+/* ---- ALMA's composition, lifted from the landing ------------------------ */
+.alma-comp{position:absolute;inset:0;display:block;overflow:visible}
+.alma-comp img{position:absolute}
+.alma-sphere{position:absolute;display:block;transform-origin:var(--ox,50%) var(--oy,50%);will-change:transform,opacity;animation:alma-orbit var(--orbit,50s) linear infinite,alma-sphere-breathe calc(4.8s + var(--i) * .53s) ease-in-out calc(var(--i) * -1.1s) infinite alternate;animation-delay:calc(var(--i) * -6.1s),calc(var(--i) * -1.1s)}
+@keyframes alma-orbit{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.alma-radial{position:absolute;inset:0;display:block;will-change:transform;animation:alma-radial-swing var(--radial,24s) ease-in-out calc(var(--i) * -3.7s) infinite}
+@keyframes alma-radial-swing{0%{transform:translate(0,0)}30%{transform:translate(calc(var(--rx) * 1),calc(var(--ry) * 1))}55%{transform:translate(calc(var(--rx) * -0.7),calc(var(--ry) * -0.7))}80%{transform:translate(calc(var(--rx) * 0.45),calc(var(--ry) * 0.45))}100%{transform:translate(0,0)}}
+@keyframes alma-sphere-breathe{from{opacity:1}to{opacity:.72}}
+.alma-sphere img{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;user-select:none;pointer-events:none}
+.alma-sphere .a{animation:alma-grain-a calc(5.6s + var(--i) * .61s) ease-in-out calc(var(--i) * -1.9s) infinite alternate,alma-counter-orbit var(--orbit,50s) linear calc(var(--i) * -6.1s) infinite}
+.alma-sphere .b{animation:alma-grain-b calc(5.6s + var(--i) * .61s) ease-in-out calc(var(--i) * -1.9s) infinite alternate,alma-counter-orbit var(--orbit,50s) linear calc(var(--i) * -6.1s) infinite}
+@keyframes alma-grain-a{from{opacity:1}to{opacity:.35}}
+@keyframes alma-grain-b{from{opacity:0}to{opacity:.75}}
+@keyframes alma-counter-orbit{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .alma-sphere,.alma-radial,.alma-sphere img,.alma-comp{animation:none !important}
+  .alma-sphere .b{opacity:0}
+}
+
+/* ---- Settings ------------------------------------------------------------- */
+.page:has(#questionnaires) { max-width: none; padding: 0; margin-left: 0; }
+.eco-head { padding: 2rem 0 2rem; }
+.eco-crumbs { display: flex; align-items: center; gap: 0.875rem; margin-bottom: 1.75rem; }
+.eco-crumbs-back { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--color-line); border-radius: 0.625rem;
+  background: var(--color-surface); color: var(--color-ink); text-decoration: none; transition: border-color .14s ease, background-color .14s ease; }
+.eco-crumbs-back:hover { border-color: var(--color-sand-400); background: var(--color-light-beige); }
+.eco-crumbs-back svg { width: 1.125rem; height: 1.125rem; }
+.eco-crumbs-trail { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; flex-wrap: wrap; }
+.eco-crumbs-trail a { color: var(--color-ink-subtle); text-decoration: none; }
+.eco-crumbs-trail a:hover { color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); }
+.eco-crumbs-trail span[aria-hidden] { color: var(--color-sand-400); }
+.eco-crumbs-trail [aria-current] { color: var(--color-ink); font-weight: 700; }
+.eco-head-t { display: flex; flex-direction: column; gap: 0.875rem; max-width: 44rem; }
+.eco-head .co-h-xl { font-size: clamp(2.25rem, 3vw, 3.25rem); }
+.eco-lead { font-size: 1.0625rem; max-width: 38rem; }
+.set-body { display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 2.5rem; align-items: start; padding-bottom: 5rem; }
+.set-nav { position: sticky; top: 6rem; display: flex; flex-direction: column; gap: 0.125rem; }
+.set-nav a { position: relative; display: block; padding: 0.5rem 0.75rem; border-radius: 0.5rem; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink-subtle); text-decoration: none; }
+.set-nav a:hover { background: var(--color-mid-beige); color: var(--color-ink); }
+.set-nav a.is-on { color: var(--color-ink); font-weight: 600; }
+.set-nav a.is-on::before { content: ""; position: absolute; left: 0; top: 0.5rem; bottom: 0.5rem; width: 3px; border-radius: 3px; background: var(--color-coral); }
+.set-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.set-card { padding: 1.75rem; gap: 1.25rem; scroll-margin-top: 6rem; }
+.set-card-h { display: flex; flex-direction: column; gap: 0.25rem; }
+.set-card-h h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; }
+.set-card-h p { font-size: 0.9375rem; max-width: 40rem; }
+.set-sub { font-size: 1rem; font-weight: 600; }
+.set-sep { height: 1px; background: var(--color-mid-beige); }
+.set-photo { display: flex; align-items: center; gap: 1.25rem; }
+.set-pic { flex: none; display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 50%; overflow: hidden; background: var(--color-graphite); color: var(--color-off-white); font-size: 1.5rem; font-weight: 600; }
+.set-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.set-photo-t { display: flex; flex-direction: column; gap: 0.375rem; }
+.set-photo-t .co-subtle { font-size: 0.8125rem; }
+.set-photo-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.set-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+#language .set-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.set-f { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+.set-f-wide { grid-column: 1 / -1; }
+.set-f label { font-size: 0.8125rem; font-weight: 600; }
+.set-opt { font-weight: 400; color: var(--color-sand-500); }
+.set-card .input { width: 100%; height: 2.875rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-off-white);
+  font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; transition: border-color .14s ease, background-color .14s ease; }
+.set-card .input:hover { border-color: var(--color-sand-400); }
+.set-card .input:focus { border-color: var(--color-graphite); background: var(--color-surface); }
+.set-card .input.is-bad { border-color: var(--color-critical); }
+.set-card select.input { appearance: none; padding-right: 2.25rem; cursor: pointer;
+  background: var(--color-off-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 0.75rem center / 1rem no-repeat; }
+.set-phone { display: flex; gap: 0.5rem; }
+.set-phone select.input { width: 7.5rem; flex: none; }
+.set-hint { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.set-err { font-size: 0.8125rem; color: var(--color-critical); }
+.set-err:empty { display: none; }
+.set-pw { position: relative; display: block; }
+.set-pw .input { padding-right: 2.75rem; }
+.set-eye { position: absolute; right: 0.375rem; top: 50%; transform: translateY(-50%); width: 2.125rem; height: 2.125rem; border: 0; border-radius: 0.5rem; background: none; cursor: pointer; color: var(--color-ink-subtle);
+  display: grid; place-items: center; }
+.set-eye:hover { background: var(--color-light-beige); color: var(--color-ink); }
+.set-eye svg { width: 1.125rem; height: 1.125rem; }
+.set-rules { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+.set-rules li { display: inline-flex; align-items: center; gap: 0.375rem; }
+.set-rules li::before { content: ""; width: 0.875rem; height: 0.875rem; border-radius: 50%; border: 1.5px solid var(--color-sand-400); }
+.set-rules li.is-ok { color: var(--color-ink); }
+.set-rules li.is-ok::before { border-color: var(--color-positive); background: var(--color-positive) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 12.5 4 4 8-9'/%3E%3C/svg%3E") center / 0.625rem no-repeat; }
+.set-foot { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; }
+.set-foot-l { justify-content: flex-start; gap: 0.75rem; }
+.set-saved { font-size: 0.875rem; color: var(--color-positive); font-weight: 500; }
+/* a button with nothing to do looks it */
+.set-card .btn:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
+.set-list { padding: 0; }
+.set-row { padding: 0.25rem 0; border-bottom: 0; }
+.set-sessions { display: flex; flex-direction: column; }
+.set-sessions li { display: flex; align-items: center; gap: 0.875rem; padding: 0.875rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.set-sessions li:last-child { border-bottom: 0; }
+.set-dev { flex: none; display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.625rem; background: var(--color-light-beige); color: var(--color-ink); }
+.set-dev svg { width: 1.25rem; height: 1.25rem; }
+.set-dev-t { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.set-dev-t b { font-weight: 500; font-size: 0.9375rem; }
+.set-dev-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.set-danger { border: 1px solid var(--color-critical-subtle); background: var(--color-critical-subtle); color: var(--color-critical); }
+.set-danger:hover { border-color: var(--color-critical); color: var(--color-critical); }
+@media (max-width: 64rem) {
+  .set-body { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .set-nav { position: static; flex-direction: row; flex-wrap: nowrap; overflow-x: auto; gap: 0.25rem; padding-bottom: 0.25rem; }
+  .set-nav a { white-space: nowrap; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 9999px; padding: 0.375rem 0.875rem; font-size: 0.875rem; }
+  .set-nav a.is-on { border-color: var(--color-graphite); }
+  .set-nav a.is-on::before { display: none; }
+}
+@media (max-width: 40rem) {
+  .set-grid, #language .set-grid { grid-template-columns: minmax(0, 1fr); }
+  .set-card { padding: 1.25rem; }
+  .set-photo { align-items: flex-start; }
+}
+/* Questionnaires: one card today, more later — the same tile the company page's
+   areas use, so a new one slots in without a new pattern */
+.qst-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1rem; padding-bottom: 4rem; }
+.qst-card { display: flex; flex-direction: column; gap: 0.75rem; padding: 1.5rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface);
+  text-align: left; font: inherit; color: var(--color-ink); text-decoration: none; cursor: pointer; transition: border-color .14s ease, box-shadow .2s ease, transform .2s var(--ease-brand); }
+.qst-card:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -14px rgba(52, 52, 52, .22); transform: translateY(-1px); }
+.qst-card-h { display: flex; align-items: center; gap: 0.625rem; font-size: 1.0625rem; font-weight: 600; }
+.qst-card-h svg { width: 1.25rem; height: 1.25rem; color: var(--color-ink-subtle); }
+.qst-card-d { font-size: 0.875rem; line-height: 1.4; color: var(--color-ink-subtle); }
+/* the breadcrumb's back button, same shape, mirrored and used as "start" instead of "back" */
+.qst-start { flex: none; margin-left: auto; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--color-line);
+  border-radius: 0.625rem; background: var(--color-surface); color: var(--color-ink); transition: border-color .14s ease, background-color .14s ease, transform .2s var(--ease-brand); }
+.qst-card-h .qst-start svg { width: 1.125rem; height: 1.125rem; color: inherit; transform: scaleX(-1); }
+.qst-card:hover .qst-start { border-color: var(--color-coral); background: var(--color-coral); color: var(--color-off-white); transform: translateX(3px); }
+/* how far along the questionnaire is */
+.qst-progress { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
+.qst-progress-t { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.qst-progress-t b { font-weight: 600; color: var(--color-ink); }
+.qst-meter { width: 100%; }
+</style>
+<link rel="stylesheet" href="css/esg.css">
+</head>
+<body>
+
+<div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
+
+<header class="top"><div class="hdr-in">
+  <button type="button" class="sn-toggle" id="sn-toggle" aria-label="Menu" aria-controls="sn" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <a class="brand" href="index.html" aria-label="C-MORE, back to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
+  <div class="top-right">
+    <span data-lang-switch></span>
+    <div class="nt" id="nt">
+      <button type="button" class="hdr-bell" id="hdr-bell" aria-haspopup="true" aria-expanded="false" aria-controls="nt-panel" aria-label="Notifications, 6 new" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg><span class="bell-count" data-sn-count>6</span></button>
+      <div class="nt-panel" id="nt-panel" role="dialog" aria-label="Notifications">
+        <div class="nt-head"><b>Notifications</b><button type="button" class="link-btn" id="nt-readall">Mark all as read</button></div>
+        <ul class="nt-list"><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>Business license expired</b><span>It ran out on 15 August. Drop the new one on ALMA.</span><small>Documents · 15 Aug</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>E‑Verify is incomplete</b><span>3 I‑9 attestations are still missing.</span><small>Documents · this week</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>Good Standing expires in 32 days</b><span>Certificate of Good Standing, Delaware · 31 Oct.</span><small>Documents · today</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="consents"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Northgate Facilities asked to see your insurance</b><span>General liability, workers’ comp and W‑9.</span><small>Consents · 2 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="consents"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Bramwell Group asked to see your insurance</b><span>Everything in Insurance.</span><small>Consents · 6 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="projects"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>2 alerts on East wing extension</b><span>Brandywine Regional Hospital · two suppliers have expired documents.</span><small>Projects · yesterday</small></span><span class="nt-dot" aria-label="Unread"></span></a></li></ul>
+        <div class="nt-foot"><a href="#" onclick="return false">View all notifications</a></div>
+      </div>
+    </div>
+    <span class="co-badge co-founder"><span class="co-founder-star" aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
+    <div class="who" id="who">
+      <button type="button" class="who-chip" id="who-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="who-menu" aria-label="Your account"><span class="who-pic" data-who-pic aria-hidden="true">MF</span><span class="who-name" data-who-name>Miguel Ferreira</span><svg class="who-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="who-menu" id="who-menu" role="menu" aria-label="Your account">
+        <div class="who-head"><span class="who-pic who-pic-lg" data-who-pic aria-hidden="true">MF</span><span class="who-id"><b data-who-name>Miguel Ferreira</b><small data-who-email>miguel@ferreiraconstrucoes.pt</small></span></div>
+        <a role="menuitem" tabindex="-1" href="settings.html#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/></svg>Edit profile</a>
+        <a role="menuitem" tabindex="-1" href="company-profile.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>Edit company profile</a>
+        <a role="menuitem" tabindex="-1" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 3.9c.1-.5.6-.9 1.1-.9h2.6c.5 0 1 .4 1.1.9l.2 1.3c.1.4.3.7.6.9l.2.1c.3.2.7.3 1.1.1l1.2-.5c.5-.2 1.1 0 1.4.5l1.3 2.2c.3.5.1 1.1-.3 1.4l-1 .8c-.3.2-.4.6-.4 1v.3c0 .4.1.8.4 1l1 .8c.4.3.6.9.3 1.4l-1.3 2.2c-.3.5-.9.7-1.4.5l-1.2-.5c-.4-.1-.8 0-1.1.1l-.2.1c-.3.2-.6.5-.6.9l-.2 1.3c-.1.5-.6.9-1.1.9h-2.6c-.5 0-1-.4-1.1-.9l-.2-1.3c-.1-.4-.3-.7-.6-.9l-.2-.1c-.3-.2-.7-.3-1.1-.1l-1.2.5c-.5.2-1.1 0-1.4-.5L3.4 15.6c-.3-.5-.1-1.1.3-1.4l1-.8c.3-.2.4-.6.4-1v-.3c0-.4-.1-.8-.4-1l-1-.8c-.4-.3-.6-.9-.3-1.4l1.3-2.2c.3-.5.9-.7 1.4-.5l1.2.5c.4.1.8 0 1.1-.1l.2-.1c.3-.2.6-.5.6-.9l.2-1.3Z"/><circle cx="12" cy="12" r="3"/></svg>Settings</a>
+        <div class="who-sep" role="separator"></div>
+        <a role="menuitem" tabindex="-1" href="index.html" id="who-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h12"/></svg>Log out</a>
+      </div>
+    </div>
+  </div>
+</div></header>
+
+<!-- Side menu: the same as on the company page; its places link back there. -->
+<nav class="sn" id="sn" aria-label="Company">
+  <div class="sn-in">
+    <div class="sn-collapse"><button type="button" id="sn-collapse" aria-controls="sn" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
+    <a class="sn-item is-on" href="my-company.html?filled" data-sn="go" aria-current="page" title="Company overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg><span class="sn-l">Company overview</span></a>
+    <div class="sn-sep" role="separator"></div>
+    <a class="sn-item persona-miguel-only sn-proj" href="my-company.html?filled#projects" data-sn="go" title="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg><span class="sn-l">Projects</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="Batch / Shipment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"/></svg><span class="sn-l">Batch / Shipment</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="Origin parcel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"/></svg><span class="sn-l">Origin parcel</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="Supplier"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg><span class="sn-l">Supplier</span></a><a class="sn-item persona-beatriz-only sn-proj" href="my-company.html?filled#shipments" data-sn="go" title="EU importer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5"/></svg><span class="sn-l">EU importer</span></a>
+    <a class="sn-item" href="company-details.html" data-sn="go" title="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span class="sn-l">Documents</span></a>
+    <a class="sn-item" href="my-company.html?filled#consents" data-sn="go" title="Consents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span class="sn-l">Consents</span></a>
+    <a class="sn-item" href="questionnaires.html" data-sn="go" title="Questionnaires"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg><span class="sn-l">Questionnaires</span></a>
+    <div class="sn-sep" role="separator"></div>
+    <a class="sn-item" href="#" data-sn="notifications" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg><span class="sn-l">Notifications</span><span class="sn-count" data-sn-count>6</span></a>
+    <div class="sn-sep" role="separator"></div>
+    <a class="sn-item" href="ecosystem.html" data-sn="go" title="C-MORE ecosystem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418"/></svg><span class="sn-l">C&#8209;MORE ecosystem</span></a>
+    <a class="sn-item" href="#" data-sn="soon" title="My clients"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Zm0 3h.008v.008h-.008v-.008Z"/></svg><span class="sn-l">My clients</span></a>
+    <a class="sn-item" href="#" data-sn="soon" title="My suppliers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg><span class="sn-l">My suppliers</span></a>
+    <div class="sn-foot">
+      <div class="sn-sep" role="separator"></div>
+      <a class="sn-item" href="settings.html" data-sn="go" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><span class="sn-l">Settings</span></a>
+      <a class="sn-item" href="#" data-sn="soon" title="Legal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0 0 12 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 0 1-2.031.352 5.988 5.988 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971Zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0 2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 0 1-2.031.352 5.989 5.989 0 0 1-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971Z"/></svg><span class="sn-l">Legal</span></a>
+      <a class="sn-item" href="#" data-sn="logout" title="Log out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/></svg><span class="sn-l">Log out</span></a>
+    </div>
+  </div>
+</nav>
+<div class="sn-scrim" id="sn-scrim" hidden></div>
+
+<main class="page">
+<div class="pd" id="pd">
+
+  <section class="eco-head set-head"><div class="co-wrap">
+    <nav class="eco-crumbs" aria-label="Breadcrumb">
+      <a class="eco-crumbs-back" href="my-company.html?filled#products" aria-label="Back to Product overview"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></a>
+      <span class="eco-crumbs-trail"><a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="my-company.html?filled#products">Products</a><span aria-hidden="true">/</span><span aria-current="page" id="pd-crumb"></span></span>
+    </nav>
+    <div class="eco-head-t">
+      <span class="eyebrow" id="pd-eyebrow">Product sheet</span>
+      <h1 class="co-h-xl" style="font-weight:300" id="pd-name"></h1>
+      <p class="co-muted eco-lead">Every regulation that applies to this product in one place: what is already met and what is still missing. The blocks follow the product’s triage.</p>
+    </div>
+  </div></section>
+
+  <div class="co-wrap" id="pd-wrap"></div>
+</div>
+</main>
+
+<script>
+/* The header's account: the photo added at sign-up (or the initials), the name and email,
+   and a menu with Edit profile, Settings and Log out. Log out forgets this tab's demo
+   session and goes back to the landing. */
+(() => {
+  let p = null, photo = '';
+  try { p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); photo = sessionStorage.getItem('cm-photo') || ''; } catch (e) {}
+  const name = (p && p.name) || 'Miguel Ferreira', email = (p && p.email) || 'miguel@ferreiraconstrucoes.pt';
+  // the demo account has its own picture; anyone else has their initials until they add one
+  if (!photo && !(p && p.noPhoto)) {
+    if (email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt') photo = 'images/profile-miguel.webp';
+    else if (email.toLowerCase() === 'beatriz@veridianharvest.com') photo = 'images/profile-beatriz.webp';
+  }
+  const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  document.querySelectorAll('[data-who-name]').forEach((n) => (n.textContent = name));
+  document.querySelectorAll('[data-who-email]').forEach((n) => (n.textContent = email));
+  document.querySelectorAll('[data-who-pic]').forEach((n) => {
+    n.textContent = photo ? '' : ini;
+    if (photo) { const img = new Image(); img.alt = ''; img.src = photo; n.appendChild(img); }
+  });
+  const who = document.getElementById('who'), btn = document.getElementById('who-btn');
+  const items = [...who.querySelectorAll('[role="menuitem"]')];
+  const open = (focus) => { who.classList.add('is-open'); btn.setAttribute('aria-expanded', 'true'); if (focus) items[0].focus(); };
+  const close = (back) => { who.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); if (back) btn.focus(); };
+  btn.addEventListener('click', (e) => { e.stopPropagation(); who.classList.contains('is-open') ? close() : open(e.detail === 0); });
+  btn.addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { e.preventDefault(); open(true); } });
+  items.forEach((a, i) => a.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+    else if (e.key === 'Escape') close(true);
+    else if (e.key === 'Tab') close();
+  }));
+  who.querySelectorAll('[data-soon]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); close(true); }));
+  document.getElementById('who-logout').addEventListener('click', (e) => {
+    e.preventDefault();
+    ['cm-person', 'cm-photo', 'cm-done'].forEach((k) => { try { sessionStorage.removeItem(k); } catch (err) {} });
+    document.body.style.transition = 'opacity .35s ease'; document.body.style.opacity = '0';
+    setTimeout(() => { location.href = 'index.html'; }, 360);
+  });
+  document.addEventListener('click', (e) => { if (!who.contains(e.target)) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && who.classList.contains('is-open')) close(true); });
+})();
+</script>
+<script>
+/* Side menu: the company page's places, a drawer on phones. */
+(() => {
+  const sn = document.getElementById('sn'); if (!sn) return;
+  const items = [...sn.querySelectorAll('.sn-item')];
+  const toggle = document.getElementById('sn-toggle'), scrim = document.getElementById('sn-scrim');
+  const page = () => document.querySelector('#filled:not([hidden])') || document.querySelector('#empty:not([hidden])');
+  const target = (key) => {
+    const p = page(); if (!p) return null;
+    if (key === 'docs') { const h = [...p.querySelectorAll('h2')].find((e) => e.textContent.trim() === 'Documents'); return h && h.closest('section'); }
+    return key.startsWith('.') ? p.querySelector(key) : null;
+  };
+  const root = document.documentElement, collapseBtn = document.getElementById('sn-collapse');
+  let closed = false;
+  try { closed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
+  const mode = () => {
+    const m = innerWidth <= 640 ? 'drawer' : closed ? 'rail' : 'full';
+    root.dataset.sn = m;
+    const open = m === 'full';
+    collapseBtn.setAttribute('aria-expanded', String(open));
+    collapseBtn.setAttribute('aria-label', open ? 'Collapse menu' : 'Expand menu');
+    collapseBtn.title = open ? 'Collapse menu' : 'Expand menu';
+    scrim.hidden = !(m === 'drawer' && sn.classList.contains('is-open'));
+  };
+  collapseBtn.addEventListener('click', () => { closed = !closed; try { localStorage.setItem('cm-sn-closed', closed ? '1' : '0'); } catch (e) {} mode(); });
+  const drawer = (open) => {
+    sn.classList.toggle('is-open', open); toggle.setAttribute('aria-expanded', String(open)); mode();
+  };
+  toggle.addEventListener('click', () => drawer(!sn.classList.contains('is-open')));
+  scrim.addEventListener('click', () => drawer(false));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') drawer(false); });
+  addEventListener('resize', mode);
+  mode();
+  items.forEach((a) => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const key = a.dataset.sn;
+    if (key === 'go') { location.href = a.getAttribute('href'); return; }
+    if (key === 'here') { drawer(false); scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (key === 'logout') { const out = document.getElementById('who-logout'); if (out) out.click(); return; }
+    if (key === 'soon') { drawer(false); return; } // prototype: not built yet
+    drawer(false);
+    if (key === 'top') { scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    const t = target(key); if (!t) return;
+    scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8, behavior: 'smooth' });
+  }));
+  // the section in view is the one marked
+  const spy = ['.co-proj-sec', 'docs', '.co-last-sec'];
+  const mark = () => {
+    if (!page()) return; // not the company page: the marked item is set in the markup
+    let on = 'top';
+    spy.forEach((k) => { const t = target(k); if (t && t.getBoundingClientRect().top < innerHeight * 0.4) on = k; });
+    items.forEach((a) => { const is = a.dataset.sn === on; a.classList.toggle('is-on', is); if (is) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current'); });
+  };
+  addEventListener('scroll', mark, { passive: true }); addEventListener('resize', mark);
+  setTimeout(mark, 50);
+  // arriving from another page at one of these sections (#projects, #documents, #consents)
+  const jump = { '#projects': '.co-proj-sec', '#documents': 'docs', '#consents': '.co-last-sec' }[location.hash];
+  if (jump) setTimeout(() => { const t = target(jump); if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8 }); }, 80);
+  // the counts are kept by the notifications panel's script (what is unread, and none on the empty company)
+})();
+</script>
+<script src="js/esg-data.js"></script>
+<script src="js/esg-state.js"></script>
+<script src="js/esg-notify.js"></script>
+<script>
+/* Notifications: the bell opens its panel (so does the menu's Notifications); a notification
+   opens its section on the company page and is marked read; the counts follow what is unread. */
+(() => {
+  const nt = document.getElementById('nt'), bell = document.getElementById('hdr-bell'); if (!nt) return;
+  const items = [...nt.querySelectorAll('.nt-item')];
+  const open = (on) => { nt.classList.toggle('is-open', on); bell.setAttribute('aria-expanded', String(on)); if (on) setTimeout(() => (items.find((i) => i.classList.contains('is-unread')) || items[0]).focus({ preventScroll: true }), 60); };
+  const count = () => {
+    const n = items.filter((i) => i.classList.contains('is-unread')).length;
+    const filled = true;
+    document.querySelectorAll('[data-sn-count]').forEach((c) => { c.textContent = n; c.hidden = !filled || !n; });
+    bell.setAttribute('aria-label', filled && n ? `Notifications, ${n} new` : 'Notifications');
+  };
+  bell.addEventListener('click', (e) => { e.stopPropagation(); open(!nt.classList.contains('is-open')); });
+  document.getElementById('nt-readall').addEventListener('click', (e) => { e.stopPropagation(); items.forEach((i) => i.classList.remove('is-unread')); count(); });
+  items.forEach((i) => i.addEventListener('click', (e) => {
+    e.preventDefault();
+    i.classList.remove('is-unread'); count(); open(false);
+    location.href = 'my-company.html?filled#' + ({ docs: 'documents', consents: 'consents', projects: 'projects' }[i.dataset.go] || '');
+  }));
+  document.addEventListener('click', (e) => { if (!nt.contains(e.target)) open(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && nt.classList.contains('is-open')) { open(false); bell.focus(); } });
+  // the side menu's Notifications opens the same panel
+  const menuItem = document.querySelector('.sn-item[data-sn="notifications"]');
+  if (menuItem) menuItem.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); open(true); });
+  count();
+})();
+</script>
+<script>
+/* The header carries no hairline at rest; once the page scrolls, a soft shadow takes over
+   the same job of separating it from the content sliding underneath. */
+(() => {
+  const top = document.querySelector('.top'); if (!top) return;
+  const sync = () => top.classList.toggle('is-scrolled', scrollY > 0);
+  addEventListener('scroll', sync, { passive: true });
+  sync();
+})();
+</script>
+<script src="js/lang.js"></script>
+<script src="js/co-profile.js"></script>
+<script src="js/product-data.js"></script>
+<script src="js/product.js"></script>
+</body>
+</html>
