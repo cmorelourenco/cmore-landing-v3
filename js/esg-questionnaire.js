@@ -328,6 +328,16 @@
       location.href = 'esg-questionnaire.html';
     }]],
   }));
+  // prototype only: everything answered and reviewed, to show the finished questionnaire
+  document.getElementById('esgq-complete').addEventListener('click', () => dialog({
+    h: 'Complete the questionnaire?',
+    p: 'Prototype only. ALMA’s answers go in from the demo documents, every question still empty gets an answer, and her unsure answers are approved, so it is ready to submit. Answers you already gave stay as they are.',
+    acts: [['Cancel', 'btn-quiet', null], ['Complete questionnaire', 'btn-primary', () => {
+      const docs = ESG_DATA.docs.seed.filter((d) => d.name !== 'Code-of-Ethics-and-Conduct-2025.pdf').map((d) => ({ name: d.name, source: d.source === 'library' ? 'library' : 'files' }));
+      ESG.complete(ESG.load(), docs);
+      location.href = 'esg-questionnaire.html';
+    }]],
+  }));
   submitBtn.addEventListener('click', () => {
     const r = ESG.ready(s);
     if (!r.ok) {

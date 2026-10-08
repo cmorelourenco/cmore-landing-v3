@@ -144,6 +144,25 @@ window.ESG = (() => {
     }
     delete s.alma.pending; s.read = false; save(s);
   };
+  // prototype only: the whole questionnaire answered and reviewed, as it would be just before submitting
+  const FILL = { year: '2024', count: '12', when: 'March 2025', text: 'In place and documented; reviewed by the responsible team every year.' };
+  const fillOne = (s, q, key) => {
+    if (s.na[key] || (has(s.v[key]) && !problem(q, s.v[key]))) return;
+    const a = q.a, planned = a && (a.by === 'alma' || a.by === 'user') && !(q.ty === 'text' && problem(q, a.v)) ? a.v : null;
+    s.v[key] = planned != null ? planned : q.ty === 'choice' ? (q.opts.some(([v]) => v === 'no') ? 'no' : q.opts[0][0]) : (FILL[q.val] || FILL.text);
+  };
+  const complete = (s, docs) => {
+    if (!s.alma) s.alma = { started: 0, dur: 1, docs, applied: false };
+    if (s.alma.pending) s.alma.pending.started = 0;
+    if (!s.alma.applied) s.alma.started = 0;
+    apply(s); apply(s);
+    each((q, key) => {
+      fillOne(s, q, key);
+      if (q.subs && open(s, key)) q.subs.forEach((sq, i) => fillOne(s, sq, subKey(key, i)));
+    });
+    Object.values(s.meta).forEach((m) => { if (m.by === 'alma' && m.conf === 'low' && !m.edited) m.approved = true; if (m.rejected) m.rejected = false; });
+    s.read = true; save(s);
+  };
   const reason = (q, key, s) => {
     const m = s.meta[key]; if (!m) return '';
     if (m.why) return m.why;
@@ -151,5 +170,5 @@ window.ESG = (() => {
     return (q.a && q.a.why) || '';
   };
 
-  return { KEY, load, save, blank, status, almaPct, almaLeft, handTo, handMore, reading, each, subKey, open, answered, needs, rowNeeds, counts, ready, apply, problem, reason, has, SPHERES };
+  return { KEY, load, save, blank, complete, status, almaPct, almaLeft, handTo, handMore, reading, each, subKey, open, answered, needs, rowNeeds, counts, ready, apply, problem, reason, has, SPHERES };
 })();
