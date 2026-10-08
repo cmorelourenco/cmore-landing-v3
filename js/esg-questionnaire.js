@@ -200,7 +200,7 @@
   const submitBtn = document.getElementById('esgq-submit'), tipEl = document.getElementById('esgq-tip');
   const totals = () => {
     const c = ESG.counts(s);
-    pctEl.textContent = c.pct + '%'; barEl.style.width = c.pct + '%';
+    pctEl.textContent = c.pct + '%'; barEl.style.width = c.pct + '%'; barEl.style.setProperty('--pct', c.pct + '%');
     numEl.textContent = `${c.answered} of ${c.total} answered`;
     DATA.sections.forEach((sec, i) => {
       const S = c.sections[sec.id], box = document.querySelector(`[data-esgq="${sec.id}"]`);

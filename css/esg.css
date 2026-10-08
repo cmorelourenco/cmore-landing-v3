@@ -541,3 +541,15 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* submitting is a good thing: it is the "ok" green, wherever it is offered */
 #questionnaires .btn.btn-good:not(:disabled):not([aria-disabled="true"]), .dlg .btn.btn-good:not(:disabled):not([aria-disabled="true"]) { background: var(--color-positive); border-color: var(--color-positive); color: #fff; }
 #questionnaires .btn.btn-good:not(:disabled):not([aria-disabled="true"]):hover, .dlg .btn.btn-good:not(:disabled):not([aria-disabled="true"]):hover { background: color-mix(in oklab, var(--color-positive) 82%, #000); border-color: color-mix(in oklab, var(--color-positive) 82%, #000); color: #fff; box-shadow: 0 8px 24px -12px color-mix(in oklab, var(--color-positive) 60%, transparent); }
+
+/* ---- a softer "ok" green, and progress that turns from coral to it ---- */
+:root { --color-ok: #a6d8a0; --color-ok-deep: #8ccb86; }
+.is-evolving:not(.is-busy) i { background: color-mix(in oklab, var(--color-ok) var(--pct, 0%), var(--color-coral)); transition: width .45s var(--ease-brand); }
+#questionnaires .btn.btn-good:not(:disabled):not([aria-disabled="true"]), .dlg .btn.btn-good:not(:disabled):not([aria-disabled="true"]) { background: var(--color-ok); border-color: var(--color-ok); color: var(--color-graphite); }
+#questionnaires .btn.btn-good:not(:disabled):not([aria-disabled="true"]):hover, .dlg .btn.btn-good:not(:disabled):not([aria-disabled="true"]):hover { background: var(--color-ok-deep); border-color: var(--color-ok-deep); color: var(--color-graphite); box-shadow: 0 8px 24px -12px color-mix(in oklab, var(--color-ok-deep) 70%, transparent); }
+.res-ring { background: conic-gradient(var(--color-ok) 0 var(--p), var(--color-mid-beige) var(--p) 100%); }
+.res-ring b { color: var(--color-ink); }
+.res-sec .res-bar-m { background: var(--color-mid-beige); }
+.res-sec .res-bar-m i { background: var(--color-ok); }
+.res-g.is-e .res-bar-m i, .res-g.is-e .res-g-t i, .res-plan-g.is-e h3 i { background: var(--color-ok); }
+.res-g.is-e .res-bar-m { background: var(--color-mid-beige); }

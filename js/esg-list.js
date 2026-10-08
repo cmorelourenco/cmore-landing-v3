@@ -11,7 +11,7 @@
 
   const show = (label, value, line, cls) => {
     k.textContent = label; pct.textContent = value + '%';
-    meter.querySelector('i').style.width = value + '%'; meter.setAttribute('aria-valuenow', value);
+    meter.querySelector('i').style.width = value + '%'; meter.querySelector('i').style.setProperty('--pct', value + '%'); meter.setAttribute('aria-valuenow', value);
     meter.setAttribute('aria-label', label === 'Reading' ? 'ALMA reading your documents' : 'ESG Questionnaire completion');
     meter.classList.toggle('is-busy', label === 'Reading');
     statusEl.hidden = !line; statusEl.className = 'qst-status' + (cls ? ' ' + cls : ''); statusEl.innerHTML = line || '';
