@@ -213,17 +213,12 @@
     const r = ESG.ready(s);
     document.getElementById('esgq-lead').textContent = s.submitted ? 'Submitted — your answers are locked while they are reviewed.' : 'Nothing here is shared until you choose to submit it.';
     // Submit stays where it is once used, greyed out and saying why; View dashboard waits beside it until then
-    const when = s.submitted ? new Date(s.submitted) : null;
-    const done = when ? `Submitted on ${when.getDate()} ${MONTHS[when.getMonth()]} ${when.getFullYear()}. Your answers are locked while they are reviewed.` : '';
-    [submitBtn, document.getElementById('esgq-submit-end')].forEach((b) => {
-      b.setAttribute('aria-disabled', String(!r.ok || !!s.submitted));
-      if (done) b.dataset.tip = done; else delete b.dataset.tip;
-    });
+    // one or the other: Submit until it is in, then View dashboard in its place
+    [submitBtn, document.getElementById('esgq-submit-end')].forEach((b) => { b.hidden = !!s.submitted; b.setAttribute('aria-disabled', String(!r.ok)); });
     ['esgq-results', 'esgq-results-end'].forEach((id) => {
       const a = document.getElementById(id);
-      a.setAttribute('aria-disabled', String(!s.submitted));
-      if (s.submitted) { a.href = 'esg-results.html'; delete a.dataset.tip; }
-      else { a.removeAttribute('href'); a.dataset.tip = 'Available once the questionnaire is submitted.'; a.setAttribute('role', 'link'); a.tabIndex = 0; }
+      a.hidden = !s.submitted; a.setAttribute('aria-disabled', String(!s.submitted));
+      if (s.submitted) a.href = 'esg-results.html'; else a.removeAttribute('href');
     });
     filterCounts(c);
     panel();

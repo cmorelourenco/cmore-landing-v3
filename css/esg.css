@@ -612,3 +612,4 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .esgq-link[aria-disabled="true"]:hover svg { transform: none; }
 .esgq-end-btns { align-items: center; gap: 1.25rem; }
 @media (max-width: 40rem) { .esgq-top-acts { width: 100%; justify-content: space-between; } }
+.esgq-link[hidden] { display: none; }
