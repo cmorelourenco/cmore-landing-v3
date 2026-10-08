@@ -8,10 +8,10 @@
 <script>
   var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
   document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
-  // which of our two demo people is signed in, Miguel (default) or Beatriz — a few things
+  // which of our two demo people is signed in, Beatriz (default) or Miguel — a few things
   // on the company page and in this menu change shape depending on who is looking
   try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); } catch (e) {}
-  document.documentElement.dataset.persona = (cmPerson && /beatriz/i.test(cmPerson.name || '')) ? 'beatriz' : 'miguel';
+  document.documentElement.dataset.persona = (cmPerson && !/beatriz/i.test(cmPerson.name || '')) ? 'miguel' : 'beatriz';
   // whether the company has any data in it yet — ?filled, or a prior visit that finished
   // (or skipped) ALMA's intake — decides whether Projects/Shipments has anything to show
   var cmFilled = /[?&]filled\b/.test(location.search);
@@ -1189,9 +1189,9 @@ body { transition: background-color .9s ease; }
     </div>
     <span class="co-badge co-founder"><span class="co-founder-star" aria-hidden="true">✦</span><span class="co-founder-t">Founding partner</span></span>
     <div class="who" id="who">
-      <button type="button" class="who-chip" id="who-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="who-menu" aria-label="Your account"><span class="who-pic" data-who-pic aria-hidden="true">MF</span><span class="who-name" data-who-name>Miguel Ferreira</span><svg class="who-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      <button type="button" class="who-chip" id="who-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="who-menu" aria-label="Your account"><span class="who-pic" data-who-pic aria-hidden="true">BN</span><span class="who-name" data-who-name>Beatriz Nogueira</span><svg class="who-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
       <div class="who-menu" id="who-menu" role="menu" aria-label="Your account">
-        <div class="who-head"><span class="who-pic who-pic-lg" data-who-pic aria-hidden="true">MF</span><span class="who-id"><b data-who-name>Miguel Ferreira</b><small data-who-email>miguel@ferreiraconstrucoes.pt</small></span></div>
+        <div class="who-head"><span class="who-pic who-pic-lg" data-who-pic aria-hidden="true">BN</span><span class="who-id"><b data-who-name>Beatriz Nogueira</b><small data-who-email>beatriz@veridianharvest.com</small></span></div>
         <a role="menuitem" tabindex="-1" href="settings.html#profile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"/></svg>Edit profile</a>
         <a role="menuitem" tabindex="-1" href="company-profile.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>Edit company profile</a>
         <a role="menuitem" tabindex="-1" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 3.9c.1-.5.6-.9 1.1-.9h2.6c.5 0 1 .4 1.1.9l.2 1.3c.1.4.3.7.6.9l.2.1c.3.2.7.3 1.1.1l1.2-.5c.5-.2 1.1 0 1.4.5l1.3 2.2c.3.5.1 1.1-.3 1.4l-1 .8c-.3.2-.4.6-.4 1v.3c0 .4.1.8.4 1l1 .8c.4.3.6.9.3 1.4l-1.3 2.2c-.3.5-.9.7-1.4.5l-1.2-.5c-.4-.1-.8 0-1.1.1l-.2.1c-.3.2-.6.5-.6.9l-.2 1.3c-.1.5-.6.9-1.1.9h-2.6c-.5 0-1-.4-1.1-.9l-.2-1.3c-.1-.4-.3-.7-.6-.9l-.2-.1c-.3-.2-.7-.3-1.1-.1l-1.2.5c-.5.2-1.1 0-1.4-.5L3.4 15.6c-.3-.5-.1-1.1.3-1.4l1-.8c.3-.2.4-.6.4-1v-.3c0-.4-.1-.8-.4-1l-1-.8c-.4-.3-.6-.9-.3-1.4l1.3-2.2c.3-.5.9-.7 1.4-.5l1.2.5c.4.1.8 0 1.1-.1l.2-.1c.3-.2.6-.5.6-.9l.2-1.3Z"/><circle cx="12" cy="12" r="3"/></svg>Settings</a>
@@ -1313,7 +1313,7 @@ body { transition: background-color .9s ease; }
 (() => {
   let p = null, photo = '';
   try { p = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); photo = sessionStorage.getItem('cm-photo') || ''; } catch (e) {}
-  const name = (p && p.name) || 'Miguel Ferreira', email = (p && p.email) || 'miguel@ferreiraconstrucoes.pt';
+  const name = (p && p.name) || 'Beatriz Nogueira', email = (p && p.email) || 'beatriz@veridianharvest.com';
   // the demo account has its own picture; anyone else has their initials until they add one
   if (!photo && !(p && p.noPhoto)) {
     if (email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt') photo = 'images/profile-miguel.webp';

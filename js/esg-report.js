@@ -57,7 +57,7 @@ window.ESG_REPORT = (() => {
   const gather = () => {
     let s = ESG.load(); if (ESG.status(s) === 'ready') { ESG.apply(s); s = ESG.load(); }
     const sc = ESG.score(s), c = ESG.counts(s), p = window.CO_PROFILE ? CO_PROFILE.load() : {};
-    let person = 'Miguel Ferreira'; try { person = (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || person; } catch (e) {}
+    let person = 'Beatriz Nogueira'; try { person = (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || person; } catch (e) {}
     const when = new Date(s.submitted || Date.now());
     const good = new Set(sc.good.map((g) => g.key)), flags = new Set(sc.flags.map((f) => f.key));
     const answerOf = (q, key) => {

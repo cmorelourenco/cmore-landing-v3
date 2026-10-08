@@ -6,7 +6,7 @@
   const $ = (s) => document.querySelector(s);
   let person = null, photo = '';
   try { person = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); photo = sessionStorage.getItem('cm-photo') || ''; } catch (e) {}
-  person = Object.assign({ name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt', role: 'Owner', phone: '', cc: '' }, person || {});
+  person = Object.assign({ name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com', role: 'Owner', phone: '', cc: '' }, person || {});
   const demo = () => person.email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt';
   const demoF = () => person.email.toLowerCase() === 'beatriz@veridianharvest.com';
   if (!photo && !person.noPhoto) { if (demo()) photo = 'images/profile-miguel.webp'; else if (demoF()) photo = 'images/profile-beatriz.webp'; }
