@@ -28,7 +28,6 @@
 
   // ---- what applies: the triage ----------------------------------------------------------------------
   const P1 = !!c.commodity, P2 = !!p.p2, P4 = !!p.p4;
-  const risk = 'standard'; // every origin here is benchmarked standard risk by the EU (automatic)
 
   // ---- every check, so the result can add them up -------------------------------------------------------
   const owner = D.OWNER(p), items = [];
@@ -40,8 +39,6 @@
   });
   if (P1) {
     p.lots.forEach((l) => add('EUDR', `${l.code}: ${l.state === 'bad' ? 'parcel on deforestation alert' : l.state === 'missing' ? 'origin parcel not yet linked' : 'parcel evidence to approve'}`, l.state, owner));
-    if (risk !== 'low') add('EUDR', 'Risk assessment and mitigation', p.negligible === false ? 'review' : 'ok', 'You');
-    add('EUDR', 'Due diligence conclusion', p.negligible === false ? 'bad' : p.negligible === null ? 'missing' : (p.status === 'ok' ? 'ok' : 'review'), 'You');
   }
   const f = c.flr, untraced = JSON.stringify(p.tree).includes('not yet traced');
   add('FLR', 'Risk inputs and regions of origin mapped', 'ok', 'You');
@@ -95,19 +92,13 @@
   if (P1) {
     const n = p.lots.length, ok = p.lots.filter((l) => l.state === 'ok').length, alert = p.lots.filter((l) => l.state === 'bad').length, rest = n - ok - alert;
     const sumTxt = [`${n} lot${n === 1 ? '' : 's'}`, `${ok} in conformity`].concat(alert ? [`${alert} with a parcel on alert`] : []).concat(rest ? [`${rest} pending`] : []).join(', ');
-    const conc = p.negligible === false ? ['bad', 'No', 'A supplying parcel is on a deforestation alert, so the risk is not negligible. The affected lots are held and cannot be placed on the EU market until the alert is cleared or the parcel is excluded.']
-      : p.negligible === null ? ['missing', 'Not yet', 'The birth ranches are not traced yet and two legality areas have no evidence, so the risk cannot be concluded.']
-      : p.status === 'ok' ? ['ok', 'Yes', 'All parcels are geolocated and deforestation-free since 31 December 2020, legality is evidenced in all eight areas and the mitigation measures bring the remaining risk down to negligible.']
-      : ['review', 'Pending', 'Evidence is in, but some of it is still being reviewed. The conclusion will be confirmed once the open items are approved.'];
     html += card('eudr', 'Deforestation · EUDR', 'Shown because the triage marks it as an EUDR commodity (P1).', 'EUDR', `
       <dl class="pd-grid">${kv('Commodity', esc(c.commodity))}${kv('Country of production', regionsTxt.map(esc).join('<br>'))}
         ${kv('Risk level', `<span class="chip is-mid">Standard risk</span>`)}</dl>
       ${sub('Lots and parcels')}<p class="pd-sum">${sumTxt}. <span class="co-subtle">Kept with the shipments (F5) and parcels (F4); summed up here.</span></p>
       ${tbl(['Lot', 'Origin parcel', 'Region', 'Status'], p.lots.map((l) => `<tr data-go="my-company.html?filled#shipments"><td><span class="n">${l.code}</span></td><td>${esc(l.parcel)}</td><td>${esc(l.region)}</td><td>${chip(l.state, l.state === 'bad' ? 'Parcel on alert' : l.state === 'ok' ? 'In conformity' : l.state === 'missing' ? 'Parcel missing' : 'In review')}</td></tr>`))}
       ${sub('Legality checklist')}<p class="co-subtle pd-sub-p">The eight areas of law of the country of production (P07). Each has a document or a justification.</p>
-      ${tbl(['Area', 'Evidence', 'Status'], legal.map((l) => `<tr><td><span class="n">${esc(l.dom)}</span></td><td>${l.st === 'missing' ? '<span class="co-subtle">Nothing yet</span>' : `${l.just ? '<span class="pd-just">Justification</span>' : ''}${esc(l.ev)}`}</td><td>${chip(l.st)}</td></tr>`))}
-      ${risk !== 'low' ? `${sub('Risk assessment')}<p class="co-subtle pd-sub-p">Needed because the country of production is standard risk.</p><div class="pd-two"><div><span class="res-k">Criteria considered</span>${list(c.criteria.map(esc))}</div><div><span class="res-k">Mitigation measures</span>${list(c.mitigation.map(esc), 'is-ok')}</div></div>` : ''}
-      ${sub('Conclusion')}<div class="pd-conc is-${conc[0]}"><span class="pd-conc-k">Negligible risk</span><b>${conc[1]}</b><p>${conc[2]}</p></div>`);
+      ${tbl(['Area', 'Evidence', 'Status'], legal.map((l) => `<tr><td><span class="n">${esc(l.dom)}</span></td><td>${l.st === 'missing' ? '<span class="co-subtle">Nothing yet</span>' : `${l.just ? '<span class="pd-just">Justification</span>' : ''}${esc(l.ev)}`}</td><td>${chip(l.st)}</td></tr>`))}`);
   }
 
   // ---- forced labour (always; reinforced on P2) -------------------------------------------------------------

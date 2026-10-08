@@ -691,13 +691,6 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .pd-node { display: inline-block; padding: 0.375rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); }
 .pd-tree > li > .pd-node { background: var(--color-graphite); border-color: var(--color-graphite); color: var(--color-off-white); font-weight: 600; }
 .pd-tree li:not(:has(ul)) > .pd-node { background: var(--color-light-beige); }
-.pd-conc { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 0.25rem 1rem; padding: 1rem 1.25rem; border-radius: 0.75rem; background: var(--color-light-beige); }
-.pd-conc-k { font-size: 0.875rem; color: var(--color-ink-subtle); }
-.pd-conc b { font-size: 1.25rem; font-weight: 600; }
-.pd-conc p { grid-column: 1 / -1; margin: 0; font-size: 0.875rem; line-height: 1.5; }
-.pd-conc.is-ok { background: var(--color-positive-subtle); }
-.pd-conc.is-bad { background: var(--color-critical-subtle); }
-.pd-conc.is-bad b { color: var(--color-critical); }
 .pd-res { display: grid; gap: 0.75rem; }
 .pd-res-r { display: grid; grid-template-columns: minmax(10rem, 16rem) 1fr 3rem; align-items: center; gap: 1rem; font-size: 0.9375rem; }
 .pd-res-r b { text-align: right; font-weight: 600; }
