@@ -215,6 +215,7 @@
     document.getElementById('esgq-lead').textContent = s.submitted ? 'Submitted — your answers are locked while they are reviewed.' : 'Nothing here is shared until you choose to submit it.';
     submitBtn.setAttribute('aria-disabled', String(!r.ok));
     const end = document.getElementById('esgq-submit-end'); end.hidden = !!s.submitted; end.setAttribute('aria-disabled', String(!r.ok));
+    document.getElementById('esgq-results').hidden = document.getElementById('esgq-results-end').hidden = !s.submitted;
     filterCounts(c);
     panel();
   };
@@ -404,7 +405,8 @@
       const d = new Date(s.submitted);
       pt.textContent = `Submitted on ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}.`;
       ps.textContent = 'Your answers are locked while they are reviewed. Clients and buyers you share your profile with can see them.';
-      pm.hidden = true; pa.innerHTML = ''; pa.dataset.v = '';
+      pm.hidden = true;
+      if (pa.dataset.v !== 'done') { pa.dataset.v = 'done'; pa.innerHTML = '<a class="btn btn-primary btn-sm" href="esg-results.html">View results</a>'; }
     } else {
       pt.textContent = 'Let me fill this in for you.';
       ps.textContent = 'Drop your policy documents here and I’ll read them, find the answers and fill them in. You get the final say on every one before anything is submitted.';
@@ -470,5 +472,7 @@
   syncAll(); applyFilter();
   if (ESG.status(s) === 'review') markRead();
   if (/[?&]alma=start\b/.test(location.search) && canTake()) setTimeout(() => upload(), 450);
+  const asked = /^#q-/.test(location.hash) && document.getElementById(location.hash.slice(1));
+  if (asked) setTimeout(() => { scrollTo({ top: asked.getBoundingClientRect().top + scrollY - 72 - (stuck() ? band.offsetHeight : 0) - 24 }); asked.classList.add('is-arrived'); }, 150);
   setTimeout(mark, 120);
 })();

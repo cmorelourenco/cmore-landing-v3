@@ -144,6 +144,86 @@ window.ESG = (() => {
     }
     delete s.alma.pending; s.read = false; save(s);
   };
+
+  // ---- the score: how good the answers are, not just how many ----------------------------------------
+  // Yes is the good answer unless listed in NO_GOOD; exposure questions (where you operate, not how) are
+  // not scored; choices are graded; written answers carry no score. Follow-ups weigh half.
+  const NO_GOOD = ['governance-11', 'governance-12', 'governance-13', 'social-21', 'environment-3', 'infosec-4', 'waste-2'];
+  const CRITICAL = ['governance-12', 'governance-13', 'social-21', 'environment-3'];
+  const UNSCORED = ['social-14', 'water-2', 'biodiversity-1'];
+  const GRADE = {
+    'governance-14': { 'on-joining-only': 0.5, 'once-a-year': 1, 'every-two-years': 0.6, 'it-is-not-delivered': 0 },
+    'governance-15': { 'the-board': 1, 'a-compliance-officer': 1, 'the-legal-department': 0.7, 'no-one-formally': 0 },
+    'social-23': { 'on-paper-forms': 0.4, 'in-a-shared-spreadsheet': 0.6, 'in-a-dedicated-system': 1, 'they-are-not-formally-recorded': 0 },
+    'climate-7': { 'the-ghg-protocol': 1, 'iso-14064': 1, 'a-national-methodology': 0.7, 'none-of-these': 0 },
+    'infosec-1.3': { 'on-the-intranet': 0.8, 'on-the-supplier-portal': 1, 'on-the-public-website': 1, 'it-is-not-published': 0 },
+    'infosec-7': { monthly: 1, quarterly: 1, 'once-a-year': 0.6, 'only-when-someone-leaves': 0 },
+    'product-6': { 'to-the-mine': 1, 'to-the-smelter': 0.7, 'to-the-first-processor': 0.5, 'it-is-not-traced': 0 },
+  };
+  // what to do about a gap, in the words of an action plan
+  const ACTION = {
+    'governance-1': 'Draw up a code of ethics and conduct', 'governance-1.2': 'Publish the code of ethics on your website or supplier portal',
+    'governance-2': 'Draw up an anti-corruption, bribery and extortion policy', 'governance-3': 'Adopt a personal data protection policy',
+    'governance-4': 'Train employees regularly on information security and data privacy', 'governance-5': 'Formalise a governance structure with clear roles',
+    'governance-6': 'Set up risk management and internal controls', 'governance-7': 'Create a formal supplier pre-qualification process',
+    'governance-7.2': 'Include ESG criteria in supplier pre-qualification', 'governance-8': 'Require suppliers to commit to human and labour rights',
+    'governance-9': 'Identify your most critical suppliers for social and human rights risk', 'governance-10': 'Make ESG standards a contractual requirement for suppliers',
+    'governance-11': 'Run due diligence on sourcing from conflict-affected or high-risk areas', 'governance-12': 'Resolve your sanctions listing before trading further',
+    'governance-13': 'Review ownership and control against sanctions regimes', 'governance-14': 'Deliver Code of Ethics training every year',
+    'governance-15': 'Name someone accountable for the compliance programme',
+    'social-1': 'Adopt a human rights policy', 'social-1.2': 'Extend the human rights policy to the supply chain', 'social-2': 'Run human rights awareness and training for employees',
+    'social-3': 'Carry out a human rights risk assessment', 'social-4': 'Bring working hours in line with labour law and collective agreements',
+    'social-6': 'Guarantee freedom of association and collective bargaining', 'social-8': 'Ensure compliance with child and forced labour law',
+    'social-9': 'Adopt a policy to prevent harassment at all levels', 'social-10': 'Adopt policies to prevent discrimination', 'social-12': 'Start a diversity and inclusion programme',
+    'social-16': 'Support social projects in your local communities', 'social-18': 'Put a health and safety policy in place', 'social-18.1': 'Name a person or committee accountable for health and safety',
+    'social-19': 'Ensure compliance with occupational health and safety law', 'social-20': 'Train employees regularly on health and safety',
+    'social-21': 'Remediate the human rights violation and prevent recurrence', 'social-23': 'Record health and safety incidents in a dedicated system',
+    'environment-1': 'Secure a valid environmental licence and meet its conditions', 'environment-1.2': 'Monitor licence conditions and report on them internally',
+    'environment-2': 'Run environmental training for employees', 'environment-3': 'Close out the environmental breach and its corrective actions',
+    'climate-1': 'Measure Scope 1 and 2 greenhouse gas emissions', 'climate-1.2': 'Have your emissions figures verified by a third party', 'climate-1.3': 'Extend the emissions inventory to Scope 3',
+    'climate-2': 'Set and publish an emissions reduction target', 'climate-4': 'Monitor energy use and the share from renewables', 'climate-5': 'Start an energy efficiency programme',
+    'climate-6': 'Assess physical and transition climate risks', 'climate-7': 'Follow a recognised GHG inventory standard',
+    'water-1': 'Measure water withdrawal and its sources', 'water-3': 'Treat effluents before discharge', 'water-3.2': 'Report effluent results to the authority', 'water-4': 'Reuse or recycle water in your processes',
+    'waste-1': 'Classify, segregate and record all waste', 'waste-1.2': 'Keep disposal certificates for every consignment', 'waste-2': 'Reduce the waste sent to landfill',
+    'waste-4': 'Set targets to reduce waste and increase recycling', 'waste-5': 'Monitor the storage of tailings and process residues',
+    'biodiversity-3': 'Run an environmental impact assessment before new sites', 'biodiversity-3.2': 'Keep a monitoring programme after impact assessments', 'biodiversity-4': 'Draw up a land rehabilitation and closure plan',
+    'infosec-1': 'Adopt an information security policy', 'infosec-1.2': 'Have every employee acknowledge the security policy', 'infosec-1.3': 'Publish the information security policy',
+    'infosec-2': 'Certify your security management to ISO/IEC 27001', 'infosec-3': 'Document an incident response procedure', 'infosec-3.2': 'Test the incident response procedure every year',
+    'infosec-4': 'Close out the data breach and strengthen controls', 'infosec-6': 'Put a business continuity and disaster recovery plan in place', 'infosec-7': 'Review user access rights at least quarterly',
+    'product-1': 'Trace the origin of the raw materials you use', 'product-1.2': 'Record traceability batch by batch', 'product-2': 'Adopt a responsible minerals sourcing policy',
+    'product-3': 'Require suppliers to declare the origin of materials', 'product-4': 'Obtain certifications for the materials you supply', 'product-6': 'Trace each batch back to the mine',
+  };
+  const GROUP = { governance: 'G', infosec: 'G', product: 'G', social: 'S', environment: 'E', climate: 'E', water: 'E', waste: 'E', biodiversity: 'E' };
+  const pts = (q, key, v) => {
+    if (UNSCORED.includes(key) || q.ty !== 'choice') return null;
+    if (GRADE[key]) return GRADE[key][v] ?? 0;
+    if (v !== 'yes' && v !== 'no') return null;
+    return (v === 'yes') !== NO_GOOD.includes(key) ? 1 : 0;
+  };
+  const label = (q, v) => { const o = (q.opts || []).find(([x]) => x === v); return o ? o[1] : v; };
+  const score = (s) => {
+    const sec = {}, out = { flags: [], good: [], actions: [] };
+    each((q, key, S) => {
+      const rows = [[q, key, 1, null]].concat((q.subs || []).map((sq, i) => [sq, subKey(key, i), 0.5, key]));
+      rows.forEach(([qq, k, w, parent]) => {
+        if (parent && !(s.v[parent] === 'yes' && !s.na[parent])) return; // a closed follow-up does not count
+        if (UNSCORED.includes(k) || qq.ty !== 'choice' || s.na[k]) return;
+        const x = sec[S.id] || (sec[S.id] = { earned: 0, max: 0, title: S.title });
+        x.max += w;
+        const v = s.v[k], p = has(v) ? pts(qq, k, v) : null;
+        if (p == null) return;
+        x.earned += p * w;
+        const item = { key: k, sec: S.id, group: GROUP[S.id], q: qq.t, answer: label(qq, v), critical: CRITICAL.includes(k) && p === 0 };
+        if (p === 1) out.good.push(item);
+        else { if (p < 0.5) out.flags.push(item); if (ACTION[k]) out.actions.push(Object.assign({ text: ACTION[k], partial: p >= 0.5 }, item)); }
+      });
+    });
+    const pc = (e, m) => (m ? Math.round((e / m) * 100) : 0);
+    let E = 0, M = 0; const g = { E: [0, 0], S: [0, 0], G: [0, 0] };
+    Object.entries(sec).forEach(([id, x]) => { x.pct = pc(x.earned, x.max); E += x.earned; M += x.max; g[GROUP[id]][0] += x.earned; g[GROUP[id]][1] += x.max; });
+    out.flags.sort((a, b) => b.critical - a.critical);
+    return Object.assign(out, { global: pc(E, M), sections: sec, groups: { E: pc(...g.E), S: pc(...g.S), G: pc(...g.G) } });
+  };
   // prototype only: the whole questionnaire answered and reviewed, as it would be just before submitting
   const FILL = { year: '2024', count: '12', when: 'March 2025', text: 'In place and documented; reviewed by the responsible team every year.' };
   const fillOne = (s, q, key) => {
@@ -170,5 +250,5 @@ window.ESG = (() => {
     return (q.a && q.a.why) || '';
   };
 
-  return { KEY, load, save, blank, complete, status, almaPct, almaLeft, handTo, handMore, reading, each, subKey, open, answered, needs, rowNeeds, counts, ready, apply, problem, reason, has, SPHERES };
+  return { KEY, load, save, blank, complete, score, status, almaPct, almaLeft, handTo, handMore, reading, each, subKey, open, answered, needs, rowNeeds, counts, ready, apply, problem, reason, has, SPHERES };
 })();

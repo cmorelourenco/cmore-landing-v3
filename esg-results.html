@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESG Questionnaire · C-MORE</title>
+<title>ESG results · C-MORE</title>
 <meta name="robots" content="noindex">
 <script>
   // the side menu starts open (a drawer on phones) unless the visitor closed it last time
@@ -537,27 +537,6 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-step.is-done h3 { color: var(--color-ink-subtle); text-decoration: line-through; text-decoration-color: var(--color-sand-400); }
 .co-step.is-done h3 .co-badge { text-decoration: none; }
 .co-drop-t { font-size: 1.5rem; font-weight: 500; letter-spacing: -0.02em; line-height: 1.2; text-wrap: balance; }
-/* ALMA on her side, between the documents title and the table: her, the words, the buttons */
-.co-drop.co-drop-h { height: auto; flex-direction: row; align-items: center; justify-content: flex-start; text-align: left; gap: 1.5rem; padding: 1.25rem 1.75rem; margin-bottom: 1.5rem; border-radius: 1.25rem; }
-.co-drop-h .alma-media { position: relative; left: auto; top: auto; translate: none; flex: none; width: 6.5rem; max-width: none; margin: 0 2.25rem 0 0.5rem; } /* her spheres orbit past her box: room on both sides */
-.co-drop-h.has-file .alma-media { transform: none; }
-.co-drop-w { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-.co-drop-h .co-drop-t { font-size: 1.25rem; }
-.co-drop-s { font-size: 0.9375rem; }
-.co-drop-h .co-drop-acts { flex-direction: row; margin: 0 0 0 auto; flex: none; }
-@media (max-width: 40rem) { .co-drop.co-drop-h { flex-direction: column; align-items: flex-start; } .co-drop-h .co-drop-acts { margin: 0; } }
-/* ALMA stays in reach while the questions scroll: she keeps the same 1.5rem from the header
-   that she has from the questionnaire, on a band of the page's ground so nothing shows through,
-   and the section list sticks just under her. --esgq-band is her band's height, kept by script. */
-.esgq-stick { padding-block: 1.5rem; margin-top: -1.5rem; }
-.esgq-stick .co-drop.co-drop-h { margin-bottom: 0; }
-@media (min-width: 40rem) and (min-height: 36rem) {
-  .esgq-stick { position: sticky; top: 4.5rem; z-index: 5; background: var(--color-off-white); }
-  #questionnaires .set-nav { top: calc(4.5rem + var(--esgq-band, 12rem)); }
-}
-.esgq-drop.is-filed { border-style: solid; border-color: var(--color-line); }
-.esgq-by { margin-left: auto; align-self: center; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-.esgq-q:not(.is-alma) .esgq-by { display: none; }
 
 /* consents */
 .co-consents { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; } /* your own consents live in Settings */
@@ -1086,56 +1065,12 @@ body { transition: background-color .9s ease; }
 .qst-start { flex: none; margin-left: auto; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 1px solid var(--color-line);
   border-radius: 0.625rem; background: var(--color-surface); color: var(--color-ink); transition: border-color .14s ease, background-color .14s ease, transform .2s var(--ease-brand); }
 .qst-card-h .qst-start svg { width: 1.125rem; height: 1.125rem; color: inherit; transform: scaleX(-1); }
-.qst-card:hover .qst-start { border-color: var(--color-coral); background: var(--color-light-beige); transform: translateX(3px); }
+.qst-card:hover .qst-start { border-color: var(--color-coral); background: var(--color-coral); color: var(--color-off-white); transform: translateX(3px); }
 /* how far along the questionnaire is */
 .qst-progress { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
 .qst-progress-t { display: flex; align-items: baseline; justify-content: space-between; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .qst-progress-t b { font-weight: 600; color: var(--color-ink); }
 .qst-meter { width: 100%; }
-
-/* ---- the questionnaire itself: the sections, and the questions inside them ---- */
-.esgq-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 2rem; }
-.esgq-top-prog { display: flex; align-items: center; gap: 0.875rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
-.esgq-top-prog .co-meter { width: 11.25rem; }
-.esgq-top-prog b { font-weight: 600; color: var(--color-ink); }
-.esgq-sec { display: flex; flex-direction: column; gap: 1.25rem; scroll-margin-top: 6rem; }
-.esgq-sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; padding: 0 0.25rem; }
-.esgq-sec-n { font-size: 0.8125rem; color: var(--color-ink-subtle); white-space: nowrap; }
-.esgq-list { display: flex; flex-direction: column; gap: 1rem; }
-.esgq-q { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.875rem; padding: 1.25rem 1.5rem 1rem;
-  display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(52, 52, 52, .04); }
-.esgq-row { display: flex; flex-direction: column; gap: 1rem; }
-.esgq-q-main { display: flex; align-items: flex-start; gap: 0.75rem; }
-.esgq-q-n { flex: none; display: grid; place-items: center; min-width: 1.75rem; height: 1.75rem; padding: 0 0.375rem; border-radius: 0.375rem;
-  background: var(--color-graphite); color: var(--color-off-white); font-size: 0.8125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.esgq-subs .esgq-q-n { background: var(--color-mid-beige); color: var(--color-ink); }
-.esgq-q-t { font-size: 1rem; line-height: 1.45; padding-top: 0.125rem; }
-.esgq-ans { display: flex; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
-.esgq-radio { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.9375rem; cursor: pointer; }
-.esgq-radio input { appearance: none; margin: 0; flex: none; display: grid; place-items: center; width: 1.125rem; height: 1.125rem;
-  border: 1.5px solid var(--color-sand-500); border-radius: 50%; background: var(--color-surface); cursor: pointer; transition: border-color .14s ease; }
-.esgq-radio input::before { content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-graphite); transform: scale(0); transition: transform .16s var(--ease-brand); }
-.esgq-radio:hover input { border-color: var(--color-graphite); }
-.esgq-radio input:checked { border-color: var(--color-graphite); }
-.esgq-radio input:checked::before { transform: scale(1); }
-.esgq-radio input:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
-/* answers run the full width of the card and grow with what is typed: nothing is cut off or scrolled away */
-.esgq-q .input { display: block; width: 100%; max-width: none; min-height: 3.5rem; padding: 0.9375rem 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem;
-  background: var(--color-off-white); font: inherit; font-size: 1rem; line-height: 1.5; color: var(--color-ink); outline: none; transition: border-color .14s ease, background-color .14s ease; }
-.esgq-q .input:hover { border-color: var(--color-sand-400); }
-.esgq-q .input:focus { border-color: var(--color-graphite); background: var(--color-surface); }
-.esgq-q textarea.input { height: auto; resize: none; overflow: hidden; overflow-wrap: anywhere; }
-/* follow-ups: closed until the question above is answered Yes, then the card grows to hold them */
-.esgq-subs { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .4s var(--ease-brand); }
-.esgq-subs.is-open { grid-template-rows: 1fr; }
-.esgq-subs-in { overflow: hidden; min-height: 0; }
-.esgq-subs-body { display: flex; flex-direction: column; gap: 1.5rem; padding-top: 1.5rem; }
-.esgq-foot { display: flex; gap: 0.5rem; margin-top: 1.25rem; padding-top: 0.875rem; border-top: 1px solid var(--color-line); }
-.esgq-tool { display: grid; place-items: center; width: 2rem; height: 1.75rem; padding: 0; border: 1px solid var(--color-line); border-radius: 0.375rem;
-  background: var(--color-surface); color: var(--color-ink-subtle); cursor: pointer; transition: border-color .14s ease, color .14s ease; }
-.esgq-tool:hover { border-color: var(--color-sand-400); color: var(--color-ink); }
-.esgq-tool svg { width: 1rem; height: 1rem; }
-@media (prefers-reduced-motion: reduce) { .esgq-subs, .esgq-radio input, .esgq-radio input::before { transition: none; } }
 </style>
 <link rel="stylesheet" href="css/esg.css">
 </head>
@@ -1198,104 +1133,66 @@ body { transition: background-color .9s ease; }
 <div class="sn-scrim" id="sn-scrim" hidden></div>
 
 <main class="page">
-<div id="questionnaires">
+<div id="questionnaires" class="res">
 
   <section class="eco-head set-head"><div class="co-wrap">
     <nav class="eco-crumbs" aria-label="Breadcrumb">
-      <a class="eco-crumbs-back" href="questionnaires.html" aria-label="Back to Questionnaires"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></a>
-      <span class="eco-crumbs-trail"><a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="questionnaires.html">Questionnaires</a><span aria-hidden="true">/</span><span aria-current="page">ESG Questionnaire</span></span>
+      <a class="eco-crumbs-back" href="esg-questionnaire.html" aria-label="Back to the ESG Questionnaire"><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></a>
+      <span class="eco-crumbs-trail"><a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="questionnaires.html">Questionnaires</a><span aria-hidden="true">/</span><a href="esg-questionnaire.html">ESG Questionnaire</a><span aria-hidden="true">/</span><span aria-current="page">Results</span></span>
     </nav>
     <div class="eco-head-t">
-      <span class="eyebrow">ESG Questionnaire</span>
-      <h1 class="co-h-xl" style="font-weight:300">Where your company<br><span style="font-weight:600">stands, in your own words.</span></h1>
-      <p class="co-muted eco-lead">Environmental, social and governance — nine short parts. Answer what you can; come back for the rest whenever you're ready.</p>
+      <span class="eyebrow">ESG Questionnaire · Results</span>
+      <h1 class="co-h-xl" style="font-weight:300">Where your company<br><span style="font-weight:600">stands on ESG.</span></h1>
+      <p class="co-muted eco-lead" id="res-lead">What your answers add up to: the score clients and buyers see, what is already strong, and what to work on next.</p>
     </div>
   </div></section>
 
-  <div class="co-wrap esgq-stick" id="qd-stick">
-    <div class="co-drop co-drop-h esgq-drop" id="qd-drop" role="button" tabindex="0" aria-label="Drop documents on ALMA, or press to choose them">
-      <span class="alma-media" aria-hidden="true">
-<span class="alma-comp"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span>
-      </span>
-      <span class="co-drop-w">
-        <span class="eyebrow">ALMA</span>
-        <span class="co-drop-t" id="qd-t">Let me fill this in for you.</span>
-        <span class="co-muted co-drop-s" id="qd-s">Drop your policy documents here and I’ll read them, find the answers and fill them in. You get the final say on every one before anything is submitted.</span>
-        <span class="co-meter qd-meter is-busy" id="qd-m" hidden><i></i></span>
-      </span>
-      <span class="co-drop-acts qd-acts" id="qd-acts"></span>
+  <div class="co-wrap">
+    <div class="res-bar">
+      <span class="res-co"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg><b id="res-co-name"></b><span id="res-year"></span></span>
+      <span class="res-acts"><a class="btn btn-quiet btn-sm" href="esg-questionnaire.html">Open the questionnaire</a><button type="button" class="btn btn-primary btn-sm" id="res-print">Print report</button></span>
     </div>
-  </div>
 
-  <div class="co-wrap set-body">
-    <nav class="set-nav" aria-label="Questionnaire sections">
-      <a href="#governance" class="is-on">Governance</a>
-      <a href="#social">Social</a>
-      <a href="#environment">Environment</a>
-      <a href="#climate">Climate &amp; energy</a>
-      <a href="#water">Water &amp; effluents</a>
-      <a href="#waste">Waste &amp; materials</a>
-      <a href="#biodiversity">Biodiversity &amp; land</a>
-      <a href="#infosec">Information security</a>
-      <a href="#product">Product &amp; traceability</a>
-    </nav>
+    <div class="co-card res-none" id="res-none" hidden>
+      <h2>Your results appear once the questionnaire is submitted</h2>
+      <p class="co-muted">Answer every question, review ALMA’s answers and submit. The score, red flags, best practices and action plan are worked out from what you submit.</p>
+      <a class="btn btn-primary btn-sm" href="esg-questionnaire.html">Go to the questionnaire</a>
+    </div>
 
-    <div class="set-main">
-      <div class="esgq-top">
-        <span class="co-muted" id="esgq-lead">Nothing here is shared until you choose to submit it.</span>
-        <span class="esgq-top-r">
-          <span class="esgq-top-prog"><span id="esgq-num">0 of 77 answered</span><b id="esgq-pct">0%</b><span class="co-meter"><i id="esgq-bar" style="width:0%"></i></span></span>
-          <span class="esgq-submit-w"><button type="button" class="btn btn-primary btn-sm" id="esgq-submit" aria-disabled="true" aria-describedby="esgq-tip">Submit</button><a class="btn btn-primary btn-sm" id="esgq-results" href="esg-results.html" hidden>View results</a><span class="esgq-tip-pop" id="esgq-tip" role="status" hidden></span></span>
-        </span>
+    <div id="res" hidden>
+      <div class="res-top">
+        <section class="co-card res-card" aria-labelledby="res-global-h">
+          <h2 class="res-k" id="res-global-h">Global score</h2>
+          <div class="res-ring" id="res-ring"><div><b id="res-global">0</b><span>of 100</span></div></div>
+          <p class="res-verdict" id="res-verdict"></p>
+        </section>
+        <section class="co-card res-card" aria-labelledby="res-cat-h">
+          <h2 class="res-k" id="res-cat-h">Score by category</h2>
+          <div class="res-groups" id="res-groups"></div>
+          <div class="res-secs" id="res-secs"></div>
+        </section>
       </div>
-      <div class="esgq-filters" id="esgq-filters" role="group" aria-label="Show questions" hidden></div>
-      <p class="esgq-none" id="esgq-none" hidden>No questions match this. <button type="button" class="link-btn" id="esgq-show-all">Show all</button></p>
-      <!-- Each section is rendered by js/esg-questionnaire.js from its own question list,
-           so the markup here only needs to name the nine sections and give each a home. -->
-      <section class="esgq-sec" id="governance" aria-labelledby="h-governance" data-esgq="governance">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-governance">Governance</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
+
+      <section class="co-card res-card" aria-labelledby="res-flags-h">
+        <h2 class="res-h" id="res-flags-h"><span class="res-ico is-bad" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5"/></svg></span>Red flags <span class="res-n" id="res-flags-n"></span></h2>
+        <p class="res-intro is-bad">Gaps and risks in your answers. Clients read them as missing processes or possible non-compliance, so they are the first things to fix — each has an action in the plan below.</p>
+        <ul class="res-list" id="res-flags"></ul>
       </section>
-      <section class="esgq-sec" id="social" aria-labelledby="h-social" data-esgq="social">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-social">Social</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
+
+      <section class="co-card res-card" aria-labelledby="res-good-h">
+        <h2 class="res-h" id="res-good-h"><span class="res-ico is-ok" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg></span>Best practices <span class="res-n" id="res-good-n"></span></h2>
+        <p class="res-intro is-ok">What your company already does well: the processes, policies and evidence that make it a reliable supplier.</p>
+        <ul class="res-list" id="res-good"></ul>
+        <button type="button" class="link-btn res-more" id="res-good-more" hidden></button>
       </section>
-      <section class="esgq-sec" id="environment" aria-labelledby="h-environment" data-esgq="environment">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-environment">Environment</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
+
+      <section class="co-card res-card" aria-labelledby="res-plan-h">
+        <h2 class="res-h" id="res-plan-h">Action plan</h2>
+        <p class="co-muted res-plan-lede">One action for every gap, grouped the way clients look at ESG. Each one opens the question it comes from.</p>
+        <div class="res-plan" id="res-plan"></div>
       </section>
-      <section class="esgq-sec" id="climate" aria-labelledby="h-climate" data-esgq="climate">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-climate">Climate &amp; energy</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
-      </section>
-      <section class="esgq-sec" id="water" aria-labelledby="h-water" data-esgq="water">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-water">Water &amp; effluents</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
-      </section>
-      <section class="esgq-sec" id="waste" aria-labelledby="h-waste" data-esgq="waste">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-waste">Waste &amp; materials</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
-      </section>
-      <section class="esgq-sec" id="biodiversity" aria-labelledby="h-biodiversity" data-esgq="biodiversity">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-biodiversity">Biodiversity &amp; land</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
-      </section>
-      <section class="esgq-sec" id="infosec" aria-labelledby="h-infosec" data-esgq="infosec">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-infosec">Information security</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
-      </section>
-      <section class="esgq-sec" id="product" aria-labelledby="h-product" data-esgq="product">
-        <div class="set-card-h esgq-sec-head"><h2 id="h-product">Product &amp; traceability</h2><span class="esgq-sec-n" data-esgq-count></span></div>
-        <div class="esgq-list" data-esgq-list></div>
-      </section>
-      <div class="esgq-end">
-        <span class="esgq-proto-links">
-          <button type="button" class="link-btn esgq-restart" id="esgq-restart">Restart questionnaire <span class="esgq-proto">Prototype only</span></button>
-          <button type="button" class="link-btn esgq-restart" id="esgq-complete">Complete questionnaire <span class="esgq-proto">Prototype only</span></button>
-        </span>
-        <button type="button" class="btn btn-primary" id="esgq-submit-end" aria-disabled="true">Submit questionnaire</button>
-        <a class="btn btn-primary" id="esgq-results-end" href="esg-results.html" hidden>View results</a>
-      </div>
+
+      <div class="res-end"><button type="button" class="btn btn-quiet btn-sm" id="res-top">Back to top</button></div>
     </div>
   </div>
 
@@ -1448,8 +1345,7 @@ body { transition: background-color .9s ease; }
 })();
 </script>
 <script src="js/lang.js"></script>
-<script src="js/esg-upload.js"></script>
-<script src="js/esg-doc.js"></script>
-<script src="js/esg-questionnaire.js"></script>
+<script src="js/co-profile.js"></script>
+<script src="js/esg-results.js"></script>
 </body>
 </html>
