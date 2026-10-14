@@ -1,0 +1,111 @@
+{
+ "versions": {
+  "v1": {
+   "name": "Ground",
+   "blurb": "Light beige ground with a single white sheet. Coral underline on one word, the activate rule, pill button. The calmest of the four and the closest to the landing page body copy."
+  },
+  "v2": {
+   "name": "Graphite band",
+   "blurb": "Graphite header and footer bands taken from the early-access strip, with a 2px coral rule. Drawn cards and the graphite filled button. Strongest brand presence."
+  },
+  "v3": {
+   "name": "Sphere",
+   "blurb": "The grainy spheres from the hero behind a light-to-bold headline with a coral full stop. Centred, airy and the most editorial."
+  },
+  "v4": {
+   "name": "Pixel",
+   "blurb": "Built from the square devices: code digits in drawn tiles, the Turn progress bar for expiry, numbered steps in the reset. Most structured."
+  }
+ },
+ "types": {
+  "2fa": "Sign-in code",
+  "reset": "Password reset",
+  "welcome": "Welcome"
+ },
+ "emails": [
+  {
+   "v": "v1",
+   "t": "2fa",
+   "file": "v1-2fa.html",
+   "subject": "Your C-MORE sign-in code: 482913",
+   "pre": "Use 482913 to finish signing in. It expires in 10 minutes."
+  },
+  {
+   "v": "v1",
+   "t": "reset",
+   "file": "v1-reset.html",
+   "subject": "Reset your C-MORE password",
+   "pre": "Choose a new password. The link works once and expires in 60 minutes."
+  },
+  {
+   "v": "v1",
+   "t": "welcome",
+   "file": "v1-welcome.html",
+   "subject": "Welcome to C-MORE, Marta",
+   "pre": "Marta, your account for Lusofrio, Lda is ready. Here is how to get started."
+  },
+  {
+   "v": "v2",
+   "t": "2fa",
+   "file": "v2-2fa.html",
+   "subject": "Your C-MORE sign-in code: 482913",
+   "pre": "Use 482913 to finish signing in. It expires in 10 minutes."
+  },
+  {
+   "v": "v2",
+   "t": "reset",
+   "file": "v2-reset.html",
+   "subject": "Reset your C-MORE password",
+   "pre": "Choose a new password. The link works once and expires in 60 minutes."
+  },
+  {
+   "v": "v2",
+   "t": "welcome",
+   "file": "v2-welcome.html",
+   "subject": "Welcome to C-MORE, Marta",
+   "pre": "Marta, your account for Lusofrio, Lda is ready. Here is how to get started."
+  },
+  {
+   "v": "v3",
+   "t": "2fa",
+   "file": "v3-2fa.html",
+   "subject": "Your C-MORE sign-in code: 482913",
+   "pre": "Use 482913 to finish signing in. It expires in 10 minutes."
+  },
+  {
+   "v": "v3",
+   "t": "reset",
+   "file": "v3-reset.html",
+   "subject": "Reset your C-MORE password",
+   "pre": "Choose a new password. The link works once and expires in 60 minutes."
+  },
+  {
+   "v": "v3",
+   "t": "welcome",
+   "file": "v3-welcome.html",
+   "subject": "Welcome to C-MORE, Marta",
+   "pre": "Marta, your account for Lusofrio, Lda is ready. Here is how to get started."
+  },
+  {
+   "v": "v4",
+   "t": "2fa",
+   "file": "v4-2fa.html",
+   "subject": "Your C-MORE sign-in code: 482913",
+   "pre": "Use 482913 to finish signing in. It expires in 10 minutes."
+  },
+  {
+   "v": "v4",
+   "t": "reset",
+   "file": "v4-reset.html",
+   "subject": "Reset your C-MORE password",
+   "pre": "Choose a new password. The link works once and expires in 60 minutes."
+  },
+  {
+   "v": "v4",
+   "t": "welcome",
+   "file": "v4-welcome.html",
+   "subject": "Welcome to C-MORE, Marta",
+   "pre": "Marta, your account for Lusofrio, Lda is ready. Here is how to get started."
+  }
+ ]
+}

@@ -1,0 +1,202 @@
+/* ---- Teaser, between the founding-member thank-you and ALMA's intake ----
+   The product is not live yet, so before ALMA asks for documents she shows
+   what the documents are for: four screens, drawn small, one at a time. It
+   sits on the same off-white as the welcome and the intake, so the three
+   read as one movement. Hidden in the markup; script shows it. */
+.teaser { position: fixed; inset: 0; z-index: 60; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  background: var(--color-off-white); opacity: 0; transition: opacity .7s var(--ease-brand); }
+.teaser.is-in { opacity: 1; }
+.teaser[hidden] { display: none; }
+.teaser-in { min-height: 100%; max-width: 72rem; margin-inline: auto; padding: 2.5rem 1.25rem 3rem;
+  display: grid; align-content: center; gap: 1.75rem; }
+@media (min-width: 40rem) { .teaser-in { padding-inline: 2rem; } }
+@media (min-width: 64rem) { .teaser-in { padding-inline: 2.5rem; gap: 2rem; } }
+
+/* Her, small, beside her words: she is presenting, not asking. */
+.tz-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.5rem 1.5rem; }
+.tz-head .alma-media { width: 8rem; max-width: none; margin: 0; animation: alma-arrive 1.2s var(--ease-brand) .2s both; }
+.tz-head .says { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.tz-head .says::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.tz-head h1 { margin-top: 0.5rem; font-size: clamp(1.625rem, 3.6vw, 2.375rem); line-height: 1.08; letter-spacing: -0.026em;
+  font-weight: 600; max-width: 30ch; }
+.tz-head h1 .soft { font-weight: 300; }
+.tz-head .lead { margin-top: 0.5rem; max-width: 56ch; font-size: 1.0625rem; }
+@media (max-width: 34rem) {
+  .tz-head { grid-template-columns: 1fr; justify-items: start; }
+  .tz-head .alma-media { width: 6rem; }
+  .tz-head .lead { font-size: 1rem; }
+}
+.teaser .rise { animation: rise .7s var(--ease-brand) both; }
+.teaser .d1 { animation-delay: .35s; } .teaser .d2 { animation-delay: .5s; } .teaser .d3 { animation-delay: .7s; }
+
+/* The stage: the screen on the left, the words about it on the right. */
+.tz-stage { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(16rem, 1fr); gap: 2rem; align-items: center; }
+@media (max-width: 52rem) { .tz-stage { grid-template-columns: 1fr; gap: 1.25rem; } }
+
+/* A browser frame, drawn: hairline, a 12px corner, three dots. Each screen
+   inside it is a small drawing of the real page, not a picture of one, so it
+   stays crisp at any size and in step with the design system. */
+.tz-frame { position: relative; background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.875rem;
+  box-shadow: 0 2px 4px rgba(52,52,52,.04), 0 24px 48px -24px rgba(52,52,52,.22); overflow: hidden; aspect-ratio: 16 / 10; container-type: inline-size; }
+.tz-chrome { height: 1.75rem; display: flex; align-items: center; gap: 0.375rem; padding-inline: 0.75rem;
+  border-bottom: 1px solid var(--color-line); background: var(--color-light-beige); }
+.tz-chrome i { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--color-sand-400); }
+.tz-chrome .url { margin-left: 0.5rem; flex: 1; height: 0.875rem; border-radius: 0.25rem; background: var(--color-surface);
+  display: flex; align-items: center; padding-inline: 0.5rem; font-size: 0.5625rem; color: var(--color-sand-500); letter-spacing: .02em; }
+.tz-shots { position: absolute; inset: 1.75rem 0 0; }
+.tz-shot { position: absolute; inset: 0; opacity: 0; transform: translateX(14px); visibility: hidden; pointer-events: none;
+  transition: opacity .5s var(--ease-brand), transform .5s var(--ease-brand), visibility 0s .5s;
+  font-size: clamp(0.42rem, 1.75cqw, 0.6875rem); line-height: 1.35; color: var(--color-ink); }
+.tz-shot.is-on { opacity: 1; transform: none; visibility: visible; transition-delay: 0s; }
+.tz-shot.is-off { transform: translateX(-14px); }
+
+/* The pieces every drawn screen is made of. */
+.m-app { position: absolute; inset: 0; display: grid; grid-template-columns: 22% 1fr; background: var(--color-light-beige); }
+.m-app.m-wide { grid-template-columns: 1fr; }
+.m-side { background: var(--color-surface); border-right: 1px solid var(--color-line); padding: 0.7em 0.7em; display: grid; align-content: start; gap: 0.5em; }
+.m-logo { font-weight: 700; letter-spacing: -0.03em; font-size: 1.15em; margin-bottom: 0.5em; }
+.m-nav { height: 0.55em; border-radius: 0.2em; background: var(--color-mid-beige); width: 80%; }
+.m-nav.on { background: var(--color-coral-tint); width: 90%; position: relative; }
+.m-nav.on::before { content: ""; position: absolute; left: -0.7em; top: 0; bottom: 0; width: 0.15em; background: var(--color-coral); }
+.m-main { padding: 0.9em 1.1em; display: grid; align-content: start; gap: 0.7em; min-width: 0; }
+.m-eyebrow { display: inline-flex; align-items: center; gap: 0.35em; font-size: 0.78em; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--color-ink-muted); }
+.m-eyebrow::before { content: ""; width: 0.35em; height: 0.35em; background: var(--color-coral); border-radius: 1px; }
+.m-h { font-size: 1.9em; line-height: 1.05; letter-spacing: -0.025em; font-weight: 600; }
+.m-h .soft { font-weight: 300; }
+.m-sub { color: var(--color-ink-subtle); }
+.m-card { background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.6em; padding: 0.8em 0.9em; min-width: 0; }
+.m-row { display: flex; align-items: center; gap: 0.6em; }
+.m-row + .m-row { margin-top: 0.45em; }
+.m-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6em; }
+.m-big { font-size: 2.3em; line-height: 1; color: var(--color-coral); font-weight: 300; letter-spacing: -0.03em; }
+.m-big-g { color: var(--color-ink); }
+.m-tag { display: inline-block; padding: 0.1em 0.5em; border-radius: 999px; font-size: 0.85em; font-weight: 500; }
+.m-tag.warn { background: var(--color-caution-subtle); color: var(--color-caution); }
+.m-tag.bad { background: var(--color-critical-subtle); color: var(--color-critical); }
+.m-tag.ok { background: var(--color-positive-subtle); color: var(--color-positive); }
+.m-tag.neu { background: var(--color-mid-beige); color: var(--color-ink-subtle); }
+.m-tag.alma { background: var(--color-coral-tint); color: var(--color-ink); }
+.m-btn { display: inline-flex; align-items: center; height: 1.9em; padding-inline: 0.9em; border-radius: 999px; font-weight: 500; white-space: nowrap;
+  background: var(--color-coral); color: var(--color-graphite); }
+.m-btn.q { background: var(--color-surface); border: 1px solid var(--color-line); }
+.m-ring { position: relative; width: 4.4em; height: 4.4em; border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: conic-gradient(var(--color-coral) calc(var(--v) * 1%), var(--color-mid-beige) 0); }
+.m-ring::before { content: ""; position: absolute; inset: 0.5em; border-radius: 50%; background: var(--color-surface); }
+.m-ring b { position: relative; font-size: 1.4em; font-weight: 600; letter-spacing: -0.03em; }
+.m-bar { height: 0.5em; border-radius: 999px; background: var(--color-mid-beige); overflow: hidden; flex: 1; }
+.m-bar i { display: block; height: 100%; width: var(--v); background: var(--color-graphite); border-radius: 999px; }
+.m-bar.c i { background: var(--color-coral); }
+.m-line { height: 0.5em; border-radius: 0.2em; background: var(--color-mid-beige); }
+.m-q { display: grid; grid-template-columns: 1.4em minmax(0, 1fr) auto; gap: 0.6em; align-items: start; padding: 0.55em 0; border-top: 1px solid var(--color-line); }
+.m-q:first-child { border-top: 0; padding-top: 0; }
+.m-q .n { color: var(--color-ink-subtle); font-size: 0.85em; padding-top: 0.15em; }
+.m-q .a { color: var(--color-ink-muted); margin-top: 0.15em; }
+.m-cite { display: inline-flex; align-items: center; gap: 0.3em; margin-top: 0.3em; font-size: 0.8em; color: var(--color-ink-subtle);
+  border: 1px solid var(--color-line); border-radius: 999px; padding: 0.05em 0.5em; }
+.m-cite::before { content: ""; width: 0.5em; height: 0.6em; border: 1px solid currentColor; border-radius: 0.1em; }
+.m-alma { display: grid; grid-template-columns: 2.6em 1fr; gap: 0.6em; align-items: center; background: var(--color-light-beige); border-radius: 0.6em; padding: 0.6em 0.7em; }
+.m-alma .alma-media { width: 2.6em; max-width: none; margin: 0; }
+.m-alma .k { font-size: 0.78em; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.m-flag { display: grid; grid-template-columns: 0.55em 1fr; gap: 0.5em; align-items: baseline; }
+.m-flag::before { content: ""; width: 0.55em; height: 0.55em; border-radius: 1px; background: var(--color-critical); transform: translateY(0.05em); }
+.m-flag.good::before { background: var(--color-positive); }
+.m-flag + .m-flag { margin-top: 0.4em; }
+.m-sup { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6em; }
+.m-sup .m-card { display: grid; gap: 0.45em; }
+.m-ava { width: 1.9em; height: 1.9em; border-radius: 0.4em; background: var(--color-graphite); color: var(--color-off-white);
+  display: grid; place-items: center; font-weight: 600; font-size: 0.9em; }
+.m-ava.g { background: #3f7d2e; } .m-ava.b { background: var(--color-blue); } .m-ava.s { background: var(--color-sand-500); }
+.m-name { font-weight: 600; }
+.m-tabs { display: flex; gap: 0.3em; background: var(--color-mid-beige); padding: 0.2em; border-radius: 999px; width: max-content; }
+.m-tabs span { padding: 0.15em 0.7em; border-radius: 999px; color: var(--color-ink-subtle); }
+.m-tabs span.on { background: var(--color-surface); color: var(--color-ink); font-weight: 500; box-shadow: 0 1px 2px rgba(52,52,52,.08); }
+.m-chips { display: flex; flex-wrap: wrap; gap: 0.35em; }
+.m-chips span { padding: 0.1em 0.6em; border: 1px solid var(--color-line); border-radius: 999px; color: var(--color-ink-subtle); }
+.m-chips span.on { border-color: var(--color-graphite); color: var(--color-ink); }
+.m-split { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0.6em; }
+.m-stack > * + * { margin-top: 0.55em; }
+.m-score-row { display: grid; grid-template-columns: auto 1fr; gap: 0.9em; align-items: center; }
+.m-dim { display: grid; grid-template-columns: 1.2em 1fr 2em; gap: 0.5em; align-items: center; }
+.m-dim .v { text-align: right; font-weight: 500; }
+.m-dim + .m-dim { margin-top: 0.4em; }
+
+/* Beside the screen: which one this is, and what she has to say about it. */
+.tz-copy { display: grid; align-content: center; gap: 0.75rem; }
+.tz-step { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.tz-step b { color: var(--color-ink); font-weight: 600; }
+.tz-copy h2 { font-size: clamp(1.375rem, 2.6vw, 1.875rem); line-height: 1.12; letter-spacing: -0.02em; font-weight: 600; }
+.tz-copy p { color: var(--color-ink-muted); font-weight: 300; font-size: 1.0625rem; line-height: 1.55; }
+.tz-copy .tz-text { display: grid; }
+.tz-copy .tz-text > div { grid-area: 1 / 1; opacity: 0; transform: translateY(8px); visibility: hidden;
+  transition: opacity .45s var(--ease-brand), transform .45s var(--ease-brand), visibility 0s .45s; display: grid; align-content: start; gap: 0.625rem; }
+.tz-copy .tz-text > div.is-on { opacity: 1; transform: none; visibility: visible; transition-delay: .08s; }
+@media (max-width: 52rem) { .tz-copy p { font-size: 1rem; } }
+
+/* Stepping: four squares from the mark, the current one coral and turned. */
+.tz-nav { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
+.tz-dots { display: flex; gap: 0.5rem; padding: 0; margin: 0; }
+.tz-dots button { width: 0.625rem; height: 0.625rem; padding: 0; border: 0; border-radius: 2px; cursor: pointer;
+  background: color-mix(in oklab, var(--color-graphite) 18%, transparent);
+  transition: background-color .22s var(--ease-brand), transform .22s var(--ease-brand); }
+.tz-dots button[aria-current="step"] { background: var(--color-coral); transform: rotate(45deg); }
+.tz-dots button:hover { background: color-mix(in oklab, var(--color-graphite) 40%, transparent); }
+.tz-dots button[aria-current="step"]:hover { background: var(--color-coral); }
+.tz-arrows { display: flex; gap: 0.5rem; }
+.tz-arrow { width: 2.5rem; height: 2.5rem; padding: 0; display: grid; place-items: center; border: 1px solid var(--color-line);
+  border-radius: 50%; background: var(--color-surface); cursor: pointer; color: var(--color-ink);
+  transition: border-color .14s var(--ease-brand), background-color .14s var(--ease-brand), opacity .14s; }
+.tz-arrow:hover:not(:disabled) { border-color: var(--color-sand-400); }
+.tz-arrow:disabled { opacity: .35; cursor: default; }
+.tz-arrow svg { width: 1.125rem; height: 1.125rem; }
+
+/* The way on: one coral button, and a quiet way past the tour. */
+.tz-actions { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem 1.5rem; flex-wrap: wrap;
+  border-top: 1px solid var(--color-line); padding-top: 1.25rem; }
+.tz-note { font-size: 0.875rem; color: var(--color-ink-subtle); max-width: 30ch; }
+.tz-note b { color: var(--color-ink); font-weight: 500; }
+.tz-go { display: flex; align-items: center; gap: 1.25rem; }
+/* One field and one button, stacked and flush right with the divider above
+   them. The email comes from the sign-up and sits locked; the pencil opens it
+   for a correction. With no email to hand the field starts open. */
+.tz-form { display: flex; flex-direction: column; align-items: flex-end; gap: 0.75rem; width: min(100%, 26rem); margin-left: auto; }
+.tz-to { display: grid; justify-items: end; gap: 0.25rem; max-width: 100%; min-width: 0; }
+.tz-to-l { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.tz-to-w { position: relative; max-width: 100%; }
+/* sized to its email by script: the text sits as far from the left edge as the pencil from the right */
+.tz-to-in { width: 17rem; max-width: 100%; height: 3rem; padding: 0 2.625rem 0 calc(0.9375rem - 1px); font: inherit; font-size: 1rem; color: var(--color-ink); background: var(--color-surface);
+  border: 1px solid var(--color-line); border-radius: var(--radius-pill); box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); text-overflow: ellipsis;
+  transition: border-color .14s var(--ease-brand), box-shadow .14s var(--ease-brand), background-color .14s var(--ease-brand); }
+.tz-to-in { text-align: right; }
+.tz-to-in:not([readonly]) { padding-right: calc(0.9375rem - 1px); } /* no pencil while editing */
+.tz-to-in::placeholder { color: var(--color-sand-500); }
+.tz-to-in:hover:not([readonly]) { border-color: var(--color-sand-400); }
+.tz-to-in:focus:not([readonly]) { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 18%, transparent); }
+.tz-to-in[readonly] { background: var(--color-surface-sunken); border-color: transparent; box-shadow: none; cursor: default; }
+.tz-to-in[readonly]:focus { outline: none; }
+.tz-to-in.is-bad { border-color: var(--color-critical); }
+.tz-edit { position: absolute; right: 0.375rem; top: 50%; transform: translateY(-50%); display: grid; place-items: center; width: 2.25rem; height: 2.25rem;
+  padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--color-ink-subtle); cursor: pointer;
+  transition: background-color .14s var(--ease-brand), color .14s var(--ease-brand); }
+.tz-edit[hidden] { display: none; }
+.tz-edit:hover { background: var(--color-mid-beige); color: var(--color-ink); }
+.tz-edit:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+.tz-edit svg { width: 1.125rem; height: 1.125rem; }
+.tz-to-err { font-size: 0.8125rem; color: var(--color-critical); min-height: 0; padding-inline: 1rem; text-align: right; }
+.tz-to-err:empty { display: none; }
+.tz-done { display: inline-flex; align-items: center; gap: 0.5rem; height: 3rem; padding-inline: 1.25rem; border-radius: var(--radius-pill);
+  background: var(--color-positive-subtle); color: var(--color-positive); font-weight: 500; animation: rise .5s var(--ease-brand) both; }
+.tz-done i { width: 0.5rem; height: 0.5rem; border-radius: 1px; background: currentColor; transform: rotate(45deg); }
+@media (max-width: 34rem) { .tz-actions { flex-direction: column; align-items: stretch; } .tz-form .btn, .tz-form .tz-done { width: 100%; justify-content: center; } .tz-to, .tz-to-w, .tz-form .tz-to-in { min-width: 100%; } }
+/* The toast confirming it, bottom right, on the same card as ALMA's other
+   toasts (esg.css). It names the address, then leaves. */
+.tz-toast .tz-addr { font-style: normal; font-weight: 600; color: var(--color-ink); }
+.tz-toast.is-out { animation: tz-toast-out .4s var(--ease-brand) both; }
+@keyframes tz-toast-out { to { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { .tz-toast.is-out { animation: none; opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .teaser, .tz-shot, .tz-copy .tz-text > div, .tz-dots button, .tz-head .alma-media, .teaser .rise { transition: none; animation: none; }
+}
+

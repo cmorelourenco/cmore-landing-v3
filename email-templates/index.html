@@ -1,0 +1,185 @@
+<!doctype html><html><head><meta charset=utf-8><title>Email Templates</title><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<style>
+/* Layout: a review desk. Version rail + message picker on top, one mail-client frame below; a compare mode lays all four side by side. */
+@font-face{font-family:'Figtree';font-weight:300;font-display:swap;src:url("fonts/figtree-300.woff2") format('woff2')}
+@font-face{font-family:'Figtree';font-weight:400;font-display:swap;src:url("fonts/figtree-400.woff2") format('woff2')}
+@font-face{font-family:'Figtree';font-weight:500;font-display:swap;src:url("fonts/figtree-500.woff2") format('woff2')}
+@font-face{font-family:'Figtree';font-weight:600;font-display:swap;src:url("fonts/figtree-600.woff2") format('woff2')}
+:root{
+  --ground:#f2f1ed; --surface:#ffffff; --sunken:#e9e7e2; --ink:#343434; --muted:#4e638b; --subtle:#6e6e6a;
+  --line:#e0ded7; --line-strong:#909db6; --accent:#f46d4f; --accent-ink:#343434; --sel-bg:#343434; --sel-ink:#f2f1ed; --sel-n:#f46d4f;
+  --font:'Figtree',Arial,ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#343434; --surface:#3e3e3e; --sunken:#2a2a2a; --ink:#fafafa; --muted:#909db6; --subtle:#a2a2a2;
+  --line:rgba(144,157,182,.24); --line-strong:rgba(144,157,182,.5); --accent:#f46d4f; --accent-ink:#343434; --sel-bg:#f46d4f; --sel-ink:#343434; --sel-n:#343434; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#343434; --surface:#3e3e3e; --sunken:#2a2a2a; --ink:#fafafa; --muted:#909db6; --subtle:#a2a2a2;
+  --line:rgba(144,157,182,.24); --line-strong:rgba(144,157,182,.5); --accent:#f46d4f; --accent-ink:#343434; --sel-bg:#f46d4f; --sel-ink:#343434; --sel-n:#343434; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:78rem;margin:0 auto;padding-inline:clamp(16px,4vw,40px);padding-block:clamp(28px,5vw,56px) 64px;display:flex;flex-direction:column;gap:32px}
+.eyebrow{font-size:.8125rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{margin:.5rem 0 0;font-size:clamp(2.1rem,5vw,3.25rem);line-height:1.02;letter-spacing:-.028em;font-weight:600;text-wrap:balance}
+.mark{background-image:linear-gradient(var(--accent),var(--accent));background-repeat:no-repeat;background-position:0 88%;background-size:100% .26em;padding-inline:.06em}
+.intro p{margin:1rem 0 0;max-width:40rem;font-size:1.125rem;font-weight:300;color:var(--ink)}
+.rule{height:2px;border:0;margin:0;background:linear-gradient(to right,var(--accent) 0 2rem,var(--line) 2rem 100%)}
+.versions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.versions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.versions{grid-template-columns:1fr}}
+.vcard{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:18px 18px 20px;border:2px solid var(--line-strong);border-radius:4px;background:var(--surface);min-width:0;transition:border-color .14s cubic-bezier(.22,1,.36,1),transform .14s}
+.vcard:hover{border-color:var(--ink)}
+.vcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.vcard[aria-pressed="true"]{border-color:var(--ink);background:var(--sel-bg);color:var(--sel-ink)}
+.vcard .n{font-size:.8125rem;font-weight:700;color:var(--accent)}
+.vcard[aria-pressed="true"] .n{color:var(--sel-n)}
+.vcard h3{margin:0;font-size:1.25rem;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.vcard p{margin:0;font-size:.875rem;line-height:1.5;color:var(--muted)}
+.vcard[aria-pressed="true"] p{color:inherit;opacity:.85}
+.bar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;flex-wrap:wrap;padding:3px;gap:3px;background:var(--sunken);border-radius:999px}
+.seg button{border:0;background:transparent;cursor:pointer;font-family:var(--font);font-size:.9375rem;font-weight:500;color:var(--muted);padding:.4rem 1rem;border-radius:999px;transition:background-color .14s,color .14s}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(52,52,52,.08),0 4px 12px -6px rgba(52,52,52,.2)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.controls{display:flex;flex-wrap:wrap;gap:12px}
+.client{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.mailhead{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;padding:18px 24px;border-bottom:1px solid var(--line);font-size:.875rem}
+.mailhead dt{color:var(--subtle)}
+.mailhead dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.mailhead .subj{font-weight:600;font-size:1rem}
+.mailhead .pre{color:var(--subtle)}
+.stage{background:var(--sunken);display:flex;justify-content:center;padding:0;overflow-x:auto}
+.stage iframe{display:block;border:0;width:100%;max-width:700px;height:900px;background:#fff;transition:max-width .3s cubic-bezier(.22,1,.36,1)}
+.stage.mobile iframe{max-width:375px}
+.compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.compare{grid-template-columns:1fr}}
+.cmp{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.cmp header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.cmp header b{font-weight:600}
+.cmp header span{font-size:.8125rem;color:var(--subtle)}
+.cmp .win{position:relative;overflow:hidden;background:#fff}
+.cmp iframe{position:absolute;top:0;left:0;width:700px;border:0;transform-origin:0 0;pointer-events:none}
+.cmp button.open{all:unset;cursor:pointer;position:absolute;inset:0}
+.cmp button.open:focus-visible{outline:2px solid var(--accent);outline-offset:-4px}
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+@media (max-width:760px){.notes{grid-template-columns:1fr}}
+.notes h4{margin:0;font-size:1.0625rem;font-weight:600}
+.notes p{margin:.4rem 0 0;font-size:.9375rem;color:var(--muted)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em;background:var(--sunken);padding:.1em .35em;border-radius:4px;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="page">
+  <section class="intro">
+    <p class="eyebrow">Transactional email &middot; design proposal</p>
+    <h1>Four ways to write to people from <span class="mark">C-MORE</span>.</h1>
+    <p>Each direction is built from the landing page v3 system: Figtree, graphite and coral, the beige neutrals, the pixel chevron and the drawn 2px card. Every direction is shown as a sign-in code, a password reset and a welcome email.</p>
+  </section>
+
+  <div class="versions" id="versions" role="group" aria-label="Design direction"></div>
+
+  <hr class="rule">
+
+  <div class="bar">
+    <div class="seg" id="types" role="group" aria-label="Email"></div>
+    <div class="controls">
+      <div class="seg" id="widths" role="group" aria-label="Width">
+        <button type="button" data-w="desktop" aria-pressed="true">Desktop</button>
+        <button type="button" data-w="mobile" aria-pressed="false">Phone</button>
+      </div>
+      <div class="seg" id="modes" role="group" aria-label="View">
+        <button type="button" data-m="single" aria-pressed="true">One version</button>
+        <button type="button" data-m="compare" aria-pressed="false">Compare all four</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="client" id="single">
+    <dl class="mailhead">
+      <dt>From</dt><dd>C-MORE &lt;no-reply@thecmorecompany.com&gt;</dd>
+      <dt>Subject</dt><dd class="subj" id="subj"></dd>
+      <dt>Preview</dt><dd class="pre" id="pre"></dd>
+    </dl>
+    <div class="stage" id="stage"><iframe id="frame" title="Email preview"></iframe></div>
+  </section>
+
+  <section class="compare" id="compare" hidden></section>
+
+  <hr class="rule">
+
+  <section class="notes">
+    <div><h4>Built for inboxes</h4><p>Tables, inline styles and a 600px column. Figtree loads where the client allows it and falls back to Arial, the documented substitute. Images are PNG and JPG, never SVG.</p></div>
+    <div><h4>Ready to fill</h4><p>The template files use merge tags such as <code>{{first_name}}</code>, <code>{{code}}</code> and <code>{{reset_url}}</code>. The Pixel sign-in code uses <code>{{code_1}}</code> to <code>{{code_6}}</code>.</p></div>
+    <div><h4>Before sending</h4><p>Host the images folder on a CDN and swap the relative paths for absolute URLs. The Sphere header uses a background image, so Outlook for Windows shows the plain beige fallback.</p></div>
+  </section>
+</div>
+
+<script>
+(async function(){
+  const data = await fetch('manifest.json').then(r => r.json());
+  const V = data.versions, T = data.types, E = data.emails;
+  let st = { v: 'v1', t: '2fa', w: 'desktop', m: 'single' };
+  try { Object.assign(st, JSON.parse(localStorage.getItem('cm-email-state') || '{}')); } catch (e) {}
+  const save = () => { try { localStorage.setItem('cm-email-state', JSON.stringify(st)); } catch (e) {} };
+  const find = (v, t) => E.find(e => e.v === v && e.t === t);
+
+  const vEl = document.getElementById('versions');
+  Object.entries(V).forEach(([k, v], i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'vcard'; b.dataset.v = k;
+    b.innerHTML = `<span class="n">Version ${i + 1}</span><h3>${v.name}</h3><p>${v.blurb}</p>`;
+    b.onclick = () => { st.v = k; st.m = 'single'; render(); };
+    vEl.appendChild(b);
+  });
+  const tEl = document.getElementById('types');
+  Object.entries(T).forEach(([k, l]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.dataset.t = k; b.textContent = l;
+    b.onclick = () => { st.t = k; render(); };
+    tEl.appendChild(b);
+  });
+  document.querySelectorAll('#widths button').forEach(b => b.onclick = () => { st.w = b.dataset.w; render(); });
+  document.querySelectorAll('#modes button').forEach(b => b.onclick = () => { st.m = b.dataset.m; render(); });
+
+  const frame = document.getElementById('frame');
+  const fit = (f) => { try { const h = f.contentDocument.documentElement.scrollHeight; if (h > 100) f.style.height = h + 'px'; } catch (e) {} };
+  frame.addEventListener('load', () => { fit(frame); setTimeout(() => fit(frame), 400); });
+
+  const cmp = document.getElementById('compare');
+  function buildCompare(){
+    cmp.innerHTML = '';
+    Object.entries(V).forEach(([k, v], i) => {
+      const e = find(k, st.t);
+      const card = document.createElement('article'); card.className = 'cmp';
+      card.innerHTML = `<header><b>${i + 1} &middot; ${v.name}</b><span>${T[st.t]}</span></header><div class="win"><iframe title="${v.name} preview" tabindex="-1" src="emails/${e.file}"></iframe><button class="open" type="button" aria-label="Open ${v.name}"></button></div>`;
+      const win = card.querySelector('.win'), f = card.querySelector('iframe');
+      const scale = () => { const s = win.clientWidth / 700; f.style.transform = `scale(${s})`; let h = 900; try { h = f.contentDocument.documentElement.scrollHeight || 900; } catch (e) {} f.style.height = h + 'px'; win.style.height = Math.round(h * s) + 'px'; };
+      f.addEventListener('load', () => { scale(); setTimeout(scale, 400); });
+      new ResizeObserver(scale).observe(win);
+      card.querySelector('.open').onclick = () => { st.v = k; st.m = 'single'; render(); window.scrollTo({ top: vEl.offsetTop - 16, behavior: 'smooth' }); };
+      cmp.appendChild(card);
+    });
+  }
+
+  function render(){
+    save();
+    vEl.querySelectorAll('.vcard').forEach(b => b.setAttribute('aria-pressed', String(st.m === 'single' && b.dataset.v === st.v)));
+    tEl.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.t === st.t)));
+    document.querySelectorAll('#widths button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.w === st.w)));
+    document.querySelectorAll('#modes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === st.m)));
+    document.getElementById('widths').hidden = st.m === 'compare';
+    const e = find(st.v, st.t);
+    document.getElementById('subj').textContent = e.subject;
+    document.getElementById('pre').textContent = e.pre;
+    document.getElementById('stage').classList.toggle('mobile', st.w === 'mobile');
+    document.getElementById('single').hidden = st.m !== 'single';
+    cmp.hidden = st.m !== 'compare';
+    if (st.m === 'single') { const src = 'emails/' + e.file; if (!frame.src.endsWith(src)) frame.src = src; else setTimeout(() => fit(frame), 350); }
+    else buildCompare();
+  }
+  render();
+})();
+</script>
+
+</body></html>
