@@ -407,7 +407,8 @@ select.input { appearance: none; padding-right: 2.5rem; cursor: pointer;
   const annual = plan === 'annual';
   // ---- currency: USD, EUR or CNY, carried between the plan picker and checkout ----
   // Prices per currency. EUR and CNY are placeholders until the real ones are set.
-  const CUR = { usd: { sym: '$', m: 50, y: 400 }, eur: { sym: '€', m: 50, y: 400 }, cny: { sym: '¥', m: 360, y: 2880 } };
+  // y is the Halloween price on the annual plan (until 31 Oct); yWas the founders' price it replaces — same table as payment.html.
+  const CUR = { usd: { sym: '$', m: 50, y: 300, yWas: 400 }, eur: { sym: '€', m: 50, y: 300, yWas: 400 }, cny: { sym: '¥', m: 360, y: 2160, yWas: 2880 } };
   const money = (c, n) => CUR[c].sym + n.toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
   let cur = (() => { const v = qs.get('cur'); if (CUR[v]) return v; try { const s = sessionStorage.getItem('cm-cur'); if (CUR[s]) return s; } catch (e) {} return 'usd'; })();
   const curBtns = [...document.querySelectorAll('#cur [role="radio"]')];
@@ -431,7 +432,7 @@ select.input { appearance: none; padding-right: 2.5rem; cursor: pointer;
   onCur.push(() => {
     const c = CUR[cur], amt = annual ? c.y : c.m;
     total = money(cur, amt);
-    document.getElementById('plan-label').textContent = annual ? 'Annual · ' + total + ' / year' : 'Monthly · ' + total + ' / month';
+    document.getElementById('plan-label').innerHTML = annual ? 'Annual · ' + total + ' / year<br>Halloween price · was ' + money(cur, c.yWas) : 'Monthly · ' + total + ' / month';
     document.getElementById('total').textContent = total;
     document.getElementById('renew-note').textContent = (annual ? 'Renews yearly at ' : 'Renews monthly at ') + total + ' until cancelled.';
     // Change and Back return to the plan picker with this plan and currency still chosen

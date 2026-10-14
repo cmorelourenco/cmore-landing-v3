@@ -157,11 +157,35 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .price strong { font-size: 3.5rem; line-height: 1; font-weight: 600; letter-spacing: -.03em; }
 .price .per { font-size: 1.0625rem; }
 .price .note { font-size: .9375rem; }
+.price .note .promo { font-weight: 500; color: var(--color-ink); }
+.plan[aria-checked="true"] .price .note .promo { color: var(--color-off-white); }
 .feats { display: flex; flex-direction: column; gap: .625rem; padding-top: 1.125rem; border-top: 1px solid var(--color-mid-beige); font-size: .9375rem; line-height: 1.5; }
 .plan[aria-checked="true"] .feats { border-top-color: rgba(250,250,250,.16); }
 .feats span { display: flex; align-items: center; gap: .625rem; }
 .feats svg { flex: none; }
 .tag { position: absolute; top: -13px; left: 1.875rem; padding: 5px 12px; border-radius: var(--radius-pill); background: var(--color-coral); color: var(--color-graphite); font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+/* The founders' price, struck through in coral beside the Halloween price. */
+.price .was { position: relative; text-decoration: none; font-size: 1.75rem; font-weight: 500; letter-spacing: -.02em; line-height: 1; margin-right: .25rem; }
+.price .was::after { content: ""; position: absolute; left: -.1em; right: -.1em; top: 50%; height: 2px; background: var(--color-coral); transform: rotate(-8deg); border-radius: 1px; }
+/* The Halloween tag: a paper label on a thread, hung from the top edge of the
+   card between the title and the radio. It sways a little, from the knot. */
+/* Tied to the bottom edge of the card: the knot sits on the border, the
+   thread drops below the card and the label dangles under it, towards the
+   right. It sways from the knot. */
+.hang { position: absolute; top: 100%; right: 2.5rem; width: 0; display: block; z-index: 1; transform-origin: 50% 0; animation: hang-sway 5s ease-in-out infinite alternate; }
+.hang::before { content: ""; position: absolute; left: 50%; top: 0; width: .5rem; height: .5rem; border-radius: 50%; translate: -50% -50%; background: var(--color-off-white); box-shadow: inset 0 0 0 1px var(--color-sand-400); }
+.hang-thread { display: block; width: 1px; height: 1.75rem; margin-inline: auto; background: var(--color-sand-400); }
+.hang-tag { position: relative; display: inline-flex; align-items: center; gap: .4rem; translate: -50% 0; padding: .4rem .75rem .4rem .6rem; border-radius: .5rem;
+  background: var(--color-off-white); color: var(--color-graphite); font-size: .75rem; font-weight: 600; letter-spacing: .04em; white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(52,52,52,.08), 0 10px 24px -12px rgba(52,52,52,.45); }
+.hang-tag::before { content: ""; position: absolute; left: 50%; top: -.2rem; width: .35rem; height: .35rem; border-radius: 50%; translate: -50% 0; background: var(--color-sand-400); }
+.hang-tag svg { width: 1.5rem; height: 1.5rem; color: var(--color-coral); flex: none; }
+/* the carved face and the lobe line are cut out in the tag's own paper colour */
+.hang-tag svg .lobe { stroke: var(--color-off-white); stroke-width: 1.4; }
+.hang-tag svg .face { fill: var(--color-off-white); }
+.plan:not([aria-checked="true"]) .hang-tag { border: 1px solid var(--color-line); box-shadow: 0 1px 2px rgba(52,52,52,.05); }
+@keyframes hang-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+@media (prefers-reduced-motion: reduce) { .hang { animation: none; } }
 .actions { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding-top: .25rem; margin-top: 2.25rem; }
 .actions .btn { padding-inline: 1.75rem; }
 
@@ -184,6 +208,10 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   .price .per { font-size: .9375rem; } .price .note { font-size: .875rem; }
   .feats { font-size: .875rem; gap: .5rem; padding-top: .875rem; }
   .tag { left: 1.375rem; top: -12px; font-size: .6875rem; padding: 4px 10px; }
+  /* on a phone the monthly card follows underneath, so the annual card leaves room for the tag to hang */
+  .plan[data-plan="annual"] { margin-bottom: 2.75rem; }
+  .hang { right: 4rem; } .hang-thread { height: 1.25rem; } .hang-tag { font-size: .6875rem; padding: .3rem .6rem .3rem .5rem; }
+  .price .was { font-size: 1.375rem; }
   .actions { gap: .875rem; }
   .actions .btn { width: 100%; height: 3.25rem; }
   /* annual first on a phone */
@@ -247,13 +275,18 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
           <button type="button" class="plan" role="radio" aria-checked="true" data-plan="annual" tabindex="0">
             <span class="tag">Founders’ early access</span>
+            <!-- Halloween: a paper tag on a thread, hung from the top edge of the card -->
+            <span class="hang" aria-hidden="true">
+              <span class="hang-thread"></span>
+              <span class="hang-tag"><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16.3 10c-.1-2.3.8-4.4 2.6-5.9.6-.5 1.5-.4 2 .2.4.6.3 1.4-.2 1.9-1.1.9-1.8 2.1-2 3.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><ellipse cx="9.6" cy="19.6" rx="7.6" ry="9.1"/><ellipse cx="22.4" cy="19.6" rx="7.6" ry="9.1"/><ellipse cx="16" cy="19.6" rx="6.5" ry="9.9" class="lobe"/><g class="face"><path d="M9.9 18.2h3.8l-1.9-3.6z"/><path d="M18.3 18.2h3.8l-1.9-3.6z"/><path d="M14.9 21h2.2L16 19.2z"/><path d="M9.5 22.6c2.1 4.6 10.9 4.6 13 0l-1.7 1.1-1.5-1.1-1.6 1.6-1.7-1.3-1.7 1.3-1.6-1.6-1.5 1.1z"/></g></svg><span>Halloween offer</span></span>
+            </span>
             <span class="head">
               <span class="kind"><small class="muted">Annual</small><span>Commit for the year</span></span>
               <span class="radio" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#343434" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
             </span>
             <span class="price">
-              <span class="amt"><strong id="y-amt">$400</strong><span class="per muted">/ year</span></span>
-              <span class="note muted" id="y-note">Works out at $33.33 / month · save $200</span>
+              <span class="amt"><s class="was muted" aria-label="Was"><span id="y-was">$400</span></s><strong id="y-amt">$300</strong><span class="per muted">/ year</span></span>
+              <span class="note muted" id="y-note"><b class="promo">Halloween price until 31 Oct</b> · $25 / month · save $300</span>
             </span>
             <span class="feats">
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Billed once a year</span>
@@ -287,7 +320,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const plans = [...document.querySelectorAll('.plan')];
   // ---- currency: USD, EUR or CNY, carried between the plan picker and checkout ----
   // Prices per currency. EUR and CNY are placeholders until the real ones are set.
-  const CUR = { usd: { sym: '$', m: 50, y: 400 }, eur: { sym: '€', m: 50, y: 400 }, cny: { sym: '¥', m: 360, y: 2880 } };
+  // y is the Halloween price on the annual plan (until 31 Oct); yWas is the founders' price it is struck through from.
+  const CUR = { usd: { sym: '$', m: 50, y: 300, yWas: 400 }, eur: { sym: '€', m: 50, y: 300, yWas: 400 }, cny: { sym: '¥', m: 360, y: 2160, yWas: 2880 } };
   const money = (c, n) => CUR[c].sym + n.toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
   let cur = (() => { const v = qs.get('cur'); if (CUR[v]) return v; try { const s = sessionStorage.getItem('cm-cur'); if (CUR[s]) return s; } catch (e) {} return 'usd'; })();
   const curBtns = [...document.querySelectorAll('#cur [role="radio"]')];
@@ -312,7 +346,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     document.getElementById('m-amt').textContent = money(cur, c.m);
     document.getElementById('m-note').textContent = money(cur, c.m * 12) + ' over a year';
     document.getElementById('y-amt').textContent = money(cur, c.y);
-    document.getElementById('y-note').textContent = 'Works out at ' + money(cur, Math.round(c.y / 12 * 100) / 100) + ' / month · save ' + money(cur, c.m * 12 - c.y);
+    document.getElementById('y-was').textContent = money(cur, c.yWas);
+    document.getElementById('y-note').innerHTML = '<b class="promo">Halloween price until 31 Oct</b> · ' + money(cur, Math.round(c.y / 12 * 100) / 100) + ' / month · save ' + money(cur, c.m * 12 - c.y);
   });
   setCur(cur);
 
