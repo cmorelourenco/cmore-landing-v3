@@ -1,5 +1,5 @@
-/* The cookie policy shown in full by the landing page's cookie consent (js/cookies.js). One
-   long text, numbered like the rest of C-MORE's legal documents. Items in [square brackets]
+/* The cookie policy shown in full by the landing page's consent card (js/cookies.js), as Part 2
+   after the Terms & Conditions (js/terms.js). One long text, numbered like the rest of C-MORE's legal documents. Items in [square brackets]
    are facts only the company can supply (registered address, company number, contacts);
    legal review should fill them in and confirm every cookie, purpose and duration before
    this goes live. Plain strings, rendered as paragraphs; a string starting with "• " is a
@@ -9,7 +9,7 @@ window.CM_COOKIE_POLICY = {
   updated: '14 October 2026',
   intro: [
     'This Cookie Policy explains how The C-MORE Company ("C-MORE", "we", "us" or "our") uses cookies and similar technologies when you visit or use the C-MORE website, the C-MORE platform and any related services, applications and communications that link to this policy (together, the "Services"). It explains what these technologies are, why we use them, the choices available to you, and how you can exercise those choices.',
-    'Please read this Cookie Policy carefully and in full. It should be read together with our Privacy Policy and our Terms and Conditions, which describe in more detail how we process personal data and the terms on which the Services are provided. Where this Cookie Policy uses a term defined in those documents, that term has the same meaning here unless stated otherwise. If there is any conflict between this Cookie Policy and our Privacy Policy as regards the use of cookies, this Cookie Policy prevails.',
+    'Please read this Cookie Policy carefully and in full. It should be read together with the Terms & Conditions set out in Part 1 above and with our Privacy Policy, which describe the terms on which the Services are provided and, in more detail, how we process personal data. Where this Cookie Policy uses a term defined in those documents, that term has the same meaning here unless stated otherwise. If there is any conflict between this Cookie Policy and our Privacy Policy as regards the use of cookies, this Cookie Policy prevails.',
     'By selecting "Accept all" in the cookie notice, you consent to the placement and use of all the cookies and similar technologies described in this policy. By selecting "No cookies", you refuse all cookies, including those that are strictly necessary for parts of the Services to work, with the consequences described in section 7. You may change your choice at any time, as explained in section 8.',
   ],
   sections: [

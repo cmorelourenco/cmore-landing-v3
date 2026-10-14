@@ -1,10 +1,11 @@
-/* Cookie consent on the landing page. On a first visit a small card asks once, with two
-   choices: Accept all, or No cookies. "Read the Cookie Policy" opens the full policy
-   (js/cookie-policy.js), one long text with the same two choices at the end of it. The footer's
-   "Cookies" link opens the policy again to change one's mind. Accept all is kept for 12 months;
-   No cookies cannot be stored without a cookie, so it holds only for this visit and the question
-   comes back next time. Prototype: no cookie is set; the choice lives in localStorage
-   (sessionStorage for No cookies). */
+/* Terms and cookies on the landing page. On a first visit a small card says that using C-MORE
+   means agreeing to the Terms & Conditions, and asks about cookies: Accept all, or No cookies.
+   "Read the Terms & Conditions and Cookie Policy" opens one long text, the Terms (js/terms.js) as
+   Part 1 and the Cookie Policy (js/cookie-policy.js) as Part 2, with the same two choices at the
+   end. The footer's "Terms & conditions" and "Cookies" links open it at the matching part.
+   Accept all is kept for 12 months; No cookies cannot be stored without a cookie, so it holds only
+   for this visit and the question comes back next time. Prototype: no cookie is set; the choice
+   lives in localStorage (sessionStorage for No cookies). */
 (() => {
   const KEY = 'cm-cookies';
   const CHOICES = [['all', 'Accept all', 'is-primary'], ['none', 'No cookies', '']];
@@ -55,7 +56,12 @@
   .ck-doc { display: grid; gap: 0.75rem; font-size: 0.875rem; line-height: 1.65; color: var(--ck-ink); max-width: 36rem; }
   .ck-doc p { margin: 0; }
   .ck-doc .ck-upd { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ck-sub); }
-  .ck-doc h3 { margin: 1rem 0 0; font-size: 0.9375rem; font-weight: 600; }
+  .ck-part { display: grid; gap: 0.25rem; padding-top: 0.25rem; }
+  .ck-part + p { margin-top: 0.25rem; }
+  .ck-doc > .ck-part:not(:first-child) { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--ck-line); }
+  .ck-part span { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-coral, #f46d4f); }
+  .ck-part h3 { margin: 0; font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+  .ck-doc h4 { margin: 1rem 0 0; font-size: 0.9375rem; font-weight: 600; }
   .ck-doc ul { margin: 0; padding-left: 1.125rem; display: grid; gap: 0.375rem; }
   .ck-doc li::marker { color: var(--ck-sub); }
   .ck-end { margin: 0.75rem 0 0; padding-top: 1rem; border-top: 1px solid var(--ck-line); font-size: 0.8125rem; color: var(--ck-sub); }
@@ -85,10 +91,10 @@
   const showCard = () => {
     if (card) return;
     card = document.createElement('section');
-    card.className = 'ck'; card.setAttribute('aria-label', 'Cookie choices');
-    card.innerHTML = `<h2>Cookies on C&#8209;MORE</h2>
-      <p>We use cookies to keep you signed in, remember your choices and see which pages help people. Accept all, or choose no cookies at all.</p>
-      <button type="button" class="ck-more">Read the Cookie Policy</button>${acts()}`;
+    card.className = 'ck'; card.setAttribute('aria-label', 'Terms and cookie choices');
+    card.innerHTML = `<h2>Terms and cookies</h2>
+      <p>Using C&#8209;MORE means agreeing to our Terms &amp; Conditions. Cookies are your choice: we use them to keep you signed in, remember your choices and see which pages help. Accept all, or choose none.</p>
+      <button type="button" class="ck-more">Read the Terms &amp; Conditions and Cookie Policy</button>${acts()}`;
     card.addEventListener('click', (e) => {
       const b = e.target.closest('[data-ck]'); if (b) return choose(b.dataset.ck);
       if (e.target.closest('.ck-more')) openDetails();
@@ -104,25 +110,26 @@
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   };
-  const openDetails = () => {
-    if (dlg) return;
+  const openDetails = (part) => {
+    if (dlg) { if (part) jump(part); return; }
     back = document.activeElement;
     const now = read();
     scrim = Object.assign(document.createElement('div'), { className: 'ck-scrim' });
     dlg = document.createElement('div');
     dlg.className = 'ck-dlg'; dlg.setAttribute('role', 'dialog'); dlg.setAttribute('aria-modal', 'true'); dlg.setAttribute('aria-labelledby', 'ck-t');
-    const P = window.CM_COOKIE_POLICY || { title: 'Cookie Policy', updated: '', intro: [], sections: [] };
+    const PARTS = [['terms', window.CM_TERMS], ['cookies', window.CM_COOKIE_POLICY]].filter(([, p]) => p);
     const paras = (list) => list.reduce((out, s) => {
       if (s.startsWith('• ')) { if (!out.endsWith('</ul>')) out += '<ul></ul>'; return out.slice(0, -5) + `<li>${esc(s.slice(2))}</li></ul>`; }
       return out + `<p>${esc(s)}</p>`;
     }, '');
-    dlg.innerHTML = `<div class="ck-dlg-h"><div><h2 id="ck-t">${esc(P.title)}</h2><p>How C&#8209;MORE uses cookies, and your choices. Please read it in full.</p></div>
+    const TITLE = 'Terms & Conditions and Cookie Policy';
+    dlg.innerHTML = `<div class="ck-dlg-h"><div><h2 id="ck-t">${esc(TITLE)}</h2><p>The terms for using C&#8209;MORE, and how we use cookies. Please read them in full.</p></div>
         <button type="button" class="ck-x" aria-label="Close">${X}</button></div>
-      <div class="ck-body" tabindex="0" aria-label="${esc(P.title)}"><article class="ck-doc">
-        ${P.updated ? `<p class="ck-upd">Last updated ${esc(P.updated)}</p>` : ''}${paras(P.intro)}
-        ${P.sections.map(([h, list], i) => `<h3>${i + 1}. ${esc(h)}</h3>${paras(list)}`).join('')}
-        <p class="ck-end">End of the ${esc(P.title)}.</p></article></div>
-      <div class="ck-dlg-f">${now ? `<p class="ck-now">Your current choice: <b>${LABEL[now]}</b></p>` : ''}${acts()}</div>`;
+      <div class="ck-body" tabindex="0" aria-label="${esc(TITLE)}"><article class="ck-doc">
+        ${PARTS.map(([id, P], n) => `<header class="ck-part" id="ck-${id}"><span>Part ${n + 1}</span><h3>${esc(P.title)}</h3>${P.updated ? `<p class="ck-upd">Last updated ${esc(P.updated)}</p>` : ''}</header>
+          ${paras(P.intro)}${P.sections.map(([h, list], i) => `<h4>${i + 1}. ${esc(h)}</h4>${paras(list)}`).join('')}`).join('')}
+        <p class="ck-end">End of the ${esc(TITLE)}.</p></article></div>
+      <div class="ck-dlg-f">${now ? `<p class="ck-now">Your current cookie choice: <b>${LABEL[now]}</b></p>` : ''}${acts()}</div>`;
     dlg.addEventListener('click', (e) => {
       const b = e.target.closest('[data-ck]'); if (b) return choose(b.dataset.ck);
       if (e.target.closest('.ck-x')) closeDetails();
@@ -131,7 +138,13 @@
     document.body.append(scrim, dlg);
     document.addEventListener('keydown', keys);
     requestAnimationFrame(() => requestAnimationFrame(() => { scrim.classList.add('is-in'); dlg.classList.add('is-in'); dlg.querySelector('.ck-x').focus(); }));
+    if (part) jump(part);
   };
+  // open at a part: the Terms from the top, the Cookie Policy where it starts
+  function jump(part) {
+    const body = dlg && dlg.querySelector('.ck-body'), h = dlg && dlg.querySelector('#ck-' + part);
+    if (body && h) body.scrollTop = part === 'terms' ? 0 : h.offsetTop - body.offsetTop - 8;
+  }
   function closeDetails() {
     if (!dlg) return;
     document.removeEventListener('keydown', keys);
@@ -139,11 +152,11 @@
     if (back && document.contains(back)) back.focus();
   }
 
-  // the footer's "Cookies" link, and #cookies in the address, open the list
+  // the footer's "Terms & conditions" and "Cookies" links, and #terms or #cookies in the address
   document.addEventListener('click', (e) => {
-    const a = e.target.closest('a[href="#cookies"]'); if (!a) return;
-    e.preventDefault(); openDetails();
+    const a = e.target.closest('a[href="#cookies"], a[href="#terms"]'); if (!a) return;
+    e.preventDefault(); openDetails(a.getAttribute('href').slice(1));
   });
-  if (location.hash === '#cookies') openDetails();
+  if (location.hash === '#cookies' || location.hash === '#terms') openDetails(location.hash.slice(1));
   if (!read()) setTimeout(showCard, 900); // after the hero has settled
 })();
