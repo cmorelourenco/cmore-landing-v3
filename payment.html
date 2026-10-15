@@ -319,8 +319,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
               <span class="radio" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#343434" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
             </span>
             <span class="price">
-              <span class="amt"><s class="was muted" aria-label="Was"><span id="y-was">$400</span></s><strong id="y-amt">$300</strong><span class="per muted">/ year</span></span>
-              <span class="note muted" id="y-note"><b class="promo">Halloween price until 31 Oct</b> · $25 / month · save $300</span>
+              <span class="amt"><s class="was muted" aria-label="Was"><span id="y-was">$500</span></s><strong id="y-amt">$400</strong><span class="per muted">/ year</span></span>
+              <span class="note muted" id="y-note"><b class="promo">Halloween price until 31 Oct</b> · $33.33 / month · save $200</span>
             </span>
             <span class="feats">
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Billed once a year</span>
@@ -356,7 +356,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   // ---- currency: USD, EUR or CNY, carried between the plan picker and checkout ----
   // Prices per currency. EUR and CNY are placeholders until the real ones are set.
   // y is the Halloween price on the annual plan (until 31 Oct); yWas is the founders' price it is struck through from.
-  const CUR = { usd: { sym: '$', m: 50, y: 300, yWas: 400 }, eur: { sym: '€', m: 50, y: 300, yWas: 400 }, cny: { sym: '¥', m: 360, y: 2160, yWas: 2880 } };
+  const CUR = { usd: { sym: '$', m: 50, y: 400, yWas: 500 }, eur: { sym: '€', m: 50, y: 400, yWas: 500 }, cny: { sym: '¥', m: 360, y: 2880, yWas: 3600 } };
   const money = (c, n) => CUR[c].sym + n.toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
   let cur = (() => { const v = qs.get('cur'); if (CUR[v]) return v; try { const s = sessionStorage.getItem('cm-cur'); if (CUR[s]) return s; } catch (e) {} return 'usd'; })();
   const curBtns = [...document.querySelectorAll('#cur [role="radio"]')];
