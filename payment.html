@@ -326,7 +326,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Billed once a year</span>
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Full founding-member perks</span>
             </span>
-            <span class="treat">Halloween Offer, no tricks just treats</span>
+            <span class="treat">Halloween offer, no tricks just treats</span>
           </button>
 
         </div>
@@ -453,11 +453,12 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         kick(Math.sign(vx || 1) * Math.min(0.35, 0.08 + Math.abs(vx) * 0.16));
       });
     }
-    let flying = false;
+    // every click lets out its own flight, however fast the clicks come; past six flights in the
+    // air the oldest is let go, so spamming the tag never slows the page
+    const flights = [];
     hangTag.addEventListener('click', () => {
       hang.classList.remove('is-lit'); void hang.offsetWidth; hang.classList.add('is-lit');
-      if (reduced || flying) return;
-      flying = true;
+      if (reduced) return;
       const r = hangTag.getBoundingClientRect();
       const x0 = r.left + r.width / 2 - 22, y0 = r.top + r.height / 2 - 11;
       const layer = document.createElement('div'); layer.className = 'bats';
@@ -478,7 +479,9 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         layer.appendChild(b);
       }
       document.body.appendChild(layer);
-      setTimeout(() => { layer.remove(); flying = false; }, 4400);
+      flights.push(layer);
+      if (flights.length > 6) flights.shift().remove();
+      setTimeout(() => { layer.remove(); const i = flights.indexOf(layer); if (i > -1) flights.splice(i, 1); }, 4400);
     });
   }
 
