@@ -713,3 +713,28 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 
 /* any progress bar that reaches 100% turns green: done is good news, not a warning */
 .co-meter[aria-valuenow="100"] i { background: var(--color-ok-deep); }
+
+/* ---- Documents (company-details.html), from the Document Catalog ----------------------------------- */
+.b-warn { background: #fdeee4; color: #a8480f; }
+.cd-tbl .cd-note { margin-top: 0.125rem; color: var(--color-ink); }
+.cd-tbl .cd-note.is-na { color: var(--color-ink-subtle); font-style: italic; }
+.cd-tbl tr.is-archived .n { color: var(--color-ink-subtle); }
+/* long catalog names wrap rather than lose their end */
+.co-tbl.cd-tbl .n { white-space: normal; overflow: visible; text-overflow: clip; }
+/* the grid: its own widths, not the four of a document table */
+.cd-tbl.cd-matrix { min-width: 40rem; }
+.cd-tbl.cd-matrix th:nth-child(n) { width: auto; }
+.cd-tbl.cd-matrix th:first-child { width: 24%; }
+.cd-tbl.cd-matrix th:last-child { width: 15%; }
+.cd-matrix th.c { white-space: normal; line-height: 1.25; font-size: 0.8125rem; }
+.cd-matrix td:last-child, .cd-matrix th:last-child { text-align: right; }
+.cd-dot { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--color-mid-beige); vertical-align: middle; }
+.cd-dot.is-ok { background: var(--color-ok-deep, #8ccb86); }
+.cd-dot.is-pend { background: #e7b04a; }
+.cd-dot.is-warn { background: #e07a3a; }
+.cd-dot.is-bad { background: var(--color-critical); }
+.cd-dot.is-neu { background: var(--color-sand-400, #c3c0b8); }
+.cd-dash { color: var(--color-sand-400, #c3c0b8); }
+.cd-legend { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin: 0.75rem 0 0; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cd-legend > span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

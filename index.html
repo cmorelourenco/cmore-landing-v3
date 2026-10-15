@@ -1409,7 +1409,7 @@ a{color:var(--color-ink);text-decoration-color:var(--color-activation)}a:hover{c
 @property --fill{syntax:'<percentage>';inherits:false;initial-value:0%}
 @property --hdr{syntax:'<length>';inherits:true;initial-value:9rem}
 /* --bar is the early-access strip under the header; --hdr is everything pinned at the top */
-:root{--bar:clamp(3.25rem,9vh,4.5rem);--hdr:calc(4.5rem + var(--bar));transition:--hdr .32s var(--ease-brand,ease)}:root.hdr-hidden{--hdr:0px}
+:root{--bar:0px;/* the early-access strip is off for now: restore clamp(3.25rem,9vh,4.5rem) and the .ea-strip markup below the header to bring it back */--hdr:calc(4.5rem + var(--bar));transition:--hdr .32s var(--ease-brand,ease)}:root.hdr-hidden{--hdr:0px}
 header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{transform:translateY(-100%)}
 /* The early-access bar, docked under the header and travelling with it. */
 .ea-strip{position:sticky;top:4.5rem;z-index:49;height:var(--bar);background:var(--color-graphite);display:flex;justify-content:center;transition:transform .32s var(--ease-brand,ease)}
@@ -1609,7 +1609,9 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 </helmet>
 <div style="position:relative;min-height:100vh;font-family:var(--font-sans);color:var(--color-ink);overflow-x:clip">
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.Navbar" dc-props="{{ navProps }}" hint-size="100%,72px"></x-import>
+<!-- Early-access strip, off for now (see --bar above). Kept for the next release:
 <div class="ea-strip" role="note" aria-label="Early access"><div class="ea-block"><p><span class="cta-long">Early access is now open and <span class="ea-mark">limited to the first <span class="ea-num">2,500</span> seats</span>.</span><span class="cta-short">Early access is open: <span class="ea-mark"><span class="ea-num">2,500</span> seats</span>.</span></p><a href="register.html">Get yours</a></div></div>
+-->
 
 <section class="hero-pin" data-screen-label="Hero" style="position:sticky;top:var(--hdr);height:calc(100vh - var(--hdr));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(1.5rem,6vh,6.67rem) 0 3.375rem">
 <div aria-hidden="true" style="position:fixed;inset:0;z-index:0;pointer-events:none">
@@ -1753,6 +1755,89 @@ header{transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{
 <div class="alma-media" aria-hidden="true" data-plx-y="0.22" data-plx-scale="0.3" style="will-change:transform;position:relative;aspect-ratio:0.9598;width:100%;max-width:44rem;justify-self:center;pointer-events:none"><span class="alma-comp" aria-hidden="true"><span class="alma-sphere" style="left:0.000%;top:28.230%;width:26.240%;height:25.180%;--i:0;--ox:214.83%;--oy:79.97%;--orbit:21.60s"><span class="alma-radial" style="--rx:-53.00%;--ry:-9.64%;--radial:13.00s"><img class="a" src="images/sphere-01.webp" alt="" draggable="false"><img class="b" src="images/sphere-02.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:19.460%;top:13.680%;width:47.050%;height:45.160%;--i:1;--ox:78.45%;--oy:76.81%;--orbit:50.70s"><span class="alma-radial" style="--rx:-18.02%;--ry:-16.98%;--radial:15.90s"><img class="a" src="images/sphere-03.webp" alt="" draggable="false"><img class="b" src="images/sphere-04.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:49.550%;top:0.000%;width:37.780%;height:36.260%;--i:2;--ox:18.06%;--oy:133.39%;--orbit:36.40s"><span class="alma-radial" style="--rx:12.39%;--ry:-32.35%;--radial:18.80s"><img class="a" src="images/sphere-05.webp" alt="" draggable="false"><img class="b" src="images/sphere-06.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:38.350%;top:1.300%;width:52.940%;height:50.810%;--i:3;--ox:34.04%;--oy:92.63%;--orbit:47.70s"><span class="alma-radial" style="--rx:7.33%;--ry:-19.57%;--radial:21.70s"><img class="a" src="images/sphere-07.webp" alt="" draggable="false"><img class="b" src="images/sphere-08.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:66.410%;top:38.550%;width:28.270%;height:27.140%;--i:4;--ox:-35.51%;--oy:36.17%;--orbit:42.50s"><span class="alma-radial" style="--rx:48.43%;--ry:7.83%;--radial:24.60s"><img class="a" src="images/sphere-09.webp" alt="" draggable="false"><img class="b" src="images/sphere-10.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:22.740%;top:36.380%;width:54.290%;height:52.110%;--i:5;--ox:61.95%;--oy:23.00%;--orbit:53.45s"><span class="alma-radial" style="--rx:-8.10%;--ry:18.30%;--radial:27.50s"><img class="a" src="images/sphere-11.webp" alt="" draggable="false"><img class="b" src="images/sphere-12.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:27.150%;top:51.150%;width:38.910%;height:37.340%;--i:6;--ox:75.10%;--oy:-7.45%;--orbit:46.06s"><span class="alma-radial" style="--rx:-13.29%;--ry:30.43%;--radial:30.40s"><img class="a" src="images/sphere-13.webp" alt="" draggable="false"><img class="b" src="images/sphere-14.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:48.650%;top:69.390%;width:31.890%;height:30.610%;--i:7;--ox:24.21%;--oy:-68.68%;--orbit:32.66s"><span class="alma-radial" style="--rx:9.27%;--ry:42.66%;--radial:33.30s"><img class="a" src="images/sphere-15.webp" alt="" draggable="false"><img class="b" src="images/sphere-16.webp" alt="" draggable="false"></span></span><span class="alma-sphere" style="left:70.820%;top:60.160%;width:29.180%;height:28.010%;--i:8;--ox:-49.51%;--oy:-42.10%;--orbit:27.04s"><span class="alma-radial" style="--rx:35.20%;--ry:32.57%;--radial:36.20s"><img class="a" src="images/sphere-17.webp" alt="" draggable="false"><img class="b" src="images/sphere-18.webp" alt="" draggable="false"></span></span></span></div>
 </div>
 </section>
+
+<!-- Awards and certifications: the programmes that backed C-MORE, and the
+     standards it is held to. Logos in images/awards, trimmed and sized here. -->
+<style>
+#awards{position:relative;z-index:2;background:var(--color-ground);padding:7rem 0}
+.aw-mark{background-image:linear-gradient(var(--color-coral),var(--color-coral));background-repeat:no-repeat;background-position:0 88%;background-size:var(--aw-mark,0%) .28em;padding-inline:.06em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.aw-head{max-width:40rem}
+.aw-groups{margin-top:3.5rem;display:grid;gap:2.5rem}
+.aw-group{display:grid;grid-template-columns:11rem minmax(0,1fr);gap:1.5rem 2.5rem;align-items:start;border-top:1px solid var(--color-line);padding-top:1.75rem}
+.aw-group>h3{margin:0;font-size:1.125rem;font-weight:600;line-height:1.3}
+.aw-group>h3 small{display:block;margin-top:.375rem;font-size:.9375rem;font-weight:300;line-height:1.5;color:var(--color-ink-muted)}
+.aw-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1.25rem}
+.aw-tile{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1rem;padding:1.75rem 1.5rem 1.5rem;border-radius:1rem;background:var(--color-surface);border:1px solid var(--color-line);box-shadow:0 1px 2px rgba(52,52,52,.04);transition:transform .22s var(--ease-brand),box-shadow .22s var(--ease-brand)}
+.aw-tile:hover{transform:translateY(-2px);box-shadow:0 1px 2px rgba(52,52,52,.05),0 12px 28px -12px rgba(52,52,52,.22)}
+.aw-logo{display:grid;place-items:center;width:100%;height:5.5rem}
+.aw-logo img{display:block;max-width:min(100%,11rem);max-height:100%;width:auto;height:auto;object-fit:contain}
+.aw-logo img.tall{max-height:5.5rem}
+.aw-logo img.wide{max-height:3.25rem}
+.aw-logo img.small{max-height:4.5rem}
+.aw-tile b{display:block;font-size:1rem;font-weight:600;line-height:1.35}
+.aw-tile p{margin:.25rem 0 0;font-size:.9375rem;line-height:1.5;color:var(--color-ink-muted)}
+@media (max-width:900px){.aw-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.aw-group{grid-template-columns:1fr;gap:1.25rem}}
+@media (max-width:768px){#awards{padding:4.5rem 0}.aw-groups{margin-top:2.5rem}}
+@media (max-width:540px){.aw-grid{grid-template-columns:1fr}}
+</style>
+<section id="awards" data-screen-label="Awards and certifications">
+<div class="container-site">
+<div class="aw-head">
+<span class="eyebrow">Awards &amp; certifications</span>
+<h2 class="text-display-lg" style="margin-top:1.25rem">Backed, recognised, <span style="font-weight:300">and <span class="aw-mark">raising the standard</span>.</span></h2>
+<p class="text-lead" style="margin-top:1.5rem;color:var(--color-ink-muted)">Some of the programmes that have backed C-MORE, and some of the standards it is certified against.</p>
+</div>
+<div class="aw-groups">
+<div class="aw-group">
+<h3>Recognition<small>Programmes and awards behind the company.</small></h3>
+<ul class="aw-grid" style="list-style:none;margin:0;padding:0">
+<li class="aw-tile"><span class="aw-logo"><img class="wide" src="images/awards/ubs.png" alt="UBS" loading="lazy"></span><div><b>UBS Female Founder Awards 2025</b><p>Top-10 finalist, and part of the UBS Female Founder mentoring programme.</p></div></li>
+<li class="aw-tile"><span class="aw-logo"><img class="wide" src="images/awards/unicorn-factory-lisboa.png" alt="Unicorn Factory Lisboa" loading="lazy"></span><div><b>Unicorn Factory Lisboa</b><p>Scaling Up programme, cohort 9, and a delegation to San Francisco Tech Week.</p></div></li>
+<li class="aw-tile"><span class="aw-logo"><img class="tall" src="images/awards/portuguese-women-in-tech.png" alt="Portuguese Women in Tech" loading="lazy"></span><div><b>Portuguese Women in Tech</b><p>Award received in 2021.</p></div></li>
+</ul>
+</div>
+<div class="aw-group">
+<h3>Standards<small>What C-MORE is certified against and reports by.</small></h3>
+<ul class="aw-grid" style="list-style:none;margin:0;padding:0">
+<li class="aw-tile"><span class="aw-logo"><img class="tall" src="images/awards/sgs-iso-27001.png" alt="SGS ISO 27001 certification" loading="lazy"></span><div><b>ISO 27001</b><p>Information security management, certified by SGS.</p></div></li>
+<li class="aw-tile"><span class="aw-logo"><img class="wide" src="images/awards/ghg-protocol.png" alt="Greenhouse Gas Protocol" loading="lazy"></span><div><b>Greenhouse Gas Protocol</b><p>Emissions accounted for under the GHG Protocol.</p></div></li>
+<li class="aw-tile"><span class="aw-logo"><img class="small" src="images/awards/b-corp.png" alt="Certified B Corporation" loading="lazy"></span><div><b>Certified B Corporation</b><p>Verified social and environmental performance.</p></div></li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<script>
+(() => {
+  // The coral under "raising the standard" draws in with the scroll: nothing
+  // while the heading is below the fold, full once it has risen to about the
+  // middle of the window, and it reverses on the way back up.
+  // The page's component runtime re-mounts the markup after this script runs,
+  // so the mark is looked up on every paint rather than held onto.
+  const find = () => document.querySelector('#awards .aw-mark');
+  if (!find()) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const ease = (t) => t * t * (3 - 2 * t);
+  let raf = 0;
+  const paint = () => {
+    raf = 0;
+    const mark = find(); if (!mark) return;
+    if (reduced) { mark.style.setProperty('--aw-mark', '100%'); return; }
+    const h2 = mark.closest('h2') || mark;
+    const r = h2.getBoundingClientRect(), vh = innerHeight;
+    // 0 when the heading's top meets the bottom of the window, 1 when it reaches 45% up
+    const p = clamp((vh - r.top) / (vh * 0.55));
+    mark.style.setProperty('--aw-mark', (ease(p) * 100).toFixed(2) + '%');
+  };
+  const req = () => { if (!raf) raf = requestAnimationFrame(paint); };
+  addEventListener('scroll', req, { passive: true });
+  document.body.addEventListener('scroll', req, { passive: true });
+  addEventListener('resize', req);
+  paint();
+  addEventListener('load', () => setTimeout(paint, 50));
+})();
+</script>
 
 <div class="mesh-field">
 <div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
