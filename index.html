@@ -1409,12 +1409,14 @@ a{color:var(--color-ink);text-decoration-color:var(--color-activation)}a:hover{c
 @property --fill{syntax:'<percentage>';inherits:false;initial-value:0%}
 @property --hdr{syntax:'<length>';inherits:true;initial-value:9rem}
 /* --bar is the early-access strip under the header; --hdr is everything pinned at the top */
-:root{--bar:3.25rem;/* the strip above the header; set to 0px (and drop the .ea-strip markup) to run without one */--hdr:calc(4.5rem + var(--bar));transition:--hdr .32s var(--ease-brand,ease)}:root.hdr-hidden{--hdr:0px}
+:root{--bar:3.25rem;/* the strip above the header; set to 0px (and drop the .ea-strip markup) to run without one */--hdr:calc(4.5rem + var(--bar));transition:--hdr .32s var(--ease-brand,ease)}
+/* scrolling down hides the header but never the strip: it stays pinned at the top of the window */
+:root.hdr-hidden{--hdr:var(--bar)}
 /* the header sits under the strip and travels with it */
 header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)}:root.hdr-hidden header{transform:translateY(calc(-100% - var(--bar)))}
-/* The campaign bar, on top of the page, the header docked under it. */
+/* The campaign bar, pinned to the top of the window; the header docks under it and slides away behind it. */
 .ea-strip{position:sticky;top:0;z-index:51;height:var(--bar);background:var(--color-graphite);display:flex;justify-content:center;transition:transform .32s var(--ease-brand,ease)}
-:root.hdr-hidden .ea-strip{transform:translateY(-100%)}
+
 .ea-strip{overflow:hidden}
 /* the words sit above the bats and embers, on their own graphite so nothing crosses the letters */
 .ea-block{background:var(--color-graphite);padding-inline:1.25rem}
@@ -1450,6 +1452,7 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 .ea-block a{flex:none;display:inline-flex;align-items:center;height:2.125rem;padding-inline:1.125rem;border-radius:9999px;background:var(--color-off-white);color:var(--color-graphite);font-size:.9375rem;font-weight:500;text-decoration:none;transition:background-color .14s var(--ease-brand,ease),box-shadow .22s var(--ease-brand,ease)}
 .ea-block a:hover{background:var(--color-dark-beige);color:var(--color-graphite);box-shadow:none}
 @media (max-width:768px){:root{--bar:3rem;--hdr:7.5rem}.ea-block{gap:0.5rem;padding-inline:0.75rem}.ea-block p{font-size:.875rem;gap:.375rem}.ea-block .ea-num{font-size:.9375rem}.ea-block a{height:1.75rem;padding-inline:0.75rem;font-size:0.8125rem}}
+@media (max-width:360px){.ea-block{gap:.375rem;padding-inline:.5rem}.ea-block p{font-size:.78rem}.ea-block .ea-num{font-size:.82rem}.ea-block a{padding-inline:.6rem;font-size:.75rem}}
 @media (prefers-reduced-motion:reduce){:root,header{transition:none}}
 .reg-sheet{position:fixed;inset:0;z-index:1000;border:0;width:100%;height:100%;background:var(--color-ground);transform:translateY(100%);box-shadow:0 -24px 60px -30px rgba(52,52,52,.35);transition:transform .8s cubic-bezier(0.7,0,0.2,1)}
 .reg-sheet.is-up{transform:translateY(0)}
@@ -1622,7 +1625,42 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
    space left between the benefits and the Know more cue, however tall the window is */
 .hero-pin>.container-site{flex:1 1 auto;width:100%}
 .hero-pin>.container-site::before{content:"";flex:1 1 0}
-.hero-cta{flex:1.25 1 auto;display:flex;align-items:center;justify-content:center;padding-block:clamp(1.5rem,4vh,3rem)}
+.hero-cta{flex:1.25 1 auto;display:flex;align-items:center;justify-content:center;gap:clamp(1.5rem,3.5vw,3.5rem);padding-block:clamp(1.5rem,4vh,3rem)}
+/* the number in the hero: the same counter as the clients section, smaller, counted up on load */
+.hero-count{margin:0;display:flex;align-items:center;gap:1rem;text-align:left}
+.hero-num{font-size:clamp(3rem,6vw,4.75rem);line-height:.9;letter-spacing:-.045em;font-weight:600;font-variant-numeric:tabular-nums;color:var(--color-ink);white-space:nowrap}
+.hero-num .plus{display:inline-block;color:var(--color-coral);font-weight:500;font-size:.42em;vertical-align:top;margin:.16em 0 0 .08em;line-height:1}
+.hero-count-what{font-size:clamp(1rem,1.4vw,1.2rem);line-height:1.3;font-weight:300;color:var(--color-ink-muted);padding-left:1rem;border-left:1px solid var(--color-line)}
+/* phones: the hero is one screen tall, so the number, its line and the button sit tighter */
+@media (max-width:768px){.hero-cta{flex-direction:column;gap:.875rem;padding-block:1rem!important}.hero-count{gap:.75rem}.hero-num{font-size:2.5rem}.hero-count-what{font-size:.9rem;padding-left:.75rem}}
+/* Short phones and landscape phones: everything in the hero stays on the screen, condensed.
+   Headline, benefits and the counter row each shrink a step; past that (hero-tall, set by the
+   script when the content still does not fit) the hero simply grows and scrolls. */
+@media (max-width:768px) and (max-height:760px){
+.hero-pin{padding-top:1rem!important;padding-bottom:2.25rem!important}
+.hero-pin h1{font-size:2.7rem!important}.hero-pin h1>span:first-child{font-size:1.65rem!important;margin-bottom:6px}
+.hero-benefits{margin-top:1.25rem;gap:.75rem 1rem}.hero-benefits li{gap:.375rem;padding-top:.5rem}.hero-benefits svg{width:1.25rem;height:1.25rem}.hero-benefits b{font-size:.9rem}.hero-benefits span{font-size:.8rem}
+.hero-cta{gap:.625rem;padding-block:.625rem!important}.hero-num{font-size:2.2rem}.hero-count-what{font-size:.85rem}
+.hero-cue-wrap{bottom:1rem}
+}
+@media (max-width:768px) and (max-height:700px){
+.hero-pin h1{font-size:2.3rem!important}.hero-pin h1>span:first-child{font-size:1.4rem!important}
+.hero-benefits{margin-top:1rem;gap:.5rem .875rem}.hero-benefits li{flex-direction:row;align-items:flex-start;gap:.5rem;padding-top:.4rem}.hero-benefits b{font-size:.85rem;display:inline}.hero-benefits span{font-size:.8rem;display:inline;margin:0 0 0 .3em}
+.hero-cta{flex-direction:row;flex-wrap:wrap;justify-content:center;gap:.5rem 1.25rem;padding-block:.5rem!important}
+}
+/* landscape phones: wide and very short */
+@media (min-width:769px) and (max-height:480px){
+.hero-pin{padding-top:.5rem!important;padding-bottom:2rem!important}
+.hero-pin h1{font-size:2.4rem!important}.hero-pin h1>span:first-child{font-size:1.4rem!important}
+.hero-pin .hero-benefits{margin-top:.875rem!important;gap:.875rem}.hero-pin .hero-benefits li{padding-top:.5rem!important;gap:.5rem}.hero-pin .hero-benefits svg{width:1.125rem;height:1.125rem}.hero-pin .hero-benefits b{font-size:.85rem!important}.hero-pin .hero-benefits span{font-size:.78rem!important}
+.hero-pin .hero-cta{padding-block:.5rem!important}.hero-num{font-size:2.2rem}.hero-count-what{font-size:.85rem}
+.hero-cue-wrap{bottom:.75rem}
+}
+/* the fallback: when the content still does not fit the pinned height, the hero grows past
+   one screen and scrolls like any other section */
+.hero-pin.hero-tall{height:auto!important;min-height:calc(100vh - var(--hdr))}
+.hero-pin.hero-tall>.container-site::before{display:none}
+.hero-pin.hero-tall .hero-cue-wrap{position:static;margin-top:1.5rem}
 /* Hero benefits: four reasons to join, one row on desktop, two by two on phones */
 .hero-benefits{list-style:none;margin:clamp(2.5rem,5.5vh,4rem) 0 0;padding:0;width:100%;max-width:72rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2rem;text-align:left}
 .hero-benefits li{display:flex;gap:0.875rem;align-items:flex-start;border-top:1px solid var(--color-line);padding-top:1rem}
@@ -1638,6 +1676,27 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 <div class="ea-strip" role="note" aria-label="Pre-launch Halloween campaign"><span class="ea-bat" style="--d:17.9s;--dl:-11.7s;--y:-8px;width:0.693rem;height:0.3465rem;opacity:0.38" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:29.2s;--dl:-26.6s;--y:-4px;width:0.521rem;height:0.2605rem;opacity:0.23" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:15.8s;--dl:-1.4s;--y:3px;width:0.775rem;height:0.3875rem;opacity:0.23" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:38.6s;--dl:-24.3s;--y:8px;width:0.874rem;height:0.437rem;opacity:0.41" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:24.3s;--dl:-23.7s;--y:-9px;width:0.883rem;height:0.4415rem;opacity:0.33" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:24.9s;--dl:-13.5s;--y:8px;width:0.55rem;height:0.275rem;opacity:0.28" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:18.7s;--dl:-10.9s;--y:10px;width:1.062rem;height:0.531rem;opacity:0.26" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:32.5s;--dl:-18.3s;--y:9px;width:0.523rem;height:0.2615rem;opacity:0.26" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:25.1s;--dl:-7.9s;--y:8px;width:0.96rem;height:0.48rem;opacity:0.4" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:20.5s;--dl:-3.7s;--y:-3px;width:0.721rem;height:0.3605rem;opacity:0.24" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:26.9s;--dl:-9.2s;--y:4px;width:0.675rem;height:0.3375rem;opacity:0.28" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:17.1s;--dl:-7.1s;--y:0px;width:1.185rem;height:0.5925rem;opacity:0.25" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:15.0s;--dl:-10.0s;--y:7px;width:0.817rem;height:0.4085rem;opacity:0.33" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:22.2s;--dl:-15.4s;--y:9px;width:1.107rem;height:0.5535rem;opacity:0.32" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:15.8s;--dl:-1.5s;--y:-2px;width:1.048rem;height:0.524rem;opacity:0.31" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:15.6s;--dl:-10.9s;--y:10px;width:0.948rem;height:0.474rem;opacity:0.34" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:25.6s;--dl:-18.3s;--y:1px;width:0.961rem;height:0.4805rem;opacity:0.22" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:18.4s;--dl:-2.2s;--y:-9px;width:0.796rem;height:0.398rem;opacity:0.26" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:33.2s;--dl:-13.2s;--y:5px;width:0.666rem;height:0.333rem;opacity:0.24" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:28.3s;--dl:-25.0s;--y:3px;width:0.787rem;height:0.3935rem;opacity:0.39" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:24.8s;--dl:-8.9s;--y:2px;width:0.659rem;height:0.3295rem;opacity:0.41" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:18.6s;--dl:-4.3s;--y:-3px;width:0.563rem;height:0.2815rem;opacity:0.22" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat" style="--d:18.7s;--dl:-5.3s;--y:-6px;width:1.073rem;height:0.5365rem;opacity:0.3" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-bat rtl" style="--d:28.7s;--dl:-27.4s;--y:6px;width:0.727rem;height:0.3635rem;opacity:0.41" aria-hidden="true"><svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true"><path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/><path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/><path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg></span><span class="ea-ember" style="--x:65.5%;--d:5.5s;--dl:-2.5s;--sx:7px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:39.8%;--d:4.3s;--dl:-2.1s;--sx:2px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:19.1%;--d:6.4s;--dl:-2.8s;--sx:-7px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:60.1%;--d:3.2s;--dl:-1.8s;--sx:7px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:94.9%;--d:5.1s;--dl:-0.4s;--sx:-4px;width:4px;height:4px" aria-hidden="true"></span><span class="ea-ember" style="--x:37.6%;--d:5.1s;--dl:-4.9s;--sx:9px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:47.4%;--d:3.2s;--dl:-1.6s;--sx:4px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:48.4%;--d:3.1s;--dl:-0.3s;--sx:0px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:47.9%;--d:5.4s;--dl:-2.8s;--sx:-4px;width:4px;height:4px" aria-hidden="true"></span><span class="ea-ember" style="--x:36.2%;--d:5.4s;--dl:-4.9s;--sx:6px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:97.9%;--d:6.0s;--dl:-4.2s;--sx:-2px;width:4px;height:4px" aria-hidden="true"></span><span class="ea-ember" style="--x:36.7%;--d:3.4s;--dl:-2.6s;--sx:7px;width:4px;height:4px" aria-hidden="true"></span><span class="ea-ember" style="--x:77.9%;--d:4.0s;--dl:-0.9s;--sx:-4px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:81.8%;--d:5.5s;--dl:-1.2s;--sx:6px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:35.6%;--d:2.9s;--dl:-0.1s;--sx:-2px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:25.9%;--d:5.4s;--dl:-5.2s;--sx:4px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:95.5%;--d:4.1s;--dl:-0.9s;--sx:-3px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:19.7%;--d:3.6s;--dl:-2.2s;--sx:9px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:47.9%;--d:5.2s;--dl:-4.2s;--sx:-8px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:91.0%;--d:5.7s;--dl:-4.3s;--sx:5px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:43.4%;--d:5.2s;--dl:-0.5s;--sx:2px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:40.1%;--d:6.3s;--dl:-4.6s;--sx:-5px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:2.8%;--d:5.0s;--dl:-2.3s;--sx:10px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:61.2%;--d:5.0s;--dl:-2.4s;--sx:1px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:54.9%;--d:3.3s;--dl:-0.0s;--sx:10px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:52.7%;--d:6.3s;--dl:-2.7s;--sx:-4px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:2.8%;--d:3.6s;--dl:-1.8s;--sx:8px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:25.9%;--d:4.4s;--dl:-0.6s;--sx:1px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:66.2%;--d:5.8s;--dl:-3.0s;--sx:6px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:53.2%;--d:4.7s;--dl:-0.1s;--sx:4px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:60.9%;--d:5.7s;--dl:-0.9s;--sx:-6px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:61.9%;--d:3.2s;--dl:-0.2s;--sx:6px;width:4px;height:4px" aria-hidden="true"></span><span class="ea-ember" style="--x:55.5%;--d:5.7s;--dl:-0.6s;--sx:7px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:24.8%;--d:3.8s;--dl:-2.9s;--sx:6px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:56.2%;--d:5.6s;--dl:-5.1s;--sx:4px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:61.3%;--d:4.7s;--dl:-2.4s;--sx:-2px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:50.8%;--d:5.8s;--dl:-2.9s;--sx:-3px;width:4px;height:4px" aria-hidden="true"></span><span class="ea-ember" style="--x:87.7%;--d:6.3s;--dl:-1.6s;--sx:7px;width:2px;height:2px" aria-hidden="true"></span><span class="ea-ember" style="--x:84.0%;--d:3.3s;--dl:-0.4s;--sx:4px;width:3px;height:3px" aria-hidden="true"></span><span class="ea-ember" style="--x:7.3%;--d:3.7s;--dl:-0.3s;--sx:-1px;width:2px;height:2px" aria-hidden="true"></span><div class="ea-block"><p><span class="cta-long">Pre-launch Halloween campaign: a <span class="ea-mark">special price on the annual plan until <span class="ea-num">1 November</span></span>.</span><span class="cta-short">Pre-launch Halloween special, <span class="ea-mark">until <span class="ea-num">1 Nov</span></span></span></p><a href="register.html">Join now</a></div></div>
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.Navbar" dc-props="{{ navProps }}" hint-size="100%,72px"></x-import>
 
+<script>
+(() => {
+  // Does the hero content fit the one-screen hero? If not, let it grow (see .hero-tall).
+  let raf = 0;
+  const check = () => {
+    raf = 0;
+    const hero = document.querySelector('.hero-pin'); if (!hero) return;
+    const box = hero.querySelector(':scope>.container-site'), cue = hero.querySelector('.hero-cue-wrap');
+    if (!box) return;
+    hero.classList.remove('hero-tall');
+    const cs = getComputedStyle(hero);
+    const room = hero.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - (cue ? cue.offsetHeight : 0);
+    const need = [...box.children].reduce((a, c) => { const m = getComputedStyle(c); return a + c.offsetHeight + (parseFloat(m.marginTop) || 0) + (parseFloat(m.marginBottom) || 0); }, 0);
+    if (need > room + 24) hero.classList.add('hero-tall'); // the counter row has that much padding to give
+  };
+  const req = () => { if (!raf) raf = requestAnimationFrame(check); };
+  addEventListener('resize', req); addEventListener('orientationchange', req);
+  addEventListener('load', () => { setTimeout(check, 60); setTimeout(check, 600); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(req);
+})();
+</script>
 <section class="hero-pin" data-screen-label="Hero" style="position:sticky;top:var(--hdr);height:calc(100vh - var(--hdr));box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(1.5rem,6vh,6.67rem) 0 3.375rem">
 <div aria-hidden="true" style="position:fixed;inset:0;z-index:0;pointer-events:none">
 <canvas id="sphere" style="width:100%;height:100%;display:block"></canvas>
@@ -1655,7 +1714,8 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 <li><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg><div><b>Identify new potential</b><span>suppliers and contractors</span></div></li>
 </ul>
 <div class="hero-cta" style="will-change:transform">
-<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="240px,52px">Get early access</x-import>
+<p class="hero-count" aria-label="3,500 and more members already on the C-MORE ecosystem"><span class="hero-num" aria-hidden="true"><span id="hero-count" data-to="3500">3,500</span><span class="plus">+</span></span><span class="hero-count-what">members already on the<br>C-MORE ecosystem</span></p>
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="160px,52px">Join now</x-import>
 </div>
 </div>
 <div class="hero-cue-wrap">
@@ -1796,17 +1856,23 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 .cl-what h2{font-size:clamp(1.5rem,2.6vw,2rem);line-height:1.15;letter-spacing:-.02em;font-weight:600}
 .cl-what h2 .soft{font-weight:300}
 .cl-what p{margin-top:1rem;font-size:1.0625rem;line-height:1.55;color:var(--color-ink-muted);font-weight:300}
-.cl-logos{list-style:none;margin:4rem 0 0;padding:2.5rem 0 0;border-top:1px solid var(--color-line);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2.5rem 2.5rem;align-items:center}
-.cl-logos li{display:grid;place-items:center;height:4rem}
-.cl-logos img{display:block;max-width:min(100%,9.5rem);max-height:100%;width:auto;height:auto;object-fit:contain;filter:grayscale(1) contrast(.9) opacity(.62);transition:filter .3s var(--ease-brand),transform .3s var(--ease-brand)}
-.cl-logos img.tall{max-height:3.5rem}
-.cl-logos img.wide{max-height:2.4rem}
-.cl-logos img.xwide{max-width:min(100%,12rem);max-height:2.1rem}
-.cl-logos li:hover img{filter:none;transform:translateY(-2px)}
-@media (max-width:900px){.cl-head{gap:1.25rem}.cl-logos{grid-template-columns:repeat(3,minmax(0,1fr));gap:2rem}}
-@media (max-width:768px){#clients{padding:4.5rem 0 4rem}.cl-logos{margin-top:2.75rem;padding-top:2rem}}
-@media (max-width:540px){.cl-logos{grid-template-columns:repeat(2,minmax(0,1fr));gap:1.75rem 1.5rem}.cl-logos li{height:3.25rem}.cl-logos img{max-width:8.5rem}.cl-logos img.tall{max-height:3rem}}
-@media (prefers-reduced-motion:reduce){.cl-logos img{transition:none}.cl-logos li:hover img{transform:none}}
+/* one belt of logos drifting left, full-bleed, faded at the edges. It holds three copies of
+   the row and slides by one copy, so the loop never shows a seam.
+   Hover pauses the belt and brings the logo under the cursor to colour. */
+.cl-marquee{margin:4rem 0 0;padding:2.5rem 0 0;border-top:1px solid var(--color-line);display:grid;gap:2.25rem}
+.cl-row{overflow:hidden;width:100vw;margin-inline:calc(50% - 50vw);-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.cl-belt{display:flex;width:max-content;animation:cl-slide var(--speed,56s) linear infinite}
+.cl-row:hover .cl-belt{animation-play-state:paused}
+.cl-track{list-style:none;margin:0;padding:0;display:flex;align-items:center;gap:4.75rem;padding-right:4.75rem;flex:none}
+.cl-track li{display:grid;place-items:center;height:4rem;flex:none}
+/* each logo gets its own width, set inline, so the amount of ink reads about the same along the belt */
+.cl-track img{display:block;width:var(--w);height:auto;object-fit:contain;filter:grayscale(1) contrast(.9) opacity(.58);transition:filter .3s var(--ease-brand),transform .3s var(--ease-brand)}
+.cl-track li:hover img{filter:none;transform:scale(1.06)}
+@keyframes cl-slide{to{transform:translateX(calc(-100% / 3))}}
+@media (max-width:900px){.cl-head{gap:1.25rem}.cl-track{gap:3.5rem;padding-right:3.5rem}.cl-track img{width:calc(var(--w) * .9)}}
+@media (max-width:768px){#clients{padding:4.5rem 0 4rem}.cl-marquee{margin-top:2.75rem;padding-top:2rem;gap:1.5rem}}
+@media (max-width:540px){.cl-track{gap:2.5rem;padding-right:2.5rem}.cl-track li{height:3.25rem}.cl-track img{width:calc(var(--w) * .78)}}
+@media (prefers-reduced-motion:reduce){.cl-belt{animation:none;width:auto;flex-wrap:wrap}.cl-track{flex-wrap:wrap;justify-content:center;row-gap:2rem}.cl-track[aria-hidden]{display:none}.cl-row{width:auto;margin-inline:0;-webkit-mask-image:none;mask-image:none}.cl-track img{transition:none}.cl-track li:hover img{transform:none}}
 </style>
 <section id="clients" data-screen-label="Clients and partners">
 <div class="container-site">
@@ -1818,18 +1884,13 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 <p>Clients, suppliers and partners connected through one place, sharing what is asked when it is asked.</p>
 </div>
 </div>
-<ul class="cl-logos" aria-label="Some of our clients">
-<li><img class="wide" src="images/clients/vodafone.png" alt="Vodafone" loading="lazy"></li>
-<li><img class="wide" src="images/clients/astrazeneca.png" alt="AstraZeneca" loading="lazy"></li>
-<li><img class="xwide" src="images/clients/world-bank.png" alt="World Bank Group" loading="lazy"></li>
-<li><img class="wide" src="images/clients/dentsu.png" alt="Dentsu" loading="lazy"></li>
-<li><img class="tall" src="images/clients/cummins.png" alt="Cummins" loading="lazy"></li>
-<li><img class="wide" src="images/clients/sibs.png" alt="SIBS, Partner in Payments" loading="lazy"></li>
-<li><img class="tall" src="images/clients/turismo-de-portugal.png" alt="Turismo de Portugal" loading="lazy"></li>
-<li><img class="tall" src="images/clients/sgs.png" alt="SGS" loading="lazy"></li>
-<li><img class="wide" src="images/clients/cbmm.png" alt="CBMM" loading="lazy"></li>
-<li><img class="wide" src="images/clients/novabase.png" alt="Novabase" loading="lazy"></li>
-</ul>
+<div class="cl-marquee" aria-label="Some of our clients">
+<div class="cl-row" style="--speed:95s"><div class="cl-belt">
+<ul class="cl-track"><li><img src="images/clients/vodafone.png" alt="Vodafone" loading="lazy" style="--w:10.5rem"></li><li><img src="images/clients/astrazeneca.png" alt="AstraZeneca" loading="lazy" style="--w:10.5rem"></li><li><img src="images/clients/world-bank.png" alt="World Bank Group" loading="lazy" style="--w:11.5rem"></li><li><img src="images/clients/dentsu.png" alt="Dentsu" loading="lazy" style="--w:7.75rem"></li><li><img src="images/clients/cummins.png" alt="Cummins" loading="lazy" style="--w:3.1rem"></li><li><img src="images/clients/sibs.png" alt="SIBS, Partner in Payments" loading="lazy" style="--w:10.25rem"></li><li><img src="images/clients/turismo-de-portugal.png" alt="Turismo de Portugal" loading="lazy" style="--w:7.75rem"></li><li><img src="images/clients/sgs.png" alt="SGS" loading="lazy" style="--w:4.9rem"></li><li><img src="images/clients/cbmm.png" alt="CBMM" loading="lazy" style="--w:8.25rem"></li><li><img src="images/clients/novabase.png" alt="Novabase" loading="lazy" style="--w:9.5rem"></li><li><img src="images/clients/alves-bandeira.png" alt="Alves Bandeira" loading="lazy" style="--w:6.5rem"></li><li><img src="images/clients/uci.png" alt="UCI" loading="lazy" style="--w:5.25rem"></li><li><img src="images/clients/tecnorem.png" alt="Grupo Tecnorém" loading="lazy" style="--w:9.75rem"></li><li><img src="images/clients/lact-acores.png" alt="Lact Açores" loading="lazy" style="--w:3.9rem"></li><li><img src="images/clients/tech-week.png" alt="Tech Week" loading="lazy" style="--w:5.5rem"></li></ul>
+<ul class="cl-track" aria-hidden="true"><li><img src="images/clients/vodafone.png" alt="Vodafone" loading="lazy" style="--w:10.5rem"></li><li><img src="images/clients/astrazeneca.png" alt="AstraZeneca" loading="lazy" style="--w:10.5rem"></li><li><img src="images/clients/world-bank.png" alt="World Bank Group" loading="lazy" style="--w:11.5rem"></li><li><img src="images/clients/dentsu.png" alt="Dentsu" loading="lazy" style="--w:7.75rem"></li><li><img src="images/clients/cummins.png" alt="Cummins" loading="lazy" style="--w:3.1rem"></li><li><img src="images/clients/sibs.png" alt="SIBS, Partner in Payments" loading="lazy" style="--w:10.25rem"></li><li><img src="images/clients/turismo-de-portugal.png" alt="Turismo de Portugal" loading="lazy" style="--w:7.75rem"></li><li><img src="images/clients/sgs.png" alt="SGS" loading="lazy" style="--w:4.9rem"></li><li><img src="images/clients/cbmm.png" alt="CBMM" loading="lazy" style="--w:8.25rem"></li><li><img src="images/clients/novabase.png" alt="Novabase" loading="lazy" style="--w:9.5rem"></li><li><img src="images/clients/alves-bandeira.png" alt="Alves Bandeira" loading="lazy" style="--w:6.5rem"></li><li><img src="images/clients/uci.png" alt="UCI" loading="lazy" style="--w:5.25rem"></li><li><img src="images/clients/tecnorem.png" alt="Grupo Tecnorém" loading="lazy" style="--w:9.75rem"></li><li><img src="images/clients/lact-acores.png" alt="Lact Açores" loading="lazy" style="--w:3.9rem"></li><li><img src="images/clients/tech-week.png" alt="Tech Week" loading="lazy" style="--w:5.5rem"></li></ul>
+<ul class="cl-track" aria-hidden="true"><li><img src="images/clients/vodafone.png" alt="Vodafone" loading="lazy" style="--w:10.5rem"></li><li><img src="images/clients/astrazeneca.png" alt="AstraZeneca" loading="lazy" style="--w:10.5rem"></li><li><img src="images/clients/world-bank.png" alt="World Bank Group" loading="lazy" style="--w:11.5rem"></li><li><img src="images/clients/dentsu.png" alt="Dentsu" loading="lazy" style="--w:7.75rem"></li><li><img src="images/clients/cummins.png" alt="Cummins" loading="lazy" style="--w:3.1rem"></li><li><img src="images/clients/sibs.png" alt="SIBS, Partner in Payments" loading="lazy" style="--w:10.25rem"></li><li><img src="images/clients/turismo-de-portugal.png" alt="Turismo de Portugal" loading="lazy" style="--w:7.75rem"></li><li><img src="images/clients/sgs.png" alt="SGS" loading="lazy" style="--w:4.9rem"></li><li><img src="images/clients/cbmm.png" alt="CBMM" loading="lazy" style="--w:8.25rem"></li><li><img src="images/clients/novabase.png" alt="Novabase" loading="lazy" style="--w:9.5rem"></li><li><img src="images/clients/alves-bandeira.png" alt="Alves Bandeira" loading="lazy" style="--w:6.5rem"></li><li><img src="images/clients/uci.png" alt="UCI" loading="lazy" style="--w:5.25rem"></li><li><img src="images/clients/tecnorem.png" alt="Grupo Tecnorém" loading="lazy" style="--w:9.75rem"></li><li><img src="images/clients/lact-acores.png" alt="Lact Açores" loading="lazy" style="--w:3.9rem"></li><li><img src="images/clients/tech-week.png" alt="Tech Week" loading="lazy" style="--w:5.5rem"></li></ul>
+</div></div>
+</div>
 </div>
 </section>
 <script>
@@ -1839,12 +1900,12 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
   // it at rest. The element is looked up when it fires, since the page's component
   // runtime re-mounts the markup after this script runs.
   const fmt = (n) => n.toLocaleString('en-US');
-  const start = () => {
-    const el = document.getElementById('cl-count'); if (!el || el.dataset.done) return;
+  const start = (id) => {
+    const el = typeof id === 'string' ? document.getElementById(id) : id; if (!el || el.dataset.done) return;
     el.dataset.done = '1';
     const to = +el.dataset.to;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = fmt(to); return; }
-    const t0 = performance.now(), dur = 1900;
+    const t0 = performance.now(), dur = 2600;
     const tick = (now) => {
       const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 4);
       el.textContent = fmt(Math.round(to * e));
@@ -1866,11 +1927,12 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
   const req = () => { if (!raf) raf = requestAnimationFrame(paint); };
   addEventListener('scroll', req, { passive: true }); document.body.addEventListener('scroll', req, { passive: true }); addEventListener('resize', req);
   addEventListener('load', () => setTimeout(paint, 50));
-  const arm = () => {
-    const el = document.getElementById('cl-count'); if (!el) return setTimeout(arm, 200);
-    new IntersectionObserver((es, io) => { if (es.some((x) => x.isIntersecting)) { start(); io.disconnect(); } }, { threshold: 0.4 }).observe(el);
+  // the hero's number and the clients' number: each counts up the first time it is seen
+  const arm = (id, threshold) => {
+    const el = document.getElementById(id); if (!el) return setTimeout(() => arm(id, threshold), 200);
+    new IntersectionObserver((es, io) => { if (es.some((x) => x.isIntersecting)) { start(id); io.disconnect(); } }, { threshold }).observe(el);
   };
-  addEventListener('load', () => setTimeout(arm, 100));
+  addEventListener('load', () => setTimeout(() => { arm('hero-count', 0.1); arm('cl-count', 0.4); }, 100));
 })();
 </script>
 

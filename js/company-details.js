@@ -47,6 +47,23 @@
       sites: [[0], [0, 2], [1], [0], [0], [2], [1], [0, 1, 2], [2], [0], [1], [0], [2], [1], [0], [2], [1], [0], [1], [0], [2], [0], [2], [0, 1]][i],
     };
   });
+  // each machine's record (EQ-00): type, brand, model, serial, plate, year, owned or rented, and whether
+  // it needs a certified operator (WK-13) — in which case the crane operators are named on it
+  const RENTALS = { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
+  const MACHINE = EQUIPMENT.map(([label, ref], i) => {
+    const [type, model] = label.split(' &mdash; ');
+    const brand = model.split(' ')[0] === 'CM&#8209;500' ? 'Ferreira (in&#8209;house)' : model.split(/ |&#8209;/)[0].replace('Allmand', 'Allmand Bros');
+    const yearBuilt = i === 4 ? 1991 : [2019, 2016, 2021, 2020, 1991, 2022, 2018, 2017, 2020, 2021, 2019, 2023][i];
+    const operators = i === 1 ? [4, 19] : i === 0 || i === 7 ? [4] : i === 6 ? [19] : [];
+    return {
+      type, brand, model: model.replace(/^\S+ /, ''), ref: ref.split(' &middot; ')[0],
+      serial: `${brand.slice(0, 2).toUpperCase().replace(/[^A-Z]/g, 'X')}${String(4180000 + i * 73219).slice(-6)}&#8209;${2 + (i % 7)}`,
+      plate: i === 6 ? 'AA&#8209;19&#8209;TR' : '',
+      yearBuilt, owned: RENTALS[i] || 'Owned', certified: operators.length > 0, operators,
+      sites: [[0], [0], [2], [0, 1], [0], [1], [1], [0, 2], [2], [1], [0], [2]][i],
+      hours: i === 11 ? null : 1240 + i * 913,
+    };
+  });
   // the sites Ferreira works on (its projects on the company page): site documents exist per site
   const SITES = ['East wing extension &middot; Brandywine Regional Hospital', 'Route 9 resurfacing, phase 2 &middot; State of Delaware', 'Elm Street Elementary renovation &middot; Wilmington Public Schools'];
   const ALL = (list) => list.map((_, i) => i);
@@ -202,6 +219,7 @@
   let area = null; // null = every area, at the top; otherwise one of AREAS[].key
   let detail = null; // the code of a document whose full roster is open, or null
   let worker = null; // the index of a worker whose own page is open, or null
+  let machine = null; // the index of a machine whose own page is open, or null
   let detailQ = ''; // search typed inside a roster page
   // a roster page's own filter, independent of the document list's: status always, plus a
   // tag — role for people, equipment type for machines — when the roster has one to offer
@@ -240,7 +258,7 @@
     const doc = DOCS.find((d) => d.code === code), r = ROSTERS[code];
     const fq = fold(detailQ);
     const tagLabel = rosterTagLabel(r);
-    const items = r.pick.map((i, k) => ({ name: r.list[i][0], sub: r.list[i][1], status: r.status(k), exp: r.exp ? r.exp(k) : doc.valid, tag: rosterTag(r, i), worker: r.list === WORKERS ? i : null, text: fold(r.list[i][0]) }));
+    const items = r.pick.map((i, k) => ({ name: r.list[i][0], sub: r.list[i][1], status: r.status(k), exp: r.exp ? r.exp(k) : doc.valid, tag: rosterTag(r, i), worker: r.list === WORKERS ? i : null, machine: r.list === EQUIPMENT ? i : null, text: fold(r.list[i][0]) }));
     // each filter ignores its own dimension when counting, so a menu always shows how many
     // rows a choice would leave rather than how many it already excludes
     const dKeep = (it, skip) => (!fq || it.text.includes(fq))
@@ -266,7 +284,7 @@
     const filt = `<div class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="${detailFiltOpen}" data-dfilt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n"${nOnD ? '' : ' hidden'}>${nOnD}</span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button><div class="co-filt-panel" role="menu" aria-label="Filter this roster" data-dfilt-panel${detailFiltOpen ? '' : ' hidden'}>${panelHtml}</div></div>`;
     const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><div class="co-tools-r"><span class="co-muted cd-detail-count">${shown.length} of ${r.pick.length}</span>${nOnD ? '<button type="button" class="link-btn co-tools-clear" data-dclear>Clear filters</button>' : ''}${filt}</div></div>`;
     const list = shown.length
-      ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl"><thead><tr><th>Name</th><th class="c">Expires</th><th>Status</th></tr></thead><tbody>${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<tr${it.worker !== null ? ` class="cd-row is-rosterable" data-worker="${it.worker}" tabindex="0" role="link"` : ''}><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td class="c">${it.status === 'missing' ? '—' : it.exp}</td><td><span class="co-badge ${cls}">${label}</span></td></tr>`; }).join('')}</tbody></table></div>`
+      ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl"><thead><tr><th>Name</th><th class="c">Expires</th><th>Status</th></tr></thead><tbody>${shown.map((it) => { const [label, cls] = STATUS[it.status]; return `<tr${it.worker !== null ? ` class="cd-row is-rosterable" data-worker="${it.worker}" tabindex="0" role="link"` : it.machine !== null ? ` class="cd-row is-rosterable" data-machine="${it.machine}" tabindex="0" role="link"` : ''}><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td class="c">${it.status === 'missing' ? '—' : it.exp}</td><td><span class="co-badge ${cls}">${label}</span></td></tr>`; }).join('')}</tbody></table></div>`
       : '<div class="co-card cd-none"><b class="co-row-n">No one matches that.</b></div>';
     // one child, not three: #cd-groups is a flex column with its own gap between items,
     // which would otherwise stack on top of the toolbar's own margin and widen just this gap
@@ -356,15 +374,15 @@
       const cells = m.cols.map(([code]) => cellOf(code, i));
       const worst = cells.filter(Boolean).reduce((acc, s) => (RANK[s] > RANK[acc] ? s : acc), 'valid');
       const [wl, wc] = STATUS[worst];
-      const open = key === 'workers' ? ` class="cd-row is-rosterable" data-worker="${i}" tabindex="0" role="link" aria-label="Open ${it[0]}"` : '';
+      const open = ` class="cd-row is-rosterable" data-${key === 'workers' ? 'worker' : 'machine'}="${i}" tabindex="0" role="link" aria-label="Open ${it[0]}"`;
       return `<tr${open}><td><span class="n">${it[0]}</span><span class="d">${it[1]}</span></td>${cells.map((s, c) => (s
         ? `<td class="c"><span class="cd-dot is-${TONE[s]}" title="${STATUS[s][0]}"></span><span class="sr-only">${m.cols[c][1]}: ${STATUS[s][0]}</span></td>`
-        : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span>${key === 'workers' ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</td></tr>`;
+        : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span><span class="cd-row-open" aria-hidden="true">${CHEV_R}</span></td></tr>`;
     }).join('');
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${m.label}</h3><span class="co-muted">${m.list.length} ${key === 'workers' ? 'workers' : 'machines'}</span></div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix"><thead><tr><th>${key === 'workers' ? 'Worker' : 'Machine'}</th>${m.cols.map(([code, l]) => `<th class="c" title="${byCode[code] ? byCode[code].name : ''}">${l}</th>`).join('')}<th>Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${key === 'workers' ? '<span>Open a worker for their record and documents.</span>' : ''}</p></div>`;
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span><span>Open a ${key === 'workers' ? 'worker' : 'machine'} for ${key === 'workers' ? 'their' : 'its'} record and documents.</span></p></div>`;
   };
 
   // one worker: their record, whether they may work here, their documents, and their sites.
@@ -403,6 +421,40 @@
     </div>`;
   };
 
+  // one machine: its record, who may operate it, its documents, and the sites it is on.
+  const renderMachine = (i) => {
+    const m = MACHINE[i];
+    const per = Object.keys(ROSTERS).filter((code) => ROSTERS[code].list === EQUIPMENT).map((code) => {
+      const r = ROSTERS[code], k = r.pick.indexOf(i); if (k < 0) return null;
+      const doc = DOCS.find((d) => d.code === code);
+      return { code, name: doc.name, req: doc.requirement, status: r.status(k), exp: r.exp ? r.exp(k) : doc.valid };
+    }).filter(Boolean);
+    const worst = per.reduce((acc, d) => (RANK[d.status] > RANK[acc] ? d.status : acc), 'valid');
+    const [wl, wc] = STATUS[worst];
+    const next = per.find((d) => d.code === 'EQ-03'), maint = per.find((d) => d.code === 'EQ-04');
+    const opRow = (w) => { const r = ROSTERS['WK-13'], k = r.pick.indexOf(w); const ok = k >= 0; const [l, c] = STATUS[ok ? r.status(k) : 'missing'];
+      return `<tr class="cd-row is-rosterable" data-worker="${w}" tabindex="0" role="link" aria-label="Open ${WORKERS[w][0]}"><td><span class="n">${WORKERS[w][0]}</span><span class="d">${WORKERS[w][1]}</span></td><td class="c">${ok && r.exp ? r.exp(k) : '&mdash;'}</td><td><span class="co-badge ${c}">${ok ? 'Operator licence ' + l.toLowerCase() : 'No licence on file'}</span><span class="cd-row-open" aria-hidden="true">${CHEV_R}</span></td></tr>`; };
+    const docRow = (d) => { const [l, c] = STATUS[d.status]; return `<tr><td><span class="n">${d.name}</span><span class="d">${d.code} &middot; ${d.req}</span></td><td class="c">${d.status === 'missing' ? '&mdash;' : d.exp}</td><td><span class="co-badge ${c}">${l}</span></td></tr>`; };
+    const docs = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th></tr></thead><tbody>${rows.map(docRow).join('')}</tbody></table></div>`;
+    groupsEl.innerHTML = `<div class="cd-detail cd-worker cd-machine">
+      <div class="cd-area-head"><h2 class="co-h-l">${m.type} <span class="soft">&mdash; ${m.brand === 'Ferreira (in&#8209;house)' ? m.model : m.brand + ' ' + m.model}</span></h2><p class="co-muted">${m.ref} &middot; built ${m.yearBuilt} &middot; ${m.owned.toLowerCase().replace(/&middot;.*$/, '').trim()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
+      ${next && next.status === 'attention' ? `<p class="cd-restricted cd-attn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Periodic inspection due ${next.exp} &mdash; book it, and drop the report on ALMA when it is done.</p>` : ''}
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Equipment record</h3><span class="co-muted">EQ&#8209;00</span></div>
+        <div class="co-card cd-card-pad"><dl class="pd-grid">
+          ${kv('Equipment type', m.type)}${kv('Brand', m.brand)}${kv('Model', m.model)}
+          ${kv('Serial number', m.serial)}${kv('Plate', m.plate || '<span class="co-subtle">Not road&#8209;registered</span>')}${kv('Year built', `${m.yearBuilt}${m.yearBuilt < 1995 ? ' <span class="co-subtle">&middot; pre&#8209;1995, certified under EQ&#8209;02</span>' : ''}`)}
+          ${kv('Owned or rented', m.owned)}${kv('Internal reference', m.ref)}${kv('Hours on the clock', m.hours ? m.hours.toLocaleString('en-US') + ' h' : '<span class="co-subtle">Not metered</span>')}
+          ${kv('Requires certified operator', m.certified ? '<span class="co-badge b-pend">Yes</span> <span class="co-subtle">operators named below</span>' : '<span class="co-badge b-neu">No</span>')}
+          ${kv('Next inspection', next ? next.exp : '<span class="co-subtle">Not subject to periodic inspection</span>')}${kv('Next maintenance', maint ? maint.exp : '&mdash;')}
+        </dl></div></div>
+      ${m.certified ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Who may operate it</h3><span class="co-muted">${m.operators.length} operator${m.operators.length === 1 ? '' : 's'} &middot; WK&#8209;13</span></div>
+        <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Worker</th><th class="c">Licence expires</th><th>Status</th></tr></thead><tbody>${m.operators.map(opRow).join('')}</tbody></table></div></div>` : ''}
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Its documents</h3><span class="co-muted">${per.length} document${per.length === 1 ? '' : 's'}</span></div>${docs(per)}</div>
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">On site</h3><span class="co-muted">${m.sites.length} site${m.sites.length === 1 ? '' : 's'}</span></div>
+        <div class="co-card cd-card-pad"><ul class="cd-sites">${m.sites.map((s) => { const [n, client] = SITES[s].split(' &middot; '); return `<li><span class="n">${n}</span><span class="co-subtle">${client}</span></li>`; }).join('')}</ul></div></div>
+    </div>`;
+  };
+
   const none = () => '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
 
   // the breadcrumb, the back button, and the title/subtitle/stats above the list — every
@@ -422,6 +474,7 @@
     if (a) levels.push({ label: a.title, crumb: 'area' });
     if (doc) levels.push({ label: doc.name, crumb: 'detail' });
     if (worker !== null) levels.push({ label: WORKERS[worker][0], crumb: 'worker' });
+    if (machine !== null) levels.push({ label: EQUIPMENT[machine][0], crumb: 'machine' });
     crumbTrail.innerHTML = levels.map((lvl, i) => {
       const sep = i ? '<span aria-hidden="true">/</span>' : '';
       if (i === levels.length - 1) return sep + `<span aria-current="page">${lvl.label}</span>`;
@@ -429,12 +482,13 @@
     }).join('');
     crumbBack.onclick = () => {
       if (worker !== null) { worker = null; render(); toTop(); }
+      else if (machine !== null) { machine = null; render(); toTop(); }
       else if (doc) { detail = null; resetDetailFilter(); render(); toTop(); }
       else if (a) { area = null; render(); toTop(); }
       else location.href = 'my-company.html?filled';
     };
-    hero.hidden = !!doc || worker !== null;
-    if (doc || worker !== null) return;
+    hero.hidden = !!doc || worker !== null || machine !== null;
+    if (doc || worker !== null || machine !== null) return;
     h2.textContent = a ? a.title : 'All company documents';
     sub.innerHTML = a ? AREA_SUB[a.key] : 'Every document the C&#8209;MORE catalog asks of a contractor, kept in one profile so any client finds the same set. Mark what doesn&rsquo;t apply to you, with a reason.';
     counts(a ? DOCS.filter((d) => d.area === a.key) : DOCS);
@@ -445,9 +499,10 @@
     if (typeof syncCards === 'function') syncCards();
     updateHeader();
     // the toolbar and the pills only mean anything one level up from a roster page
-    tools.hidden = !!detail || worker !== null;
-    pills.hidden = !!detail || worker !== null;
+    tools.hidden = !!detail || worker !== null || machine !== null;
+    pills.hidden = !!detail || worker !== null || machine !== null;
     if (worker !== null) { renderWorker(worker); return; }
+    if (machine !== null) { renderMachine(machine); return; }
     if (detail) { renderDetail(detail); return; }
     // the four area cards aren't a list to filter — Filter only earns its place once
     // there's an actual document table on screen, grouped or not
@@ -468,15 +523,17 @@
 
   crumbTrail.addEventListener('click', (e) => {
     const b = e.target.closest('[data-crumb]'); if (!b) return;
-    if (b.dataset.crumb === 'root') { area = null; detail = null; worker = null; resetDetailFilter(); }
-    else if (b.dataset.crumb === 'area') { detail = null; worker = null; resetDetailFilter(); }
+    if (b.dataset.crumb === 'root') { area = null; detail = null; worker = null; machine = null; resetDetailFilter(); }
+    else if (b.dataset.crumb === 'area') { detail = null; worker = null; machine = null; resetDetailFilter(); }
+    else if (b.dataset.crumb === 'detail') { worker = null; machine = null; }
     render(); toTop();
   });
 
   groupsEl.addEventListener('click', (e) => {
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
     const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); toTop(); return; }
-    const who = e.target.closest('[data-worker]'); if (who) { area = 'workers'; detail = null; worker = +who.dataset.worker; render(); toTop(); return; }
+    const who = e.target.closest('[data-worker]'); if (who) { area = 'workers'; detail = null; machine = null; worker = +who.dataset.worker; render(); toTop(); return; }
+    const what = e.target.closest('[data-machine]'); if (what) { area = 'equipment'; detail = null; worker = null; machine = +what.dataset.machine; render(); toTop(); return; }
     const open = e.target.closest('[data-detail]'); if (open) {
       // the id, not the code: a code like PF‑T1 carries an HTML entity for display, which
       // the DOM would have already decoded by the time a dataset read it back
@@ -505,7 +562,7 @@
     }
   });
   groupsEl.addEventListener('keydown', (e) => {
-    const who = e.target.closest('[data-worker]'); if (who && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); who.click(); }
+    const who = e.target.closest('[data-worker], [data-machine]'); if (who && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); who.click(); }
   });
   groupsEl.addEventListener('input', (e) => {
     if (!e.target.matches('[data-detail-q]')) return;

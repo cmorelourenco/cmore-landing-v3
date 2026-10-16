@@ -511,6 +511,16 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
       setTimeout(() => { layer.remove(); const i = flights.indexOf(layer); if (i > -1) flights.splice(i, 1); }, 5600);
     };
     window.releaseBats = release;
+    // choosing the annual plan (when it wasn't the one chosen) lets a burst out of the card,
+    // from the spot pressed — the Halloween offer waking up. Re-clicking it does nothing more.
+    const annualCard = plans.find((c) => c.dataset.plan === 'annual');
+    if (annualCard) annualCard.addEventListener('click', (e) => {
+      if (annualCard.dataset.wasChecked === 'true') return;
+      release(e, annualCard, { lift: 0.4 });
+    });
+    // the state before the click, read on the way down so the click handler above can compare
+    plans.forEach((c) => c.addEventListener('pointerdown', () => { c.dataset.wasChecked = c.getAttribute('aria-checked'); }));
+    plans.forEach((c) => c.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') c.dataset.wasChecked = c.getAttribute('aria-checked'); }));
     // the tag: a kick on its thread, the pumpkin flickers, and the card-sized burst flies up from it
     if (hangTag && hang) hangTag.addEventListener('click', (e) => {
       hang.classList.remove('is-lit'); void hang.offsetWidth; hang.classList.add('is-lit');
