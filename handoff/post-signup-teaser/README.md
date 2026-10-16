@@ -35,6 +35,9 @@ the small `.m-alma .alma-media` inside screen 2.
 
 ## Behaviour to keep
 
+- A "Log out" button fixed to the bottom of the screen, centred, dark: the only way out
+  until launch. It signs the member out and goes back to the landing page. The tour keeps
+  7.5rem of room at the bottom so the button never covers the form.
 - Four screens, one visible at a time. Dots, prev/next arrows and ←/→ keys step
   through; the URL bar in the drawn frame changes with each (`data-url`).
 - The footer form: one email field with the coral button under it, both flush
