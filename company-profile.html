@@ -11,7 +11,12 @@
   document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
   // which of our two demo people is signed in, Beatriz (default) or Miguel — a few things
   // on the company page and in this menu change shape depending on who is looking
-  try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null'); } catch (e) {}
+  try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null');
+    // a new tab, or a link pasted into one, starts without this tab's session: pick up the last demo
+    // login in this browser (and its company state), so it opens as the same person, not the default
+    if (!cmPerson) { cmPerson = JSON.parse(localStorage.getItem('cm-last-person') || 'null');
+      if (cmPerson) { sessionStorage.setItem('cm-person', JSON.stringify(cmPerson)); if (localStorage.getItem('cm-last-company') === 'filled') sessionStorage.setItem('cm-company', 'filled'); } }
+  } catch (e) {}
   document.documentElement.dataset.persona = (cmPerson && !/beatriz/i.test(cmPerson.name || '')) ? 'miguel' : 'beatriz';
   // whether the company has any data in it yet — ?filled, or a prior visit that finished
   // (or skipped) ALMA's intake — decides whether Projects/Shipments has anything to show
@@ -1240,6 +1245,7 @@ body { transition: background-color .9s ease; }
   document.getElementById('who-logout').addEventListener('click', (e) => {
     e.preventDefault();
     ['cm-person', 'cm-photo', 'cm-done'].forEach((k) => { try { sessionStorage.removeItem(k); } catch (err) {} });
+    ['cm-last-person', 'cm-last-company'].forEach((k) => { try { localStorage.removeItem(k); } catch (err) {} });
     document.body.style.transition = 'opacity .35s ease'; document.body.style.opacity = '0';
     setTimeout(() => { location.href = 'index.html'; }, 360);
   });
