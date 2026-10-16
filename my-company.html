@@ -13,7 +13,8 @@
      purpose — a deferred script would run after the first paint, which is
      exactly the flash we are avoiding. */
   // ?welcome (straight from sign-up) also starts on off-white: the thank-you screen comes first.
-  if (!/[?&](page|filled)\b/.test(location.search) || /[?&]welcome\b/.test(location.search)) document.documentElement.className += ' intake-first';
+  // ?teaser (back from a password reset) does too: the coming-soon teaser opens straight away.
+  if (!/[?&](page|filled)\b/.test(location.search) || /[?&](welcome|teaser)\b/.test(location.search)) document.documentElement.className += ' intake-first';
   // the side menu starts open (a drawer on phones) unless the visitor closed it last time
   var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
   document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
@@ -2218,8 +2219,12 @@ body { transition: background-color .9s ease; }
     // The intake does not follow: the product is not open yet, so she shows
     // what is coming and hands over to the empty company page.
     setTimeout(() => welcome(() => teaser(reveal), `<b>${name}</b>, your founding seat is saved. Next, let me show you what&#8217;s coming soon.`), 0);
+  } else if (arrive.has('teaser')) {
+    // the coming-soon home, straight (after a password reset): the teaser, with the page behind it;
+    // the address keeps ?teaser, so a reload comes back to it
+    setTimeout(() => teaser(reveal), 0);
   } else if (root.classList.contains('intake-first')) open(); else reveal();
-  if (!arrive.has('welcome') && arrive.has('page')) overlay();
+  if (!arrive.has('welcome') && !arrive.has('teaser') && arrive.has('page')) overlay();
   document.getElementById('skip').addEventListener('click', close);
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intake.hidden) close(); });
 

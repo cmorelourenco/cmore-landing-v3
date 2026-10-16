@@ -329,11 +329,11 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         <form class="form" id="f-login" novalidate>
           <div class="field">
             <label for="login-email">Work email</label>
-            <input class="input" id="login-email" name="email" type="email" inputmode="email" autocomplete="username" value="beatriz@veridianharvest.com" required>
+            <input class="input" id="login-email" name="email" type="email" inputmode="email" autocomplete="username" required>
             <p class="err" id="login-email-err" role="alert"></p>
           </div>
           <div class="field">
-            <div class="label-row"><label for="login-password">Password</label><button type="button" class="link-btn" onclick="return false">Forgot password?</button></div>
+            <div class="label-row"><label for="login-password">Password</label><button type="button" class="link-btn" id="to-forgot">Forgot password?</button></div>
             <div class="pw">
               <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required>
               <button type="button" class="reveal" aria-controls="login-password" aria-label="Show password" aria-pressed="false"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.04 12.32a1 1 0 0 1 0-.64C3.42 7.51 7.36 4.5 12 4.5s8.57 3.01 9.96 7.18a1 1 0 0 1 0 .64C20.58 16.49 16.64 19.5 12 19.5s-8.57-3.01-9.96-7.18Z"/><path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.98 8.22A10.48 10.48 0 0 0 1.93 12C3.23 16.34 7.24 19.5 12 19.5c.99 0 1.95-.14 2.86-.39M6.23 6.23A10.45 10.45 0 0 1 12 4.5c4.76 0 8.77 3.16 10.07 7.5a10.52 10.52 0 0 1-4.29 5.77M6.23 6.23 3 3m3.23 3.23 3.65 3.65m7.89 7.89L21 21m-3.23-3.23-3.65-3.65m0 0a3 3 0 1 0-4.24-4.24m4.24 4.24L9.88 9.88"/></svg></button>
@@ -349,6 +349,31 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
         <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="f">Beatriz Nogueira</button><br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button></p>
         <p class="hint" style="margin-top:0.5rem;text-align:center">New here? <a class="link-btn" href="register.html" data-to-signup>Get early access</a></p>
+      </section>
+
+      <!-- Forgot password: the email (filled in when this browser remembers one), then a code, a new password, done -->
+      <section class="step" data-step="forgot" aria-labelledby="t-forgot">
+        <p class="eyebrow">Password recovery</p>
+        <h1 class="title" id="t-forgot">Forgot your password?</h1>
+        <p class="subtitle">Enter your work email. We will send you a code to set a new one.</p>
+        <form class="form" id="f-forgot" novalidate>
+          <div class="field">
+            <label for="forgot-email">Work email</label>
+            <input class="input" id="forgot-email" name="email" type="email" inputmode="email" autocomplete="username" required>
+            <p class="err" id="forgot-err" role="alert"></p>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="forgot-go" disabled>Recover password</button>
+        </form>
+        <div class="back-row" style="margin-top:1.5rem"><button type="button" class="link-btn" data-to="login">Back to log in</button></div>
+      </section>
+
+      <section class="step" data-step="reset-done" aria-labelledby="t-reset-done">
+        <p class="eyebrow">Password recovery</p>
+        <h1 class="title" id="t-reset-done">Welcome back<span id="reset-name"></span>.</h1>
+        <p class="subtitle">Your new password is now set.</p>
+        <div class="actions" style="align-items:stretch;margin-top:1.75rem">
+          <a class="btn btn-primary" href="my-company.html?page&amp;teaser" id="reset-home">Continue</a>
+        </div>
       </section>
 
       <!-- 1. Sign up: a provider, or a name and an email -->
@@ -385,7 +410,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
       <!-- 2. Code: verifies the email -->
       <section class="step" data-step="code" aria-labelledby="t-code">
-        <p class="eyebrow">Get early access</p>
+        <p class="eyebrow" data-flow-eyebrow>Get early access</p>
         <h1 class="title" id="t-code">Check your inbox.</h1>
         <p class="subtitle">Enter the six digits we sent to <b id="code-email" style="font-weight:500;color:var(--color-ink)">you</b>.</p>
         <ol class="stepper" data-at="2" aria-label="Sign-up steps">
@@ -402,14 +427,14 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
           <input inputmode="numeric" maxlength="1" aria-label="Digit 6">
         </div>
         <div class="code-meta"><span>Prototype: any six digits work.</span><button type="button" class="link-btn" data-resend>Resend code</button></div>
-        <div class="back-row" style="margin-top:1.75rem"><button type="button" class="link-btn" data-to="signup">Back</button></div>
+        <div class="back-row" style="margin-top:1.75rem"><button type="button" class="link-btn" data-to="signup" id="code-back">Back</button></div>
       </section>
 
       <!-- 3. Password -->
       <section class="step" data-step="password" aria-labelledby="t-password">
-        <p class="eyebrow">Get early access</p>
+        <p class="eyebrow" data-flow-eyebrow>Get early access</p>
         <h1 class="title" id="t-password">Create a password.</h1>
-        <p class="subtitle">You will log in with it and <b id="pw-email" style="font-weight:500;color:var(--color-ink)">your email</b>.</p>
+        <p class="subtitle"><span id="pw-lead">You will log in with it and</span> <b id="pw-email" style="font-weight:500;color:var(--color-ink)">your email</b>.</p>
         <ol class="stepper" data-at="3" aria-label="Sign-up steps">
           <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Your details</span></li>
           <li class="is-done"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Verify email</span></li>
@@ -514,6 +539,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     if (!name) return bad(nameIn, nameErr, 'Tell us your name.');
     if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) return bad(emailIn, emailErr, 'That does not look like an email address.');
     person = { name, email, via: 'Email' };
+    setFlow('signup');
     $('#code-email').textContent = email;
     codes.forEach((c) => { c.value = ''; c.className = ''; });
     codeBox.classList.remove('checking');
@@ -598,7 +624,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   $('#f-password').addEventListener('submit', (e) => {
     e.preventDefault();
     if (!checkRules()) { pwErr.textContent = 'Your password needs everything on the list.'; pwIn.classList.add('is-bad'); pwIn.focus(); return; }
-    toPayment();
+    if (flow === 'reset') finishReset(); else toPayment();
   });
 
   // ---- on to payment ------------------------------------------------------------
@@ -793,6 +819,55 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     // there at full opacity, and this page would be a blank off-white field.
     document.querySelectorAll('.to-company').forEach((v) => v.remove());
   });
+
+  // ---- forgot password ------------------------------------------------------------
+  // The email (filled in when this browser remembers one: what was typed on the log-in, or the
+  // last person logged in here), then the same code and password screens as sign-up, worded for
+  // a reset, then "Password changed" and on to the coming-soon home. Prototype: no email is sent;
+  // any six digits work.
+  let flow = 'signup';
+  const STEP_LABELS = { signup: ['Your details', 'Verify email', 'Create password'], reset: ['Your email', 'Verify email', 'New password'] };
+  const setFlow = (mode) => {
+    flow = mode; const reset = mode === 'reset';
+    document.querySelectorAll('[data-flow-eyebrow]').forEach((e) => (e.textContent = reset ? 'Password recovery' : 'Get early access'));
+    document.querySelectorAll('[data-step="code"] .stepper, [data-step="password"] .stepper').forEach((ol) => {
+      ol.setAttribute('aria-label', reset ? 'Password recovery steps' : 'Sign-up steps');
+      ol.querySelectorAll('.lbl').forEach((l, i) => (l.textContent = STEP_LABELS[mode][i]));
+    });
+    $('#t-password').textContent = reset ? 'Create a new password.' : 'Create a password.';
+    $('#pw-lead').textContent = reset ? 'For' : 'You will log in with it and';
+    $('#pw-go').textContent = reset ? 'Change password' : 'Create account';
+    $('#code-back').dataset.to = reset ? 'forgot' : 'signup';
+  };
+  const fgIn = $('#forgot-email'), fgErr = $('#forgot-err'), fgGo = $('#forgot-go');
+  const fgReady = () => { fgGo.disabled = !fgIn.value.trim(); };
+  ['input', 'change'].forEach((ev) => fgIn.addEventListener(ev, () => { fgErr.textContent = ''; fgIn.classList.remove('is-bad'); fgReady(); }));
+  $('#to-forgot').addEventListener('click', () => {
+    let known = $('#login-email').value.trim();
+    if (!known) { try { known = (JSON.parse(localStorage.getItem('cm-last-person') || 'null') || {}).email || ''; } catch (e) {} }
+    fgIn.value = known; fgErr.textContent = ''; fgIn.classList.remove('is-bad'); fgReady();
+    show('forgot');
+  });
+  $('#f-forgot').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = fgIn.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) { fgErr.textContent = 'That does not look like an email address.'; fgIn.classList.add('is-bad'); fgIn.focus(); return; }
+    const ex = Object.values(EXAMPLES).find((x) => x.email.toLowerCase() === email.toLowerCase());
+    const name = ex ? ex.name : email.split('@')[0].split(/[._-]+/).filter(Boolean).map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+    person = { name, email, via: 'Email' };
+    setFlow('reset');
+    $('#code-email').textContent = email;
+    codes.forEach((c) => { c.value = ''; c.className = ''; });
+    codeBox.classList.remove('checking');
+    show('code');
+  });
+  // the new password is set: logged in as that person, and on to the coming-soon home
+  function finishReset() {
+    try { const who = JSON.stringify(person); sessionStorage.setItem('cm-person', who); localStorage.setItem('cm-last-person', who); } catch (e) {}
+    const first = (person.name || '').split(/\s+/)[0];
+    $('#reset-name').textContent = first ? ', ' + first : '';
+    show('reset-done');
+  }
 
   // ---- log in ------------------------------------------------------------------
   // Prototype: the dummy account (Beatriz) and any password. It dissolves straight into the
