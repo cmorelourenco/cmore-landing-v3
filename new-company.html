@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Add a company · C-MORE</title>
+<meta name="robots" content="noindex">
+<script>
+  // who is signed in (the same rule as every signed-in page): a new tab picks up the last demo
+  // login in this browser; nobody signed in goes to log in first
+  try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null');
+    if (!cmPerson) { cmPerson = JSON.parse(localStorage.getItem('cm-last-person') || 'null');
+      if (cmPerson) { sessionStorage.setItem('cm-person', JSON.stringify(cmPerson)); if (localStorage.getItem('cm-last-company') === 'filled') sessionStorage.setItem('cm-company', 'filled'); } }
+  } catch (e) {}
+  if (!cmPerson) location.replace('register.html?login');
+  document.documentElement.dataset.persona = (cmPerson && !/beatriz/i.test(cmPerson.name || '')) ? 'miguel' : 'beatriz';
+</script>
+<style>
+/* The account creation page's look (register.html): same tokens, steps, stepper and controls. */
+/* Figtree, the brand face — same self-hosted files as the landing. */
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 300; font-display: swap; src: url("fonts/figtree-300.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/figtree-400.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 500; font-display: swap; src: url("fonts/figtree-500.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url("fonts/figtree-600.woff2") format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/figtree-700.woff2") format('woff2'); }
+
+/* The design system's tokens, the subset this page uses. */
+:root {
+  --color-graphite: #343434;
+  --color-coral: #f46d4f;
+  --color-coral-deep: #f44e29;
+  --color-coral-tint: #f9e7e3;
+  --color-blue: #4e638b;
+  --color-mid-blue: #909db6;
+  --color-off-white: #fafafa;
+  --color-light-beige: #f2f1ed;
+  --color-mid-beige: #e9e7e2;
+  --color-dark-beige: #e0ded7;
+  --color-sand-400: #c3c0b8;
+  --color-sand-500: #96958e;
+  --color-sand-600: #6e6e6a;
+  --color-positive: #3f7d2e;
+  --color-critical: #b3261e;
+
+  --color-ground: var(--color-light-beige);
+  --color-surface: #ffffff;
+  --color-surface-sunken: var(--color-mid-beige);
+  --color-ink: var(--color-graphite);
+  --color-ink-muted: var(--color-blue);
+  --color-ink-subtle: var(--color-sand-600);
+  --color-line: var(--color-dark-beige);
+  --color-activation: var(--color-coral);
+  --color-activation-hover: var(--color-coral-deep);
+  --color-activation-foreground: var(--color-graphite);
+
+  --font-sans: 'Figtree', Arial, ui-sans-serif, system-ui, sans-serif;
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius-md: 0.75rem;
+  --radius-pill: 9999px;
+  --shadow-activate: 0 8px 28px -10px rgba(244, 109, 79, 0.55);
+  --shadow-raised: 0 1px 2px rgba(52, 52, 52, 0.05), 0 4px 12px -6px rgba(52, 52, 52, 0.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; background: var(--color-ground); color: var(--color-ink);
+  font-family: var(--font-sans); font-size: 1rem; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; font-synthesis-weight: none;
+}
+h1, h2, p { margin: 0; }
+h1, h2 { text-wrap: balance; }
+a { color: var(--color-ink); text-decoration-color: var(--color-activation); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; border-radius: 0.5rem; }
+::selection { background: var(--color-coral); color: var(--color-graphite); }
+
+/* ---- Page frame --------------------------------------------------------- */
+.reg { min-height: 100vh; display: flex; flex-direction: column; }
+.reg-top { height: 4.5rem; border-bottom: 1px solid var(--color-line); }
+/* the landing header's column: the site's 78rem measure, 2rem in on phones, 2.5rem from 64rem */
+.hdr-in { width: 100%; max-width: 78rem; margin-inline: auto; padding-inline: 2rem; height: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
+
+/* the logo file, at the landing header's size; the link carries the accessible name */
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
+.brand img { display: block; width: 6.8rem; height: 1.25rem; }
+.hdr-right { display: flex; align-items: center; gap: 0.75rem; }
+.top-link { font-size: 0.875rem; color: var(--color-ink-subtle); text-decoration: none; }
+.top-link:hover { color: var(--color-ink); }
+.top-link b { font-weight: 500; color: var(--color-ink); }
+
+/* Every step starts on the same line, whatever its height, so the eyebrow, title and
+   stepper stay put while the fields under them change. */
+.reg-main { flex: 1; display: grid; justify-items: center; align-content: start; padding: clamp(1.5rem, 4vh, 4rem) 1.25rem 4rem; }
+/* the landing's "Know more" cue, turned round: same eyebrow, same coral rule, pointing home */
+.home-cue { display: flex; justify-content: center; padding-top: 1.75rem; }
+.home-cue a { position: relative; display: inline-block; padding-bottom: 0.5rem; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; text-decoration: none; color: var(--color-ink-subtle); transition: color .14s var(--ease-brand); }
+.home-cue a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--color-coral);
+  transform: scaleX(.55); transition: transform .3s var(--ease-brand); }
+.home-cue a:hover { color: var(--color-ink); }
+.home-cue a:hover::after { transform: scaleX(1); }
+.back-row { display: flex; justify-content: center; }
+.stage { width: 100%; max-width: 30rem; }
+
+/* one step visible at a time; the next rises in the way the page itself arrived */
+.step { display: none; }
+.step.is-on { display: block; animation: step-in .55s var(--ease-brand) both; }
+@keyframes step-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-muted); }
+.eyebrow::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.title { margin-top: 1rem; font-size: clamp(2.25rem, 6vw, 3.25rem); line-height: 1.02; letter-spacing: -0.028em; font-weight: 600; }
+.title .soft { font-weight: 300; }
+.lead { margin-top: 1rem; font-size: 1.125rem; line-height: 1.55; font-weight: 300; color: var(--color-ink-muted); }
+
+/* ---- Controls: the design system's input and primary button ----------- */
+.field { display: flex; flex-direction: column; gap: 0.375rem; }
+.field label { font-size: 0.875rem; font-weight: 500; }
+.input {
+  width: 100%; height: 3rem; padding: 0 1rem; font: inherit; font-size: 1rem; color: var(--color-ink);
+  background: var(--color-surface); border: 1px solid var(--color-line); border-radius: var(--radius-md);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+  transition: border-color .14s var(--ease-brand), box-shadow .14s var(--ease-brand);
+}
+.input::placeholder { color: var(--color-sand-500); }
+.input:hover { border-color: var(--color-sand-400); }
+.input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 14%, transparent); }
+.input.is-bad { border-color: var(--color-critical); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-critical) 14%, transparent); }
+.hint { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.err { font-size: 0.8125rem; color: var(--color-critical); min-height: 1.25rem; }
+.err:empty { display: none; } /* no reserved gap under a field until there is something to say */
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 3rem; padding-inline: 1.5rem;
+  border: 1px solid transparent; border-radius: var(--radius-pill); font: inherit; font-weight: 500; font-size: 1rem;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap; text-decoration: none;
+  transition: transform .14s var(--ease-brand), box-shadow .22s var(--ease-brand), background-color .14s var(--ease-brand); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--color-activation); color: var(--color-activation-foreground); }
+.btn-primary:hover:not(:disabled) { background: var(--color-activation-hover); box-shadow: var(--shadow-activate); color: var(--color-activation-foreground); }
+.btn-block { width: 100%; }
+.link-btn { border: 0; background: none; padding: 0; font: inherit; font-size: 0.875rem; color: var(--color-ink-subtle); cursor: pointer; text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; }
+.link-btn:hover { color: var(--color-ink); text-decoration-color: var(--color-activation); }
+
+.form { margin-top: 1.5rem; display: grid; gap: 0.875rem; }
+.form > .btn-primary { margin-top: 0.875rem; }
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.label-row .link-btn { font-size: 0.8125rem; } /* air between the last field and the button */
+
+/* ---- Stepper: where you are in the three steps -----------------------
+   The landing's square nodes on a track. Behind you: graphite, with a check.
+   Where you are: coral, arriving with the brand's quarter-turn, and the stretch
+   of track that led here draws itself in. Ahead: an outline. The first node sits
+   on the form's left edge and the last on its right, so the track spans the form. */
+.stepper { position: relative; list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stepper li { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem;
+  font-size: 0.8125rem; line-height: 1.3; color: var(--color-ink-subtle); }
+.stepper li:nth-child(2) { align-items: center; text-align: center; }
+.stepper li:last-child { align-items: flex-end; text-align: right; }
+/* The two stretches of track, node edge to node edge, with a little air at each end.
+   Nodes are 2rem: the first on the left edge, the second centred, the third on the right. */
+.stepper::before, .stepper::after { content: ""; position: absolute; top: calc(1rem - 1px); height: 2px; border-radius: 2px;
+  background: linear-gradient(var(--color-graphite), var(--color-graphite)) left / 0% 100% no-repeat, var(--color-line); }
+.stepper::before { left: 2.5rem; right: calc(50% + 1.5rem); }
+.stepper::after { left: calc(50% + 1.5rem); right: 2.5rem; }
+.stepper[data-at="2"]::before, .stepper[data-at="3"]::before, .stepper[data-at="3"]::after { background-size: 100% 100%; }
+/* the stretch that brought you here draws in as the step arrives */
+.stepper[data-at="2"]::before, .stepper[data-at="3"]::after { animation: track-draw .7s var(--ease-brand) .15s both; }
+@keyframes track-draw { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
+
+.stepper .node { position: relative; z-index: 1; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 4px;
+  background: var(--color-surface); border: 1.5px solid var(--color-sand-400); color: var(--color-ink-subtle);
+  font-size: 0.8125rem; font-weight: 600; }
+.stepper .node b { font-weight: inherit; }
+.stepper li.is-on { color: var(--color-ink); font-weight: 600; }
+.stepper li.is-on .node { background: var(--color-coral); border-color: var(--color-coral); color: var(--color-graphite);
+  box-shadow: 0 0 0 4px var(--color-coral-tint); animation: node-turn .6s var(--ease-brand) .55s both; }
+@keyframes node-turn { from { transform: rotate(-90deg) scale(.7); box-shadow: 0 0 0 0 var(--color-coral-tint); }
+  to { transform: none; box-shadow: 0 0 0 4px var(--color-coral-tint); } }
+.stepper li.is-done { color: var(--color-ink); }
+.stepper li.is-done .node { background: var(--color-graphite); border-color: var(--color-graphite); }
+.stepper li.is-done .node b { display: none; }
+.stepper li.is-done .node::before { content: ""; width: 0.875rem; height: 0.875rem; background: var(--color-off-white);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center / contain no-repeat; }
+
+.subtitle { margin-top: 0.75rem; font-size: 1.25rem; line-height: 1.45; font-weight: 300; color: var(--color-ink-muted); }
+/* The stepper sits on a fixed line in all three steps: titles are one line, and the
+   subtitle keeps room for two so a long email address cannot push the stepper down. */
+.step .title { white-space: nowrap; }
+.step:has(.stepper) .subtitle { min-height: calc(2 * 1.45em); overflow-wrap: anywhere; }
+@media (min-width: 34rem) { .step:has(.stepper) .subtitle { font-size: 1.125rem; } }
+
+/* ---- Password ---------------------------------------------------------- */
+.pw { position: relative; }
+.pw .input { padding-right: 3rem; }
+.pw .reveal { position: absolute; right: 0.5rem; top: 50%; translate: 0 -50%; width: 2.25rem; height: 2.25rem; display: grid; place-items: center;
+  padding: 0; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink-subtle); cursor: pointer; }
+.pw .reveal svg { width: 1.25rem; height: 1.25rem; }
+.pw .reveal .eye-off, .pw .reveal[aria-pressed="true"] .eye-on { display: none; }
+.pw .reveal[aria-pressed="true"] .eye-off { display: block; }
+.pw .reveal:hover { background: var(--color-surface-sunken); color: var(--color-ink); }
+.rules { list-style: none; margin: 0.375rem 0 0; padding: 0; display: grid; gap: 0.375rem; font-size: 0.9375rem; line-height: 1.4; color: var(--color-ink-muted); }
+.rules li { display: flex; align-items: center; gap: 0.625rem; }
+.rules li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 1px; background: var(--color-sand-400); transition: background-color .2s var(--ease-brand); }
+.rules li.ok { color: var(--color-ink); }
+.rules li.ok::before { background: var(--color-positive); }
+.field-verify { margin-top: 0.75rem; } /* clear air after the list of rules */
+.match { margin-top: 0.125rem; font-size: 0.9375rem; line-height: 1.4; display: flex; align-items: center; gap: 0.625rem; color: var(--color-ink-muted); }
+.match:empty { display: none; }
+.match::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 1px; background: var(--color-sand-400); }
+.match.ok { color: var(--color-ink); }
+.match.ok::before { background: var(--color-positive); }
+
+/* ---- Single sign-on, under the form ----------------------------------- */
+.sso { margin-top: 1rem; display: grid; gap: 0.625rem; }
+.btn-sso { width: 100%; background: var(--color-surface); border-color: var(--color-line); color: var(--color-ink);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); }
+.btn-sso:hover:not(:disabled) { border-color: var(--color-sand-400); color: var(--color-ink); }
+.btn-sso svg { flex: none; width: 1.125rem; height: 1.125rem; }
+.or { margin-top: 1.25rem; display: flex; align-items: center; gap: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--color-line); }
+
+/* ---- The person, on the welcome screen --------------------------------- */
+.mono { flex: none; width: 3.25rem; height: 3.25rem; display: grid; place-items: center; border-radius: 3px;
+  background: var(--color-graphite); color: var(--color-off-white); font-weight: 700; font-size: 1.125rem; letter-spacing: -0.02em; position: relative; }
+/* Your picture on the welcome: your initials until you add a photo. The circle is the
+   button; the camera badge says it can be changed, and the links beside it say how. */
+.me { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.me-pic { position: relative; flex: none; width: 4rem; height: 4rem; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  background: var(--color-graphite); color: var(--color-off-white); display: grid; place-items: center; }
+.me-pic:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 3px; border-radius: 50%; }
+.me-ini { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+.me-img { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; }
+.me-img:empty { display: none; }
+.me-img img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.me-cam { position: absolute; right: -2px; bottom: -2px; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center;
+  background: var(--color-coral); color: var(--color-graphite); border: 2px solid var(--color-ground); }
+.me-cam svg { width: 0.8125rem; height: 0.8125rem; }
+.me-pic::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: rgba(52, 52, 52, .28); opacity: 0; transition: opacity .15s ease; }
+.me-pic:hover::after { opacity: 1; }
+.me-pic.is-over { box-shadow: 0 0 0 3px var(--color-coral); }
+.me-acts { display: flex; flex-direction: column; align-items: flex-start; gap: 0.25rem; font-size: 0.875rem; }
+.me-acts .link-btn { color: var(--color-ink); font-weight: 500; text-decoration-color: var(--color-activation); }
+.me-acts .link-btn[hidden] { display: none; }
+.me-acts .me-note { color: var(--color-ink-subtle); font-size: 0.8125rem; }
+.me-acts .me-err { color: var(--color-critical); font-size: 0.8125rem; }
+.me-acts .me-err:empty { display: none; }
+.done-mark[hidden] { display: none; }
+/* Welcome, three lines: "Welcome to" / "the ecosystem," / the name. "ecosystem" carries the
+   landing's coral highlight, drawn in once the screen has settled. */
+.done-title .ln { display: block; }
+.done-title .ln[hidden] { display: none; }
+.done-title .hl { background-image: linear-gradient(var(--color-coral), var(--color-coral)); background-repeat: no-repeat;
+  background-position: 0 88%; background-size: 100% 0.28em; padding-inline: 0.08em;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.step.is-on .done-title .hl { animation: hl-draw 1s var(--ease-brand) .45s both; }
+@keyframes hl-draw { from { background-size: 0% 0.28em; } to { background-size: 100% 0.28em; } }
+.actions { margin-top: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 0.875rem; }
+
+/* ---- Code -------------------------------------------------------------- */
+.code { margin-top: 2rem; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.5rem; }
+.code input { width: 100%; aspect-ratio: 0.86; min-width: 0; text-align: center; font: inherit; font-size: 1.5rem; font-weight: 600;
+  color: var(--color-ink); background: var(--color-surface); border: 1px solid var(--color-line); border-radius: 0.5rem;
+  transition: border-color .14s var(--ease-brand), box-shadow .14s var(--ease-brand), transform .3s var(--ease-brand); }
+.code input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 14%, transparent); }
+.code input.ok { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
+.code.checking input { animation: code-pulse .9s var(--ease-brand) infinite alternate; }
+.code.checking input:nth-child(2) { animation-delay: .08s; } .code.checking input:nth-child(3) { animation-delay: .16s; }
+.code.checking input:nth-child(4) { animation-delay: .24s; } .code.checking input:nth-child(5) { animation-delay: .32s; }
+.code.checking input:nth-child(6) { animation-delay: .4s; }
+@keyframes code-pulse { to { background: var(--color-coral); border-color: var(--color-coral); color: var(--color-graphite); } }
+.code-meta { margin-top: 1rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: 0.875rem; color: var(--color-ink-subtle); }
+
+/* ---- Done -------------------------------------------------------------- */
+.done-mark { display: flex; gap: 6px; }
+.done-mark i { width: 14px; height: 14px; border-radius: 2px; background: var(--color-graphite); animation: done-pop .5s var(--ease-brand) both; }
+.done-mark i:nth-child(2) { animation-delay: .08s; } .done-mark i:nth-child(3) { animation-delay: .16s; background: var(--color-coral); }
+@keyframes done-pop { from { opacity: 0; transform: translateY(8px) rotate(-90deg); } to { opacity: 1; transform: none; } }
+.ready { list-style: none; margin: 1.75rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--color-line); display: grid; gap: 0.625rem; }
+.ready li { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.25rem 1rem; min-height: 1.75rem; font-size: 0.9375rem; }
+.ready .k { color: var(--color-ink-subtle); }
+.ready .v { display: inline-flex; align-items: center; gap: 0.75rem; margin-left: auto; font-weight: 500; text-align: right; }
+.ready .v[hidden] { display: none; }
+.ready .v .muted { font-weight: 400; color: var(--color-ink-subtle); }
+.ready .v .link-btn { font-weight: 500; color: var(--color-ink); text-decoration-color: var(--color-activation); }
+/* editing a row: the field drops under its label and takes the full width */
+.ready-form { flex-basis: 100%; display: flex; gap: 0.5rem; align-items: center; margin-top: 0.375rem; }
+.ready-form .input { height: 2.5rem; font-size: 0.9375rem; padding: 0 0.75rem; }
+.ready-form select.input { flex: none; width: 6.25rem; appearance: none; cursor: pointer; padding-right: 1.75rem;
+  background: var(--color-surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2396958e' stroke-width='1.5'><path d='M6 8l4 4 4-4'/></svg>") right 0.5rem center / 1rem no-repeat; }
+.ready-form .btn { flex: none; height: 2.5rem; padding-inline: 1rem; font-size: 0.875rem; }
+.ready li.is-field { padding-top: 0.25rem; }
+.ready .opt { color: var(--color-sand-500); }
+.ready-err { flex-basis: 100%; font-size: 0.8125rem; color: var(--color-critical); }
+.ready-err:empty { display: none; }
+.ready-note { flex-basis: 100%; margin: 0.125rem 0 0; font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+
+/* ---- Arriving and leaving --------------------------------------------- */
+/* Direct visits settle in; arrivals from the landing do not, because the landing
+   already slid this exact frame up into place. */
+.reg-main { animation: arrive .6s var(--ease-brand) both; }
+.from-landing .reg-main, .embedded .reg-main { animation: none; }
+@keyframes arrive { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+/* going back runs the landing's move in reverse: this page drops away downwards */
+.leaving .reg { transform: translateY(100vh); transition: transform .7s cubic-bezier(0.7, 0, 0.2, 1); }
+/* Going on to the company: this screen does not slide away, it dissolves.
+   The veil settles on the same off-white the next page paints itself, so the
+   two pages meet on one colour and the navigation underneath is invisible. */
+.to-company { position: fixed; inset: 0; z-index: 999; pointer-events: none;
+  background: var(--color-off-white); opacity: 0; transition: opacity .9s ease; }
+.to-company.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .to-company { transition: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ---- New company: the steps' own parts ----------------------------------- */
+.stage { max-width: 38rem; }
+/* each step's form is one large card: everything it asks for, and its button, inside it */
+.form.big { margin-top: 1.75rem; gap: 1.125rem; padding: 2rem; border: 1px solid var(--color-line); border-radius: 20px; background: var(--color-surface);
+  box-shadow: 0 1px 2px rgba(52,52,52,.04), 0 30px 60px -40px rgba(52,52,52,.3); }
+.form.big > .btn-primary { margin-top: 0.5rem; }
+.form.big .back-row { margin-top: -0.25rem; }
+@media (max-width: 30rem) { .form.big { padding: 1.25rem; border-radius: 16px; } }
+.step .title { white-space: normal; }
+/* the plan, the card on file, and the total */
+/* the structure's three choices: one white card, a line between them; the dot marks the chosen
+   one, and what it opens (its parent, or the companies under it) sits right under it */
+.opts { display: grid; margin: -0.75rem 0 0; border-bottom: 1px solid var(--color-mid-beige); }
+.opts > * + .opt { border-top: 1px solid var(--color-mid-beige); }
+.opt { position: relative; display: flex; align-items: flex-start; gap: 0.875rem; padding: 1.125rem 0.5rem; margin: 0 -0.5rem; border-radius: 10px; cursor: pointer; transition: background-color .14s var(--ease-brand); }
+.opt:hover { background: var(--color-off-white); }
+.opt:has(input:focus-visible) { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
+.opt input { position: absolute; opacity: 0; pointer-events: none; }
+.opt .dot { flex: none; width: 1.25rem; height: 1.25rem; margin-top: 0.125rem; border-radius: 50%; border: 1.5px solid var(--color-sand-400); display: grid; place-items: center; background: var(--color-surface); }
+.opt:has(input:checked) .dot { border-color: var(--color-graphite); background: var(--color-graphite); box-shadow: inset 0 0 0 3px var(--color-surface); }
+.opt-t { display: grid; gap: 0.125rem; flex: 1 1 auto; min-width: 0; }
+.opt-t b { font-size: 1rem; font-weight: 600; }
+.opt-t span { font-size: 0.875rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.opt-p { flex: none; text-align: right; display: grid; gap: 0.125rem; }
+.opt-p b { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.01em; }
+.opt-p s { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.opt-p small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.opt .tag { display: inline-block; width: max-content; margin-top: 0.375rem; padding: 0.125rem 0.5rem; border-radius: 4px; background: var(--color-coral-tint); color: var(--color-graphite); font-size: 0.75rem; font-weight: 600; }
+select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
+  background: var(--color-surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2396958e' stroke-width='1.5'><path d='M6 8l4 4 4-4'/></svg>") right 0.875rem center / 1.125rem no-repeat; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
+@media (max-width: 30rem) { .two { grid-template-columns: 1fr; } .opt { padding: 0.875rem 1rem; gap: 0.75rem; } .opt-p b { font-size: 1rem; } }
+/* the structure: a choice is required; each opens what it needs */
+.more { display: grid; gap: 0.5rem; padding: 0 0 1.25rem 2.125rem; }
+.more[hidden] { display: none; }
+.kids { display: grid; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.kids label { display: flex; align-items: center; gap: 0.625rem; font-size: 0.9375rem; cursor: pointer; }
+.kids input { width: 1rem; height: 1rem; accent-color: var(--color-graphite); }
+.opt-l { font-weight: 400; color: var(--color-sand-500); }
+.foot { margin-top: 1.5rem; display: flex; justify-content: center; }
+.note { margin-top: 0.875rem; text-align: center; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+</style>
+</head>
+<body>
+<div class="reg">
+  <header class="reg-top"><div class="hdr-in">
+    <a class="brand" href="my-company.html?filled" aria-label="C-MORE, back to your company"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
+    <div class="hdr-right"><a class="top-link" href="my-company.html?filled" id="cancel">Cancel</a></div>
+  </div></header>
+
+  <main class="reg-main">
+    <div class="stage">
+
+      <!-- 1. Payment: every company on C-MORE has its own subscription -->
+      <!-- 2. The company: what decides the documents it will be asked for -->
+      <section class="step is-on" data-step="details" aria-labelledby="t-details">
+        <p class="eyebrow">New company</p>
+        <h1 class="title" id="t-details">About the company.</h1>
+        <p class="subtitle"><span id="paid-with">Paid</span>. Next: its country and sector decide which documents it will be asked for.</p>
+        <ol class="stepper" data-at="2" aria-label="New company steps">
+          <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Payment</span></li>
+          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Company details</span></li>
+          <li><span class="node" aria-hidden="true"><b>3</b></span><span class="lbl">Structure</span></li>
+        </ol>
+        <form class="form big" id="f-details" novalidate>
+          <div class="field">
+            <label for="c-name">Company name</label>
+            <input class="input" id="c-name" name="name" autocomplete="organization" placeholder="Its legal name" required>
+            <p class="err" id="c-name-err" role="alert"></p>
+          </div>
+          <div class="two">
+            <div class="field">
+              <label for="c-country">Country</label>
+              <select class="input" id="c-country" name="country" required>
+                <option value="PT">Portugal</option><option value="ES">Spain</option><option value="FR">France</option><option value="DE">Germany</option>
+                <option value="IT">Italy</option><option value="NL">Netherlands</option><option value="BE">Belgium</option><option value="IE">Ireland</option>
+                <option value="US">United States</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="c-sector">Sector</label>
+              <select class="input" id="c-sector" name="sector" required>
+                <option>Construction</option><option>Industry</option><option>Services</option><option>Retail</option><option>Technology</option><option>Transport and logistics</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="c-tax"><span id="c-tax-l">Tax number (NIF)</span> <span class="opt-l">Optional</span></label>
+            <input class="input" id="c-tax" name="tax" inputmode="text" autocomplete="off" placeholder="9 digits">
+            <p class="err" id="c-tax-err" role="alert"></p>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="details-go" disabled>Continue</button>
+        </form>
+      </section>
+
+      <!-- 3. Structure: required — a group's parent, one of its companies, or neither -->
+      <section class="step" data-step="structure" aria-labelledby="t-structure">
+        <p class="eyebrow">New company</p>
+        <h1 class="title" id="t-structure">Is it part of a group?</h1>
+        <p class="subtitle">So clients see how <b id="s-name" style="font-weight:500;color:var(--color-ink)">it</b> relates to your other companies.</p>
+        <ol class="stepper" data-at="3" aria-label="New company steps">
+          <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Payment</span></li>
+          <li class="is-done"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Company details</span></li>
+          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>3</b></span><span class="lbl">Structure</span></li>
+        </ol>
+        <form class="form big" id="f-structure" novalidate>
+          <div class="opts" role="radiogroup" aria-label="Company structure" aria-required="true">
+            <label class="opt"><input type="radio" name="structure" value="parent"><span class="dot" aria-hidden="true"></span>
+              <span class="opt-t"><b>Parent company</b><span>Other companies sit under it, like a holding.</span></span></label>
+            <div class="more" id="more-parent" hidden>
+              <span class="hint">Which of your companies sit under it? <span style="color:var(--color-sand-500)">Optional</span></span>
+              <ul class="kids" id="kids"></ul>
+            </div>
+            <label class="opt"><input type="radio" name="structure" value="subsidiary"><span class="dot" aria-hidden="true"></span>
+              <span class="opt-t"><b>Subsidiary company</b><span>It belongs to a group: one of your companies is its parent.</span></span></label>
+            <div class="more" id="more-sub" hidden>
+              <label class="hint" for="c-parent">Its parent company</label>
+              <select class="input" id="c-parent"></select>
+            </div>
+            <label class="opt"><input type="radio" name="structure" value="independent"><span class="dot" aria-hidden="true"></span>
+              <span class="opt-t"><b>None</b><span>It stands on its own, not part of a group.</span></span></label>
+          </div>
+          <p class="err" id="structure-err" role="alert"></p>
+          <button class="btn btn-primary btn-block" type="submit" id="structure-go" disabled>Create company</button>
+          <div class="back-row"><button type="button" class="link-btn" data-to="details">Back</button></div>
+        </form>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="js/company-switcher.js"></script>
+<script>
+(() => {
+  const O = window.CMOrgs;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // only a super admin adds companies; anyone else goes back where they came from
+  if (!O || O.role !== 'super_admin') { location.replace('my-company.html?filled'); return; }
+  const back = O.current().state === 'filled' ? 'my-company.html?filled' : 'my-company.html?page';
+  document.querySelectorAll('#cancel, .brand').forEach((a) => a.setAttribute('href', back));
+
+  const show = (name) => {
+    document.querySelectorAll('.step').forEach((s) => s.classList.toggle('is-on', s.dataset.step === name));
+    const first = document.querySelector(`.step[data-step="${name}"] input:not([type=radio]):not([type=checkbox]), .step[data-step="${name}"] input`);
+    setTimeout(() => first && first.focus({ preventScroll: true }), 60);
+    scrollTo(0, 0);
+  };
+  document.querySelectorAll('[data-to]').forEach((b) => b.addEventListener('click', () => show(b.dataset.to)));
+
+  // ---- paid first: step 1 is new-company-pay.html, the sign-up checkout ------------------
+  let paidInfo = null;
+  try { paidInfo = JSON.parse(sessionStorage.getItem('cm-newco-paid') || 'null'); } catch (e) {}
+  if (!paidInfo) { location.replace('new-company-pay.html'); return; }
+
+  // ---- 2. details --------------------------------------------------------------------------
+  // the tax number's name and shape follow the country
+  const TAX = { PT: ['NIF', '9 digits', /^\d{9}$/], ES: ['NIF / CIF', 'e.g. B12345678', /^[A-Z0-9]{9}$/], FR: ['SIREN or VAT', '9 digits, or FR + 11', /^(\d{9}|FR[A-Z0-9]{2}\d{9})$/],
+    DE: ['VAT ID', 'DE + 9 digits', /^DE\d{9}$/], IT: ['Partita IVA', '11 digits', /^\d{11}$/], NL: ['VAT ID', 'NL + 9 digits + B + 2', /^NL\d{9}B\d{2}$/],
+    BE: ['Enterprise number', '10 digits', /^\d{10}$/], IE: ['VAT number', 'IE + 8 or 9 characters', /^IE[A-Z0-9]{8,9}$/], US: ['EIN', '12-3456789', /^\d{2}-?\d{7}$/] };
+  const cur = O.current();
+  if (cur.country && TAX[cur.country]) $('#c-country').value = cur.country;
+  if (cur.sector) $('#c-sector').value = cur.sector;
+  const tax = () => TAX[$('#c-country').value];
+  const clean = (v) => v.toUpperCase().replace(/[\s.]/g, '');
+  const paintTax = () => { $('#c-tax-l').textContent = `Tax number (${tax()[0]})`; $('#c-tax').placeholder = tax()[1]; checkDetails(false); };
+  const checkDetails = (loud) => {
+    const name = $('#c-name').value.trim(), t = clean($('#c-tax').value);
+    const nameOk = name.length >= 2, taxOk = !t || tax()[2].test(t);
+    if (loud) {
+      $('#c-name-err').textContent = nameOk ? '' : 'Give the company its name.';
+      $('#c-tax-err').textContent = taxOk ? '' : `That doesn't look like a valid ${tax()[0]}: ${tax()[1]}.`;
+      $('#c-name').classList.toggle('is-bad', !nameOk); $('#c-tax').classList.toggle('is-bad', !taxOk);
+    }
+    $('#details-go').disabled = !name;
+    return nameOk && taxOk;
+  };
+  $('#c-country').addEventListener('change', paintTax);
+  ['#c-name', '#c-tax'].forEach((s) => $(s).addEventListener('input', () => { $(s).classList.remove('is-bad'); $(s + '-err').textContent = ''; checkDetails(false); }));
+  $('#f-details').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!checkDetails(true)) { (document.querySelector('#f-details .is-bad') || $('#c-name')).focus(); return; }
+    $('#s-name').textContent = $('#c-name').value.trim();
+    paintStructure();
+    show('structure');
+  });
+  paintTax();
+  document.getElementById('paid-with').innerHTML = `Paid <b style="font-weight:500;color:var(--color-ink)">${esc(paidInfo.total)}</b>${paidInfo.paidWith ? ' with ' + esc(paidInfo.paidWith) : ''}`;
+  setTimeout(() => $('#c-name').focus({ preventScroll: true }), 60);
+
+  // ---- 3. structure ------------------------------------------------------------------------
+  const paintStructure = () => {
+    const orgs = O.list();
+    $('#kids').innerHTML = orgs.map((o) => `<li><label><input type="checkbox" value="${esc(o.id)}">${esc(o.name)}${O.parentOf(o.id) ? ' <span class="hint">&middot; now part of ' + esc((O.byId(O.parentOf(o.id)) || {}).name || '') + '</span>' : ''}</label></li>`).join('');
+    $('#c-parent').innerHTML = orgs.map((o) => `<option value="${esc(o.id)}"${o.id === cur.id ? ' selected' : ''}>${esc(o.name)}</option>`).join('');
+  };
+  const structure = () => { const r = document.querySelector('[name="structure"]:checked'); return r ? r.value : null; };
+  document.querySelectorAll('[name="structure"]').forEach((r) => r.addEventListener('change', () => {
+    $('#more-parent').hidden = structure() !== 'parent';
+    $('#more-sub').hidden = structure() !== 'subsidiary';
+    $('#structure-err').textContent = '';
+    $('#structure-go').disabled = !structure();
+  }));
+  $('#f-structure').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const s = structure();
+    if (!s) { $('#structure-err').textContent = 'Choose one: parent, subsidiary or none.'; return; }
+    const org = O.add({
+      name: $('#c-name').value.trim(), country: $('#c-country').value, sector: $('#c-sector').value, tax: clean($('#c-tax').value),
+      structure: s, parent: s === 'subsidiary' ? $('#c-parent').value : null, plan: paidInfo.plan, paidWith: paidInfo.paidWith,
+    }, s === 'parent' ? [...document.querySelectorAll('#kids input:checked')].map((x) => x.value) : []);
+    // into the new company: its empty homepage, with ALMA's step over it — use her, or skip
+    try { sessionStorage.removeItem('cm-newco-paid'); } catch (er) {}
+    O.go(org);
+  });
+})();
+</script>
+</body>
+</html>

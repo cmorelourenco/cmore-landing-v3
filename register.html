@@ -500,6 +500,9 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
   const $ = (s) => document.querySelector(s);
+  // a login starts clean: companies added in an earlier session (and cards added with them) are
+  // gone, as they are after Log out — only each person's main company is part of the demo
+  const forgetCompanies = () => { try { ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
 
   // ---- steps ---------------------------------------------------------------
   const show = (name) => {
@@ -634,7 +637,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   function toPayment() {
     done(false);
     // a new demo session starts with an empty ESG Questionnaire, and so no company score
-    try { sessionStorage.setItem('cm-person', JSON.stringify(person)); sessionStorage.removeItem('cm-esg'); localStorage.setItem('cm-last-person', JSON.stringify(person)); localStorage.removeItem('cm-last-company'); } catch (e) {}
+    try { sessionStorage.setItem('cm-person', JSON.stringify(person)); sessionStorage.removeItem('cm-esg'); forgetCompanies(); localStorage.setItem('cm-last-person', JSON.stringify(person)); localStorage.removeItem('cm-last-company'); } catch (e) {}
     location.href = 'payment.html';
   }
 
@@ -649,7 +652,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     try {
       sessionStorage.setItem('cm-done', JSON.stringify({ first, pic: $('#d-pic').innerHTML, mono: $('#d-mono').textContent, ready: $('#ready').innerHTML }));
       sessionStorage.setItem('cm-person', JSON.stringify(person)); sessionStorage.removeItem('cm-esg');
-      localStorage.setItem('cm-last-person', JSON.stringify(person)); localStorage.removeItem('cm-last-company');
+      forgetCompanies(); localStorage.setItem('cm-last-person', JSON.stringify(person)); localStorage.removeItem('cm-last-company');
     } catch (e) {}
   };
   // The phone is always a field: optional, kept as you type, checked when you leave it.
@@ -863,7 +866,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   });
   // the new password is set: logged in as that person, and on to the coming-soon home
   function finishReset() {
-    try { const who = JSON.stringify(person); sessionStorage.setItem('cm-person', who); localStorage.setItem('cm-last-person', who); } catch (e) {}
+    try { const who = JSON.stringify(person); sessionStorage.setItem('cm-person', who); forgetCompanies(); localStorage.setItem('cm-last-person', who); } catch (e) {}
     const first = (person.name || '').split(/\s+/)[0];
     $('#reset-name').textContent = first ? ', ' + first : '';
     show('reset-done');
@@ -895,7 +898,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     // pre-filled account the rest of the demo assumes
     const match = Object.values(EXAMPLES).find((ex) => ex.email.toLowerCase() === typed.toLowerCase()) || EXAMPLES.f;
     // remembered for this browser too, so a link opened in a new tab is still this person
-    try { const who = JSON.stringify({ ...match, via: 'Email' }); sessionStorage.setItem('cm-person', who); sessionStorage.removeItem('cm-esg'); localStorage.setItem('cm-last-person', who); localStorage.setItem('cm-last-company', 'filled'); } catch (err) {}
+    try { const who = JSON.stringify({ ...match, via: 'Email' }); sessionStorage.setItem('cm-person', who); sessionStorage.removeItem('cm-esg'); forgetCompanies(); localStorage.setItem('cm-last-person', who); localStorage.setItem('cm-last-company', 'filled'); } catch (err) {}
     await wait(600);
     toCompany('my-company.html?filled');
   });
@@ -904,7 +907,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     b.lastChild.textContent = 'Connecting to ' + b.dataset.loginSso + '…';
     await wait(900);
     // a provider sign-in carries no typed email to match against, so it is always Beatriz's
-    try { const who = JSON.stringify({ ...EXAMPLES.f, via: b.dataset.loginSso }); sessionStorage.setItem('cm-person', who); sessionStorage.removeItem('cm-esg'); localStorage.setItem('cm-last-person', who); localStorage.setItem('cm-last-company', 'filled'); } catch (e) {}
+    try { const who = JSON.stringify({ ...EXAMPLES.f, via: b.dataset.loginSso }); sessionStorage.setItem('cm-person', who); sessionStorage.removeItem('cm-esg'); forgetCompanies(); localStorage.setItem('cm-last-person', who); localStorage.setItem('cm-last-company', 'filled'); } catch (e) {}
     toCompany('my-company.html?filled');
   }));
   // the header's link and the tab title follow the mode: log in, or sign up
