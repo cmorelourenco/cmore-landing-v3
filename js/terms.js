@@ -22,7 +22,7 @@ window.CM_TERMS = {
       '• "Customer Data" means all documents, information, answers, comments and other content that you or your users upload to, enter into or generate through the Services, including content drafted by ALMA from your documents.',
       '• "Founding Member" means a customer who has secured a place in the early-access programme described in section 4.',
       '• "Connected Party" means any client, buyer, supplier, subcontractor or other organisation with which you choose to share Customer Data through the Services.',
-      '• "Subscription" means the plan you select at checkout, monthly or annual, and the fees that apply to it.',
+      '• "Subscription" means the plan you select at checkout, paid annually or in monthly instalments, and the fees that apply to it. Every Subscription is a 12-month commitment.',
     ]],
     ['Eligibility and accounts', [
       'The Services are intended for businesses and for individuals acting for the purposes of their trade, business, craft or profession. You must be at least 18 years old to create an Account. You must not use the Services as a consumer.',
@@ -37,7 +37,7 @@ window.CM_TERMS = {
     ['Subscriptions, fees and payment', [
       'Access to the Services requires a paid Subscription. The fees, billing period and currency for your Subscription are those shown at checkout and confirmed in your order. Unless stated otherwise, fees are exclusive of VAT and any other applicable taxes, which you must pay in addition.',
       'You may pay by card, by SEPA direct debit, by digital wallet or, for annual Subscriptions, against an invoice. By providing payment details you authorise us and our payment providers to charge the fees when they fall due. Invoices are payable within [payment term] days of their date.',
-      'Subscriptions renew automatically at the end of each billing period for a further period of the same length, unless you cancel before the renewal date through your Account settings or by contacting us. We will remind you of an annual renewal at least [notice period] days before it takes place.',
+      'Each Subscription runs for a term of 12 months, including where you pay in monthly instalments, and the instalments for the whole term are payable even if you stop using the Services before it ends. Subscriptions renew automatically at the end of each term for a further 12 months, unless you cancel before the renewal date through your Account settings or by contacting us. We will remind you of an annual renewal at least [notice period] days before it takes place.',
       'If any amount is not paid when due, we may, after giving you notice and a reasonable opportunity to pay, suspend access to the Services until payment is received. Except where required by law or stated otherwise in these Terms, fees already paid are not refundable.',
       'We may change our fees with effect from your next renewal by giving you at least 30 days\' notice. If you do not agree to a change, you may cancel your Subscription before it takes effect.',
     ]],

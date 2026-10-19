@@ -313,14 +313,15 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
 
           <button type="button" class="plan" role="radio" aria-checked="false" data-plan="monthly" tabindex="-1">
             <span class="head">
-              <span class="kind"><small class="muted">Monthly</small><span>Pay as you go</span></span>
+              <span class="kind"><small class="muted">Monthly</small><span>Annual plan, paid monthly</span></span>
               <span class="radio" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#343434" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
             </span>
             <span class="price">
               <span class="amt"><strong id="m-amt">$50</strong><span class="per muted">/ month</span></span>
-              <span class="note muted" id="m-note">$600 over a year</span>
+              <span class="note muted" id="m-note">$600 over the 12 months</span>
             </span>
             <span class="feats">
+              <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>12-month commitment</span>
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Billed monthly</span>
             </span>
           </button>
@@ -397,7 +398,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   onCur.push(() => {
     const c = CUR[cur];
     document.getElementById('m-amt').textContent = money(cur, c.m);
-    document.getElementById('m-note').textContent = money(cur, c.m * 12) + ' over a year';
+    document.getElementById('m-note').textContent = money(cur, c.m * 12) + ' over the 12 months';
     document.getElementById('y-amt').textContent = money(cur, c.y);
     document.getElementById('y-was').textContent = money(cur, c.yWas);
     document.getElementById('y-note').innerHTML = '<b class="promo">Halloween price until 31 Oct</b> · ' + money(cur, Math.round(c.y / 12 * 100) / 100) + ' / month · save ' + money(cur, c.m * 12 - c.y);

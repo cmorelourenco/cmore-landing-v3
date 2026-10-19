@@ -447,9 +447,9 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   onCur.push(() => {
     const c = CUR[cur], amt = annual ? c.y : c.m;
     total = money(cur, amt);
-    document.getElementById('plan-label').innerHTML = annual ? 'Annual · ' + total + ' / year<br>Halloween price · was ' + money(cur, c.yWas) : 'Monthly · ' + total + ' / month';
+    document.getElementById('plan-label').innerHTML = annual ? 'Annual · ' + total + ' / year<br>Halloween price · was ' + money(cur, c.yWas) : 'Monthly · ' + total + ' / month<br>12-month commitment';
     document.getElementById('total').textContent = total;
-    document.getElementById('renew-note').textContent = (annual ? 'Renews yearly at ' : 'Renews monthly at ') + total + ' until cancelled.';
+    document.getElementById('renew-note').textContent = annual ? 'Renews yearly at ' + total + ' until cancelled.' : 'A 12-month commitment, billed at ' + total + ' a month. Renews yearly until cancelled.';
     // Change and Back return to the plan picker with this plan and currency still chosen
     ['plan-change', 'co-back'].forEach((id) => document.getElementById(id).setAttribute('href', 'payment.html?plan=' + plan + '&cur=' + cur));
     if (typeof label === 'function') label();
