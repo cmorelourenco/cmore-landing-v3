@@ -112,7 +112,7 @@
         'CO-08': ['valid', '1 Jan 2026', '31 Dec 2026', '', { ref: 'AT 0091&#8209;448210', by: 'Fidelidade' }],
         'CO-10': ['expiring', '3 Nov 2025', '3 Nov 2026', 'Asked for by 2 clients.', { ref: 'RC 77&#8209;104382', by: 'Fidelidade' }],
         'CO-11': ['valid', '14 Apr 2026', '14 Apr 2027', '', { by: 'Allianz Portugal' }],
-        'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'ALMA could not read the service model &mdash; check the highlighted field.', { edited: true }],
+        'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'ALMA could not read the service model &mdash; check the highlighted field.', { edited: true, by: 'Prevenir &ndash; Seguran&ccedil;a no Trabalho, Lda.' }],
         'CO-13': ['valid', '10 Feb 2025', 'No expiry', '', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
         'CO-14': ['valid', '31 Mar 2026', 'Next report, Apr 2027'],
         'CO-15': ['valid', '1 Jul 2026', '1 Jan 2027', 'Asked for by 1 client.'],
@@ -282,7 +282,7 @@
   let detail = null; // the id of a per-record document whose roster is open, or null
   let worker = null; // the index of a worker whose own page is open, or null
   let machine = null; // the index of a machine whose own page is open, or null
-  const open = new Set(); // ids of document rows expanded to show their fields
+  const open = new Set(); // ids of document rows expanded to show their versions
   let detailQ = '';
   let detailFilter = { status: new Set(), tag: new Set() };
   let detailFiltOpen = false;
@@ -297,65 +297,220 @@
   const dash = '<span class="co-subtle">&mdash;</span>';
 
   // ---- one document's row ----------------------------------------------------------------------------
-  // The catalog's columns, the same in every table: Document, Belongs to, Status, Reference no.,
-  // Issued by, Issue date, Expiry date, Edited by user. A per-record document opens its roster;
-  // every other row expands to the fields ALMA reads from it.
+  // The catalog's columns, the same in every table: Document, Belongs to, Status, ALMA confidence,
+  // Reference no., Issued by, Issue date, Expiry date, Edited by user. A per-record document opens its
+  // roster; any other row opens the document in a drawer, and its chevron lists earlier versions.
   const belongsTo = (d) => {
     if (d.kind) return d.roster.length ? `${d.roster.length} ${NOUN[d.kind][d.roster.length === 1 ? 0 : 1]}` : dash;
     return { all_workers: 'All workers', per_worker: 'A worker', per_equipment: 'A machine', per_product: 'A product' }[d.level] || 'Company';
   };
+  const hash = (s) => [...String(s)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 100003, 11);
+  const NO_FILE = ['missing', 'na', 'notrequested', 'notuploaded', 'filemissing'];
+  // how sure ALMA is of its reading: a percentage, and the band it falls in. A document it flagged
+  // reads lower; one still being read has none yet; data typed in with no file has nothing to read
+  const confOf = (d, salt = '') => {
+    if (NO_FILE.includes(d.status)) return null;
+    if (d.status === 'processing') return 'reading';
+    const h = hash(d.code + (d.archivedCode || '') + salt + PERSONA);
+    return d.status === 'attention' ? 58 + (h % 15) : 86 + (h % 14);
+  };
+  // shown as a tag, not a number — the same badge as the Status column, so the two read alike
+  const band = (p) => (p >= 90 ? ['High', 'b-ok', 'Read cleanly, and it matches the profile.'] : p >= 75 ? ['Medium', 'b-pend', 'Read well, but worth a glance.'] : ['Low', 'b-over', 'ALMA isn&rsquo;t sure of something here &mdash; check it against the file.']);
+  const confCell = (p) => {
+    if (p === 'reading') return '<span class="co-badge b-neu">Reading&hellip;</span>';
+    if (p == null) return dash;
+    const [b, cls, why] = band(p);
+    return `<span class="co-badge ${cls}" title="${why}">${b} confidence</span>`;
+  };
+  // a roster row reads as sure as its least sure record
+  const rosterConf = (d) => { const l = d.roster.filter((r) => !NO_FILE.includes(r.status)).map((r) => (r.status === 'attention' ? 61 : 86 + (hash(d.code + r.i) % 14))); return l.length ? Math.min(...l) : null; };
+
+  // ---- earlier versions ---------------------------------------------------------------------------
+  // Every document keeps the versions it replaced. A monthly one has last month's, and the month
+  // before; a yearly one last year's; one renewed on change, the one before the change. Prototype:
+  // made up from each document's renewal rule and its current issue date, the same every time.
+  const MON = MONTHS;
+  const parse = (s) => { const m = /^(\d{1,2}) (\w{3}) (\d{4})$/.exec(s || ''); return m ? new Date(+m[3], MON.indexOf(m[2]), +m[1]) : null; };
+  const fmt = (dt) => `${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}`;
+  const addM = (dt, n) => new Date(dt.getFullYear(), dt.getMonth() + n, Math.min(dt.getDate(), 28));
+  const versionsOf = (d) => {
+    if (d.kind || NO_FILE.includes(d.status) || d.status === 'archived') return [];
+    const now = parse(d.issued); if (!now) return [];
+    const r = (d.cat.renewal || '').toLowerCase(), h = hash(d.code);
+    const monthly = /month/.test(r) && !/6/.test(r);
+    const step = monthly ? 1 : /6|six/.test(r) ? 6 : /3 years/.test(r) ? 36 : /1.2 years/.test(r) ? 18 : /change|revision|amend|plan|client|entry|delivery|transport|assembly|posting|product/.test(r) || !r ? 0 : 12;
+    const n = monthly ? 4 : step ? 2 + (h % 2) : 1;
+    const gap = step || 14 + (h % 18);
+    const who = monthly ? ['Ana Rocha, accountant', 'Ana Rocha, accountant', 'Miguel Ferreira'] : ['Miguel Ferreira', 'Helena Ferreira'];
+    const out = [];
+    let replacedOn = now;
+    for (let k = 1; k <= n; k++) {
+      const issued = addM(now, -gap * k);
+      const expires = d.valid === 'No expiry' ? 'No expiry' : monthly ? fmt(addM(issued, 1)) : fmt(addM(issued, step || 12));
+      out.push({
+        label: monthly ? `${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][issued.getMonth()]} ${issued.getFullYear()}` : `Version of ${fmt(issued)}`,
+        issued: fmt(issued), valid: expires, replaced: fmt(replacedOn), by: who[k % who.length],
+        ref: d.ref ? refOf(d.code + k, String(issued.getFullYear())) : '', conf: 86 + (hash(d.code + k) % 13),
+      });
+      replacedOn = issued;
+    }
+    return out;
+  };
+
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
     const hasRoster = !!(d.kind && d.roster.length);
     const attn = hasRoster ? d.roster.filter((r) => RANK[r.status] > 0).length : 0;
     const alert = attn ? `<span class="cd-row-alert">${attn}</span>` : '';
     const isOpen = open.has(d.id);
-    const opener = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : `<span class="cd-row-open cd-row-exp${isOpen ? ' is-open' : ''}" aria-hidden="true">${CHEV_D}</span>`;
-    const attrs = (hasRoster ? ` data-detail="${d.id}" role="link"` : ` data-expand="${d.id}" aria-expanded="${isOpen}"`) + ` data-row-id="${d.id}" tabindex="0"`;
+    // the Versions column: how many there are (the current one and those it replaced), and a
+    // dropdown that lists them under the row; a per-record document keeps its roster instead
+    const nv = hasRoster || NO_FILE.includes(d.status) || d.status === 'processing' ? 0 : versionsOf(d).length + 1;
+    const opener = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>`
+      : nv ? `<button type="button" class="cd-vbtn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}" aria-label="${nv} version${nv === 1 ? '' : 's'} of ${esc(d.name)}">${nv} version${nv === 1 ? '' : 's'}${CHEV_D}</button>` : dash;
+    const attrs = (hasRoster ? ` data-detail="${d.id}" role="link"` : ` data-open="${d.id}" role="button" aria-label="Open ${esc(d.name)}"`) + ` data-row-id="${d.id}" tabindex="0"`;
     const meta = [d.code || d.archivedCode, d.requirement, d.sharing !== 'Standard' ? d.sharing : ''].filter(Boolean).join(' &middot; ');
     const note = d.note ? `<span class="d cd-note${d.status === 'na' ? ' is-na' : ''}">${d.status === 'na' ? 'Not applicable: ' : ''}${d.note}</span>` : '';
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}"${attrs}>` +
-      `<td><span class="n">${esc(d.name)}${alert}</span><span class="d">${meta}</span>${note}</td>` +
+      `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span>${note}</td>` +
       `<td>${belongsTo(d)}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
+      `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
       `<td class="cd-ref">${d.ref || dash}</td>` +
       `<td class="cd-by">${d.by && !['missing', 'na', 'notrequested', 'notuploaded'].includes(d.status) ? esc(d.by).replace(/&amp;(\w+;)/g, '&$1') : dash}</td>` +
       `<td class="c">${d.issued === '—' ? dash : d.issued}</td><td class="c">${d.valid === '—' ? dash : d.valid}</td>` +
-      `<td class="cd-ed">${ed}${opener}</td></tr>` + (isOpen ? expansion(d) : '');
+      `<td class="cd-ed">${opener}</td></tr>` + (isOpen ? history(d) : '');
   };
 
-  // a row opened: what the catalog says about this document, and the fields ALMA reads from it,
-  // with what it read where the demo knows it
+  // a row opened by its chevron: the current version, then each one it replaced, newest first;
+  // any of them opens in the drawer (earlier ones read-only)
+  const history = (d) => {
+    const vs = versionsOf(d);
+    const cur = NO_FILE.includes(d.status) ? '' : `<tr class="is-cur" data-version="${d.id}:0" tabindex="0" role="button"><td><b>Current</b><span class="d">${d.status === 'archived' ? 'Archived' : 'In use'} &middot; ${esc(d.ref || '—')}</span></td><td>${d.issued === '—' ? dash : d.issued}</td><td>${d.valid === '—' ? dash : d.valid}</td><td>${dash}</td><td>${confCell(confOf(d))}</td><td class="cd-h-go">Open</td></tr>`;
+    const rows = vs.map((v, k) => `<tr data-version="${d.id}:${k + 1}" tabindex="0" role="button"><td><b>${esc(v.label)}</b><span class="d">Archived &middot; ${esc(v.ref || '—')} &middot; uploaded by ${escE(v.by)}</span></td><td>${v.issued}</td><td>${v.valid}</td><td>${v.replaced}</td><td>${confCell(v.conf)}</td><td class="cd-h-go">Open</td></tr>`).join('');
+    const empty = !cur && !rows ? `<p class="cd-h-none">No versions yet. Once a file is uploaded, every version it replaces is kept here.</p>`
+      : !rows ? `<p class="cd-h-none">No earlier versions: this is the first one on C&#8209;MORE.</p>` : '';
+    return `<tr class="cd-exp"><td colspan="9"><div class="cd-hist">
+      <div class="cd-h-head"><b>Versions</b><span class="co-subtle">${vs.length ? `${vs.length} earlier version${vs.length === 1 ? '' : 's'}, kept read-only` : ''}</span></div>
+      ${cur || rows ? `<table class="cd-h-tbl"><thead><tr><th>Version</th><th>Issue date</th><th>Expiry date</th><th>Replaced on</th><th>ALMA confidence</th><th><span class="sr-only">Open</span></th></tr></thead><tbody>${cur}${rows}</tbody></table>` : ''}${empty}
+    </div></td></tr>`;
+  };
+
+  // what ALMA read from a document, field by field, where the demo knows it
   const valueOf = (d, field) => {
-    if (['missing', 'na', 'notrequested', 'notuploaded'].includes(d.status)) return null;
+    if (NO_FILE.includes(d.status) && d.status !== 'filemissing') return null;
     const n = field.name.toLowerCase();
-    if (/issue date|date of issue|issued on|^date$/.test(n)) return d.issued !== '—' ? d.issued : null;
+    if (/(provider|insurer|issuer|lessor|certification body).*tax number/.test(n)) return d.by ? '5' + String(100000000 + hash(d.by) * 977).slice(-8).replace(/(\d{2})(\d{3})(\d{3})/, '$1 $2 $3') : null;
     if (/expiry|valid until|validity|end date|next exam|next inspection/.test(n)) return d.valid !== '—' ? d.valid : null;
+    if (/issue date|date of issue|issued on|^date$/.test(n)) return d.issued !== '—' ? d.issued : null;
     if (/(certificate|policy|licence|license|reference|registration|document|report) (no|number)|^number$|reference/.test(n)) return d.ref || null;
     if (/issuer|issued by|insurer|certification body|authority|provider/.test(n)) return d.by || null;
     if (/legal name|company name|policyholder|holder|insured|organization|supplier name/.test(n)) return D.company;
     const known = Object.keys(D.facts).find((k) => new RegExp(k).test(n));
     return known ? D.facts[known] : null;
   };
-  const expansion = (d) => {
-    const c = d.cat;
-    const facts = [
-      ['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && c.requirement !== 'on_request' && c.requirement !== 'optional' ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
-      ['Renewal', esc(c.renewal || '—')], ['Expiry', esc(c.expiryRule || '—')], ['Shared with', c.sharing === 'standard' ? 'Every client you share your profile with' : esc(LBL.sharing[c.sharing])],
-      ['Legal basis', esc(c.legalBasis || '—')],
-    ].map(([k, v]) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`).join('');
-    const fields = (c.fields || []).map((fl) => {
-      const v = valueOf(d, fl);
-      const tags = [fl.requiredToSave ? 'Required' : '', fl.visibleToClients ? '' : 'Not shared'].filter(Boolean).map((t) => `<span class="cd-tag">${t}</span>`).join('');
-      return `<tr><td><span class="n">${esc(fl.name)}</span><span class="d">${esc(fl.type)}</span></td><td>${v ? v : `<span class="co-subtle">${d.status === 'archived' ? 'Kept with the archived file' : 'Read by ALMA on upload'}</span>`}</td><td>${tags}</td></tr>`;
-    }).join('');
-    return `<tr class="cd-exp"><td colspan="8"><div class="cd-exp-in">
-      <p class="cd-exp-desc">${esc(en(c.description))}</p>
-      <dl class="pd-grid cd-exp-facts">${facts}</dl>
-      ${fields ? `<div class="cd-exp-f"><h4 class="eyebrow">What ALMA reads from it</h4><table class="cd-fields"><tbody>${fields}</tbody></table></div>` : ''}
-    </div></td></tr>`;
+
+  // ---- the document, in a drawer ------------------------------------------------------------------
+  // The same drawer as a questionnaire's evidence (.docd): the file on the left of the eye, what ALMA
+  // read from it, how sure it is, and what the catalog says about the document. Previous / Next walk
+  // the documents on screen. Prototype: the page is drawn from the document's own data, not a file.
+  const DOC_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  const XI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  const LI = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg>';
+  const dw = document.createElement('div');
+  dw.className = 'docd cdd'; dw.hidden = true;
+  dw.innerHTML = `<div class="docd-scrim" data-close></div>
+    <aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="cdd-title" tabindex="-1">
+      <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOC_I}</span><div class="docd-t"><h3 id="cdd-title"></h3><p id="cdd-sub"></p></div>
+        <button type="button" class="dlg-x" data-close aria-label="Close the document">${XI}</button></header>
+      <div class="docd-bar"><span id="cdd-page"></span><span id="cdd-conf"></span></div>
+      <div class="docd-body" id="cdd-body"></div>
+      <footer class="docd-foot"><span id="cdd-foot"></span><span class="cdd-acts" id="cdd-acts"></span></footer>
+      <div class="docd-nav" role="group" aria-label="Documents on this page">
+        <button type="button" class="docd-step" id="cdd-prev">${LI}Previous document</button><span id="cdd-count"></span>
+        <button type="button" class="docd-step is-next" id="cdd-next">Next document${LI}</button></div>
+    </aside>`;
+  document.body.appendChild(dw);
+  const dq = (id) => dw.querySelector('#' + id), dPanel = dw.querySelector('.docd-panel');
+  let dState = null, dLast = null;
+  const escE = (s) => esc(s).replace(/&amp;(#?\w+;)/g, '&$1');
+  const sheetFor = (d, v, fields) => {
+    const titles = (d.cat.titles || d.name).split(';')[0].trim();
+    const rowsHtml = fields.filter((x) => x.value).slice(0, 7).map((x) => `<tr><th>${esc(x.name)}</th><td><mark class="${x.flag ? 'is-flag' : ''}">${x.value}</mark></td></tr>`).join('');
+    const seed = hash(d.code + (v ? v.issued : ''));
+    const filler = ['This certificate is issued at the request of the entity named above, for the purposes set out in the applicable legislation, and reflects the records held on the date of issue.',
+      'Its validity may be confirmed online with the access code printed below, during the period stated. Any alteration renders it void.',
+      'The information above corresponds to the situation recorded at the time of issue and does not cover obligations falling due after that date.'];
+    return `<article class="docd-sheet cdd-sheet"><p class="docd-kicker">${escE(d.by || issuerOf(d.cat) || 'Issuer')}</p>
+      <h4>${esc(titles)}</h4>
+      <table class="cdd-ftbl"><tbody>${rowsHtml}</tbody></table>
+      <p>${filler[seed % 3]}</p><p>${filler[(seed + 1) % 3]}</p>
+      <div class="cdd-sign"><span>Issued ${esc(v ? v.issued : d.issued)}</span><span>${escE(d.by || issuerOf(d.cat) || '')}</span></div>
+      <div class="docd-rule"><span>${esc(d.code || d.archivedCode)} &middot; ${esc(d.ref || v && v.ref || '')}</span><span>1 / ${1 + (seed % 3)}</span></div></article>`;
   };
+  const drawDoc = () => {
+    const d = docById(dState.list[dState.k]), vk = dState.v || 0, vs = versionsOf(d), v = vk ? vs[vk - 1] : null;
+    const view = v ? Object.assign({}, d, { issued: v.issued, valid: v.valid, ref: v.ref, status: 'archived' }) : d;
+    const conf = v ? v.conf : confOf(d);
+    const [label, cls] = STATUS[view.status];
+    dq('cdd-title').textContent = d.name + (v ? ` · ${v.label}` : '');
+    dq('cdd-sub').innerHTML = `${esc(d.code || d.archivedCode)} &middot; ${esc(d.requirement || 'Archived')} &middot; <span class="co-badge ${cls}">${v ? 'Earlier version' : label}</span>`;
+    const raw = (d.cat.fields || []).map((fl) => valueOf(view, fl));
+    const flagAt = !v && d.status === 'attention' ? Math.max(0, raw.findIndex((x) => !x)) : -1;
+    const fields = (d.cat.fields || []).map((fl, i) => {
+      const flag = i === flagAt;
+      const value = flag && !raw[i] ? '<span class="cdd-unread">Couldn&rsquo;t read it</span>' : raw[i];
+      return { name: fl.name, type: fl.type, value, flag, conf: value ? (flag ? 41 + (hash(d.code) % 12) : Math.min(99, (typeof conf === 'number' ? conf : 90) + (hash(d.code + i) % 9) - 3)) : null, shared: fl.visibleToClients, req: fl.requiredToSave };
+    });
+    const hasFile = !NO_FILE.includes(view.status) && view.status !== 'processing';
+    dq('cdd-page').textContent = hasFile ? (v ? `Earlier version · replaced ${v.replaced}` : 'Current version') : view.status === 'processing' ? 'ALMA is reading it' : view.status === 'filemissing' ? 'Data typed in, no file yet' : 'No file yet';
+    dq('cdd-conf').innerHTML = typeof conf === 'number' ? confCell(conf) : conf === 'reading' ? confCell(conf) : '';
+    const read = fields.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one &mdash; check it against the file.</span>' : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
+    const c = d.cat;
+    const facts = [['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && !['on_request', 'optional'].includes(c.requirement) ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
+      ['Renewal', esc(c.renewal || '—')], ['Expiry', esc(c.expiryRule || '—')], ['Shared with', c.sharing === 'standard' ? 'Every client you share your profile with' : esc(LBL.sharing[c.sharing])], ['Legal basis', esc(c.legalBasis || '—')]]
+      .map(([k, val]) => `<div class="pd-kv"><dt>${k}</dt><dd>${val}</dd></div>`).join('');
+    const about = `<section class="cdd-card"><h4 class="eyebrow">About this document</h4><p class="cdd-desc">${esc(en(c.description))}</p><dl class="pd-grid cdd-facts">${facts}</dl></section>`;
+    const none = `<div class="docd-none"><span class="docd-ico" aria-hidden="true">${DOC_I}</span><h4>${view.status === 'processing' ? 'ALMA is reading it' : 'No file yet'}</h4><p>${view.status === 'processing' ? 'It takes up to two minutes. The fields below fill in as she reads them.' : view.status === 'na' ? `Marked not applicable: ${d.note}` : 'Drop it on ALMA, or upload it here: she reads it, dates it and files it.'}</p></div>`;
+    dq('cdd-body').innerHTML = (hasFile ? sheetFor(d, v, fields) : none) + read + about;
+    dq('cdd-body').scrollTop = 0;
+    dq('cdd-foot').textContent = v ? `Read-only. Uploaded by ${v.by}; replaced on ${v.replaced}.` : hasFile ? (d.edited ? 'Edited by user: changes to ALMA’s reading are logged and visible to clients.' : `Issued ${d.issued}${d.valid && d.valid !== '—' ? ' · ' + (/^\d/.test(d.valid) ? 'expires ' : '') + d.valid : ''}`) : '';
+    dq('cdd-acts').innerHTML = v ? `<button type="button" class="btn btn-quiet btn-sm" data-cdd-cur>Back to current version</button>`
+      : `<button type="button" class="btn btn-quiet btn-sm" data-cdd-up>${hasFile ? 'Upload a new version' : 'Upload it'}</button>`;
+    const n = dState.list.length;
+    dw.querySelector('.docd-nav').hidden = n < 2 || !!v;
+    dq('cdd-count').textContent = `${dState.k + 1} of ${n}`;
+    dq('cdd-prev').disabled = dState.k <= 0; dq('cdd-next').disabled = dState.k >= n - 1;
+  };
+  const openDrawer = (id, v = 0) => {
+    // the documents on screen, in order, are what Previous / Next walk through
+    const list = [...groupsEl.querySelectorAll('[data-open]')].map((r) => +r.dataset.open);
+    if (!list.includes(id)) list.push(id);
+    dState = { list, k: list.indexOf(id), v };
+    drawDoc();
+    if (dw.hidden) { dLast = document.activeElement; dw.hidden = false; requestAnimationFrame(() => dw.classList.add('is-open')); document.documentElement.classList.add('dlg-open'); setTimeout(() => dPanel.focus({ preventScroll: true }), 320); }
+  };
+  const closeDrawer = () => {
+    dw.classList.remove('is-open'); document.documentElement.classList.remove('dlg-open');
+    setTimeout(() => { dw.hidden = true; }, 300);
+    if (dLast && dLast.focus) dLast.focus({ preventScroll: true });
+  };
+  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; drawDoc(); };
+  dq('cdd-prev').addEventListener('click', () => stepDoc(-1));
+  dq('cdd-next').addEventListener('click', () => stepDoc(1));
+  dw.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close]')) { closeDrawer(); return; }
+    if (e.target.closest('[data-cdd-cur]')) { dState.v = 0; drawDoc(); return; }
+    const up = e.target.closest('[data-cdd-up]');
+    if (up) { up.textContent = 'Prototype: drop it on ALMA at the top of the page'; up.disabled = true; }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (dw.hidden) return;
+    if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); }
+    else if (e.key === 'ArrowLeft' && !dState.v) stepDoc(-1);
+    else if (e.key === 'ArrowRight' && !dState.v) stepDoc(1);
+  });
 
   // ---- a per-record document's roster, its own page ---------------------------------------------
   const renderDetail = (id) => {
@@ -387,9 +542,9 @@
     const go = (it) => (kind === 'workers' ? ` data-worker="${it.i}"` : kind === 'equipment' ? ` data-machine="${it.i}"` : '');
     const by = issuerOf(doc.cat);
     const table = list.length
-      ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl cd-roster-tbl"><thead><tr><th>${NOUN[kind][0][0].toUpperCase() + NOUN[kind][0].slice(1)}</th><th>Status</th><th>Reference no.</th><th>Issued by</th><th class="c">Expiry date</th><th></th></tr></thead><tbody>${list.map((it) => {
+      ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl cd-roster-tbl"><thead><tr><th>${NOUN[kind][0][0].toUpperCase() + NOUN[kind][0].slice(1)}</th><th>Status</th><th>ALMA confidence</th><th>Reference no.</th><th>Issued by</th><th class="c">Expiry date</th><th></th></tr></thead><tbody>${list.map((it) => {
         const [label, cls] = STATUS[it.status]; const has = it.status !== 'missing';
-        return `<tr class="cd-row${go(it) ? ' is-rosterable' : ''}"${go(it)}${go(it) ? ' tabindex="0" role="link"' : ''}><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td><span class="co-badge ${cls}">${label}</span></td><td class="cd-ref">${has ? refOf(doc.code + it.i, it.exp) : dash}</td><td class="cd-by">${has ? esc(by) : dash}</td><td class="c">${has ? it.exp : dash}</td><td class="cd-ed">${go(it) ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</td></tr>`;
+        return `<tr class="cd-row${go(it) ? ' is-rosterable' : ''}"${go(it)}${go(it) ? ' tabindex="0" role="link"' : ''}><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td><span class="co-badge ${cls}">${label}</span></td><td>${has ? confCell(it.status === 'attention' ? 61 : 86 + (hash(doc.code + it.i) % 14)) : dash}</td><td class="cd-ref">${has ? refOf(doc.code + it.i, it.exp) : dash}</td><td class="cd-by">${has ? esc(by) : dash}</td><td class="c">${has ? it.exp : dash}</td><td class="cd-ed">${go(it) ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</td></tr>`;
       }).join('')}</tbody></table></div>`
       : '<div class="co-card cd-none"><b class="co-row-n">Nothing matches that.</b></div>';
     groupsEl.innerHTML = `<div class="cd-detail">${crumb}${search}${table}</div>`;
@@ -432,7 +587,7 @@
   const clearAll = () => { f.q = ''; GROUPS.forEach(([, k]) => f[k].clear()); q.value = ''; render(); if (!panel.hidden) paintFilters(); };
   tools.querySelector('.co-tools-clear').addEventListener('click', clearAll);
 
-  const DOC_THEAD = '<thead><tr><th>Document</th><th>Belongs to</th><th>Status</th><th>Reference no.</th><th>Issued by</th><th class="c">Issue date</th><th class="c">Expiry date</th><th><span class="sr-only">Edited by user</span></th></tr></thead>';
+  const DOC_THEAD = '<thead><tr><th>Document</th><th>Belongs to</th><th>Status</th><th>ALMA confidence</th><th>Reference no.</th><th>Issued by</th><th class="c">Issue date</th><th class="c">Expiry date</th><th>Versions</th></tr></thead>';
   const docTable = (docs) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl">${DOC_THEAD}<tbody>${docs.map(row).join('')}</tbody></table></div>`;
   const GROUP_NOTE = { 'On client request': 'Only needed once a client asks for it. Upload it ahead if you like.', Optional: 'Never required. Worth adding if it helps you win work.', Archived: 'Earlier versions, read-only, kept for audit.' };
   const group = (cat, docs, raw) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${GROUP_NOTE[raw] ? GROUP_NOTE[raw] + ' &middot; ' : ''}${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docTable(docs)}</div>`;
@@ -630,6 +785,8 @@
       const again = groupsEl.querySelector(`[data-expand="${id}"]`); if (again) again.focus({ preventScroll: true });
       return;
     }
+    const ver = e.target.closest('[data-version]'); if (ver) { const [id, k] = ver.dataset.version.split(':').map(Number); openDrawer(id, k); return; }
+    const doc = e.target.closest('[data-open]'); if (doc) { openDrawer(+doc.dataset.open); return; }
     const dBtn = e.target.closest('[data-dfilt-btn]'); if (dBtn) {
       detailFiltOpen = !detailFiltOpen; renderDetail(detail);
       if (detailFiltOpen) { const first = groupsEl.querySelector('[data-dfilt-panel] .co-menu-i'); if (first) first.focus(); }
@@ -647,7 +804,7 @@
     }
   });
   groupsEl.addEventListener('keydown', (e) => {
-    const t = e.target.closest('[data-worker], [data-machine], [data-detail], [data-expand]');
+    const t = e.target.closest('[data-worker], [data-machine], [data-detail], [data-open], [data-version]');
     if (t && e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.click(); }
   });
   groupsEl.addEventListener('input', (e) => {
@@ -722,11 +879,11 @@
   const openDoc = openCode && DOCS.find((d) => d.code === openCode);
   if (openDoc) {
     area = openDoc.area;
-    if (openDoc.kind && openDoc.roster.length) { detail = openDoc.id; resetDetailFilter(); } else open.add(openDoc.id);
+    if (openDoc.kind && openDoc.roster.length) { detail = openDoc.id; resetDetailFilter(); }
   }
   render();
   if (openDoc && detail === null) {
     const arrived = groupsEl.querySelector(`[data-row-id="${openDoc.id}"]`);
-    if (arrived) { arrived.scrollIntoView({ block: 'center' }); arrived.classList.add('is-arrived'); }
+    if (arrived) { arrived.scrollIntoView({ block: 'center' }); arrived.classList.add('is-arrived'); setTimeout(() => openDrawer(openDoc.id), 450); }
   }
 })();
