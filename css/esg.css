@@ -812,12 +812,34 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cdd-card { padding: 1.125rem 1.25rem; border-radius: 0.75rem; background: var(--color-surface); box-shadow: 0 1px 3px rgba(52, 52, 52, .08); }
 .cdd-card .eyebrow { margin: 0 0 0.625rem; }
 .cdd-card .cd-fields tr.is-flag td { background: color-mix(in oklab, var(--color-caution) 10%, transparent); }
+/* citations in the drawer: the questionnaire's (.esgq-src), under each value */
+.cdd-card .esgq-src-btn { display: block; }
+.cdd-src { margin-top: 0.5rem; }
+.cdd-src[hidden] { display: none; }
+.cdd-src mark.is-flag { background: color-mix(in oklab, var(--color-caution) 24%, transparent); }
+.cdd-ftbl tr.is-cited td, .cdd-ftbl tr.is-cited th { animation: docd-flash 1.6s ease both; }
 .cdd-unread { font-style: italic; color: var(--color-caution); }
 .cdd-why { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--color-caution); font-weight: 500; }
 .cdd-desc { margin: 0 0 1rem; font-size: 0.875rem; line-height: 1.55; color: var(--color-ink-muted); }
 .cdd-facts { gap: 0.875rem 1.5rem; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); }
 .cdd-acts .btn:disabled { opacity: 1; cursor: default; font-weight: 400; }
-.cdd-acts { display: inline-flex; align-items: center; gap: 1rem; }
+.cdd-acts { display: inline-flex; flex: none; align-items: center; gap: 1rem; }
+.cdd-acts .link-btn { white-space: nowrap; }
+/* a row's note: a line of its own under the row, across the table, one line long */
+.co-tbl.cd-tbl tbody tr.has-note > td { border-bottom-color: transparent; padding-bottom: 0.375rem; }
+.co-tbl.cd-tbl tbody tr.cd-note-tr { cursor: pointer; }
+.co-tbl.cd-tbl tbody tr.cd-note-tr > td { padding-top: 0; padding-bottom: 0.875rem; }
+.co-tbl.cd-tbl tbody tr.has-note:hover + tr.cd-note-tr, .co-tbl.cd-tbl tbody tr.cd-note-tr:hover, .co-tbl.cd-tbl tbody tr.has-note:has(+ tr.cd-note-tr:hover) { background: var(--color-light-beige); }
+.co-tbl.cd-tbl tbody tr.cd-note-tr.is-open > td { background: var(--color-light-beige); }
+.cd-note-l { display: flex; align-items: baseline; gap: 1rem; min-width: 0; }
+.cd-note-t { display: block; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; color: var(--color-ink); }
+.cd-note-t b { font-weight: 600; }
+.cd-note-t b.is-alma { display: inline-flex; align-items: center; gap: 0.375rem; }
+.cd-note-t b.is-alma::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.cd-note-tr.is-na .cd-note-t { color: var(--color-ink-subtle); }
+.cd-note-tr.is-na .cd-note-t b { color: var(--color-ink-muted); }
+.cd-note-s { margin: 0 0.375rem; color: var(--color-sand-400); }
+.cd-note-l .cd-na-q { flex: none; margin-top: 0; }
 /* Not applicable: the link on a missing row, the form in the drawer, and the mark once given */
 .cd-na-q { display: inline-block; margin-top: 0.25rem; padding: 0; border: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-ink-muted); text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; cursor: pointer; }
 .cd-na-q:hover { color: var(--color-ink); text-decoration-color: var(--color-coral); }
@@ -845,6 +867,8 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cd-fields td:first-child { width: 38%; }
 .cd-fields td:last-child { width: 1%; white-space: nowrap; text-align: right; padding-right: 0; }
 .cd-fields .n { font-weight: 500; font-size: 0.875rem; }
+.cd-fields .n, .cd-fields .d { display: block; }
+.cd-fields .d { font-size: 0.75rem; color: var(--color-ink-subtle); }
 .cd-tag { display: inline-block; margin-left: 0.375rem; padding: 0.0625rem 0.4375rem; border-radius: 0.3125rem; background: var(--color-mid-beige); color: var(--color-ink-subtle); font-size: 0.75rem; font-weight: 500; }
 .cd-profile { font-weight: 600; color: var(--color-ink); }
 /* on a phone the table scrolls sideways; the opened panel stays put, as wide as the screen shows */

@@ -104,7 +104,7 @@
       state: {
         'CO-01': ['valid', '3 Jan 2026', '3 Jan 2027', '', { ref: '4417&#8209;2209&#8209;1180' }],
         'CO-02': ['valid', '12 Mar 2024', 'No expiry', '', { ref: '514 228 930' }],
-        'CO-03': ['expired', '15 Aug 2024', '15 Aug 2026', 'Expired 15 August &mdash; drop the renewed one on ALMA.', { ref: 'Alvar&aacute; 81204&#8209;PUB' }],
+        'CO-03': ['expired', '15 Aug 2024', '15 Aug 2026', 'Expired 15 August &mdash; drop the renewed one on me.', { ref: 'Alvar&aacute; 81204&#8209;PUB' }],
         'CO-04': ['na', '', '', 'We don&rsquo;t transport other companies&rsquo; goods.', { naBy: 'Helena Ferreira', naOn: '14 Mar 2026' }],
         'CO-05': ['valid', '12 Dec 2025', '12 Dec 2026'],
         'CO-06': ['valid', '1 Sep 2026', '1 Dec 2026'],
@@ -112,7 +112,7 @@
         'CO-08': ['valid', '1 Jan 2026', '31 Dec 2026', '', { ref: 'AT 0091&#8209;448210', by: 'Fidelidade' }],
         'CO-10': ['expiring', '3 Nov 2025', '3 Nov 2026', 'Asked for by 2 clients.', { ref: 'RC 77&#8209;104382', by: 'Fidelidade' }],
         'CO-11': ['valid', '14 Apr 2026', '14 Apr 2027', '', { by: 'Allianz Portugal' }],
-        'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'ALMA could not read the service model &mdash; check the highlighted field.', { edited: true, by: 'Prevenir &ndash; Seguran&ccedil;a no Trabalho, Lda.' }],
+        'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'I couldn&rsquo;t read the service model &mdash; check the highlighted field.', { edited: true, by: 'Prevenir &ndash; Seguran&ccedil;a no Trabalho, Lda.' }],
         'CO-13': ['valid', '10 Feb 2025', 'No expiry', '', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
         'CO-14': ['valid', '31 Mar 2026', 'Next report, Apr 2027'],
         'CO-15': ['valid', '1 Jul 2026', '1 Jan 2027', 'Asked for by 1 client.'],
@@ -125,7 +125,7 @@
         'UN-12': ['valid', '31 Jan 2026', 'Next figures, Jan 2027', '2025 figures. Asked for by 1 client.', { by: 'Ferreira Constru&ccedil;&otilde;es', edited: true }],
         'UN-15': ['missing', '', '', 'Infraestruturas de Portugal asked on 9 Oct.'],
         'WK-01': ['valid', '30 Sep 2026', '31 Oct 2026', 'September &middot; 24 workers covered.', { by: 'Fidelidade' }],
-        'WK-02': ['processing', '14 Oct 2026', '30 Nov 2026', 'September &middot; ALMA is reading it.'],
+        'WK-02': ['processing', '14 Oct 2026', '30 Nov 2026', 'September &middot; I&rsquo;m reading it now.'],
         'WK-03': ['valid', '15 Feb 2026', 'No expiry', '4 for first aid, 3 for firefighting and evacuation.', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
         'WK-04': ['valid', '20 Jan 2026', 'No expiry', '', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
       },
@@ -400,6 +400,12 @@
     return out;
   };
 
+  const citeFor = (d) => {
+    const fl = d.cat.fields || [];
+    if (d.status === 'attention') { const k = fl.findIndex((f) => !valueOf(d, f)); return k < 0 ? 0 : k; }
+    const k = fl.findIndex((f) => /expiry|valid until|validity|end date|next exam|next inspection/i.test(f.name) && valueOf(d, f));
+    return k;
+  };
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
     const hasRoster = !!(d.kind && d.roster.length);
@@ -413,18 +419,24 @@
       : nv ? `<button type="button" class="cd-vbtn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}" aria-label="${nv} version${nv === 1 ? '' : 's'} of ${esc(d.name)}">${nv} version${nv === 1 ? '' : 's'}${CHEV_D}</button>` : dash;
     const attrs = (hasRoster ? ` data-detail="${d.id}" role="link"` : ` data-open="${d.id}" role="button" aria-label="Open ${esc(d.name)}"`) + ` data-row-id="${d.id}" tabindex="0"`;
     const meta = [d.code || d.archivedCode, d.requirement, d.sharing !== 'Standard' ? d.sharing : ''].filter(Boolean).join(' &middot; ');
-    const note = (d.note ? `<span class="d cd-note${d.status === 'na' ? ' is-na' : ''}">${d.status === 'na' ? 'Not applicable: ' : ''}${d.note}</span>` : '')
-      + (canNa(d) && d.status === 'missing' ? `<button type="button" class="cd-na-q" data-na="${d.id}">Doesn&rsquo;t apply to you?</button>` : '');
+    // the reason a row is as it is (ALMA's note, or why it doesn't apply) gets a line of its own under
+    // the row, across the whole table, rather than wrapping inside the narrow Document column
+    const naQ = canNa(d) && d.status === 'missing' ? `<button type="button" class="cd-na-q" data-na="${d.id}">Doesn&rsquo;t apply to you?</button>` : '';
+    const plain = (h) => h.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, (m) => ({ '&rsquo;': '’', '&mdash;': '—', '&middot;': '·', '&amp;': '&', '&nbsp;': ' ' }[m] || ' '));
+    const who = d.status === 'na' ? '<b>Not applicable</b>' : '<b class="is-alma">ALMA</b>';
+    const citeAt = !d.kind && ['expired', 'expiring', 'attention'].includes(d.status) ? citeFor(d) : -1;
+    const citeQ = citeAt >= 0 ? `<button type="button" class="cd-na-q" data-row-cite="${d.id}:${citeAt}">View citation</button>` : '';
+    const noteRow = d.note || naQ ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="9"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}${naQ}</span></td></tr>` : '';
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
-    return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}"${attrs}>` +
-      `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span>${note}</td>` +
+    return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}${noteRow ? ' has-note' : ''}"${attrs}>` +
+      `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span></td>` +
       `<td>${belongsTo(d)}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
       `<td class="cd-ref">${d.ref || dash}</td>` +
       `<td class="cd-by">${d.by && !['missing', 'na', 'notrequested', 'notuploaded'].includes(d.status) ? esc(d.by).replace(/&amp;(\w+;)/g, '&$1') : dash}</td>` +
       `<td class="c">${d.issued === '—' ? dash : d.issued}</td><td class="c">${d.valid === '—' ? dash : d.valid}</td>` +
-      `<td class="cd-ed">${opener}</td></tr>` + (isOpen ? history(d) : '');
+      `<td class="cd-ed">${opener}</td></tr>` + noteRow + (isOpen ? history(d) : '');
   };
 
   // a row opened by its chevron: the current version, then each one it replaced, newest first;
@@ -450,6 +462,8 @@
     if (/issue date|date of issue|issued on|^date$/.test(n)) return d.issued !== '—' ? d.issued : null;
     if (/(certificate|policy|licence|license|reference|registration|document|report) (no|number)|^number$|reference/.test(n)) return d.ref || null;
     if (/issuer|issued by|insurer|certification body|authority|provider/.test(n)) return d.by || null;
+    // the company's own tax number, before 'holder' or 'company' can claim the field for the name
+    if (/tax number|nipc|\bnif\b/.test(n)) { const k = Object.keys(D.facts).find((x) => /tax number/.test(x)); return k ? D.facts[k] : null; }
     if (/legal name|company name|policyholder|holder|insured|organization|supplier name/.test(n)) return D.company;
     const known = Object.keys(D.facts).find((k) => new RegExp(k).test(n));
     return known ? D.facts[known] : null;
@@ -479,9 +493,11 @@
   const dq = (id) => dw.querySelector('#' + id), dPanel = dw.querySelector('.docd-panel');
   let dState = null, dLast = null;
   const escE = (s) => esc(s).replace(/&amp;(#?\w+;)/g, '&$1');
+  // HTML entities in the demo's names (Constru&ccedil;&otilde;es) back to plain text
+  const decode = (h) => { const el = document.createElement('textarea'); el.innerHTML = h; return el.value; };
   const sheetFor = (d, v, fields) => {
     const titles = (d.cat.titles || d.name).split(';')[0].trim();
-    const rowsHtml = fields.filter((x) => x.value).slice(0, 7).map((x) => `<tr><th>${esc(x.name)}</th><td><mark class="${x.flag ? 'is-flag' : ''}">${x.value}</mark></td></tr>`).join('');
+    const rowsHtml = fields.map((x, i) => Object.assign({ i }, x)).filter((x) => x.value).slice(0, 7).map((x) => `<tr data-f="${x.i}"><th>${esc(x.name)}</th><td><mark class="${x.flag ? 'is-flag' : ''}">${x.value}</mark></td></tr>`).join('');
     const seed = hash(d.code + (v ? v.issued : ''));
     const filler = ['This certificate is issued at the request of the entity named above, for the purposes set out in the applicable legislation, and reflects the records held on the date of issue.',
       'Its validity may be confirmed online with the access code printed below, during the period stated. Any alteration renders it void.',
@@ -508,9 +524,26 @@
       return { name: fl.name, type: fl.type, value, flag, conf: value ? (flag ? 41 + (hash(d.code) % 12) : Math.min(99, (typeof conf === 'number' ? conf : 90) + (hash(d.code + i) % 9) - 3)) : null, shared: fl.visibleToClients, req: fl.requiredToSave };
     });
     const hasFile = !NO_FILE.includes(view.status) && view.status !== 'processing';
+    // each value's citation, as in a questionnaire: the file, the page and part of it, the passage
+    // with the value marked. Prototype: the passage is built from the field and its value.
+    const file = `${d.name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${((v ? v.issued : d.issued).match(/\d{4}/) || [''])[0]}.pdf`;
+    const partOf = (n) => (/date|expir|valid|until|next/i.test(n) ? 'Validity' : /sign|representative|officer/i.test(n) ? 'Signatures' : /number|reference|code|nif|tax/i.test(n) ? 'Identification' : 'Particulars');
+    const cites = fields.map((x, i) => {
+      if (!hasFile || !x.value) return null;
+      const val = decode(x.value.replace(/<[^>]+>/g, ''));
+      const page = 1; // the fields are all on the page the preview shows
+      if (x.flag) return { src: file, loc: `Page ${page} · ${partOf(x.name)}, where the scan is cut off`, quote: `${x.name}: [the line is cut off at the edge of the scan]`, match: '[the line is cut off at the edge of the scan]', unread: true };
+      return { src: file, loc: `Page ${page} · ${partOf(x.name)}`, quote: `${x.name}: ${val}`, match: val };
+    });
+    const citeOpen = dState.cite == null ? -1 : dState.cite;
+    const citeHtml = (cte, i) => {
+      const at = cte.quote.indexOf(cte.match);
+      const body = at < 0 ? esc(cte.quote) : esc(cte.quote.slice(0, at)) + `<mark${cte.unread ? ' class="is-flag"' : ''}>` + esc(cte.match) + '</mark>' + esc(cte.quote.slice(at + cte.match.length));
+      return `<figure class="esgq-src cdd-src" id="cdd-cite-${i}"${i === citeOpen ? '' : ' hidden'}><figcaption><b>${esc(cte.src)}</b><span>${esc(cte.loc)}</span></figcaption><blockquote>&ldquo;${body}&rdquo;</blockquote><button type="button" class="esgq-src-open" data-cite-show="${i}">Show on the page</button></figure>`;
+    };
     dq('cdd-page').textContent = hasFile ? (v ? `Earlier version · replaced ${v.replaced}` : 'Current version') : view.status === 'na' ? 'Not applicable to this company' : view.status === 'processing' ? 'ALMA is reading it' : view.status === 'filemissing' ? 'Data typed in, no file yet' : 'No file yet';
     dq('cdd-conf').innerHTML = typeof conf === 'number' ? confCell(conf) : conf === 'reading' ? confCell(conf) : '';
-    const read = fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one &mdash; check it against the file.</span>' : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
+    const read = fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one &mdash; check it against the file.</span>' : ''}${cites[i] ? `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${i === citeOpen}" aria-controls="cdd-cite-${i}">${i === citeOpen ? 'Hide citation' : 'View citation'}</button>${citeHtml(cites[i], i)}` : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
     const c = d.cat;
     const facts = [['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && !['on_request', 'optional'].includes(c.requirement) ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
       ['Renewal', esc(c.renewal || '—')], ['Expiry', esc(c.expiryRule || '—')], ['Shared with', c.sharing === 'standard' ? 'Every client you share your profile with' : esc(LBL.sharing[c.sharing])], ['Legal basis', esc(c.legalBasis || '—')]]
@@ -542,13 +575,15 @@
     dq('cdd-count').textContent = `${dState.k + 1} of ${n}`;
     dq('cdd-prev').disabled = dState.k <= 0; dq('cdd-next').disabled = dState.k >= n - 1;
   };
-  const openDrawer = (id, v = 0, na = false) => {
+  const openDrawer = (id, v = 0, na = false, cite = null) => {
     // the documents on screen, in order, are what Previous / Next walk through
     const list = [...groupsEl.querySelectorAll('[data-open]')].map((r) => +r.dataset.open);
     if (!list.includes(id)) list.push(id);
-    dState = { list, k: list.indexOf(id), v, na };
+    dState = { list, k: list.indexOf(id), v, na, cite };
     drawDoc();
     if (na) setTimeout(() => { const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); }, dw.hidden ? 340 : 30);
+    // opened at a citation: bring it into view
+    if (cite != null) setTimeout(() => { const f = dw.querySelector('#cdd-cite-' + cite); if (f) f.closest('tr').scrollIntoView({ block: 'center' }); }, dw.hidden ? 360 : 40);
     if (dw.hidden) { dLast = document.activeElement; dw.hidden = false; requestAnimationFrame(() => dw.classList.add('is-open')); document.documentElement.classList.add('dlg-open'); setTimeout(() => dPanel.focus({ preventScroll: true }), 320); }
   };
   const closeDrawer = () => {
@@ -556,7 +591,7 @@
     setTimeout(() => { dw.hidden = true; }, 300);
     if (dLast && dLast.focus) dLast.focus({ preventScroll: true });
   };
-  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; drawDoc(); };
+  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; dState.cite = null; drawDoc(); };
   dq('cdd-prev').addEventListener('click', () => stepDoc(-1));
   dq('cdd-next').addEventListener('click', () => stepDoc(1));
   dw.addEventListener('click', (e) => {
@@ -566,6 +601,19 @@
     if (up) { up.textContent = 'Prototype: drop it on ALMA at the top of the page'; up.disabled = true; return; }
     if (e.target.closest('[data-na-open]')) { dState.na = true; drawDoc(); const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); return; }
     if (e.target.closest('[data-na-cancel]')) { dState.na = false; drawDoc(); return; }
+    // a citation: open or close it in place, or show its line on the page
+    const cb = e.target.closest('[data-cite]');
+    if (cb) {
+      const fig = dw.querySelector('#cdd-cite-' + cb.dataset.cite), open = fig.hidden;
+      fig.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation';
+      return;
+    }
+    const sh = e.target.closest('[data-cite-show]');
+    if (sh) {
+      const line = dw.querySelector(`.cdd-ftbl tr[data-f="${sh.dataset.citeShow}"]`);
+      if (line) { line.scrollIntoView({ behavior: 'smooth', block: 'center' }); line.classList.remove('is-cited'); void line.offsetWidth; line.classList.add('is-cited'); }
+      return;
+    }
     if (e.target.closest('[data-na-undo]')) { undoNa(docById(dState.list[dState.k])); dState.na = false; render(); drawDoc(); return; }
   });
   // the reason: one of the suggestions, or your own sentence
@@ -871,6 +919,8 @@
     }
     const ver = e.target.closest('[data-version]'); if (ver) { const [id, k] = ver.dataset.version.split(':').map(Number); openDrawer(id, k); return; }
     const naq = e.target.closest('[data-na]'); if (naq) { openDrawer(+naq.dataset.na, 0, true); return; }
+    const rc = e.target.closest('[data-row-cite]'); if (rc) { const [id, k] = rc.dataset.rowCite.split(':').map(Number); openDrawer(id, 0, false, k); return; }
+    const nt = e.target.closest('[data-note-for]'); if (nt) { const d = docById(+nt.dataset.noteFor); if (d.kind && d.roster.length) { area = d.area; detail = d.id; detailQ = ''; resetDetailFilter(); render(); toTop(); } else openDrawer(d.id); return; }
     const doc = e.target.closest('[data-open]'); if (doc) { openDrawer(+doc.dataset.open); return; }
     const dBtn = e.target.closest('[data-dfilt-btn]'); if (dBtn) {
       detailFiltOpen = !detailFiltOpen; renderDetail(detail);
