@@ -105,7 +105,7 @@
         'CO-01': ['valid', '3 Jan 2026', '3 Jan 2027', '', { ref: '4417&#8209;2209&#8209;1180' }],
         'CO-02': ['valid', '12 Mar 2024', 'No expiry', '', { ref: '514 228 930' }],
         'CO-03': ['expired', '15 Aug 2024', '15 Aug 2026', 'Expired 15 August &mdash; drop the renewed one on ALMA.', { ref: 'Alvar&aacute; 81204&#8209;PUB' }],
-        'CO-04': ['na', '', '', 'We don&rsquo;t transport other companies&rsquo; goods.'],
+        'CO-04': ['na', '', '', 'We don&rsquo;t transport other companies&rsquo; goods.', { naBy: 'Helena Ferreira', naOn: '14 Mar 2026' }],
         'CO-05': ['valid', '12 Dec 2025', '12 Dec 2026'],
         'CO-06': ['valid', '1 Sep 2026', '1 Dec 2026'],
         'CO-07': ['expiring', '20 Jun 2026', '20 Oct 2026', 'Expires tomorrow.'],
@@ -121,11 +121,9 @@
         'CO-20': ['missing', '', '', 'ULS S&atilde;o Jo&atilde;o asked on 8 Oct: download it, sign it, upload it.'],
         'CO-21': ['valid', '22 May 2025', '22 May 2028', 'ISO 9001.', { by: 'SGS' }],
         'CO-23': ['valid', '2 Feb 2026', 'No expiry', 'Asked for by 1 client.', { by: 'Millennium bcp' }],
-        'UN-06': ['na', '', '', 'We don&rsquo;t process personal data on our clients&rsquo; behalf.'],
         'UN-11': ['valid', '15 Jan 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
         'UN-12': ['valid', '31 Jan 2026', 'Next figures, Jan 2027', '2025 figures. Asked for by 1 client.', { by: 'Ferreira Constru&ccedil;&otilde;es', edited: true }],
         'UN-15': ['missing', '', '', 'Infraestruturas de Portugal asked on 9 Oct.'],
-        'UN-24': ['na', '', '', 'We don&rsquo;t import CBAM goods.'],
         'WK-01': ['valid', '30 Sep 2026', '31 Oct 2026', 'September &middot; 24 workers covered.', { by: 'Fidelidade' }],
         'WK-02': ['processing', '14 Oct 2026', '30 Nov 2026', 'September &middot; ALMA is reading it.'],
         'WK-03': ['valid', '15 Feb 2026', 'No expiry', '4 for first aid, 3 for firefighting and evacuation.', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
@@ -225,7 +223,7 @@
       const extra = (st && st[4]) || {};
       const issued = (st && st[1]) || '—';
       const has = !['missing', 'na', 'notrequested', 'notuploaded'].includes(status);
-      doc = Object.assign(base, { kind: null, roster: null, status, issued, valid: (st && st[2]) || '—', note: (st && st[3]) || '',
+      doc = Object.assign(base, { kind: null, roster: null, status, issued, valid: (st && st[2]) || '—', note: (st && st[3]) || '', naBy: extra.naBy || '', naOn: extra.naOn || '',
         ref: has ? (extra.ref || refOf(c.code, issued)) : '', by: has ? (extra.by || issuerOf(c)) : '', edited: !!extra.edited });
     }
     // the group a document sits in: its catalog section for the company's own documents, who it
@@ -263,6 +261,51 @@
 
   const fold = (t) => t.replace(/<[^>]+>/g, '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const textOf = (d) => fold(`${d.code} ${d.name} ${d.group} ${d.requirement} ${d.note} ${d.ref} ${d.by}`);
+  // ---- Not applicable ---------------------------------------------------------------------------
+  // Only a 'Mandatory if applicable' document can be marked Not applicable, always with a reason
+  // the company's clients will see; it then counts as compliant, and it can be undone (back to
+  // what it was). Prototype: marks are kept for this tab (sessionStorage), on top of the demo's.
+  const NA_KEY = 'cm-na';
+  const naMarks = (() => { try { return JSON.parse(sessionStorage.getItem(NA_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const saveNa = () => { try { sessionStorage.setItem(NA_KEY, JSON.stringify(naMarks)); } catch (e) {} };
+  const me = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || 'You'; } catch (e) { return 'You'; } })();
+  const today = () => { const n = new Date(); return `${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`; };
+  // suggested reasons, from the condition behind each document's 'Applies when'
+  const NA_REASONS = {
+    has_employees: ['We have no employees with an employment contract', 'Everyone working with us is self-employed or a partner'],
+    self_employed: ['We are a company, not a self-employed person working alone'],
+    foreign_posting: ['We are not a foreign company posting workers to Portugal'],
+    construction_work: ['We don&rsquo;t carry out construction work'],
+    own_equipment: ['We don&rsquo;t bring our own equipment to sites', 'All the equipment we use is the client&rsquo;s'],
+    non_us_for_us_clients: ['We have no clients in the United States'],
+    transports_goods: ['We don&rsquo;t transport other companies&rsquo; goods', 'Our vehicles are all under 2,500 kg'],
+    produces_waste: ['We don&rsquo;t produce or transport waste ourselves', 'A licensed operator collects all our waste'],
+    env_liability: ['Our activity isn&rsquo;t covered by the environmental liability regime'],
+    special_risk_work: ['We don&rsquo;t carry out special-risk work'],
+    hazardous_chemicals: ['We don&rsquo;t use hazardous chemical products'],
+    processes_personal_data: ['We don&rsquo;t process personal data on our clients&rsquo; behalf', 'We only see our clients&rsquo; business contacts'],
+    handles_client_data: ['We don&rsquo;t handle our clients&rsquo; data'],
+    imports_cbam: ['We don&rsquo;t import CBAM goods into the EU', 'We buy steel, cement and aluminium from EU suppliers only'],
+  };
+  const reasonsFor = (d) => NA_REASONS[d.cat.condition] || ['This doesn&rsquo;t apply to our activity'];
+  const canNa = (d) => !d.kind && d.req === 'if_applicable' && d.status !== 'archived';
+  DOCS.forEach((d) => {
+    d.orig = { status: d.status, note: d.note, naBy: d.naBy, naOn: d.naOn };
+    const m = naMarks[d.code];
+    if (!m || !canNa(d)) return;
+    if (m.undone) Object.assign(d, { status: d.orig.status === 'na' ? 'missing' : d.orig.status, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' });
+    else Object.assign(d, { status: 'na', note: m.reason, naBy: m.by, naOn: m.on });
+  });
+  const markNa = (d, reason) => {
+    naMarks[d.code] = { reason, by: me, on: today() }; saveNa();
+    Object.assign(d, { status: 'na', note: reason, naBy: me, naOn: today() }); d.text = textOf(d);
+  };
+  const undoNa = (d) => {
+    // back to what it was before it was marked: Missing, unless a file was there all along
+    const back = d.orig.status === 'na' ? 'missing' : d.orig.status;
+    naMarks[d.code] = d.orig.status === 'na' ? { undone: true } : undefined; if (!naMarks[d.code]) delete naMarks[d.code]; saveNa();
+    Object.assign(d, { status: back, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' }); d.text = textOf(d);
+  };
   const DATA = DOCS.map((d) => Object.assign(d, { text: textOf(d) }));
   const needsAttention = (d) => RANK[d.status] > 0;
 
@@ -370,7 +413,8 @@
       : nv ? `<button type="button" class="cd-vbtn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}" aria-label="${nv} version${nv === 1 ? '' : 's'} of ${esc(d.name)}">${nv} version${nv === 1 ? '' : 's'}${CHEV_D}</button>` : dash;
     const attrs = (hasRoster ? ` data-detail="${d.id}" role="link"` : ` data-open="${d.id}" role="button" aria-label="Open ${esc(d.name)}"`) + ` data-row-id="${d.id}" tabindex="0"`;
     const meta = [d.code || d.archivedCode, d.requirement, d.sharing !== 'Standard' ? d.sharing : ''].filter(Boolean).join(' &middot; ');
-    const note = d.note ? `<span class="d cd-note${d.status === 'na' ? ' is-na' : ''}">${d.status === 'na' ? 'Not applicable: ' : ''}${d.note}</span>` : '';
+    const note = (d.note ? `<span class="d cd-note${d.status === 'na' ? ' is-na' : ''}">${d.status === 'na' ? 'Not applicable: ' : ''}${d.note}</span>` : '')
+      + (canNa(d) && d.status === 'missing' ? `<button type="button" class="cd-na-q" data-na="${d.id}">Doesn&rsquo;t apply to you?</button>` : '');
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}"${attrs}>` +
       `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span>${note}</td>` +
@@ -464,31 +508,47 @@
       return { name: fl.name, type: fl.type, value, flag, conf: value ? (flag ? 41 + (hash(d.code) % 12) : Math.min(99, (typeof conf === 'number' ? conf : 90) + (hash(d.code + i) % 9) - 3)) : null, shared: fl.visibleToClients, req: fl.requiredToSave };
     });
     const hasFile = !NO_FILE.includes(view.status) && view.status !== 'processing';
-    dq('cdd-page').textContent = hasFile ? (v ? `Earlier version · replaced ${v.replaced}` : 'Current version') : view.status === 'processing' ? 'ALMA is reading it' : view.status === 'filemissing' ? 'Data typed in, no file yet' : 'No file yet';
+    dq('cdd-page').textContent = hasFile ? (v ? `Earlier version · replaced ${v.replaced}` : 'Current version') : view.status === 'na' ? 'Not applicable to this company' : view.status === 'processing' ? 'ALMA is reading it' : view.status === 'filemissing' ? 'Data typed in, no file yet' : 'No file yet';
     dq('cdd-conf').innerHTML = typeof conf === 'number' ? confCell(conf) : conf === 'reading' ? confCell(conf) : '';
-    const read = fields.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one &mdash; check it against the file.</span>' : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
+    const read = fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one &mdash; check it against the file.</span>' : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
     const c = d.cat;
     const facts = [['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && !['on_request', 'optional'].includes(c.requirement) ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
       ['Renewal', esc(c.renewal || '—')], ['Expiry', esc(c.expiryRule || '—')], ['Shared with', c.sharing === 'standard' ? 'Every client you share your profile with' : esc(LBL.sharing[c.sharing])], ['Legal basis', esc(c.legalBasis || '—')]]
       .map(([k, val]) => `<div class="pd-kv"><dt>${k}</dt><dd>${val}</dd></div>`).join('');
     const about = `<section class="cdd-card"><h4 class="eyebrow">About this document</h4><p class="cdd-desc">${esc(en(c.description))}</p><dl class="pd-grid cdd-facts">${facts}</dl></section>`;
-    const none = `<div class="docd-none"><span class="docd-ico" aria-hidden="true">${DOC_I}</span><h4>${view.status === 'processing' ? 'ALMA is reading it' : 'No file yet'}</h4><p>${view.status === 'processing' ? 'It takes up to two minutes. The fields below fill in as she reads them.' : view.status === 'na' ? `Marked not applicable: ${d.note}` : 'Drop it on ALMA, or upload it here: she reads it, dates it and files it.'}</p></div>`;
-    dq('cdd-body').innerHTML = (hasFile ? sheetFor(d, v, fields) : none) + read + about;
+    const none = view.status === 'na' ? '' : `<div class="docd-none"><span class="docd-ico" aria-hidden="true">${DOC_I}</span><h4>${view.status === 'processing' ? 'ALMA is reading it' : 'No file yet'}</h4><p>${view.status === 'processing' ? 'It takes up to two minutes. The fields below fill in as she reads them.' : 'Drop it on ALMA, or upload it here: she reads it, dates it and files it.'}</p></div>`;
+    // marked not applicable: the reason, who and when, and the way back
+    const naCard = !v && d.status === 'na' ? `<section class="cdd-card cdd-na-on"><h4 class="eyebrow">Not applicable</h4><p class="cdd-na-r">&ldquo;${d.note}&rdquo;</p>
+      <p class="cdd-na-m">${d.naBy ? `Marked by ${esc(d.naBy)}${d.naOn ? ' on ' + esc(d.naOn) : ''} &middot; ` : ''}Your clients see this reason, and it counts as compliant.</p>
+      ${canNa(d) ? '<button type="button" class="btn btn-quiet btn-sm" data-na-undo>Undo &mdash; it does apply</button>' : ''}</section>` : '';
+    // the form: a reason from the catalog's 'Applies when', or one of your own
+    const naForm = !v && dState.na && canNa(d) && d.status !== 'na' ? `<form class="cdd-card cdd-na-f" id="cdd-na-f" novalidate>
+      <h4 class="eyebrow">Doesn&rsquo;t apply to us</h4>
+      <p class="cdd-desc">It applies ${esc((c.appliesWhen || '').charAt(0).toLowerCase() + (c.appliesWhen || '').slice(1))}. Tell your clients why it doesn&rsquo;t apply to you &mdash; they will see the reason.</p>
+      <div class="cdd-na-opts" role="radiogroup" aria-label="Reason">${reasonsFor(d).map((r, i) => `<label><input type="radio" name="na-r" value="${i}"><span>${r}</span></label>`).join('')}
+        <label><input type="radio" name="na-r" value="own"><span>Another reason</span></label></div>
+      <textarea class="cdd-na-t" id="cdd-na-t" rows="2" placeholder="In a sentence, why it doesn&rsquo;t apply" hidden></textarea>
+      ${hasFile ? '<p class="cdd-na-w">Its current file stays in its versions, read-only.</p>' : ''}
+      <div class="cdd-na-acts"><button type="button" class="link-btn" data-na-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm" id="cdd-na-go" disabled>Mark as not applicable</button></div>
+    </form>` : '';
+    dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? sheetFor(d, v, fields) : none) + read + about;
     dq('cdd-body').scrollTop = 0;
     dq('cdd-foot').textContent = v ? `Read-only. Uploaded by ${v.by}; replaced on ${v.replaced}.` : hasFile ? (d.edited ? 'Edited by user: changes to ALMA’s reading are logged and visible to clients.' : `Issued ${d.issued}${d.valid && d.valid !== '—' ? ' · ' + (/^\d/.test(d.valid) ? 'expires ' : '') + d.valid : ''}`) : '';
     dq('cdd-acts').innerHTML = v ? `<button type="button" class="btn btn-quiet btn-sm" data-cdd-cur>Back to current version</button>`
-      : `<button type="button" class="btn btn-quiet btn-sm" data-cdd-up>${hasFile ? 'Upload a new version' : 'Upload it'}</button>`;
+      : (canNa(d) && d.status !== 'na' && !dState.na ? '<button type="button" class="link-btn" data-na-open>Doesn&rsquo;t apply to us</button>' : '')
+      + (d.status === 'na' ? '' : `<button type="button" class="btn btn-quiet btn-sm" data-cdd-up>${hasFile ? 'Upload a new version' : 'Upload it'}</button>`);
     const n = dState.list.length;
     dw.querySelector('.docd-nav').hidden = n < 2 || !!v;
     dq('cdd-count').textContent = `${dState.k + 1} of ${n}`;
     dq('cdd-prev').disabled = dState.k <= 0; dq('cdd-next').disabled = dState.k >= n - 1;
   };
-  const openDrawer = (id, v = 0) => {
+  const openDrawer = (id, v = 0, na = false) => {
     // the documents on screen, in order, are what Previous / Next walk through
     const list = [...groupsEl.querySelectorAll('[data-open]')].map((r) => +r.dataset.open);
     if (!list.includes(id)) list.push(id);
-    dState = { list, k: list.indexOf(id), v };
+    dState = { list, k: list.indexOf(id), v, na };
     drawDoc();
+    if (na) setTimeout(() => { const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); }, dw.hidden ? 340 : 30);
     if (dw.hidden) { dLast = document.activeElement; dw.hidden = false; requestAnimationFrame(() => dw.classList.add('is-open')); document.documentElement.classList.add('dlg-open'); setTimeout(() => dPanel.focus({ preventScroll: true }), 320); }
   };
   const closeDrawer = () => {
@@ -496,18 +556,42 @@
     setTimeout(() => { dw.hidden = true; }, 300);
     if (dLast && dLast.focus) dLast.focus({ preventScroll: true });
   };
-  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; drawDoc(); };
+  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; drawDoc(); };
   dq('cdd-prev').addEventListener('click', () => stepDoc(-1));
   dq('cdd-next').addEventListener('click', () => stepDoc(1));
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) { closeDrawer(); return; }
     if (e.target.closest('[data-cdd-cur]')) { dState.v = 0; drawDoc(); return; }
     const up = e.target.closest('[data-cdd-up]');
-    if (up) { up.textContent = 'Prototype: drop it on ALMA at the top of the page'; up.disabled = true; }
+    if (up) { up.textContent = 'Prototype: drop it on ALMA at the top of the page'; up.disabled = true; return; }
+    if (e.target.closest('[data-na-open]')) { dState.na = true; drawDoc(); const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); return; }
+    if (e.target.closest('[data-na-cancel]')) { dState.na = false; drawDoc(); return; }
+    if (e.target.closest('[data-na-undo]')) { undoNa(docById(dState.list[dState.k])); dState.na = false; render(); drawDoc(); return; }
+  });
+  // the reason: one of the suggestions, or your own sentence
+  const naReason = () => {
+    const r = dw.querySelector('[name="na-r"]:checked'); if (!r) return '';
+    if (r.value === 'own') return esc(dw.querySelector('#cdd-na-t').value.trim());
+    return reasonsFor(docById(dState.list[dState.k]))[+r.value];
+  };
+  dw.addEventListener('change', (e) => {
+    if (e.target.name !== 'na-r') return;
+    const own = e.target.value === 'own', ta = dw.querySelector('#cdd-na-t');
+    ta.hidden = !own; if (own) ta.focus();
+    dw.querySelector('#cdd-na-go').disabled = !naReason();
+  });
+  dw.addEventListener('input', (e) => { if (e.target.id === 'cdd-na-t') dw.querySelector('#cdd-na-go').disabled = !naReason(); });
+  dw.addEventListener('submit', (e) => {
+    if (e.target.id !== 'cdd-na-f') return;
+    e.preventDefault();
+    const reason = naReason(); if (!reason) return;
+    markNa(docById(dState.list[dState.k]), reason); dState.na = false;
+    render(); drawDoc();
   });
   document.addEventListener('keydown', (e) => {
     if (dw.hidden) return;
     if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); }
+    else if (e.target.closest && e.target.closest('input, textarea')) return;
     else if (e.key === 'ArrowLeft' && !dState.v) stepDoc(-1);
     else if (e.key === 'ArrowRight' && !dState.v) stepDoc(1);
   });
@@ -786,6 +870,7 @@
       return;
     }
     const ver = e.target.closest('[data-version]'); if (ver) { const [id, k] = ver.dataset.version.split(':').map(Number); openDrawer(id, k); return; }
+    const naq = e.target.closest('[data-na]'); if (naq) { openDrawer(+naq.dataset.na, 0, true); return; }
     const doc = e.target.closest('[data-open]'); if (doc) { openDrawer(+doc.dataset.open); return; }
     const dBtn = e.target.closest('[data-dfilt-btn]'); if (dBtn) {
       detailFiltOpen = !detailFiltOpen; renderDetail(detail);

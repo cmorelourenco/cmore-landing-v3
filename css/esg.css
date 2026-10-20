@@ -817,6 +817,24 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cdd-desc { margin: 0 0 1rem; font-size: 0.875rem; line-height: 1.55; color: var(--color-ink-muted); }
 .cdd-facts { gap: 0.875rem 1.5rem; grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr)); }
 .cdd-acts .btn:disabled { opacity: 1; cursor: default; font-weight: 400; }
+.cdd-acts { display: inline-flex; align-items: center; gap: 1rem; }
+/* Not applicable: the link on a missing row, the form in the drawer, and the mark once given */
+.cd-na-q { display: inline-block; margin-top: 0.25rem; padding: 0; border: 0; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-ink-muted); text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; cursor: pointer; }
+.cd-na-q:hover { color: var(--color-ink); text-decoration-color: var(--color-coral); }
+.cdd-na-f { display: grid; gap: 0.75rem; border: 1px solid var(--color-graphite); }
+.cdd-na-f .cdd-desc { margin: 0; }
+.cdd-na-opts { display: grid; gap: 0.375rem; }
+.cdd-na-opts label { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; font-size: 0.875rem; line-height: 1.4; cursor: pointer; }
+.cdd-na-opts label:has(input:checked) { border-color: var(--color-graphite); background: var(--color-off-white); }
+.cdd-na-opts input { flex: none; margin: 0.125rem 0 0; accent-color: var(--color-graphite); }
+.cdd-na-t { width: 100%; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; font: inherit; font-size: 0.875rem; resize: vertical; }
+.cdd-na-t[hidden] { display: none; }
+.cdd-na-t:focus { outline: 2px solid var(--color-graphite); outline-offset: 1px; }
+.cdd-na-w { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cdd-na-acts { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; }
+.cdd-na-on { border-left: 3px solid var(--color-sand-400); }
+.cdd-na-r { margin: 0 0 0.375rem; font-size: 0.9375rem; line-height: 1.5; color: var(--color-ink); }
+.cdd-na-m { margin: 0 0 0.875rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .cd-tbl tr.is-open > td { border-bottom-color: transparent; background: var(--color-light-beige); }
 /* a row opened: its versions (below) */
 .co-tbl.cd-tbl tbody tr.cd-exp, .co-tbl.cd-tbl tbody tr.cd-exp:hover { cursor: default; background: var(--color-light-beige); }
