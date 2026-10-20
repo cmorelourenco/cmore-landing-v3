@@ -2,17 +2,17 @@
    may see its documents. The demo company starts from what the company page shows; edits
    are kept for this tab's session and the company page follows them. */
 window.CO_PROFILE = (() => {
-  const KEY = 'cm-co-profile';
+  const KEY = 'cm-co-profile-pt'; // renamed when the demo company moved to Portugal, so an older profile in this tab doesn't come back
   const DEFAULTS = {
     miguel: {
-      name: 'Ferreira Construction LLC', trading: '', activity: 'General contractor', people: '24', form: 'Delaware LLC', tax: '84-3921745',
-      street: '1209 N Market St, Suite 400', city: 'Wilmington', region: 'DE', postcode: '19801', country: 'United States',
-      email: 'office@ferreiraconstrucoes.pt', cc: '+1', phone: '(302) 555-0148', website: 'ferreiraconstrucoes.pt',
+      name: 'Ferreira Construções, Lda.', trading: 'Ferreira Construções', activity: 'General contractor', people: '24', form: 'Sociedade por quotas', tax: '514228930',
+      street: 'Rua do Freixo 1071', city: 'Porto', region: '', postcode: '4300-219', country: 'Portugal',
+      email: 'geral@ferreiraconstrucoes.pt', cc: '+351', phone: '22 600 4180', website: 'ferreiraconstrucoes.pt',
       logo: 'images/ferreira-logo.webp',
       consents: [
-        { name: 'Northgate Facilities', state: 'pending', what: 'general liability, workers’ comp, W‑9', when: 'Asked 2 days ago' },
-        { name: 'Bramwell Group', state: 'pending', what: 'everything in Insurance', when: 'Asked 6 days ago' },
-        { name: 'Meridian Health', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2026' },
+        { name: 'Mota-Engil', state: 'pending', what: 'civil liability, workers’ compensation, tax clearance', when: 'Asked 2 days ago' },
+        { name: 'Sonae MC', state: 'pending', what: 'everything in Insurance', when: 'Asked 6 days ago' },
+        { name: 'CUF', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2026' },
       ],
     },
   };
@@ -23,10 +23,12 @@ window.CO_PROFILE = (() => {
     return Object.assign(d, saved, { consents: saved.consents || d.consents });
   };
   const save = (p) => { const a = all(); a[who()] = p; try { sessionStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
-  // "General contractor · 24 people · EIN 84‑3921745 · Delaware LLC · Wilmington, DE"
-  const line = (p) => [p.activity, p.people && `${p.people} people`, p.tax && `EIN ${p.tax.replace(/-/g, '‑')}`, p.form, [p.city, p.region].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
+  // "General contractor · 24 people · NIPC 514 228 930 · Sociedade por quotas · Porto" — the tax
+  // number goes by its country's name (NIPC in Portugal, EIN in the US)
+  const taxLabel = (p) => (p.country === 'United States' ? `EIN ${p.tax.replace(/-/g, '‑')}` : p.country === 'Portugal' ? `NIPC ${p.tax.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}` : `Tax number ${p.tax}`);
+  const line = (p) => [p.activity, p.people && `${p.people} people`, p.tax && taxLabel(p), p.form, [p.city, p.region].filter(Boolean).join(', ')].filter(Boolean).join(' · ');
   const today = () => { const d = new Date(); return `Since ${d.getDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]} ${d.getFullYear()}`; };
-  const initials = (n) => n.replace(/\b(LLC|Inc\.?|Co\.?|Ltd\.?|GmbH|BV|NV)\b/gi, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const initials = (n) => n.replace(/\b(LLC|Inc\.?|Co\.?|Ltd\.?|Lda\.?|S\.A\.?|GmbH|BV|NV)(?=\W|$)/gi, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const SAY = { pending: (c) => `Wants to see: ${c.what}. ${c.when}.`, accepted: (c) => `Sees: ${c.what}. ${c.when}.`, declined: (c) => `Asked to see: ${c.what}. You declined.`, stopped: (c) => `Saw: ${c.what}. You stopped sharing.` };
   const manage = () => Object.assign(document.createElement('a'), { className: 'btn co-btn-ghost co-btn-sm', href: 'company-profile.html#consents', textContent: 'Manage' });
   const BADGE = { pending: ['b-pend', 'Pending'], accepted: ['b-ok', 'Accepted'], declined: ['b-neu', 'Declined'], stopped: ['b-neu', 'Stopped'] };

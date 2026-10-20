@@ -185,7 +185,7 @@ window.ESG_REPORT = (() => {
         <div class="rp-rule" style="margin:26px 0"></div>
         ${kv('Main activity', p.activity)}${kv('Trading name', p.trading || p.name)}</div>
       <div class="rp-right" style="display:grid;grid-template-columns:1fr 1fr;gap:0 40px">
-        <div>${kv('Legal name', p.name)}${kv('Legal form', p.form)}${kv('Tax number (EIN)', p.tax)}${kv('Registered office', [p.street, [p.city, p.region].filter(Boolean).join(', '), p.postcode].filter(Boolean).join(', '))}</div>
+        <div>${kv('Legal name', p.name)}${kv('Legal form', p.form)}${kv(p.country === 'United States' ? 'Tax number (EIN)' : 'Tax number (NIPC)', p.tax)}${kv('Registered office', [p.street, [p.city, p.region].filter(Boolean).join(', '), p.postcode].filter(Boolean).join(', '))}</div>
         <div>${kv('Country of main operations', p.country)}${kv('Company email', p.email)}${kv('Phone', [p.cc, p.phone].filter(Boolean).join(' '))}${kv('Website', p.website)}</div>
         <div style="grid-column:1/-1" class="rp-rule"></div>
         <div style="grid-column:1/-1;margin-top:24px">${kv('Reporting scope', `ESG Questionnaire, ${D.c.total} questions in nine areas, submitted on ${dateLong(D.when)} by ${D.person}`)}</div></div>`);

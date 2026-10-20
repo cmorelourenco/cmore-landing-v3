@@ -28,8 +28,8 @@
   try { me = Object.assign(me, JSON.parse(sessionStorage.getItem('cm-person') || '{}')); } catch (e) {}
   // the demo company's projects (the ones in Miguel's project table)
   const PROJECTS = {
-    miguel: [['FC-2026-031', 'East wing extension'], ['FC-2026-018', 'Route 9 resurfacing, phase 2'], ['FC-2025-047', 'Elm Street Elementary renovation'], ['FC-2026-052', 'Harbor View apartments'],
-      ['NF-2026-112', 'Data centre shell, Building B'], ['MH-2026-027', 'Clinic fit-out, level 3'], ['BG-2026-064', 'Warehouse expansion'], ['FC-2026-044', 'Christiana Mall parking deck']],
+    miguel: [['FC-2026-031', 'São João Hospital, east wing'], ['FC-2026-018', 'EN13 resurfacing, Vila do Conde'], ['FC-2025-047', 'Garcia de Orta secondary school renovation'], ['FC-2026-052', 'Quinta da Boavista apartments'],
+      ['ME-2026-112', 'Data centre shell, Building B'], ['CF-2026-027', 'Clinic fit-out, level 3'], ['SN-2026-064', 'Warehouse expansion'], ['FC-2026-044', 'NorteShopping parking deck']],
   }[O.persona];
   const projectsOf = (id) => (id === 'home' ? PROJECTS : []);
   // the people already on each demo company

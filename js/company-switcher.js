@@ -15,7 +15,7 @@
   const ROLE = { super_admin: 'Super admin', admin: 'Admin', manager: 'Manager', user: 'User' };
 
   const HOME = {
-    miguel: { id: 'home', name: 'Ferreira Construction LLC', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'US', sector: 'Construction' },
+    miguel: { id: 'home', name: 'Ferreira Construções, Lda.', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
   }[persona];
   const KEY = 'cm-orgs-' + persona, LINKS = 'cm-org-links-' + persona, LAST = 'cm-last-org-' + persona;
 
@@ -49,7 +49,7 @@
   const forget = () => {
     try {
       ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
-      ['cm-org', 'cm-newco-paid'].forEach((k) => sessionStorage.removeItem(k));
+      ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k));
     } catch (e) {}
   };
   window.CMOrgs = { persona, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, go, forget };

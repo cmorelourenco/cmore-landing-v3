@@ -502,7 +502,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const $ = (s) => document.querySelector(s);
   // a login starts clean: companies added in an earlier session (and cards added with them) are
   // gone, as they are after Log out — only each person's main company is part of the demo
-  const forgetCompanies = () => { try { ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
+  const forgetCompanies = () => { try { ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
 
   // ---- steps ---------------------------------------------------------------
   const show = (name) => {

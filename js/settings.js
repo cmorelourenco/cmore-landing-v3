@@ -42,11 +42,11 @@
   $('#set-photo-rm').addEventListener('click', () => { photo = ''; person.noPhoto = true; save(); paint(); });
 
   // ---- profile -----------------------------------------------------------------
-  const CODES = [['+1', 'US'], ['+351', 'PT'], ['+44', 'UK'], ['+49', 'DE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT']];
+  const CODES = [['+351', 'PT'], ['+1', 'US'], ['+44', 'UK'], ['+49', 'DE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT']];
   const cc = $('#p-cc');
   cc.innerHTML = CODES.map(([c, k]) => `<option value="${c}">${k} ${c}</option>`).join('');
   const fp = $('#f-profile'), saveBtn = fp.querySelector('[type="submit"]');
-  const fill = () => { $('#p-name').value = person.name; $('#p-role').value = person.role || ''; $('#p-email').value = person.email; $('#p-phone').value = person.phone || ''; cc.value = person.cc || '+1'; };
+  const fill = () => { $('#p-name').value = person.name; $('#p-role').value = person.role || ''; $('#p-email').value = person.email; $('#p-phone').value = person.phone || ''; cc.value = person.cc || '+351'; };
   const now = () => ({ name: $('#p-name').value.trim(), role: $('#p-role').value.trim(), email: $('#p-email').value.trim(), phone: $('#p-phone').value.trim(), cc: $('#p-phone').value.trim() ? cc.value : '' });
   const dirty = () => { const n = now(); return ['name', 'role', 'email', 'phone', 'cc'].some((k) => (n[k] || '') !== (person[k] || '')); };
   const phoneOk = (v) => { const d = v.replace(/\D/g, ''); return !v || (d.length >= 6 && d.length <= 15 && !/[^\d\s()+.-]/.test(v)); };

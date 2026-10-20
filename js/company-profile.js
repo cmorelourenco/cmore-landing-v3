@@ -9,8 +9,8 @@
   const flash = (el, text) => { el.textContent = text; clearTimeout(el._t); el._t = setTimeout(() => (el.textContent = ''), 2600); };
 
   // ---- fields -----------------------------------------------------------------------------------
-  const COUNTRIES = ['United States', 'Canada', 'Brazil', 'United Kingdom', 'Portugal', 'Spain', 'France', 'Germany', 'Italy', 'Netherlands', 'Belgium'];
-  const CODES = [['+1', 'US'], ['+351', 'PT'], ['+44', 'UK'], ['+49', 'DE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'], ['+31', 'NL'], ['+32', 'BE'], ['+55', 'BR']];
+  const COUNTRIES = ['Portugal', 'Spain', 'United States', 'Canada', 'Brazil', 'United Kingdom', 'France', 'Germany', 'Italy', 'Netherlands', 'Belgium'];
+  const CODES = [['+351', 'PT'], ['+1', 'US'], ['+44', 'UK'], ['+49', 'DE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'], ['+31', 'NL'], ['+32', 'BE'], ['+55', 'BR']];
   $('#cp-country').innerHTML = COUNTRIES.map((c) => `<option>${c}</option>`).join('');
   $('#cp-cc').innerHTML = CODES.map(([c, k]) => `<option value="${c}">${k} ${c}</option>`).join('');
   const forms = [...document.querySelectorAll('[data-cp]')];
@@ -20,7 +20,8 @@
   const CHECK = {
     name: (v) => (!v ? 'The company needs its legal name.' : ''),
     people: (v) => (v && !/^\d{1,6}$/.test(v) ? 'People is a whole number — 24, for example.' : ''),
-    tax: (v) => (v && !/^\d{2}-?\d{7}$/.test(v) ? 'An EIN is nine digits, written 12-3456789.' : ''),
+    // the tax number's shape follows the country: a Portuguese NIPC (nine digits), a US EIN, or anything elsewhere
+    tax: (v) => { const c = (document.querySelector('#cp-country') || {}).value || p.country; if (!v) return ''; if (c === 'Portugal') return /^\d{9}$/.test(v.replace(/\s/g, '')) ? '' : 'A NIPC is nine digits, like 514 228 930.'; if (c === 'United States') return /^\d{2}-?\d{7}$/.test(v) ? '' : 'An EIN is nine digits, written 12-3456789.'; return ''; },
     email: (v) => (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'That does not look like an email address.' : ''),
     phone: (v) => { const d = v.replace(/\D/g, ''); return v && (d.length < 6 || d.length > 15 || /[^\d\s()+.-]/.test(v)) ? 'That does not look like a phone number.' : ''; },
     website: (v) => (v && !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(v) ? 'That does not look like a web address.' : ''),
@@ -44,7 +45,7 @@
   });
 
   // ---- logo ---------------------------------------------------------------------------------------
-  const ini = (n) => n.replace(/\b(LLC|Inc\.?|Co\.?|Ltd\.?|GmbH|BV|NV)\b/gi, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const ini = (n) => n.replace(/\b(LLC|Inc\.?|Co\.?|Ltd\.?|Lda\.?|S\.A\.?|GmbH|BV|NV)(?=\W|$)/gi, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   const paintLogo = () => {
     const box = $('#cp-logo'); box.textContent = '';
     if (p.logo) { const img = new Image(); img.alt = ''; img.src = p.logo; box.appendChild(img); } else box.textContent = ini(p.trading || p.name);
