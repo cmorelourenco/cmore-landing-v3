@@ -5,19 +5,17 @@
    Prototype: companies you add live in this browser (localStorage), per demo person; the one
    you're in lives in this tab (sessionStorage), and the pages read cm-company as they already do. */
 (() => {
-  const persona = document.documentElement.dataset.persona === 'miguel' ? 'miguel' : 'beatriz';
+  const persona = 'miguel'; // the one demo company
   const get = (store, k, d) => { try { const v = store.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const set = (store, k, v) => { try { store.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const person = get(sessionStorage, 'cm-person', null) || {};
   // demo: both people own their company; a role other than super admin can't add companies
   const role = person.role || 'super_admin';
-  const ROLE = { super_admin: 'Super admin', admin: 'Admin', member: 'Member' };
+  const ROLE = { super_admin: 'Super admin', admin: 'Admin', manager: 'Manager', user: 'User' };
 
-  const LEAF = '<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg>';
   const HOME = {
     miguel: { id: 'home', name: 'Ferreira Construction LLC', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'US', sector: 'Construction' },
-    beatriz: { id: 'home', name: 'Veridian Harvest Co.', logo: `<span class="cs-mono cs-leaf">${LEAF}</span>`, state: 'filled', country: 'US', sector: 'Other' },
   }[persona];
   const KEY = 'cm-orgs-' + persona, LINKS = 'cm-org-links-' + persona, LAST = 'cm-last-org-' + persona;
 
@@ -50,7 +48,7 @@
   };
   const forget = () => {
     try {
-      ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-'].forEach((k) => localStorage.removeItem(k + p)));
+      ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
       ['cm-org', 'cm-newco-paid'].forEach((k) => sessionStorage.removeItem(k));
     } catch (e) {}
   };
@@ -72,6 +70,9 @@
   const out = document.getElementById('who-logout');
   if (out) out.addEventListener('click', () => forget());
 
+  // the account menu's "Create a new company" is for super admins only
+  if (role !== 'super_admin') document.querySelectorAll('[data-super-only]').forEach((a) => a.remove());
+
   // ---- the selector, on pages with the side menu ---------------------------------------------
   const sn = document.querySelector('.sn-in');
   if (!sn) return;
@@ -86,8 +87,6 @@
 .cs-logo { flex: none; width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; overflow: hidden; display: grid; place-items: center; }
 .cs-logo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .cs-mono { display: grid; place-items: center; width: 100%; height: 100%; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; font-weight: 600; }
-.cs-leaf { background: linear-gradient(155deg, #4a9636, var(--color-positive) 60%, #2f5f23); }
-.cs-leaf svg { width: 62%; height: 62%; }
 .cs-id { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
 .cs-id b { font-size: 0.875rem; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cs-role { margin-top: 0.125rem; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-coral-deep, #c24a2c); }
@@ -120,7 +119,7 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
 
   const CHEV = '<svg class="cs-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>';
   const TICK = '<svg class="cs-tick" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
-  const PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+  const PEOPLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 19.1a9.4 9.4 0 0 0 6.7-.6 4.1 4.1 0 0 0-7.5-2.5M15 19.1a6.4 6.4 0 0 0-12.7 0M12 6.4a3.4 3.4 0 1 1-6.8 0 3.4 3.4 0 0 1 6.8 0Zm8.3 2.2a2.6 2.6 0 1 1-5.3 0 2.6 2.6 0 0 1 5.3 0Z"/></svg>';
 
   // the chip, right under the collapse button
   const box = document.createElement('div'); box.className = 'cs';
@@ -140,7 +139,7 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
       const rel = up && byId(up) ? `Part of ${esc(byId(up).name)}` : down.length ? `Parent of ${down.map((k) => esc(k.name)).join(', ')}` : '';
       const state = o.state === 'filled' ? '<span class="cs-state is-ok"><i></i>Profile in place</span>' : '<span class="cs-state"><i></i>Empty &middot; set up with ALMA</span>';
       return `<button type="button" class="cs-item" role="menuitemradio" aria-checked="${o.id === cur.id}" data-org="${esc(o.id)}"><span class="cs-logo">${mono(o)}</span><span class="cs-item-t"><b>${esc(o.name)}</b>${state}${rel ? `<span class="cs-rel">${rel}</span>` : ''}</span>${o.id === cur.id ? TICK : ''}</button>`;
-    }).join('') + (role === 'super_admin' ? `<div class="cs-sep" role="separator"></div><a class="cs-item cs-new" role="menuitem" href="new-company-pay.html"><span class="cs-logo">${PLUS}</span><span class="cs-item-t"><b>Create a new company</b><span>Its own subscription, a few details, then ALMA or an empty profile</span></span></a>` : '');
+    }).join('') + (role === 'super_admin' ? `<div class="cs-sep" role="separator"></div><a class="cs-item cs-new" role="menuitem" href="team.html"><span class="cs-logo">${PEOPLE}</span><span class="cs-item-t"><b>Invite people</b><span>To ${esc(cur.name)}, with a role each</span></span></a>` : '');
   };
   const place = () => {
     const r = chip.getBoundingClientRect(), rail = document.documentElement.dataset.sn === 'rail';

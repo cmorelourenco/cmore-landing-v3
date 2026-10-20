@@ -1,5 +1,5 @@
 /* The company's own profile: who it is, where, how to reach it, its logo, and which clients
-   may see its documents. Each demo company starts from what the company page shows; edits
+   may see its documents. The demo company starts from what the company page shows; edits
    are kept for this tab's session and the company page follows them. */
 window.CO_PROFILE = (() => {
   const KEY = 'cm-co-profile';
@@ -15,19 +15,8 @@ window.CO_PROFILE = (() => {
         { name: 'Meridian Health', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2026' },
       ],
     },
-    beatriz: {
-      name: 'Veridian Harvest Co.', trading: '', activity: 'Agricultural commodity exporter', people: '60', form: 'Louisiana LLC', tax: '71-4482019',
-      street: '400 Poydras St, Suite 1850', city: 'New Orleans', region: 'LA', postcode: '70130', country: 'United States',
-      email: 'info@veridianharvest.com', cc: '+1', phone: '(504) 555-0192', website: 'veridianharvest.com',
-      logo: 'images/veridian-logo.svg',
-      consents: [
-        { name: 'Rotterdam Roasters BV', state: 'pending', what: 'EUDR due diligence statements, geolocation data', when: 'Asked 3 days ago' },
-        { name: 'Café Direct Hamburg GmbH', state: 'pending', what: 'supplier code of conduct, deforestation risk assessments', when: 'Asked 5 days ago' },
-        { name: 'Belgian Cocoa Works NV', state: 'accepted', what: 'Product overview, carbon footprint reports', when: 'Since 12 Aug 2026' },
-      ],
-    },
   };
-  const who = () => document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
+  const who = () => 'miguel'; // the one demo company
   const all = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
   const load = () => {
     const d = JSON.parse(JSON.stringify(DEFAULTS[who()])), saved = all()[who()] || {};

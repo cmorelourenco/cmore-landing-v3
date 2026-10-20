@@ -12,7 +12,7 @@
       if (cmPerson) { sessionStorage.setItem('cm-person', JSON.stringify(cmPerson)); if (localStorage.getItem('cm-last-company') === 'filled') sessionStorage.setItem('cm-company', 'filled'); } }
   } catch (e) {}
   if (!cmPerson) location.replace('register.html?login');
-  document.documentElement.dataset.persona = (cmPerson && !/beatriz/i.test(cmPerson.name || '')) ? 'miguel' : 'beatriz';
+  document.documentElement.dataset.persona = 'miguel'; // the one demo company on this branch
 </script>
 <meta name="robots" content="noindex">
 <style>
