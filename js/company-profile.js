@@ -80,6 +80,7 @@
   };
   const SAY = CO_PROFILE.SAY;
   const paintConsents = () => {
+    if (!p.consents.length) { list.innerHTML = '<div class="co-list-empty"><span class="co-row-n">No requests yet</span><span class="co-subtle">When a client asks to see your documents, it shows up here for a yes or a no.</span></div>'; return; }
     list.innerHTML = p.consents.map((c, i) => `<div class="co-row"><div class="co-row-t"><span class="co-row-n">${esc(c.name)} <span class="co-badge ${CO_PROFILE.BADGE[c.state][0]}">${CO_PROFILE.BADGE[c.state][1]}</span></span><span class="co-subtle">${esc(SAY[c.state](c))}</span></div><div class="co-acts">${ACTS[c.state](i)}</div></div>`).join('');
   };
   list.addEventListener('click', (e) => {
@@ -90,7 +91,7 @@
   });
 
   // ---- the section in view is the one marked on the left, as in Settings --------------------------------
-  const links = [...document.querySelectorAll('.set-nav a')], cards = links.map((a) => document.querySelector(a.getAttribute('href')));
+  const links = [...document.querySelectorAll('.set-nav a:not([data-out])')], cards = links.map((a) => document.querySelector(a.getAttribute('href')));
   const mark = () => {
     let on = 0;
     cards.forEach((c, i) => { if (c && c.getBoundingClientRect().top < innerHeight * 0.35) on = i; });

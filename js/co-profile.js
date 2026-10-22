@@ -1,6 +1,7 @@
 /* The company's own profile: who it is, where, how to reach it, its logo, and which clients
-   may see its documents. The demo company starts from what the company page shows; edits
-   are kept for this tab's session and the company page follows them. */
+   may see its documents. The demo company starts from what the company page shows; a company
+   added in this session starts from what was typed when it was created. Edits are kept for this
+   tab's session, per company, and the company page follows them. */
 window.CO_PROFILE = (() => {
   const KEY = 'cm-co-profile-pt'; // renamed when the demo company moved to Portugal, so an older profile in this tab doesn't come back
   const DEFAULTS = {
@@ -16,7 +17,22 @@ window.CO_PROFILE = (() => {
       ],
     },
   };
-  const who = () => 'miguel'; // the one demo company
+  // the company you're in: the demo company, or one added in this session (js/company-switcher.js)
+  const added = (() => {
+    try {
+      const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null');
+      return id && id !== 'home' ? (JSON.parse(localStorage.getItem('cm-orgs-miguel') || '[]') || []).find((o) => o.id === id) || null : null;
+    } catch (e) { return null; }
+  })();
+  const NAMES = { PT: 'Portugal', ES: 'Spain', US: 'United States', FR: 'France', DE: 'Germany', IT: 'Italy', NL: 'Netherlands', BE: 'Belgium' };
+  if (added) {
+    DEFAULTS[added.id] = {
+      name: added.name, trading: added.trading || '', activity: added.sector === 'Other' ? added.sectorOther || '' : added.sector || '', people: '', form: added.form || '',
+      tax: added.tax || '', street: '', city: '', region: '', postcode: '', country: added.countryName || NAMES[added.country] || '',
+      email: '', cc: added.country === 'US' ? '+1' : '+351', phone: '', website: '', logo: '', consents: [],
+    };
+  }
+  const who = () => (added ? added.id : 'miguel');
   const all = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
   const load = () => {
     const d = JSON.parse(JSON.stringify(DEFAULTS[who()])), saved = all()[who()] || {};

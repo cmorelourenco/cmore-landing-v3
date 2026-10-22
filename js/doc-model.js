@@ -149,7 +149,36 @@ window.DOC_MODEL = (() => {
       ],
     },
   };
-  const D = DEMO[PERSONA];
+  // ---- a company added in this session (new-company.html) ---------------------------------------
+  // Its documents are the ones it uploaded and accepted in ALMA's guided upload
+  // (js/guided-upload.js), and only those: what it still owes shows in the profile-completion
+  // strip on its homepage, not as a list of missing documents here.
+  const EMP = { 0: 0, '1-9': 5, '10-49': 25, '50-249': 100, '250+': 300 };
+  const profileOf = (o) => {
+    const construction = o.sector === 'Construction';
+    return { country: o.country || 'PT', sector: construction ? 'construction' : 'other', entityType: o.people === '0' ? 'self_employed' : 'company',
+      employees: EMP[o.people] != null ? EMP[o.people] : 5, services: construction ? ['construction_work'] : [], equipmentCount: 0, usClients: false };
+  };
+  const ORG = (() => {
+    try {
+      const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + PERSONA) || 'null');
+      if (!id || id === 'home') return null;
+      return (JSON.parse(localStorage.getItem('cm-orgs-' + PERSONA) || '[]') || []).find((o) => o.id === id) || null;
+    } catch (e) { return null; }
+  })();
+  const COUNTRY_NAME = { PT: 'Portugal (EU)', ES: 'Spain (EU)', FR: 'France (EU)', DE: 'Germany (EU)', IT: 'Italy (EU)', NL: 'Netherlands (EU)', BE: 'Belgium (EU)', IE: 'Ireland (EU)', US: 'United States' };
+  if (ORG) {
+    const guided = (() => { try { return JSON.parse(sessionStorage.getItem('cm-guided-' + ORG.id) || 'null') || {}; } catch (e) { return {}; } })();
+    const state = {};
+    Object.entries(guided.files || {}).forEach(([code, f]) => { if (f.ok) state[code] = ['valid', f.issued, f.valid, '', { ref: esc(f.ref), by: esc(f.by), edited: !!f.edited, conf: f.conf }]; });
+    DEMO.added = {
+      company: esc(ORG.name), profile: profileOf(ORG),
+      line: [COUNTRY_NAME[ORG.country] || ORG.countryName || ORG.country, ORG.sector === 'Other' ? ORG.sectorOther || 'Other' : ORG.sector, ORG.people ? ORG.people + ' people' : ''].filter(Boolean).map(esc).join(' &middot; '),
+      facts: ORG.tax ? { 'tax number|nipc': esc(ORG.tax) } : {},
+      records: { workers: [], equipment: [], products: [] }, state, perRecord: {}, archive: [],
+    };
+  }
+  const D = DEMO[ORG ? 'added' : PERSONA];
   const PROFILE = D.profile;
 
   // ---- statuses ---------------------------------------------------------------------------------
@@ -200,6 +229,8 @@ window.DOC_MODEL = (() => {
     const base = { id: DOCS.length, code: c.code, name: en(c.name), section: en(c.section), area, cat: c, ask,
       requirement: LBL.requirement[c.requirement], req: c.requirement, sharing: LBL.sharing[c.sharing], level: c.level };
     let doc;
+    // a company added in this session lists only what it has uploaded and accepted
+    if (ORG && (kind || !D.state[c.code])) return;
     if (kind) {
       // one per worker, machine or product: the rules say which records it covers
       const all = D.records[kind].map((r, i) => Object.assign({ i }, r));
@@ -221,6 +252,7 @@ window.DOC_MODEL = (() => {
       const has = !['missing', 'na', 'notrequested', 'notuploaded'].includes(status);
       doc = Object.assign(base, { kind: null, roster: null, status, issued, valid: (st && st[2]) || '—', note: (st && st[3]) || '', naBy: extra.naBy || '', naOn: extra.naOn || '',
         ref: has ? (extra.ref || refOf(c.code, issued)) : '', by: has ? (extra.by || issuerOf(c)) : '', edited: !!extra.edited });
+      if (extra.conf != null) doc.conf = extra.conf;
     }
     // the group a document sits in: its catalog section for the company's own documents, who it
     // covers everywhere else — unless nobody has asked for it yet, or it is optional
@@ -234,8 +266,14 @@ window.DOC_MODEL = (() => {
     DOCS.push({ id: DOCS.length, code: '', archivedCode: code, name: en(c.name), section: 'Archived', area: c.category, cat: c, requirement: '', req: '', level: c.level, sharing: LBL.sharing[c.sharing], status: 'archived',
       issued: version.replace(/^Version of /, ''), valid: replaced, note: '', ref: '', by: issuerOf(c), edited: false, group: 'Archived', kind: null, roster: null });
   });
+  // only the Documents pages the person looking can open (js/access.js): the rest aren't counted,
+  // searched or shown on the company homepage either
+  if (window.CMAccess) for (let i = DOCS.length - 1; i >= 0; i--) if (!CMAccess.can('documents.' + DOCS[i].area)) DOCS.splice(i, 1);
   // the areas this company has: open by its profile, with at least one document in them
-  const AREAS = Object.keys(AREA_META).filter((k) => R.AREA_OPEN[k](PROFILE) && DOCS.some((d) => d.area === k && d.status !== 'archived'))
+  // (a company added in this session keeps Company, Workers and Equipment even while they're empty)
+  // (and only the ones the person looking can open: js/access.js)
+  const AREAS = Object.keys(AREA_META).filter((k) => (ORG && k !== 'products') || R.AREA_OPEN[k](PROFILE) && DOCS.some((d) => d.area === k && d.status !== 'archived'))
+    .filter((k) => !window.CMAccess || CMAccess.can('documents.' + k))
     .map((k) => Object.assign({ key: k }, AREA_META[k]));
   const AREA_TITLE = Object.fromEntries(AREAS.map((a) => [a.key, a.title]));
   DOCS.forEach((d) => { d.groupLabel = `${AREA_TITLE[d.area] || ''} &middot; ${d.group}`; });
@@ -254,7 +292,7 @@ window.DOC_MODEL = (() => {
   // Only a 'Mandatory if applicable' document can be marked Not applicable, always with a reason
   // the company's clients will see; it then counts as compliant, and it can be undone (back to
   // what it was). Prototype: marks are kept for this tab (sessionStorage), on top of the demo's.
-  const NA_KEY = 'cm-na';
+  const NA_KEY = 'cm-na' + (ORG ? '-' + ORG.id : '');
   const naMarks = (() => { try { return JSON.parse(sessionStorage.getItem(NA_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveNa = () => { try { sessionStorage.setItem(NA_KEY, JSON.stringify(naMarks)); } catch (e) {} };
   const me = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || 'You'; } catch (e) { return 'You'; } })();
@@ -297,7 +335,7 @@ window.DOC_MODEL = (() => {
   };
   // a document filed again (dropped on ALMA, on any page): its new state, kept for this tab, so
   // the Documents page and the company homepage both see it
-  const UP_KEY = 'cm-doc-updates';
+  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '');
   const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   DOCS.forEach((d) => { if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); });
   const saveDoc = (code, patch) => {
@@ -315,5 +353,5 @@ window.DOC_MODEL = (() => {
   const needing = () => DOCS.filter((d) => counted(d) && RANK[d.status] > 0).sort((a, b) => rank(a) - rank(b));
   const DATA = DOCS.map((d) => Object.assign(d, { text: textOf(d) }));
 
-  return { saveDoc, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { ORG, profileOf, saveDoc, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

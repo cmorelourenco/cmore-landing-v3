@@ -358,9 +358,24 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
 .kids label { display: flex; align-items: center; gap: 0.625rem; font-size: 0.9375rem; cursor: pointer; }
 .kids input { width: 1rem; height: 1rem; accent-color: var(--color-graphite); }
 .opt-l { font-weight: 400; color: var(--color-sand-500); }
+.field[hidden] { display: none; }
+/* the welcome: the account creation's done screen, with the setup ticking off underneath */
+.setup { list-style: none; margin: 1.75rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--color-line); display: grid; gap: 0.75rem; }
+.setup li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; color: var(--color-ink-subtle); transition: color .3s ease; }
+.setup .tick { flex: none; width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 2px solid var(--color-sand-400); border-right-color: var(--color-coral); animation: spin .9s linear infinite; }
+.setup li.is-done { color: var(--color-ink); }
+/* ALMA's checks: the same ticks, each with what she found under it */
+.checks li { align-items: flex-start; }
+.checks li > span:last-child { display: grid; gap: 0.125rem; }
+.checks b { font-weight: 500; color: inherit; }
+.checks .chk-d { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.checks li:not(.is-on):not(.is-done) .tick { animation: none; border-right-color: var(--color-sand-400); }
+.setup li.is-done .tick { animation: none; border: 0; background: var(--color-ok, #a6d8a0) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23343434' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M7 12.5l3.5 3.5L17 9'/></svg>") center / 75% no-repeat; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .foot { margin-top: 1.5rem; display: flex; justify-content: center; }
 .note { margin-top: 0.875rem; text-align: center; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 </style>
+<script src="js/focus-quiet.js"></script>
 </head>
 <body>
 <div class="reg">
@@ -377,7 +392,7 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
       <section class="step is-on" data-step="details" aria-labelledby="t-details">
         <p class="eyebrow">New company</p>
         <h1 class="title" id="t-details">About the company.</h1>
-        <p class="subtitle"><span id="paid-with">Paid</span>. Next: its country and sector decide which documents it will be asked for.</p>
+        <p class="subtitle"><span id="paid-with">Paid</span>. Next, who the company is: its sector and tax number decide which documents it will be asked for.</p>
         <ol class="stepper" data-at="2" aria-label="New company steps">
           <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Payment</span></li>
           <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Company details</span></li>
@@ -385,29 +400,58 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
         </ol>
         <form class="form big" id="f-details" novalidate>
           <div class="field">
-            <label for="c-name">Company name</label>
-            <input class="input" id="c-name" name="name" autocomplete="organization" placeholder="Its legal name" required>
+            <label for="c-name">Legal name</label>
+            <input class="input" id="c-name" name="name" autocomplete="organization" placeholder="As registered, e.g. Ferreira Ibérica, Lda." required>
             <p class="err" id="c-name-err" role="alert"></p>
+          </div>
+          <div class="field">
+            <label for="c-trading">Trading name <span class="opt-l">Optional</span></label>
+            <input class="input" id="c-trading" name="trading" autocomplete="off" placeholder="If clients know it by another name">
+          </div>
+          <div class="two">
+            <div class="field">
+              <label for="c-sector">Sector</label>
+              <select class="input" id="c-sector" name="sector" required>
+                <option value="">Choose one</option>
+                <option>Construction</option><option>Industry</option><option>Services</option><option>Retail</option><option>Technology</option><option>Transport and logistics</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="c-people">People in the company</label>
+              <select class="input" id="c-people" name="people" required>
+                <option value="">Choose one</option>
+                <option value="0">Just me, no employees</option><option value="1-9">1&ndash;9</option><option value="10-49">10&ndash;49</option><option value="50-249">50&ndash;249</option><option value="250+">250 or more</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" id="c-sector-o-f" hidden>
+            <label for="c-sector-o">Which sector?</label>
+            <input class="input" id="c-sector-o" name="sectorOther" autocomplete="off" placeholder="e.g. Agriculture, Hospitality">
           </div>
           <div class="two">
             <div class="field">
               <label for="c-country">Country</label>
-              <select class="input" id="c-country" name="country" required>
-                <option value="PT">Portugal</option><option value="ES">Spain</option><option value="FR">France</option><option value="DE">Germany</option>
-                <option value="IT">Italy</option><option value="NL">Netherlands</option><option value="BE">Belgium</option><option value="IE">Ireland</option>
-                <option value="US">United States</option>
+              <select class="input" id="c-country" name="country" autocomplete="country" required>
+                <option value="">Choose one</option>
               </select>
             </div>
             <div class="field">
-              <label for="c-sector">Sector</label>
-              <select class="input" id="c-sector" name="sector" required>
-                <option>Construction</option><option>Industry</option><option>Services</option><option>Retail</option><option>Technology</option><option>Transport and logistics</option><option>Other</option>
+              <label for="c-form">Legal form</label>
+              <select class="input" id="c-form" name="form" required>
+                <option value="">Choose one</option>
+                <option>Sociedade por quotas (Lda.)</option><option>Sociedade unipessoal por quotas</option><option>Sociedade an&oacute;nima (S.A.)</option>
+                <option>Empres&aacute;rio em nome individual</option><option>Cooperativa</option><option value="other">Other</option>
               </select>
             </div>
           </div>
+          <div class="field" id="c-form-o-f" hidden>
+            <label for="c-form-o">Which legal form?</label>
+            <input class="input" id="c-form-o" name="formOther" autocomplete="off" placeholder="e.g. Sociedad limitada (S.L.)">
+          </div>
           <div class="field">
-            <label for="c-tax"><span id="c-tax-l">Tax number (NIF)</span> <span class="opt-l">Optional</span></label>
-            <input class="input" id="c-tax" name="tax" inputmode="text" autocomplete="off" placeholder="9 digits">
+            <label for="c-tax">Tax number or VAT number</label>
+            <input class="input" id="c-tax" name="tax" inputmode="text" autocomplete="off" placeholder="e.g. 514 228 938, or ESB12345678" required>
+            <p class="hint" id="c-tax-hint">A Portuguese NIF, or an EU VAT number starting with its country code.</p>
             <p class="err" id="c-tax-err" role="alert"></p>
           </div>
           <button class="btn btn-primary btn-block" type="submit" id="details-go" disabled>Continue</button>
@@ -447,6 +491,27 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
         </form>
       </section>
 
+      <!-- Between details and structure: ALMA checks the tax number, VAT and activity code at the
+           source, then moves on to Structure by herself. Prototype: every check passes. -->
+      <section class="step" data-step="check" aria-labelledby="t-check" aria-live="polite">
+        <p class="eyebrow">ALMA</p>
+        <h1 class="title" id="t-check">Checking the company.</h1>
+        <p class="subtitle" id="check-lead">I&rsquo;m confirming its tax number and registration with the official registers.</p>
+        <ul class="setup checks" id="checks"></ul>
+      </section>
+
+      <!-- Welcome: the company being set up, a couple of seconds, then its (empty) homepage -->
+      <section class="step" data-step="welcome" aria-labelledby="t-welcome" aria-live="polite">
+        <div class="done-mark" aria-hidden="true"><i></i><i></i><i></i></div>
+        <h1 class="title done-title" id="t-welcome"><span class="ln">Welcome,</span><span class="ln"><span class="hl" id="w-name">your company</span>.</span></h1>
+        <p class="lead">Setting it up on C&#8209;MORE.</p>
+        <ul class="setup" id="setup">
+          <li><span class="tick" aria-hidden="true"></span><span>Creating the company profile</span></li>
+          <li><span class="tick" aria-hidden="true"></span><span id="setup-docs">Choosing the documents it will be asked for</span></li>
+          <li><span class="tick" aria-hidden="true"></span><span>Getting ALMA ready for its first documents</span></li>
+        </ul>
+      </section>
+
     </div>
   </main>
 </div>
@@ -458,8 +523,8 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // only a super admin adds companies; anyone else goes back where they came from
-  if (!O || O.role !== 'super_admin') { location.replace('my-company.html?filled'); return; }
+  // only an owner adds companies; anyone else goes back where they came from
+  if (!O || O.role !== 'owner') { location.replace('my-company.html?filled'); return; }
   const back = O.current().state === 'filled' ? 'my-company.html?filled' : 'my-company.html?page';
   document.querySelectorAll('#cancel, .brand').forEach((a) => a.setAttribute('href', back));
 
@@ -477,37 +542,99 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
   if (!paidInfo) { location.replace('new-company-pay.html'); return; }
 
   // ---- 2. details --------------------------------------------------------------------------
-  // the tax number's name and shape follow the country
-  const TAX = { PT: ['NIF', '9 digits', /^\d{9}$/], ES: ['NIF / CIF', 'e.g. B12345678', /^[A-Z0-9]{9}$/], FR: ['SIREN or VAT', '9 digits, or FR + 11', /^(\d{9}|FR[A-Z0-9]{2}\d{9})$/],
-    DE: ['VAT ID', 'DE + 9 digits', /^DE\d{9}$/], IT: ['Partita IVA', '11 digits', /^\d{11}$/], NL: ['VAT ID', 'NL + 9 digits + B + 2', /^NL\d{9}B\d{2}$/],
-    BE: ['Enterprise number', '10 digits', /^\d{10}$/], IE: ['VAT number', 'IE + 8 or 9 characters', /^IE[A-Z0-9]{8,9}$/], US: ['EIN', '12-3456789', /^\d{2}-?\d{7}$/] };
+  // the country is chosen, and the tax number has to belong to it: nine digits are a Portuguese NIF
+  // (with its check digit); otherwise an EU VAT number, whose first two letters name the country; a
+  // US EIN also works. A tax number typed first picks the country for you.
+  const EU = { AT: 'Austria', BE: 'Belgium', BG: 'Bulgaria', CY: 'Cyprus', CZ: 'Czechia', DE: 'Germany', DK: 'Denmark', EE: 'Estonia', EL: 'Greece', ES: 'Spain', FI: 'Finland',
+    FR: 'France', HR: 'Croatia', HU: 'Hungary', IE: 'Ireland', IT: 'Italy', LT: 'Lithuania', LU: 'Luxembourg', LV: 'Latvia', MT: 'Malta', NL: 'Netherlands', PL: 'Poland',
+    PT: 'Portugal', RO: 'Romania', SE: 'Sweden', SI: 'Slovenia', SK: 'Slovakia' };
+  const nifOk = (n) => { if (!/^[1-9]\d{8}$/.test(n)) return false; const s = [...n.slice(0, 8)].reduce((a, c, i) => a + c * (9 - i), 0) % 11; return +n[8] === (s < 2 ? 0 : 11 - s); };
+  const readTax = (raw) => {
+    const v = raw.toUpperCase().replace(/[\s.\-]/g, '');
+    if (!v) return null;
+    if (/^\d{9}$/.test(v)) return nifOk(v) ? { country: 'PT', name: 'Portugal', kind: 'NIF', value: v } : { error: 'That NIF doesn’t check out — the last digit doesn’t match. A typo?' };
+    const m = /^([A-Z]{2})([A-Z0-9]{8,12})$/.exec(v);
+    if (m && EU[m[1]]) {
+      if (m[1] === 'PT' && !nifOk(m[2])) return { error: 'That Portuguese VAT number doesn’t check out. A typo?' };
+      return { country: m[1] === 'EL' ? 'GR' : m[1], name: EU[m[1]], kind: 'VAT number', value: v };
+    }
+    if (/^\d{2}-?\d{7}$/.test(raw.trim())) return { country: 'US', name: 'United States', kind: 'EIN', value: raw.trim() };
+    return { error: 'Use a Portuguese NIF (nine digits) or an EU VAT number that starts with its country code, like ESB12345678.' };
+  };
+  const COUNTRIES = Object.assign({}, EU, { US: 'United States' });
+  delete COUNTRIES.EL; COUNTRIES.GR = 'Greece';
+  $('#c-country').insertAdjacentHTML('beforeend', Object.entries(COUNTRIES).sort((a, b) => (a[0] === 'PT' ? -1 : b[0] === 'PT' ? 1 : a[1].localeCompare(b[1])))
+    .map(([k, n]) => `<option value="${k}">${n}</option>`).join(''));
+  const taxFor = () => {
+    const t = readTax($('#c-tax').value), c = $('#c-country').value;
+    if (t && !t.error && c && t.country !== c) return { error: `That’s a ${t.kind} from ${t.name}, but the company is in ${COUNTRIES[c]}. Check the country or the number.` };
+    return t;
+  };
   const cur = O.current();
-  if (cur.country && TAX[cur.country]) $('#c-country').value = cur.country;
-  if (cur.sector) $('#c-sector').value = cur.sector;
-  const tax = () => TAX[$('#c-country').value];
-  const clean = (v) => v.toUpperCase().replace(/[\s.]/g, '');
-  const paintTax = () => { $('#c-tax-l').textContent = `Tax number (${tax()[0]})`; $('#c-tax').placeholder = tax()[1]; checkDetails(false); };
+  const val = (s) => $(s).value.trim();
+  const other = (sel, box) => { $(box).hidden = $(sel).value !== 'Other' && $(sel).value !== 'other'; };
   const checkDetails = (loud) => {
-    const name = $('#c-name').value.trim(), t = clean($('#c-tax').value);
-    const nameOk = name.length >= 2, taxOk = !t || tax()[2].test(t);
+    const name = val('#c-name'), raw = readTax($('#c-tax').value);
+    // a tax number typed before the country is chosen chooses it
+    if (raw && !raw.error && !$('#c-country').value && COUNTRIES[raw.country]) $('#c-country').value = raw.country;
+    const tax = taxFor();
+    const nameOk = name.length >= 2, taxOk = !!tax && !tax.error;
+    // the country it comes from, as you type
+    $('#c-tax-hint').innerHTML = tax && !tax.error ? `<b>${tax.name}</b> &middot; ${tax.kind}` : 'A Portuguese NIF, or an EU VAT number starting with its country code.';
     if (loud) {
-      $('#c-name-err').textContent = nameOk ? '' : 'Give the company its name.';
-      $('#c-tax-err').textContent = taxOk ? '' : `That doesn't look like a valid ${tax()[0]}: ${tax()[1]}.`;
+      $('#c-name-err').textContent = nameOk ? '' : 'Give the company its legal name.';
+      $('#c-tax-err').textContent = taxOk ? '' : tax ? tax.error : 'The tax or VAT number is needed: it decides which documents the company is asked for.';
       $('#c-name').classList.toggle('is-bad', !nameOk); $('#c-tax').classList.toggle('is-bad', !taxOk);
     }
-    $('#details-go').disabled = !name;
+    const filled = name && val('#c-country') && val('#c-sector') && val('#c-people') && val('#c-form') && $('#c-tax').value.trim()
+      && (val('#c-sector') !== 'Other' || val('#c-sector-o')) && (val('#c-form') !== 'other' || val('#c-form-o'));
+    $('#details-go').disabled = !filled;
     return nameOk && taxOk;
   };
-  $('#c-country').addEventListener('change', paintTax);
-  ['#c-name', '#c-tax'].forEach((s) => $(s).addEventListener('input', () => { $(s).classList.remove('is-bad'); $(s + '-err').textContent = ''; checkDetails(false); }));
+  $('#c-sector').addEventListener('change', () => { other('#c-sector', '#c-sector-o-f'); checkDetails(false); });
+  $('#c-form').addEventListener('change', () => { other('#c-form', '#c-form-o-f'); checkDetails(false); });
+  $('#c-people').addEventListener('change', () => checkDetails(false));
+  $('#c-country').addEventListener('change', () => { $('#c-tax').classList.remove('is-bad'); $('#c-tax-err').textContent = ''; checkDetails(false); });
+  ['#c-name', '#c-trading', '#c-sector-o', '#c-form-o', '#c-tax'].forEach((s) => $(s).addEventListener('input', () => { $(s).classList.remove('is-bad'); const er = $(s + '-err'); if (er) er.textContent = ''; checkDetails(false); }));
   $('#f-details').addEventListener('submit', (e) => {
     e.preventDefault();
     if (!checkDetails(true)) { (document.querySelector('#f-details .is-bad') || $('#c-name')).focus(); return; }
-    $('#s-name').textContent = $('#c-name').value.trim();
+    $('#s-name').textContent = val('#c-trading') || val('#c-name');
     paintStructure();
-    show('structure');
+    check();
   });
-  paintTax();
+
+  // ---- between 2 and 3: ALMA validates what was typed --------------------------------------
+  // the tax number's check digit, the VAT number in VIES (EU), the legal name against the
+  // registry and the activity code against the sector; all pass, and Structure follows
+  const CAE = { Construction: ['41200', 'building construction'], Industry: ['25110', 'manufacture of metal structures'], Services: ['70220', 'business consultancy'],
+    Retail: ['47190', 'retail sale in non-specialised stores'], Technology: ['62010', 'computer programming'], 'Transport and logistics': ['49410', 'freight transport by road'] };
+  const check = () => {
+    const tax = taxFor(), c = val('#c-country'), name = val('#c-name');
+    const num = tax.value.replace(/^[A-Z]{2}/, ''), pretty = /^\d{9}$/.test(num) ? num.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3') : num;
+    const sector = val('#c-sector') === 'Other' ? val('#c-sector-o') : val('#c-sector');
+    const code = CAE[val('#c-sector')];
+    const list = [];
+    if (c === 'PT') list.push([`NIF ${pretty}`, `Check digit valid &middot; a company number (it starts with ${num[0]})`]);
+    else if (c === 'US') list.push([`EIN ${esc(tax.value)}`, 'Valid format &middot; issued by the IRS']);
+    else list.push([`Tax number ${esc(num)}`, `Valid format for ${COUNTRIES[c]}`]);
+    if (c !== 'US') list.push([`VAT number ${c === 'GR' ? 'EL' : c}${esc(num)}`, 'Active in VIES, the EU&rsquo;s VAT register']);
+    list.push(['Legal name', `Matches the ${c === 'PT' ? 'commercial registry' : c === 'US' ? 'state registry' : 'business register'}: ${esc(name)}`]);
+    list.push([c === 'PT' ? 'Activity code (CAE)' : 'Activity code (NACE)', code ? `${code[0]}, ${code[1]} &middot; fits ${esc(sector)}` : `Registered activity fits ${esc(sector || 'its sector')}`]);
+    $('#checks').innerHTML = list.map(([t, d]) => `<li><span class="tick" aria-hidden="true"></span><span><b>${t}</b><span class="chk-d">Waiting</span></span></li>`).join('');
+    $('#t-check').textContent = 'Checking the company.';
+    $('#check-lead').textContent = 'I’m confirming its tax number and registration with the official registers.';
+    show('check');
+    const items = [...document.querySelectorAll('#checks li')];
+    const step = reduced ? 120 : 700;
+    items.forEach((li, i) => {
+      setTimeout(() => { li.classList.add('is-on'); li.querySelector('.chk-d').textContent = 'Checking…'; }, (reduced ? 0 : 450) + i * step);
+      setTimeout(() => { li.classList.add('is-done'); li.querySelector('.chk-d').innerHTML = list[i][1]; }, (reduced ? 0 : 450) + i * step + step - 80);
+    });
+    const end = (reduced ? 0 : 450) + items.length * step;
+    setTimeout(() => { $('#t-check').textContent = 'All confirmed.'; $('#check-lead').textContent = 'Everything checks out. Next, how it fits with your other companies.'; }, end);
+    setTimeout(() => show('structure'), end + (reduced ? 200 : 1300));
+  };
   document.getElementById('paid-with').innerHTML = `Paid <b style="font-weight:500;color:var(--color-ink)">${esc(paidInfo.total)}</b>${paidInfo.paidWith ? ' with ' + esc(paidInfo.paidWith) : ''}`;
   setTimeout(() => $('#c-name').focus({ preventScroll: true }), 60);
 
@@ -528,13 +655,22 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
     e.preventDefault();
     const s = structure();
     if (!s) { $('#structure-err').textContent = 'Choose one: parent, subsidiary or none.'; return; }
+    const tax = taxFor();
     const org = O.add({
-      name: $('#c-name').value.trim(), country: $('#c-country').value, sector: $('#c-sector').value, tax: clean($('#c-tax').value),
+      name: val('#c-name'), trading: val('#c-trading'), sector: val('#c-sector'), sectorOther: val('#c-sector') === 'Other' ? val('#c-sector-o') : '',
+      people: val('#c-people'), form: val('#c-form') === 'other' ? val('#c-form-o') : val('#c-form'), tax: tax.value, country: val('#c-country'), countryName: COUNTRIES[val('#c-country')],
       structure: s, parent: s === 'subsidiary' ? $('#c-parent').value : null, plan: paidInfo.plan, paidWith: paidInfo.paidWith,
     }, s === 'parent' ? [...document.querySelectorAll('#kids input:checked')].map((x) => x.value) : []);
-    // into the new company: its empty homepage, with ALMA's step over it — use her, or skip
     try { sessionStorage.removeItem('cm-newco-paid'); } catch (er) {}
-    O.go(org);
+    // the welcome: a couple of seconds while it is set up, then its empty homepage, where ALMA
+    // asks for its mandatory documents
+    $('#w-name').textContent = org.trading || org.name;
+    $('#setup-docs').textContent = `Choosing its documents: ${COUNTRIES[val('#c-country')]} · ${org.sector === 'Other' && org.sectorOther ? org.sectorOther : org.sector}`;
+    show('welcome');
+    $('#cancel').hidden = true; // the company exists now: nothing left to cancel
+    const items = [...document.querySelectorAll('#setup li')];
+    items.forEach((li, i) => setTimeout(() => li.classList.add('is-done'), reduced ? 0 : 500 + i * 650));
+    setTimeout(() => O.go(org, { guided: true }), reduced ? 300 : 2700);
   });
 })();
 </script>

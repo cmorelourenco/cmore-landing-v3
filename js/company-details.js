@@ -64,6 +64,7 @@
   const confOf = (d, salt = '') => {
     if (NO_FILE.includes(d.status)) return null;
     if (d.status === 'processing') return 'reading';
+    if (typeof d.conf === 'number' && !salt) return d.conf; // as ALMA read it on upload
     const h = hash(d.code + (d.archivedCode || '') + salt + PERSONA);
     return d.status === 'attention' ? 58 + (h % 15) : 86 + (h % 14);
   };
@@ -87,7 +88,8 @@
   const fmt = (dt) => `${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}`;
   const addM = (dt, n) => new Date(dt.getFullYear(), dt.getMonth() + n, Math.min(dt.getDate(), 28));
   const versionsOf = (d) => {
-    if (d.kind || NO_FILE.includes(d.status) || d.status === 'archived') return [];
+    // a company added in this session has only the file it just uploaded
+    if (d.kind || NO_FILE.includes(d.status) || d.status === 'archived' || window.DOC_MODEL.ORG) return [];
     const now = parse(d.issued); if (!now) return [];
     const r = (d.cat.renewal || '').toLowerCase(), h = hash(d.code);
     const monthly = /month/.test(r) && !/6/.test(r);
@@ -439,9 +441,9 @@
     groupsEl.innerHTML = `<div class="cd-areas" role="list">${AREAS.map((a) => {
       const docs = DATA.filter((d) => d.area === a.key && counted(d));
       const alerts = docs.filter(needsAttention).length;
-      return `<button type="button" class="cd-area" data-area="${a.key}" role="listitem">` +
+      return `<button type="button" class="cd-area${docs.length ? '' : ' is-empty'}" data-area="${a.key}" role="listitem">` +
         `<span class="cd-area-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${a.icon}</svg><span>${a.title}</span>${alerts ? `<span class="cd-area-alert">${alerts}</span>` : ''}<span class="cd-area-arrow" aria-hidden="true">→</span></span>` +
-        `<span class="cd-area-n">${docs.length}<small>document${docs.length === 1 ? '' : 's'} asked of you</small></span>` +
+        `<span class="cd-area-n">${docs.length}<small>document${docs.length === 1 ? '' : 's'} ${window.DOC_MODEL.ORG ? 'on file' : 'asked of you'}</small></span>` +
         `<span class="cd-area-d">${a.sub}</span>` +
       `</button>`;
     }).join('')}</div>`;
@@ -454,7 +456,9 @@
       const docs = list.filter((d) => d.area === key && d.group === g);
       return docs.length ? group(area ? g : docs[0].groupLabel, docs, g) : '';
     })).join('');
-    groupsEl.innerHTML = list.length ? (area && !filtering() ? matrix(area) : '') + html : none();
+    // an area of a company added in this session, with nothing uploaded to it yet
+    const empty = area && !filtering() && !DATA.some((d) => d.area === area);
+    groupsEl.innerHTML = list.length ? (area && !filtering() ? matrix(area) : '') + html : empty ? areaEmpty(area) : none();
   };
 
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
@@ -547,6 +551,7 @@
     </div>`;
   };
 
+  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : 'Nothing uploaded here yet.'} Drop them on ALMA above and she files them here.</span></div>`;
   const none = () => '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
 
   // the breadcrumb, the back button, and the title/subtitle/stats above the list
@@ -575,9 +580,11 @@
     hero.hidden = !!doc || worker !== null || machine !== null;
     if (doc || worker !== null || machine !== null) return;
     h2.textContent = a ? a.title : 'All company documents';
-    sub.innerHTML = a ? a.long : `Every document the C&#8209;MORE catalog asks of a company like yours, kept in one profile so any client finds the same set. Chosen from your profile: <b class="cd-profile">${D.line}</b>.`;
+    const fresh = window.DOC_MODEL.ORG; // a company added in this session: only what it uploaded
+    sub.innerHTML = a ? a.long : fresh ? `The documents you&rsquo;ve uploaded, kept in one profile so any client finds the same set. Your profile: <b class="cd-profile">${D.line}</b>.` : `Every document the C&#8209;MORE catalog asks of a company like yours, kept in one profile so any client finds the same set. Chosen from your profile: <b class="cd-profile">${D.line}</b>.`;
     counts(a ? DOCS.filter((d) => d.area === a.key) : DOCS);
-    document.getElementById('cd-card-total-d').textContent = a ? `Every document asked of you in ${a.title.toLowerCase()}.` : 'Every document asked of you, from your profile.';
+    document.getElementById('cd-card-total-d').textContent = fresh ? (a ? `Every document you've uploaded in ${a.title.toLowerCase()}.` : 'Every document you’ve uploaded.') : a ? `Every document asked of you in ${a.title.toLowerCase()}.` : 'Every document asked of you, from your profile.';
+    if (fresh) { const h = document.querySelector('#cd-card-total-d') && document.querySelector('#cd-card-total-d').closest('.cd-card'); const l = h && h.querySelector('.cd-card-h span'); if (l) l.textContent = 'On file'; }
   };
 
   function render() {

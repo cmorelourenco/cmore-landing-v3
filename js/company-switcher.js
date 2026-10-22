@@ -1,7 +1,7 @@
 /* Your companies, and the selector at the top of the side menu on every signed-in page.
    window.CMOrgs is the list itself — the company you sign up with, plus any you add on
    new-company.html — and which one you're working in; the selector shows that company and your
-   role, and opens the list to switch between them or, for a super admin, to add another.
+   role, and opens the list to switch between them or, for an owner, to add another.
    Prototype: companies you add live in this browser (localStorage), per demo person; the one
    you're in lives in this tab (sessionStorage), and the pages read cm-company as they already do. */
 (() => {
@@ -10,9 +10,10 @@
   const set = (store, k, v) => { try { store.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const person = get(sessionStorage, 'cm-person', null) || {};
-  // demo: both people own their company; a role other than super admin can't add companies
-  const role = person.role || 'super_admin';
-  const ROLE = { super_admin: 'Super admin', admin: 'Admin', manager: 'Manager', user: 'User' };
+  // demo: the person owns the company; only an owner can add companies. (An older demo's
+  // super admin is an owner now.)
+  const role = !person.role || person.role === 'super_admin' ? 'owner' : person.role;
+  const ROLE = { owner: 'Owner', admin: 'Admin', manager: 'Manager', user: 'User' };
 
   const HOME = {
     miguel: { id: 'home', name: 'Ferreira Construções, Lda.', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
@@ -40,16 +41,19 @@
   };
   // going into a company: an empty one opens on its empty homepage, where ALMA's step comes up
   // over it (skip it and the empty page stays); one with a profile opens on that profile
-  const go = (o) => {
+  const go = (o, opts = {}) => {
     set(sessionStorage, 'cm-org', o.id); set(localStorage, LAST, o.id);
     const st = o.state === 'filled' ? 'filled' : 'empty';
     try { sessionStorage.setItem('cm-company', st); localStorage.setItem('cm-last-company', st); } catch (e) {}
-    location.href = st === 'filled' ? 'my-company.html?filled' : 'my-company.html?page';
+    // a company just created opens with ALMA asking for its mandatory documents (js/guided-upload.js)
+    location.href = st === 'filled' ? 'my-company.html?filled' : 'my-company.html?page' + (opts.guided ? '&guided' : '');
   };
   const forget = () => {
     try {
       ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
-      ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k));
+      ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
+      // and what was filed for the companies added (their guided upload, marks and updates)
+      Object.keys(sessionStorage).filter((k) => /^cm-(guided|na|doc-updates)-/.test(k)).forEach((k) => sessionStorage.removeItem(k));
     } catch (e) {}
   };
   window.CMOrgs = { persona, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, go, forget };
@@ -70,8 +74,8 @@
   const out = document.getElementById('who-logout');
   if (out) out.addEventListener('click', () => forget());
 
-  // the account menu's "Create a new company" is for super admins only
-  if (role !== 'super_admin') document.querySelectorAll('[data-super-only]').forEach((a) => a.remove());
+  // the account menu's "Create a new company" is for owners only
+  if (role !== 'owner') document.querySelectorAll('[data-owner-only]').forEach((a) => a.remove());
 
   // ---- the selector, on pages with the side menu ---------------------------------------------
   const sn = document.querySelector('.sn-in');
@@ -139,7 +143,7 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
       const rel = up && byId(up) ? `Part of ${esc(byId(up).name)}` : down.length ? `Parent of ${down.map((k) => esc(k.name)).join(', ')}` : '';
       const state = o.state === 'filled' ? '<span class="cs-state is-ok"><i></i>Profile in place</span>' : '<span class="cs-state"><i></i>Empty &middot; set up with ALMA</span>';
       return `<button type="button" class="cs-item" role="menuitemradio" aria-checked="${o.id === cur.id}" data-org="${esc(o.id)}"><span class="cs-logo">${mono(o)}</span><span class="cs-item-t"><b>${esc(o.name)}</b>${state}${rel ? `<span class="cs-rel">${rel}</span>` : ''}</span>${o.id === cur.id ? TICK : ''}</button>`;
-    }).join('') + (role === 'super_admin' ? `<div class="cs-sep" role="separator"></div><a class="cs-item cs-new" role="menuitem" href="team.html"><span class="cs-logo">${PEOPLE}</span><span class="cs-item-t"><b>Invite people</b><span>To ${esc(cur.name)}, with a role each</span></span></a>` : '');
+    }).join('') + (role === 'owner' || role === 'admin' ? `<div class="cs-sep" role="separator"></div><a class="cs-item cs-new" role="menuitem" href="team.html"><span class="cs-logo">${PEOPLE}</span><span class="cs-item-t"><b>Invite people</b><span>To ${esc(cur.name)}, with a role each</span></span></a>` : '');
   };
   const place = () => {
     const r = chip.getBoundingClientRect(), rail = document.documentElement.dataset.sn === 'rail';

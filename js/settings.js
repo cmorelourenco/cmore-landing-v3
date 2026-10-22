@@ -141,7 +141,7 @@
   document.addEventListener('click', (e) => { const a = e.target.closest('#tfa-hint a'); if (a) { e.preventDefault(); links[0].click(); setTimeout(() => $('#p-phone').focus({ preventScroll: true }), 450); } });
 
   fill(); paint(); tfa(); checkPw();
-  // arriving at a section (from the account menu's Edit profile, or the company page)
+  // arriving at a section (from the account menu's Profile, or the company page)
   const at = location.hash && document.querySelector(location.hash);
   if (at && at.classList.contains('set-card')) setTimeout(() => scrollTo({ top: at.getBoundingClientRect().top + scrollY - 96 }), 60);
   setTimeout(mark, 120);
