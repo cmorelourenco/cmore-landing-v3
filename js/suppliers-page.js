@@ -1,0 +1,205 @@
+/* My suppliers (suppliers.html): a card for each supplier, and — with ?id= — the supplier's own
+   page: who they are, what they share with you, and a table for each consent they have given, with
+   the documents it lets you see. A document opens in the drawer, as everywhere else: the supplier's
+   file, its status, and what the catalog says about it. The data is js/suppliers.js. */
+(() => {
+  const S = window.CM_SUPPLIERS, box = document.getElementById('sup-body');
+  if (!S || !box) return;
+  const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('');
+  const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
+  const CLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+  const css = `
+.sp-tools { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1rem; margin-bottom: 1.25rem; }
+.sp-search { flex: 1 1 18rem; max-width: 24rem; }
+.sp-search .input { width: 100%; height: 2.5rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
+.sp-search .input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 12%, transparent); }
+.sp-filt { display: inline-flex; gap: 0.125rem; padding: 0.1875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); }
+.sp-filt button { padding: 0.375rem 0.875rem; border: 0; border-radius: 0.4375rem; background: none; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
+.sp-filt button[aria-pressed="true"] { background: var(--color-graphite); color: var(--color-off-white); }
+.sp-filt b { margin-left: 0.375rem; font-weight: 600; opacity: .7; }
+.sp-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
+.sp-card { display: grid; gap: 0.875rem; height: 100%; padding: 1.25rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface); color: inherit; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; }
+.sp-card:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -16px rgba(52, 52, 52, .25); transform: translateY(-1px); }
+.sp-id { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.sp-logo { flex: none; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 0.5rem; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.9375rem; font-weight: 600; letter-spacing: -0.01em; }
+.sp-logo.is-lg { width: 4rem; height: 4rem; font-size: 1.25rem; border-radius: 0.75rem; }
+.sp-id b { display: block; font-size: 1.0625rem; font-weight: 600; line-height: 1.25; }
+.sp-id small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-meter { display: grid; gap: 0.375rem; }
+.sp-meter-t { display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--color-ink-muted); }
+.sp-meter-t b { color: var(--color-ink); font-weight: 600; }
+.sp-meter i { display: block; height: 6px; border-radius: 3px; background: var(--color-mid-beige); overflow: hidden; }
+.sp-meter i span { display: block; height: 100%; background: var(--color-ok, #a6d8a0); }
+.sp-meter.is-warn i span { background: var(--color-coral); }
+.sp-chips { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+.sp-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--color-mid-beige); font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-foot svg { width: 1rem; height: 1rem; color: var(--color-ink); }
+.sp-none { padding: 2.5rem 1.5rem; text-align: center; color: var(--color-ink-subtle); }
+.sp-head { display: flex; align-items: center; gap: 1.25rem; }
+.sp-head > div { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 34rem) { .sp-head { flex-direction: column; align-items: flex-start; } }
+.sp-head h1 { font-size: clamp(2rem, 3vw, 2.5rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 600; }
+.sp-head p { margin-top: 0.375rem; font-size: 0.9375rem; color: var(--color-ink-muted); }
+.sp-head a { color: var(--color-ink); }
+.sp-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.sp-kpi { padding: 1.125rem 1.25rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); }
+.sp-kpi span { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink-muted); }
+.sp-kpi b { display: block; margin-top: 0.25rem; font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.sp-kpi small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-kpi.is-bad b { color: var(--color-critical, #b3261e); }
+.sp-sec { margin-top: 2.25rem; }
+.sp-sec > h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; }
+.sp-sec > p { margin-top: 0.25rem; font-size: 0.9375rem; color: var(--color-ink-muted); }
+.sp-consent { margin-top: 1rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); overflow: hidden; }
+.sp-consent-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.25rem; border-bottom: 1px solid var(--color-line); }
+.sp-consent-h h3 { font-size: 1.0625rem; font-weight: 600; }
+.sp-consent-h p { margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-tbl .sp-ch td { padding: 1rem 1.25rem; border-top: 0; vertical-align: top; background: var(--color-surface); } /* the badge on the title's line */
+.sp-ch h3 { font-size: 1.0625rem; font-weight: 600; line-height: 1.5rem; color: var(--color-ink); }
+.sp-ch p { margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-ch-b { text-align: right; }
+/* one line tall and centred on it, like the title beside it */
+.sp-ch-b .co-badge { display: inline-flex; align-items: center; height: 1.5rem; margin: 0; vertical-align: top; white-space: nowrap; }
+.sp-ch h3 { margin: 0; }
+.sp-consent.is-pending { border-style: dashed; background: var(--color-light-beige); }
+.sp-tbl { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.sp-tbl th { padding: 0.625rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); background: var(--color-light-beige); }
+.sp-tbl td { padding: 0.75rem 1.25rem; border-top: 1px solid var(--color-mid-beige); vertical-align: middle; color: var(--color-ink-muted); } /* every cell on the row's centre line */
+.sp-tbl tbody .co-badge { vertical-align: middle; }
+.sp-tbl td:first-child { color: var(--color-ink); }
+.sp-tbl td .n { display: block; font-weight: 500; color: var(--color-ink); }
+.sp-tbl td .d { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-tbl .c { white-space: nowrap; text-align: right; }
+.cdd .pd-facts { display: grid; margin: 0; }
+.sp-row { cursor: pointer; transition: background-color .12s; }
+.sp-row:hover, .sp-row:focus-visible { background: var(--color-light-beige); }
+.sp-row:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; } /* the last column, to the right */
+/* the same columns in every consent's table, so they line up from one card to the next */
+.sp-tbl { table-layout: fixed; }
+.sp-c-req { width: 13rem; } .sp-c-st { width: 8.5rem; } .sp-c-exp { width: 9.5rem; }
+@media (max-width: 40rem) { .sp-tbl { table-layout: auto; } .sp-c-req { width: 0; } }
+.sp-wait { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.875rem 1.25rem; font-size: 0.875rem; color: var(--color-ink-muted); }
+.sp-wait svg { width: 1rem; height: 1rem; vertical-align: -0.1875rem; margin-right: 0.375rem; }
+.sp-sent { font-size: 0.875rem; font-weight: 500; color: var(--color-positive); }
+@media (max-width: 40rem) { .sp-kpis { grid-template-columns: 1fr; } .sp-tbl .hide-s { display: none; } .sp-tbl th, .sp-tbl td { padding-inline: 0.875rem; } }`;
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  const tag = (status) => { const [l, c] = S.STATUS[status] || [status, 'b-neu']; return `<span class="co-badge ${c}">${l}</span>`; };
+  const id = new URLSearchParams(location.search).get('id');
+  const sup = id && S.byId(id);
+  const head = document.getElementById('sup-head'), crumb = document.getElementById('sup-crumb');
+
+  // ---- the suppliers, as cards ---------------------------------------------------------------------
+  let filt = 'all', q = '';
+  const card = (s) => {
+    const k = S.stats(s), warn = k.bad > 0;
+    const chips = [k.bad ? `<span class="co-badge b-over">${k.bad} need${k.bad === 1 ? 's' : ''} attention</span>` : '', k.soon ? `<span class="co-badge b-pend">${k.soon} expiring or in review</span>` : '',
+      !k.bad && !k.soon && k.shared ? '<span class="co-badge b-ok">All in order</span>' : '', k.pending ? `<span class="co-badge b-neu">${k.pending} consent${k.pending === 1 ? '' : 's'} pending</span>` : ''].filter(Boolean).join('');
+    return `<li><a class="sp-card" href="suppliers.html?id=${esc(s.id)}">
+      <span class="sp-id"><span class="sp-logo" aria-hidden="true">${esc(ini(s.name))}</span><span><b>${esc(s.name)}</b><small>${esc(s.services.join(', '))} &middot; ${esc(s.city)}</small></span></span>
+      ${k.shared ? `<span class="sp-meter${warn ? ' is-warn' : ''}"><span class="sp-meter-t"><span>Documents in order</span><b>${k.ok} of ${k.shared}</b></span><i><span style="width:${k.pct}%"></span></i></span>` : '<span class="sp-meter"><span class="sp-meter-t"><span>No documents shared yet</span></span><i><span style="width:0"></span></i></span>'}
+      <span class="sp-chips">${chips}</span>
+      <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
+    </a></li>`;
+  };
+  const list = () => {
+    const all = S.list(), n = { all: all.length, attention: all.filter((s) => S.stats(s).bad).length, pending: all.filter((s) => S.stats(s).pending).length };
+    const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const shown = all.filter((s) => (filt === 'all' || (filt === 'attention' ? S.stats(s).bad : S.stats(s).pending)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
+      .sort((a, b) => S.stats(b).bad - S.stats(a).bad || a.name.localeCompare(b.name));
+    const F = [['all', 'All'], ['attention', 'Need attention'], ['pending', 'Consent pending']];
+    box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
+        <div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div></div>
+      ${shown.length ? `<ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
+  };
+
+  // ---- one supplier: who they are, and a table for each consent -----------------------------------
+  const page = (s) => {
+    const k = S.stats(s);
+    document.title = `${s.name} · My suppliers · C-MORE`;
+    if (crumb) crumb.innerHTML = `<a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="suppliers.html">My suppliers</a><span aria-hidden="true">/</span><span aria-current="page">${esc(s.name)}</span>`;
+    const back = document.querySelector('.eco-crumbs-back'); if (back) { back.href = 'suppliers.html'; back.setAttribute('aria-label', 'Back to My suppliers'); }
+    if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier</span><h1>${esc(s.name)}</h1>
+        <p>${esc(s.services.join(', '))} &middot; ${esc(s.city)} &middot; NIPC ${esc(s.nipc)} &middot; ${s.workers} people &middot; supplier since ${esc(s.since)} &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p></div></div>`;
+    const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending');
+    // the card's title is the table's first row, so the consent's badge sits in the Expiry date
+    // column, level with the title
+    const consent = (c) => `<article class="sp-consent">
+        <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp"></colgroup><thead>
+          <tr class="sp-ch"><td colspan="3" class="sp-ch-t"><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : 'For all your projects'} &middot; given on ${esc(c.granted)} &middot; ${c.docs.length} document${c.docs.length === 1 ? '' : 's'}</p></td><td class="sp-ch-b"><span class="co-badge b-ok">Consent given</span></td></tr>
+          <tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th><th class="c">Expiry date</th></tr></thead>
+          <tbody>${c.docs.map((d, i) => `<tr class="sp-row" data-doc="${esc(c.id)}:${i}" tabindex="0" role="button" aria-label="Open ${esc(d.name)}"><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}${d.note ? ' &middot; ' + esc(d.note) : ''}</span></td><td class="hide-s">${esc(d.requirement)}</td><td>${tag(d.status)}</td><td class="c">${esc(d.valid === 'No expiry' ? 'No expiry' : d.valid)}</td></tr>`).join('')}</tbody></table>
+      </article>`;
+    const ask = (c) => `<article class="sp-consent is-pending" data-ask="${esc(c.id)}">
+        <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : 'For all your projects'} &middot; you asked on ${esc(c.granted)}</p></div><span class="co-badge b-pend">Waiting for their answer</span></header>
+        <div class="sp-wait"><span>${CLOCK}Until they say yes you can&rsquo;t see: ${c.docs.map((d) => esc(d.name)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}">Send a reminder</button></div>
+      </article>`;
+    box.innerHTML = `<div class="sp-kpis">
+        <div class="sp-kpi"><span>Documents you can see</span><b>${k.shared}</b><small>${k.ok} in order</small></div>
+        <div class="sp-kpi${k.bad ? ' is-bad' : ''}"><span>Need attention</span><b>${k.bad}</b><small>${k.bad ? 'Missing or expired' : k.soon ? `${k.soon} expiring or in review` : 'Nothing to chase'}</small></div>
+        <div class="sp-kpi"><span>Consents</span><b>${k.given}</b><small>${k.pending ? `${k.pending} waiting for their answer` : 'All answered'}</small></div>
+      </div>
+      <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Consents they&rsquo;ve given you</h2><p>What ${esc(s.name)} lets you see, and for which projects. The documents stay current: when they renew one, you see the new one.</p>
+        ${given.length ? given.map(consent).join('') : '<div class="co-card sp-none">They haven&rsquo;t given you a consent yet.</div>'}</section>
+      ${pending.length ? `<section class="sp-sec" aria-labelledby="sp-asked"><h2 id="sp-asked">Waiting for their answer</h2><p>Consents you asked for that ${esc(s.name)} hasn&rsquo;t answered yet.</p>${pending.map(ask).join('')}</section>` : ''}`;
+  };
+
+  // ---- a document, in the drawer (.docd .cdd, as in Documents) ------------------------------------
+  const C = window.DOC_CATALOG || { docs: [], labels: { requirement: {}, sharing: {} } };
+  const byCode = Object.fromEntries(C.docs.map((d) => [d.code, d]));
+  const LEFT = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg>';
+  const DOCI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  const dw = document.createElement('div');
+  dw.className = 'docd cdd'; dw.hidden = true;
+  dw.innerHTML = `<div class="docd-scrim" data-x></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="sp-dw-t" tabindex="-1">
+      <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOCI}</span><div class="docd-t"><h3 id="sp-dw-t"></h3><p id="sp-dw-sub"></p></div>
+        <button type="button" class="dlg-x" data-x aria-label="Close the document"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+      <div class="docd-bar"><span id="sp-dw-bar"></span><span id="sp-dw-st"></span></div>
+      <div class="docd-body" id="sp-dw-body"></div>
+      <div class="docd-nav" role="group" aria-label="Documents in this consent"><button type="button" class="docd-step" data-step="-1">${LEFT}Previous document</button><span id="sp-dw-n"></span><button type="button" class="docd-step is-next" data-step="1">Next document${LEFT}</button></div>
+    </aside>`;
+  document.body.appendChild(dw);
+  const dq = (x) => dw.querySelector('#' + x);
+  let at = null, back = null;
+  const drawDoc = () => {
+    const c = sup.consents.find((x) => x.id === at.c), d = c.docs[at.i], cat = byCode[d.code] || {};
+    dq('sp-dw-t').textContent = d.name;
+    dq('sp-dw-sub').innerHTML = `${esc(sup.name)} &middot; ${esc(d.code)} &middot; ${esc(d.requirement)}`;
+    dq('sp-dw-bar').textContent = `Shared with you by ${sup.name}`;
+    dq('sp-dw-st').innerHTML = tag(d.status);
+    const file = `${d.name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}.pdf`;
+    const fileHtml = d.status === 'missing' ? `<div class="cmf-none">${DOCI}<h4>They haven&rsquo;t uploaded it yet</h4><p>${esc(d.note || 'ALMA has asked them for it.')}</p></div>`
+      : window.CMFiles ? window.CMFiles.missing(`${sup.name}’s ${file}`, `The demo&rsquo;s suppliers have no files behind their documents. On C&#8209;MORE you see the file ${esc(sup.name)} uploaded, exactly as it is.`) : '';
+    const kv = (k, v) => (v ? `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>` : '');
+    dq('sp-dw-body').innerHTML = fileHtml
+      + `<section class="cdd-card"><h4 class="eyebrow">This document</h4><dl class="pd-facts cdd-facts">${kv('Status', tag(d.status))}${kv('Expiry date', esc(d.valid === '—' ? 'Not on file' : d.valid))}${d.note ? kv('Note', esc(d.note)) : ''}${kv('Issued by', esc((cat.usuallyIssuedBy || '').split(';')[0]))}${kv('Section', esc(d.section))}</dl></section>`
+      + `<section class="cdd-card"><h4 class="eyebrow">Shared under</h4><dl class="pd-facts cdd-facts">${kv('Consent', esc(c.title))}${kv('For', c.project ? esc(c.project) : 'All your projects')}${kv('Given on', esc(c.granted))}${kv('Stays current', 'When they renew it, you see the new one')}</dl></section>`
+      + `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${cat.description ? `<p class="cdd-desc">${esc(cat.description.en)}</p>` : ''}<dl class="pd-facts cdd-facts">${kv('Requirement', esc(d.requirement))}${kv('Renewal', esc(cat.renewal || '—'))}${kv('Expiry', esc(cat.expiryRule || '—'))}${kv('Legal basis', esc(cat.legalBasis || '—'))}</dl></section>`;
+    dq('sp-dw-n').textContent = `${at.i + 1} of ${c.docs.length} in ${c.title}`;
+    dw.querySelector('[data-step="-1"]').disabled = at.i === 0;
+    dw.querySelector('[data-step="1"]').disabled = at.i === c.docs.length - 1;
+    dq('sp-dw-body').scrollTop = 0;
+  };
+  const openDoc = (key) => {
+    const [cid, i] = key.split(':'); at = { c: cid, i: +i }; back = document.activeElement;
+    dw.hidden = false; document.documentElement.style.overflow = 'hidden'; drawDoc();
+    setTimeout(() => dw.classList.add('is-open'), 20); dw.querySelector('.docd-panel').focus();
+  };
+  const closeDoc = () => { dw.classList.remove('is-open'); document.documentElement.style.overflow = ''; setTimeout(() => { dw.hidden = true; }, 280); if (back && back.isConnected) back.focus(); at = null; };
+  dw.addEventListener('click', (e) => {
+    if (e.target.closest('[data-x]')) { closeDoc(); return; }
+    const st = e.target.closest('[data-step]'); if (st && !st.disabled) { at.i += +st.dataset.step; drawDoc(); }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && at) closeDoc(); });
+  box.addEventListener('click', (e) => { const r = e.target.closest('[data-doc]'); if (r) openDoc(r.dataset.doc); });
+  box.addEventListener('keydown', (e) => { const r = e.target.closest('[data-doc]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDoc(r.dataset.doc); } });
+
+  if (id && !sup) { box.innerHTML = '<div class="co-card sp-none">That supplier isn&rsquo;t in your list. <a href="suppliers.html">See all your suppliers</a>.</div>'; return; }
+  if (sup) page(sup); else list();
+  box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
+  box.addEventListener('click', (e) => {
+    const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
+    const r = e.target.closest('[data-remind]');
+    if (r) r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: 'Reminder sent' }));
+  });
+})();

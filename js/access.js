@@ -103,8 +103,8 @@ window.CMAccess = (() => {
   // ---- on every page: the side menu, the page itself, and the preview bar ----------------------------
   const NAV = { Projects: 'projects', Documents: 'documents', Consents: 'consents', Questionnaires: 'questionnaires', 'C-MORE ecosystem': 'ecosystem', 'My clients': 'clients', 'My suppliers': 'suppliers', 'Team management': 'team', Settings: 'settings' };
   const PAGE_OF = { 'company-details.html': 'documents', 'questionnaires.html': 'questionnaires', 'esg-questionnaire.html': 'questionnaires', 'esg-results.html': 'questionnaires',
-    'ecosystem.html': 'ecosystem', 'team.html': 'team', 'company-profile.html': 'settings' };
-  const NAME_OF = { documents: 'Documents', questionnaires: 'Questionnaires', ecosystem: 'the C‑MORE ecosystem', team: 'Team management', settings: 'Settings' };
+    'ecosystem.html': 'ecosystem', 'team.html': 'team', 'company-profile.html': 'settings', 'suppliers.html': 'suppliers' };
+  const NAME_OF = { documents: 'Documents', questionnaires: 'Questionnaires', ecosystem: 'the C‑MORE ecosystem', team: 'Team management', settings: 'Settings', suppliers: 'My suppliers' };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const apply = () => {
     const t = teamOf(orgId()), v = viewer(t), as = previewing() && !v.you;

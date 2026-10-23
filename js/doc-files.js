@@ -3,7 +3,7 @@
    browser (IndexedDB), per company and document, and forgotten on log out
    (js/company-switcher.js). A document with no file behind it (the demo company's, which were
    never uploaded here) says so instead of showing an imitation.
-   window.CMFiles: put(code, file), get(code) → Promise<record|null>, view(record), missing(name). */
+   window.CMFiles: put(code, file), get(code) → Promise<record|null>, view(record), missing(name, why). */
 window.CMFiles = (() => {
   const DB = 'cm-files', STORE = 'files';
   let open = null;
@@ -50,7 +50,7 @@ window.CMFiles = (() => {
     return `<figure class="cmf">${bar}<div class="cmf-none">${DOC}<h4>No preview for this kind of file</h4><p>Open it to see it as it is.</p></div></figure>`;
   };
   // no file here: say so, rather than draw one
-  const missing = (name) => `<div class="cmf-none">${DOC}<h4>${name ? esc(name) : 'The original file'} isn&rsquo;t in this demo</h4><p>This document was set up for the demo without a file. Upload one and it shows here exactly as it is.</p></div>`;
+  const missing = (name, why) => `<div class="cmf-none">${DOC}<h4>${name ? esc(name) : 'The original file'} isn&rsquo;t in this demo</h4><p>${why || 'This document was set up for the demo without a file. Upload one and it shows here exactly as it is.'}</p></div>`;
 
   return { put, get, view, missing };
 })();
