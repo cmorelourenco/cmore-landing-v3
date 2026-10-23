@@ -207,20 +207,6 @@
   const escE = (s) => esc(s).replace(/&amp;(#?\w+;)/g, '&$1');
   // HTML entities in the demo's names (Constru&ccedil;&otilde;es) back to plain text
   const decode = (h) => { const el = document.createElement('textarea'); el.innerHTML = h; return el.value; };
-  const sheetFor = (d, v, fields) => {
-    const titles = (d.cat.titles || d.name).split(';')[0].trim();
-    const rowsHtml = fields.map((x, i) => Object.assign({ i }, x)).filter((x) => x.value).slice(0, 7).map((x) => `<tr data-f="${x.i}"><th>${esc(x.name)}</th><td><mark class="${x.flag ? 'is-flag' : ''}">${x.value}</mark></td></tr>`).join('');
-    const seed = hash(d.code + (v ? v.issued : ''));
-    const filler = ['This certificate is issued at the request of the entity named above, for the purposes set out in the applicable legislation, and reflects the records held on the date of issue.',
-      'Its validity may be confirmed online with the access code printed below, during the period stated. Any alteration renders it void.',
-      'The information above corresponds to the situation recorded at the time of issue and does not cover obligations falling due after that date.'];
-    return `<article class="docd-sheet cdd-sheet"><p class="docd-kicker">${escE(d.by || issuerOf(d.cat) || 'Issuer')}</p>
-      <h4>${esc(titles)}</h4>
-      <table class="cdd-ftbl"><tbody>${rowsHtml}</tbody></table>
-      <p>${filler[seed % 3]}</p><p>${filler[(seed + 1) % 3]}</p>
-      <div class="cdd-sign"><span>Issued ${esc(v ? v.issued : d.issued)}</span><span>${escE(d.by || issuerOf(d.cat) || '')}</span></div>
-      <div class="docd-rule"><span>${esc(d.code || d.archivedCode)} &middot; ${esc(d.ref || v && v.ref || '')}</span><span>1 / ${1 + (seed % 3)}</span></div></article>`;
-  };
   const drawDoc = () => {
     const d = docById(dState.list[dState.k]), vk = dState.v || 0, vs = versionsOf(d), v = vk ? vs[vk - 1] : null;
     const view = v ? Object.assign({}, d, { issued: v.issued, valid: v.valid, ref: v.ref, status: 'archived' }) : d;
@@ -276,8 +262,15 @@
       ${hasFile ? '<p class="cdd-na-w">Its current file stays in its versions, read-only.</p>' : ''}
       <div class="cdd-na-acts"><button type="button" class="link-btn" data-na-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm" id="cdd-na-go" disabled>Mark as not applicable</button></div>
     </form>` : '';
-    dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? sheetFor(d, v, fields) : none) + read + about;
+    // the file itself (js/doc-files.js): the one uploaded for it, or a plain note that the demo has none
+    dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + about;
     dq('cdd-body').scrollTop = 0;
+    if (hasFile) {
+      const slot = dq('cdd-file'), drawn = dState;
+      const put = (html) => { if (dState === drawn && slot.isConnected) slot.innerHTML = html; };
+      if (v || !window.CMFiles) put(window.CMFiles ? window.CMFiles.missing(file) : '');
+      else window.CMFiles.get(d.code).then((r) => put(r ? window.CMFiles.view(r) : window.CMFiles.missing(file)));
+    }
     dq('cdd-foot').textContent = v ? `Read-only. Uploaded by ${v.by}; replaced on ${v.replaced}.` : hasFile ? (d.edited ? 'Edited by user: changes to ALMA’s reading are logged and visible to clients.' : `Issued ${d.issued}${d.valid && d.valid !== '—' ? ' · ' + (/^\d/.test(d.valid) ? 'expires ' : '') + d.valid : ''}`) : '';
     dq('cdd-acts').innerHTML = v ? `<button type="button" class="btn btn-quiet btn-sm" data-cdd-cur>Back to current version</button>`
       : (canNa(d) && d.status !== 'na' && !dState.na ? '<button type="button" class="link-btn" data-na-open>Doesn&rsquo;t apply to us</button>' : '')
@@ -322,8 +315,9 @@
     }
     const sh = e.target.closest('[data-cite-show]');
     if (sh) {
-      const line = dw.querySelector(`.cdd-ftbl tr[data-f="${sh.dataset.citeShow}"]`);
-      if (line) { line.scrollIntoView({ behavior: 'smooth', block: 'center' }); line.classList.remove('is-cited'); void line.offsetWidth; line.classList.add('is-cited'); }
+      // the passage is on the file itself: bring the file into view
+      const fileEl = dw.querySelector('#cdd-file');
+      if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
     if (e.target.closest('[data-na-undo]')) { undoNa(docById(dState.list[dState.k])); dState.na = false; render(); drawDoc(); return; }
@@ -739,6 +733,7 @@
       setTimeout(() => {
         setState('filed');
         if (!target) { t.textContent = 'Filed.'; dsub.textContent = 'Prototype: nothing was uploaded or saved.'; return; }
+        if (window.CMFiles) window.CMFiles.put(target.code, picked); // the file itself, for its drawer
         window.DOC_MODEL.saveDoc(target.code, { status: 'valid', issued: today(), valid: target.valid === 'No expiry' ? 'No expiry' : today().replace(/\d{4}$/, (y) => +y + 1), note: '', ref: target.ref || refOf(target.code, '2026'), by: target.by || issuerOf(target.cat) });
         target.text = textOf(target);
         t.textContent = `Filed: ${target.name}, valid again.`;

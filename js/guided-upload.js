@@ -3,17 +3,21 @@
    asking for that section's documents (worked out by js/doc-rules.js from the company's country,
    sector and size). The same overlay answers the other empty states — the company homepage's
    drop zone, a section's empty card — so wherever there's nothing yet, she's the way in.
-     1 Upload   — the section's documents at once: drop them together and she works out which
-                  is which, or add them one by one. Nothing is read yet.
-                  Moving on, she reads them and checks each one's code with the body that issued
-                  it, then opens the review by herself.
+     1 Upload   — what she's asking for, and the files the user adds (as many as they like), side
+                  by side: nothing says which file is which yet, because nothing has been read.
+                  Moving on, she reads every file: each one she recognises is checked with the body
+                  that issued it; one that isn't among the documents asked for is kept, and said so.
      2 Review   — what she read from each: a short summary, the fields and her confidence.
                   Accept each (or all at once), change what she got wrong, replace or remove.
+                  A card opens the document in a drawer, as in Documents: a preview of it as read,
+                  each value with its citation.
      3 Complete — how complete the section is. All in: congratulations. Anything missing: add it
                   now, or skip for now.
    What is accepted is what Documents and the homepage show (js/doc-model.js reads it). Files
    beyond what she asked for are kept too, without a word about it at this stage.
    window.CMGuided.open(area) opens it; js/company-details.js opens it on an empty section.
+   Creating a company ends with it too: the new company's homepage opens (?guided) with ALMA asking
+   for its Company documents over it, and the page is only the user's once they upload or skip.
    Prototype: nothing is uploaded; what was read and accepted is kept for this tab, per company. */
 (() => {
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
@@ -164,13 +168,28 @@
 .gs-n { display: block; font-weight: 600; color: var(--color-ink); }
 .gs-d { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); overflow-wrap: anywhere; }
 .gs-list .link-btn { white-space: nowrap; }
+.gs-two { display: grid; gap: 1.5rem; } /* one list above the other */
+.gs-lh { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.gs-lh span { display: inline-grid; place-items: center; min-width: 1.375rem; height: 1.375rem; padding: 0 0.375rem; border-radius: 0.375rem; background: var(--color-mid-beige); font-size: 0.75rem; letter-spacing: 0; color: var(--color-ink); }
+.gs-two .gs-list li { padding: 0.75rem 0.875rem; gap: 0.75rem; }
+.gs-list li.gs-req { grid-template-columns: minmax(0, 1fr) auto; }
+.gs-req .co-badge { white-space: nowrap; }
+.gs-ic.is-file { border-style: solid; border-color: var(--color-line); color: var(--color-ink); }
+.gs-none { padding: 1rem; border: 1.5px dashed var(--color-sand-400); border-radius: 0.75rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-ink-subtle); }
+
 .gs .actions { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 1rem 1.5rem; }
 .gs .btn:disabled { opacity: .45; cursor: default; }
 .gs-cards { display: grid; gap: 1rem; }
 .gs-card { border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); padding: 1.125rem 1.25rem; transition: border-color .2s; }
+.gs-card:not(.is-editing) { cursor: pointer; }
+.gs-card:not(.is-editing):hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -16px rgba(52, 52, 52, .25); }
 .gs-card.is-ok { border-color: color-mix(in oklab, var(--color-positive) 45%, var(--color-line)); }
 .gs-card header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .gs-card h3 { font-size: 1.0625rem; font-weight: 600; line-height: 1.3; }
+.gs-peek { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.2em; transition: text-decoration-color .15s; }
+.gs-peek:hover { text-decoration-color: var(--color-coral); }
+.gs-dw { z-index: 120; } /* over ALMA's overlay */
+.gs-dw .cd-fields td:last-child { width: 1%; white-space: nowrap; }
 .gs-card .co-badge { flex: none; }
 .gs-sum { margin-top: 0.625rem; font-size: 0.9375rem; line-height: 1.5; color: var(--color-ink-muted); }
 .gs-fields { display: grid; grid-template-columns: 0.8fr 1.3fr 1fr 0.9fr 0.9fr; gap: 0.75rem 1.25rem; margin: 0.875rem 0 0; padding: 0.875rem 0 0; border-top: 1px solid var(--color-line); }
@@ -213,7 +232,8 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     const docs = asks(area);
     if (!docs.length) return;
     const A = AREA[area];
-    const st = saved.areas[area] = Object.assign({ step: 1, reviewed: false }, saved.areas[area] || {});
+    const st = saved.areas[area] = Object.assign({ step: 1, reviewed: false, pending: [], kept: [] }, saved.areas[area] || {});
+    if (!st.pending) st.pending = []; if (!st.kept) st.kept = [];
     let changedAny = false;
     const FLAGGED = (docs.filter((d) => !/no expiry/i.test(d.expiryRule || '')).pop() || {}).code;
     const read = (d, file) => {
@@ -241,6 +261,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     const $ = (id) => wrap.querySelector('#' + id);
     const alma = almaHtml;
     let target = null, editing = null;
+    const held = {}; // the files themselves, by name, until each is filed (then js/doc-files.js keeps it)
 
     const filed = () => docs.filter((d) => saved.files[d.code]);
     const confirmed = () => docs.filter((d) => (saved.files[d.code] || {}).ok);
@@ -257,22 +278,28 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     };
     const sec = `<span class="gs-sec">Documents &rsaquo; ${A.title}</span>`;
 
-    // step 1: the section's documents at once
+    // step 1: what she's asking for, and the files added — two lists, not matched to each other yet
     const step1 = () => {
-      const n = docs.length, k = filed().length;
-      const rows = docs.map((d) => {
+      const n = docs.length, read = filed(), np = st.pending.length;
+      const asked = docs.map((d) => {
         const f = saved.files[d.code], pt = local(d);
-        const sub = f ? esc(f.file) : pt ? `In ${where}: ${esc(pt)}` : esc(d.description.en.split(/(?<=\.)\s/)[0]);
-        return `<li class="${f ? 'is-in' : ''}"><span class="gs-ic">${f ? FILE : ''}</span><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${sub}</span></span>`
-          + `<button class="link-btn" type="button" data-one="${d.code}">${f ? 'Replace' : 'Add'}</button></li>`;
+        // a requirement, not a to-do: no box to tick, the catalog's requirement instead
+        return `<li class="gs-req"><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${f ? `Read from ${esc(f.file)}` : pt ? `In ${where}: ${esc(pt)}` : esc(d.description.en.split(/(?<=\.)\s/)[0])}</span></span><span class="co-badge ${d.requirement === 'mandatory' ? 'b-info' : 'b-neu'}">${esc(DM.LBL.requirement[d.requirement] || '')}</span></li>`;
       }).join('');
+      const files = st.pending.map((name, i) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Not read yet</span></span><button class="link-btn" type="button" data-unpend="${i}">Remove</button></li>`)
+        .concat(read.map((d) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(saved.files[d.code].file)}</span><span class="gs-d">Read as ${esc(d.name.en)}</span></span><span></span></li>`))
+        .concat(st.kept.map((name) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Kept &middot; not one of the documents asked for here</span></span><span></span></li>`)).join('');
+      const total = np + read.length + st.kept.length;
       return `${sec}<button class="drop is-small" id="gs-drop" type="button" aria-label="Add files"><span class="alma-media" aria-hidden="true">${alma()}</span>
           <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span></span></button>
         <p class="says">ALMA</p>
-        <h1 id="gs-title" tabindex="-1">${k === n ? 'That&rsquo;s all of them.' : k ? `${k} of ${n} in, <span class="soft">${n - k} to go.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
-        <p class="lead">${A.who.replace('WHERE', where).replace('N', n)} Drop them on me together &mdash; I&rsquo;ll work out which is which &mdash; or add them one by one.</p>
-        <div class="gs-pane"><ul class="gs-list" aria-label="${A.title} documents">${rows}</ul></div>
-        <div class="actions"><button class="btn btn-primary" type="button" data-go="2"${k ? '' : ' disabled'}>Upload documents</button>
+        <h1 id="gs-title" tabindex="-1">${total ? `${total} file${total === 1 ? '' : 's'} so far, <span class="soft">add more or carry on.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
+        <p class="lead">${A.who.replace('WHERE', where).replace('N', n)} Drop your files on me &mdash; as many as you have. I&rsquo;ll read them and tell you which is which.</p>
+        <div class="gs-pane gs-two">
+          <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
+          <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
+        </div>
+        <div class="actions"><button class="btn btn-primary" type="button" data-go="2"${np || read.length ? '' : ' disabled'}>Upload documents</button>
           <button class="link-btn" type="button" data-close>I&rsquo;ll do it later</button></div>`;
     };
 
@@ -286,12 +313,12 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${flagged && f.flag === k ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">` : esc(f[k])}</dd></div>`).join('');
       const noExp = f.valid === 'No expiry';
       const summary = `${esc(d.description.en.split(/(?<=\.)\s/)[0])} Issued by ${esc(f.by)} on ${esc(f.issued)}${noExp ? ', with no expiry' : `, valid until ${esc(f.valid)}`}.`;
-      return `<article class="gs-card${f.ok ? ' is-ok' : ''}" data-card="${d.code}">
-        <header><div><h3>${esc(d.name.en)}</h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
+      return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}" data-card="${d.code}">
+        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
         <p class="gs-sum">${summary}</p>
         <dl class="gs-fields">${fields}</dl>
         ${flagged ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly &mdash; the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
-        <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button><button class="link-btn" type="button" data-remove="${d.code}">Remove</button>`}</span>
+        <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button><button class="link-btn" type="button" data-remove="${d.code}">Remove</button>`}</span>
           <span>${ed ? `<button class="link-btn" type="button" data-cancel>Cancel</button><button class="gs-acc" type="button" data-save="${d.code}">${OK}Save changes</button>`
             : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-accept="${d.code}">${OK}Accept</button>`}</span></footer>
       </article>`;
@@ -317,7 +344,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
           <p class="says">ALMA</p>
           <h1 id="gs-title" tabindex="-1">${A.title} is complete, <span class="soft">${esc(nameOf.replace(/\.$/, ''))}.</span></h1>
           <p class="lead">Every one of your ${A.what} is in, checked and in Documents. I&rsquo;ll tell you when one is about to expire, and when a client asks for more.</p>
-          <div class="actions"><button class="btn btn-primary" type="button" data-close>Go to ${A.title}</button></div>`;
+          <div class="actions"><button class="btn btn-primary" type="button" data-close>${opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button></div>`;
       }
       const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${local(d) ? `In ${where}: ${esc(local(d))}` : esc(d.description.en.split(/(?<=\.)\s/)[0])}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
       const one = missing.length === 1;
@@ -333,31 +360,92 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     // between upload and review: she reads each file and checks it at the source
     let checking = null;
     const unchecked = () => filed().filter((d) => !saved.files[d.code].checked);
-    const checks = () => unchecked().map((d) => {
+    // reading: each file added goes to the document it turns out to be; one that isn't among them is kept
+    const assign = () => {
+      // first the files she recognises by name, then the rest in order; what's left over is kept
+      const openDocs = docs.filter((d) => !saved.files[d.code]), extra = [], later = [];
+      const give = (name, d) => { openDocs.splice(openDocs.indexOf(d), 1); saved.files[d.code] = read(d, { name }); if (window.CMFiles && held[name]) window.CMFiles.put(d.code, held[name]); };
+      st.pending.forEach((name) => { const d = openDocs.length && match({ name }, openDocs); if (d && WORDS(d).some((w) => fold(name).includes(w))) give(name, d); else later.push(name); });
+      later.forEach((name) => { if (openDocs.length) give(name, openDocs[0]); else extra.push(name); });
+      st.pending = []; st.kept = st.kept.concat(extra); saved.extra += extra.length;
+      return extra;
+    };
+    const checks = (extra) => unchecked().map((d) => {
       const f = saved.files[d.code];
-      return [d.name.en, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
-    });
+      return [`${f.file} → ${d.name.en}`, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
+    }).concat(extra.map((name) => [name, `Not one of the ${A.title.toLowerCase()} documents I asked for &mdash; I&rsquo;ve kept it in your documents.`, null]));
     const validating = () => {
       const all = checking.rows.length, done = Math.min(checking.at, all);
-      const rows = checking.rows.map(([n, why], i) => `<li class="${i < done ? 'is-ok' : i === done ? 'is-reading' : ''}"><span class="gs-ic">${i < done ? OK : i === done ? SPIN : ''}</span><span><span class="gs-n">${esc(n)}</span><span class="gs-d">${i < done ? why : i === done ? 'Checking&hellip;' : 'Waiting'}</span></span><span></span></li>`).join('');
+      const rows = checking.rows.map(([n, why, code], i) => `<li class="${i < done ? (code ? 'is-ok' : 'is-in') : i === done ? 'is-reading' : ''}"><span class="gs-ic">${i < done ? (code ? OK : FILE) : i === done ? SPIN : ''}</span><span><span class="gs-n">${esc(n)}</span><span class="gs-d">${i < done ? why : i === done ? 'Reading&hellip;' : 'Waiting'}</span></span><span></span></li>`).join('');
       return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
         <p class="says">ALMA</p>
-        <h1 id="gs-title" tabindex="-1" aria-live="polite">${done === all ? 'All confirmed.' : 'Reading and checking them&hellip;'}</h1>
-        <p class="lead">${done === all ? `${all === 1 ? 'It checks' : 'They all check'} out with the bodies that issued ${all === 1 ? 'it' : 'them'}. Next, what I read.` : 'I&rsquo;m reading each document and confirming its code with the body that issued it.'}</p>
+        <h1 id="gs-title" tabindex="-1" aria-live="polite">${done === all ? 'All read.' : 'Reading your files&hellip;'}</h1>
+        <p class="lead">${done === all ? (checking.rows.some((r) => r[2]) ? 'Every document I recognised checks out with the body that issued it. Next, what I read.' : 'None of these is a document I asked for here &mdash; I&rsquo;ve kept them in your documents.') : 'I&rsquo;m reading each file, working out which document it is, and confirming its code with the body that issued it.'}</p>
         <div class="gs-pane"><ul class="gs-list" aria-label="Checks">${rows}</ul></div>`;
     };
     const validate = () => {
-      if (!unchecked().length) { goStep(2); return; }
-      checking = { rows: checks(), at: 0 }; editing = null; paint();
+      const extra = assign(); keep();
+      if (!unchecked().length && !extra.length) { goStep(filed().length ? 2 : 1); return; }
+      checking = { rows: checks(extra), at: 0 }; editing = null; paint();
       const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const tick = () => {
         if (!wrap) return;
         checking.at += 1; paint();
         if (checking.at < checking.rows.length) setTimeout(tick, reduced ? 150 : 650);
-        else setTimeout(() => { if (!wrap) return; checking.rows.forEach((r) => { saved.files[r[2]].checked = true; }); checking = null; keep(); goStep(2); }, reduced ? 300 : 1100);
+        else setTimeout(() => { if (!wrap) return; checking.rows.forEach((r) => { if (r[2]) saved.files[r[2]].checked = true; }); checking = null; keep(); goStep(filed().length ? 2 : 1); }, reduced ? 300 : 1300);
       };
       setTimeout(tick, reduced ? 150 : 800);
     };
+
+    // ---- a document from the review, in a drawer: the same parts as Documents' (.docd .cdd) --------
+    const dwEl = document.createElement('div');
+    dwEl.className = 'docd cdd gs-dw'; dwEl.hidden = true;
+    dwEl.innerHTML = `<div class="docd-scrim" data-dwclose></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="gs-dw-t" tabindex="-1">
+        <header class="docd-head"><span class="docd-ico" aria-hidden="true">${FILE}</span><div class="docd-t"><h3 id="gs-dw-t"></h3><p id="gs-dw-sub"></p></div>
+          <button type="button" class="dlg-x" data-dwclose aria-label="Close the preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></header>
+        <div class="docd-bar"><span>The file you uploaded</span><span id="gs-dw-conf"></span></div>
+        <div class="docd-body" id="gs-dw-body"></div>
+        <footer class="docd-foot"><span id="gs-dw-foot"></span><span class="cdd-acts" id="gs-dw-acts"></span></footer>
+      </aside>`;
+    document.body.appendChild(dwEl);
+    const dq = (id) => dwEl.querySelector('#' + id);
+    let peek = null, peekBack = null, citeAt = null;
+    const company = esc(org.name), taxShown = taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
+    const paintPeek = () => {
+      const d = docs.find((x) => x.code === peek), f = d && saved.files[d.code];
+      if (!f) { closePeek(); return; }
+      const flagged = f.flag && !f.edited;
+      const label = (k, l) => (k === 'ref' && CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : l);
+      // what she read: the holder first, then the document's own fields
+      const rows = [['Holder', company, false], ['Tax number', esc(taxShown || '—'), false]].concat(FIELDS.map(([k, l]) => [label(k, l), esc(f[k]), flagged && f.flag === k]));
+      const conf = (flag, i) => (f.edited ? 98 : flag ? 52 : Math.min(99, f.conf + (hash(d.code + i) % 7) - 3));
+      const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
+      const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here &mdash; I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
+        + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${citeAt === i}">${citeAt === i ? 'Hide citation' : 'View citation'}</button>`
+        + `<figure class="esgq-src cdd-src"${citeAt === i ? '' : ' hidden'}><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td>`
+        + `<td>${tag(conf(fl, i))}</td></tr>`).join('')}</tbody></table></section>`;
+      dq('gs-dw-t').textContent = d.name.en;
+      dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
+      dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f);
+      // the file itself, not a page drawn from what she read (js/doc-files.js)
+      dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + read;
+      const slot = dq('gs-dw-file'), at = peek;
+      const fill = (html) => { if (peek === at && slot.isConnected) slot.innerHTML = html; };
+      if (!window.CMFiles) fill('');
+      else window.CMFiles.get(d.code).then((r) => fill(r ? window.CMFiles.view(r) : window.CMFiles.missing(f.file)));
+      dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
+      dq('gs-dw-acts').innerHTML = `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
+    };
+    const openPeek = (code) => { peekBack = document.activeElement; peek = code; citeAt = null; dwEl.hidden = false; paintPeek(); setTimeout(() => dwEl.classList.add('is-open'), 20); dwEl.querySelector('.docd-panel').focus(); };
+    const closePeek = () => { if (dwEl.hidden) return; dwEl.classList.remove('is-open'); peek = null; setTimeout(() => { dwEl.hidden = true; }, 250); if (peekBack && peekBack.isConnected) peekBack.focus(); };
+    dwEl.addEventListener('click', (e) => {
+      const t = (sel) => e.target.closest(sel);
+      if (t('[data-dwclose]')) { closePeek(); return; }
+      if (t('[data-cite]')) { const i = +t('[data-cite]').dataset.cite; citeAt = citeAt === i ? null : i; paintPeek(); return; }
+      if (t('[data-show]')) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); paintPeek(); return; }
+      if (t('[data-dwedit]')) { const c = peek; closePeek(); editing = c; paint(); const i = wrap.querySelector(`[data-card="${c}"] .is-flag input`) || wrap.querySelector(`[data-card="${c}"] input`); if (i) i.focus(); }
+    });
 
     let shownStep = 0;
     const paint = () => {
@@ -368,19 +456,15 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     };
     const goStep = (n) => { st.step = n; editing = null; keep(); paint(); };
 
-    // files in: each to the document it looks like (or the one asked for), the rest kept quietly
+    // files in: they wait in "Your files" until she reads them. One given for a named document
+    // (Replace in review, Add on the last step) goes straight to it and is read at once.
     const take = (files) => {
       const list = [...files]; if (!list.length) return;
       const one = target; target = null;
-      const openDocs = docs.filter((d) => !saved.files[d.code]);
-      list.forEach((file, i) => {
-        const d = one && i === 0 ? docs.find((x) => x.code === one) : match(file, openDocs);
-        if (!d) { saved.extra += 1; return; }
-        if (openDocs.includes(d)) openDocs.splice(openDocs.indexOf(d), 1);
-        saved.files[d.code] = read(d, file); // attached, not yet read
-      });
+      if (one) { saved.files[one] = read(docs.find((x) => x.code === one), list[0]); if (window.CMFiles) window.CMFiles.put(one, list[0]); keep(); validate(); return; }
+      list.forEach((file) => { held[file.name] = file; if (!st.pending.includes(file.name)) st.pending.push(file.name); });
       keep();
-      if (st.step !== 1 && unchecked().length) { validate(); return; }
+      if (st.step !== 1) { goStep(1); return; }
       paint();
     };
     const browse = (code) => { target = code || null; $('gs-file').multiple = !code; $('gs-file').value = ''; $('gs-file').click(); };
@@ -392,20 +476,22 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 
     const before = JSON.stringify(accepted(docs).map((d) => d.code));
     const close = () => {
-      keep(); wrap.remove(); wrap = null; document.removeEventListener('keydown', onKey);
+      keep(); wrap.remove(); wrap = null; dwEl.remove(); document.removeEventListener('keydown', onKey);
       document.documentElement.classList.remove('intake-open');
       changedAny = JSON.stringify(accepted(docs).map((d) => d.code)) !== before;
       strip();
       if (opts.onClose) opts.onClose(changedAny);
     };
-    const onKey = (e) => { if (e.key === 'Escape' && wrap && editing == null && !checking) close(); };
+    const onKey = (e) => { if (e.key !== 'Escape' || !wrap) return; if (peek) { closePeek(); return; } if (editing == null && !checking) close(); };
     document.addEventListener('keydown', onKey);
     wrap.addEventListener('click', (e) => {
       const t = (s) => e.target.closest(s);
       if (checking) return;
       const code = (a) => t(`[data-${a}]`).getAttribute(`data-${a}`);
       if (t('[data-close]')) { e.preventDefault(); close(); return; }
-      if (t('#gs-drop')) { browse(); return; }
+      if (t('[data-peek]')) { openPeek(code('peek')); return; }
+      if (t('#gs-drop') || t('[data-browse]')) { browse(); return; }
+      if (t('[data-unpend]')) { st.pending.splice(+code('unpend'), 1); keep(); paint(); return; }
       if (t('[data-one]')) { browse(code('one')); return; }
       if (t('[data-step]')) { const n = +code('step'); if (n === 2 && st.step === 1) validate(); else goStep(n); return; }
       if (t('[data-go]')) { const n = +code('go'); if (n === 2) validate(); else goStep(n); return; }
@@ -429,7 +515,11 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         f.ok = true; editing = null; keep(); paint(); return;
       }
       if (t('[data-remove]')) { delete saved.files[code('remove')]; keep(); if (!filed().length) goStep(1); else paint(); return; }
-      if (t('[data-confirm]')) { st.reviewed = true; goStep(3); }
+      if (t('[data-confirm]')) { st.reviewed = true; goStep(3); return; }
+      // anywhere else on a card opens it in the drawer; its own buttons (above) keep their jobs, and
+      // a card being edited stays put so its fields can be clicked into
+      const cardEl = t('.gs-card');
+      if (cardEl && !t('button, a, input, select, textarea, label') && editing !== cardEl.dataset.card) openPeek(cardEl.dataset.card);
     });
     // a step left half-done comes back where it was; one that can't be reached starts at the upload
     if (!reached(st.step - 1)) st.step = 1;
@@ -453,9 +543,9 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
   strip();
 
   window.CMGuided = { open, asks, has, AREA };
-  // an older link to the company-creation upload: the Company section
+  // the end of creating a company: ALMA on its Company documents, over its homepage
   if (/[?&]guided\b/.test(location.search)) {
     history.replaceState(null, '', location.pathname + location.search.replace(/[?&]guided\b/, '').replace(/^&/, '?') + location.hash);
-    if (!has('company')) open('company', { onClose: (c) => { if (c) location.reload(); } });
+    if (!has('company')) open('company', { doneLabel: 'Go to my company', onClose: (c) => { if (c) location.reload(); } });
   }
 })();

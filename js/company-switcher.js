@@ -54,6 +54,8 @@
       ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
       // and what was filed for the companies added (their guided upload, marks and updates)
       Object.keys(sessionStorage).filter((k) => /^cm-(guided|na|doc-updates)-/.test(k)).forEach((k) => sessionStorage.removeItem(k));
+      // and the files uploaded (js/doc-files.js)
+      if (window.indexedDB) indexedDB.deleteDatabase('cm-files');
     } catch (e) {}
   };
   window.CMOrgs = { persona, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, go, forget };

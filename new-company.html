@@ -350,14 +350,6 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
   background: var(--color-surface) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2396958e' stroke-width='1.5'><path d='M6 8l4 4 4-4'/></svg>") right 0.875rem center / 1.125rem no-repeat; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.875rem; }
-/* a yes / no: a small switch, like the role switch on Team management */
-.lbl-q { font-size: 0.875rem; font-weight: 500; }
-.seg { display: inline-flex; gap: 0.125rem; width: fit-content; padding: 0.1875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); }
-.seg label { position: relative; padding: 0.4375rem 1.125rem; border-radius: 0.4375rem; font-size: 0.9375rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; transition: background-color .15s, color .15s; }
-.seg label:hover { color: var(--color-ink); }
-.seg label:has(input:checked) { background: var(--color-graphite); color: var(--color-off-white); }
-.seg label:has(input:focus-visible) { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
-.seg input { position: absolute; opacity: 0; pointer-events: none; }
 @media (max-width: 30rem) { .two { grid-template-columns: 1fr; } .opt { padding: 0.875rem 1rem; gap: 0.75rem; } .opt-p b { font-size: 1rem; } }
 /* the structure: a choice is required; each opens what it needs */
 .more { display: grid; gap: 0.5rem; padding: 0 0 1.25rem 2.125rem; }
@@ -425,25 +417,16 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
               </select>
             </div>
             <div class="field">
-              <label for="c-people">People in the company</label>
-              <select class="input" id="c-people" name="people" required>
+              <label for="c-size">Company size <span class="opt-l">Optional</span></label>
+              <select class="input" id="c-size" name="size">
                 <option value="">Choose one</option>
-                <option value="0">Just me, no employees</option><option value="1-9">1&ndash;9</option><option value="10-49">10&ndash;49</option><option value="50-249">50&ndash;249</option><option value="250+">250 or more</option>
+                <option value="small">Small &middot; under 50 people</option><option value="medium">Medium &middot; 50&ndash;249</option><option value="large">Large &middot; 250 or more</option>
               </select>
             </div>
           </div>
           <div class="field" id="c-sector-o-f" hidden>
             <label for="c-sector-o">Which sector?</label>
             <input class="input" id="c-sector-o" name="sectorOther" autocomplete="off" placeholder="e.g. Agriculture, Hospitality">
-          </div>
-          <!-- whether ALMA asks for equipment documents at all: inspections, conformity, manuals -->
-          <div class="field">
-            <span class="lbl-q" id="c-equip-l">Does the company bring its own equipment or machines to clients&rsquo; sites?</span>
-            <div class="seg" role="radiogroup" aria-labelledby="c-equip-l">
-              <label><input type="radio" name="equip" value="yes">Yes</label>
-              <label><input type="radio" name="equip" value="no">No</label>
-            </div>
-            <p class="hint">Cranes, lifts, tools you hire or own. If yes, we&rsquo;ll ask for their inspections and conformity.</p>
           </div>
           <div class="two">
             <div class="field">
@@ -603,15 +586,14 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
       $('#c-tax-err').textContent = taxOk ? '' : tax ? tax.error : 'The tax or VAT number is needed: it decides which documents the company is asked for.';
       $('#c-name').classList.toggle('is-bad', !nameOk); $('#c-tax').classList.toggle('is-bad', !taxOk);
     }
-    const filled = name && val('#c-country') && val('#c-sector') && val('#c-people') && val('#c-form') && $('#c-tax').value.trim() && document.querySelector('[name="equip"]:checked')
+    const filled = name && val('#c-country') && val('#c-sector') && val('#c-form') && $('#c-tax').value.trim()
       && (val('#c-sector') !== 'Other' || val('#c-sector-o')) && (val('#c-form') !== 'other' || val('#c-form-o'));
     $('#details-go').disabled = !filled;
     return nameOk && taxOk;
   };
   $('#c-sector').addEventListener('change', () => { other('#c-sector', '#c-sector-o-f'); checkDetails(false); });
   $('#c-form').addEventListener('change', () => { other('#c-form', '#c-form-o-f'); checkDetails(false); });
-  $('#c-people').addEventListener('change', () => checkDetails(false));
-  document.querySelectorAll('[name="equip"]').forEach((r) => r.addEventListener('change', () => checkDetails(false)));
+  $('#c-size').addEventListener('change', () => checkDetails(false));
   $('#c-country').addEventListener('change', () => { $('#c-tax').classList.remove('is-bad'); $('#c-tax-err').textContent = ''; checkDetails(false); });
   ['#c-name', '#c-trading', '#c-sector-o', '#c-form-o', '#c-tax'].forEach((s) => $(s).addEventListener('input', () => { $(s).classList.remove('is-bad'); const er = $(s + '-err'); if (er) er.textContent = ''; checkDetails(false); }));
   $('#f-details').addEventListener('submit', (e) => {
@@ -676,7 +658,7 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
     const tax = taxFor();
     const org = O.add({
       name: val('#c-name'), trading: val('#c-trading'), sector: val('#c-sector'), sectorOther: val('#c-sector') === 'Other' ? val('#c-sector-o') : '',
-      people: val('#c-people'), ownEquipment: (document.querySelector('[name="equip"]:checked') || {}).value === 'yes', form: val('#c-form') === 'other' ? val('#c-form-o') : val('#c-form'), tax: tax.value, country: val('#c-country'), countryName: COUNTRIES[val('#c-country')],
+      size: val('#c-size'), form: val('#c-form') === 'other' ? val('#c-form-o') : val('#c-form'), tax: tax.value, country: val('#c-country'), countryName: COUNTRIES[val('#c-country')],
       structure: s, parent: s === 'subsidiary' ? $('#c-parent').value : null, plan: paidInfo.plan, paidWith: paidInfo.paidWith,
     }, s === 'parent' ? [...document.querySelectorAll('#kids input:checked')].map((x) => x.value) : []);
     try { sessionStorage.removeItem('cm-newco-paid'); } catch (er) {}
@@ -688,7 +670,7 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
     $('#cancel').hidden = true; // the company exists now: nothing left to cancel
     const items = [...document.querySelectorAll('#setup li')];
     items.forEach((li, i) => setTimeout(() => li.classList.add('is-done'), reduced ? 0 : 500 + i * 650));
-    setTimeout(() => O.go(org), reduced ? 300 : 2700); // ALMA asks for documents section by section (js/guided-upload.js)
+    setTimeout(() => O.go(org, { guided: true }), reduced ? 300 : 2700); // its homepage, with ALMA asking for the company's documents first (js/guided-upload.js)
   });
 })();
 </script>

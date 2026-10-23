@@ -153,11 +153,15 @@ window.DOC_MODEL = (() => {
   // Its documents are the ones it uploaded and accepted in ALMA's guided upload
   // (js/guided-upload.js), and only those: what it still owes shows in the profile-completion
   // strip on its homepage, not as a list of missing documents here.
-  const EMP = { 0: 0, '1-9': 5, '10-49': 25, '50-249': 100, '250+': 300 };
+  // the size it gave (optional: small, medium, large), as the rules read it; no size reads as small.
+  // An older company, created with a head count, keeps it.
+  const EMP = { small: 10, medium: 100, large: 300, 0: 0, '1-9': 5, '10-49': 25, '50-249': 100, '250+': 300 };
+  const SIZE = { small: 'Small company', medium: 'Medium company', large: 'Large company' };
   const profileOf = (o) => {
     const construction = o.sector === 'Construction';
+    const n = EMP[o.size || o.people];
     return { country: o.country || 'PT', sector: construction ? 'construction' : 'other', entityType: o.people === '0' ? 'self_employed' : 'company',
-      employees: EMP[o.people] != null ? EMP[o.people] : 5, services: construction ? ['construction_work'] : [], equipmentCount: o.ownEquipment === false ? 0 : 1, usClients: false };
+      employees: n != null ? n : 10, services: construction ? ['construction_work'] : [], equipmentCount: o.ownEquipment === false ? 0 : 1, usClients: false };
   };
   const ORG = (() => {
     try {
@@ -173,7 +177,7 @@ window.DOC_MODEL = (() => {
     Object.entries(guided.files || {}).forEach(([code, f]) => { if (f.ok) state[code] = ['valid', f.issued, f.valid, '', { ref: esc(f.ref), by: esc(f.by), edited: !!f.edited, conf: f.conf }]; });
     DEMO.added = {
       company: esc(ORG.name), profile: profileOf(ORG),
-      line: [COUNTRY_NAME[ORG.country] || ORG.countryName || ORG.country, ORG.sector === 'Other' ? ORG.sectorOther || 'Other' : ORG.sector, ORG.people ? ORG.people + ' people' : ''].filter(Boolean).map(esc).join(' &middot; '),
+      line: [COUNTRY_NAME[ORG.country] || ORG.countryName || ORG.country, ORG.sector === 'Other' ? ORG.sectorOther || 'Other' : ORG.sector, SIZE[ORG.size] || (ORG.people ? ORG.people + ' people' : '')].filter(Boolean).map(esc).join(' &middot; '),
       facts: ORG.tax ? { 'tax number|nipc': esc(ORG.tax) } : {},
       records: { workers: [], equipment: [], products: [] }, state, perRecord: {}, archive: [],
     };
