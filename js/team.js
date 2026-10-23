@@ -57,13 +57,14 @@
 .tm-edit { grid-column: 1 / -1; display: grid; gap: 0.875rem; margin-top: 0.375rem; padding: 1rem; border-radius: 0.75rem; background: var(--color-light-beige); }
 .tm-edit select.input { height: 2.5rem; max-width: 14rem; font-size: 0.875rem; }
 .tm-invite { display: grid; gap: 1rem; padding: 1.25rem; border-radius: 0.875rem; background: var(--color-light-beige); }
-.tm-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
-.tm-roles label { position: relative; display: grid; gap: 0.25rem; padding: 0.75rem 0.875rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); cursor: pointer; }
-.tm-roles label:has(input:checked) { border-color: var(--color-graphite); box-shadow: 0 0 0 1px var(--color-graphite); }
+/* the role: a compact switch, and one line saying what the chosen role can do */
+.tm-roles { display: inline-flex; flex-wrap: wrap; gap: 0.125rem; width: fit-content; max-width: 100%; padding: 0.1875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); }
+.tm-roles label { position: relative; display: block; padding: 0.375rem 0.875rem; border-radius: 0.4375rem; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; transition: background-color .15s, color .15s; }
+.tm-roles label:hover { color: var(--color-ink); }
+.tm-roles label:has(input:checked) { background: var(--color-graphite); color: var(--color-off-white); }
 .tm-roles label:has(input:focus-visible) { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .tm-roles input { position: absolute; opacity: 0; pointer-events: none; }
-.tm-roles b { font-size: 0.875rem; font-weight: 600; }
-.tm-roles span { font-size: 0.75rem; line-height: 1.4; color: var(--color-ink-subtle); }
+.tm-role-d { font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
 .tm-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.375rem 1rem; }
 .tm-checks label { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.875rem; line-height: 1.35; cursor: pointer; }
 .tm-checks label.is-off { color: var(--color-sand-500); cursor: not-allowed; }
@@ -118,8 +119,66 @@
 .tm-rev tbody tr.is-bad td { color: var(--color-ink-subtle); }
 .tm-rev td small { display: block; color: var(--color-ink-subtle); }
 .tm-rev .co-badge { white-space: nowrap; }
+.tm-ph { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.5rem; }
+.tm-all { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
+.tm-all input, .tm-sel { width: 1rem; height: 1rem; accent-color: var(--color-graphite); cursor: pointer; }
+.tm-list.is-sel > li { grid-template-columns: 1rem auto minmax(0, 1fr) auto; }
+.tm-list > li.is-picked { background: var(--color-light-beige); }
+.tm-toast { position: fixed; bottom: 1.5rem; left: 50%; translate: -50% 0; z-index: 95; display: flex; align-items: flex-start; gap: 0.75rem; width: min(24rem, calc(100vw - 2rem)); padding: 0.875rem 0.875rem 0.875rem 1rem;
+  border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); box-shadow: 0 16px 36px -14px rgba(0,0,0,.5); animation: tm-toast-in .3s var(--ease-brand, ease); }
+.tm-toast.is-raised { bottom: 5rem; } /* above the preview bar */
+.tm-toast.is-out { opacity: 0; transform: translateY(6px); transition: opacity .25s, transform .25s; }
+@keyframes tm-toast-in { from { opacity: 0; transform: translateY(10px); } }
+.tm-toast-i { flex: none; width: 1.5rem; height: 1.5rem; display: grid; place-items: center; border-radius: 0.375rem; background: var(--color-ok, #a6d8a0); color: var(--color-graphite); }
+.tm-toast-i svg { width: 0.875rem; height: 0.875rem; }
+.tm-toast-t { flex: 1; display: grid; gap: 0.125rem; font-size: 0.875rem; line-height: 1.4; }
+.tm-toast-t b { font-weight: 600; }
+.tm-toast-t span { color: color-mix(in oklab, var(--color-off-white) 72%, transparent); }
+.tm-toast-x { flex: none; border: 0; background: none; padding: 0 0.125rem; font-size: 1.25rem; line-height: 1; color: color-mix(in oklab, var(--color-off-white) 70%, transparent); cursor: pointer; }
+.tm-toast-x:hover { color: var(--color-off-white); }
+@media (prefers-reduced-motion: reduce) { .tm-toast { animation: none; } }
+.tm-list > li.is-changed { animation: tm-changed 2.4s ease; }
+@keyframes tm-changed { 0%, 40% { background: color-mix(in oklab, var(--color-ok, #a6d8a0) 35%, transparent); } 100% { background: transparent; } }
+/* the selection: a bar that sticks to the bottom of the screen while the list is in view */
+.tm-selbar { position: sticky; bottom: 1rem; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.625rem 0.75rem 0.625rem 1rem;
+  border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); box-shadow: 0 12px 28px -12px rgba(0,0,0,.45); }
+.tm-selbar-t { display: flex; align-items: baseline; gap: 0.625rem; min-width: 0; font-size: 0.875rem; }
+.tm-selbar-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: color-mix(in oklab, var(--color-off-white) 70%, transparent); }
+.tm-selbar-a { flex: none; display: flex; align-items: center; gap: 1rem; }
+.tm-selbar .tm-x { color: var(--color-off-white); text-decoration-color: color-mix(in oklab, var(--color-off-white) 40%, transparent); }
+/* the drawer: what's changing, for whom */
+.tm-dw { position: fixed; inset: 0; z-index: 90; }
+.tm-dw[hidden] { display: none; }
+.tm-dw-scrim { position: absolute; inset: 0; background: rgba(52, 52, 52, .32); animation: tm-fade .2s ease; }
+.tm-dw-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(32rem, 100vw); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--color-off-white);
+  box-shadow: -16px 0 40px -20px rgba(0,0,0,.35); animation: tm-in .28s var(--ease-brand, ease); outline: none; }
+@keyframes tm-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tm-fade { from { opacity: 0; } }
+.tm-dw-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-line); }
+.tm-dw-h h3 { font-size: 1.25rem; font-weight: 600; }
+.tm-dw-h p { font-size: 0.875rem; color: var(--color-ink-subtle); }
+.tm-dw-x { border: 0; background: none; padding: 0; font-size: 1.75rem; line-height: 1; color: var(--color-ink-subtle); cursor: pointer; }
+.tm-dw-x:hover { color: var(--color-ink); }
+.tm-dw-b { overflow-y: auto; display: grid; align-content: start; gap: 1.25rem; padding: 1.25rem 1.5rem; }
+.tm-dw-b .tm-checks { grid-template-columns: 1fr 1fr; }
+.tm-dw-f { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.875rem 1.5rem; border-top: 1px solid var(--color-line); background: var(--color-surface); font-size: 0.875rem; color: var(--color-ink-muted); }
+.tm-plan { list-style: none; margin: 0; padding: 0; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); }
+.tm-plan > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 0.75rem; padding: 0.75rem 0.875rem; }
+.tm-plan > li + li { border-top: 1px solid var(--color-mid-beige); }
+.tm-plan .tm-pic { width: 2rem; height: 2rem; font-size: 0.75rem; }
+.tm-plan-t { display: grid; gap: 0.1875rem; min-width: 0; font-size: 0.875rem; }
+.tm-plan-t b { font-weight: 600; }
+.tm-plan-t small { font-size: 0.75rem; color: var(--color-ink-subtle); }
+.tm-plan-t .co-badge { justify-self: start; margin-top: 0.125rem; }
+.tm-plan-c { display: flex; align-items: center; gap: 0.375rem; font-weight: 500; }
+.tm-from { color: var(--color-ink-subtle); }
+.tm-plan > li:not(.is-same) .tm-from { text-decoration: line-through; text-decoration-color: var(--color-sand-400); }
+.tm-to { color: var(--color-ink); font-weight: 600; }
+.tm-stay { color: var(--color-ink); }
+.tm-plan-t small .tm-to { font-weight: 600; }
+.tm-plan > li.is-same { opacity: .7; }
 .tm-perm-note { margin-top: 0.875rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-@media (max-width: 40rem) { .tm-roles, .tm-checks, .tm-groups { grid-template-columns: 1fr; } .tm-list > li { grid-template-columns: auto minmax(0, 1fr); } .tm-r { grid-column: 1 / -1; justify-content: flex-start; padding-left: 3.125rem; } }`;
+@media (max-width: 40rem) { .tm-checks, .tm-groups { grid-template-columns: 1fr; } .tm-list > li { grid-template-columns: auto minmax(0, 1fr); } .tm-list.is-sel > li { grid-template-columns: 1rem auto minmax(0, 1fr); } .tm-r { grid-column: 1 / -1; justify-content: flex-start; padding-left: 3.125rem; } }`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   const initials = (n) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
@@ -144,7 +203,8 @@
       const edit = canEdit(c, m);
       const open = edit && editing === i;
       const roles = ORDER.filter((r) => c.grants.includes(r) || r === m.role);
-      return `<li><span class="tm-pic" aria-hidden="true">${esc(initials(m.name))}</span><span class="tm-t"><b>${esc(m.name)}${m === c.v ? `<span class="tm-you">${as === 'you' ? 'You' : 'Previewing as'}</span>` : ''}</b><small>${esc(m.email)}${m.title ? ' &middot; ' + esc(m.title) : ''}</small><span class="tm-tags">${reach(t, m)}</span></span>`
+      const pickBox = selecting ? (edit ? `<input type="checkbox" class="tm-sel" data-sel="${i}"${sel.has(i) ? ' checked' : ''} aria-label="Select ${esc(m.name)}">` : '<span></span>') : '';
+      return `<li class="${sel.has(i) ? 'is-picked' : ''}${changed.has(i) ? ' is-changed' : ''}">${pickBox}<span class="tm-pic" aria-hidden="true">${esc(initials(m.name))}</span><span class="tm-t"><b>${esc(m.name)}${m === c.v ? `<span class="tm-you">${as === 'you' ? 'You' : 'Previewing as'}</span>` : ''}</b><small>${esc(m.email)}${m.title ? ' &middot; ' + esc(m.title) : ''}</small><span class="tm-tags">${reach(t, m)}</span></span>`
         + `<span class="tm-r"><span class="tm-role">${ROLES[m.role][0]}</span>${edit && !open ? `<button type="button" class="tm-x" data-edit="${i}">Edit</button>` : ''}</span>`
         + (open ? `<form class="tm-edit" data-save="${i}">
             <div class="set-f"><label for="tm-er">Role</label><select class="input" id="tm-er" name="role">${roles.map((r) => `<option value="${r}"${r === m.role ? ' selected' : ''}>${ROLES[r][0]}</option>`).join('')}</select></div>
@@ -162,10 +222,16 @@
     const invites = t.invites.map((v, i) => [v, i]).filter(([v]) => mineInvite(v));
     const canInvite = c.grants.length > 0;
     const pick = c.grants.includes('user') ? 'user' : c.grants[0];
+    const selecting = manages(c.role) && visible.some((m) => canEdit(c, m));
+    const editable = visible.filter((m) => canEdit(c, m)).map((m) => t.members.indexOf(m));
+    [...sel].forEach((i) => { if (!editable.includes(i)) sel.delete(i); });
+    const peopleHtml = `<div class="tm-ph"><h3 class="set-sub">People in ${esc(cur.name)} <span class="set-opt">${visible.length}</span></h3>${selecting ? `<label class="tm-all"><input type="checkbox" data-sel-all${editable.length && editable.every((i) => sel.has(i)) ? ' checked' : ''}>Select all</label>` : ''}</div>
+      ${roleMsg}
+      <ul class="tm-list${selecting ? ' is-sel' : ''}" aria-label="People in ${esc(cur.name)}">${visible.map((m) => member(m, t.members.indexOf(m))).join('')}</ul>
+      ${sel.size ? `<div class="tm-selbar" role="region" aria-label="Selected people"><span class="tm-selbar-t"><b>${sel.size} selected</b><span>${[...sel].map((i) => t.members[i]).filter(Boolean).map((m) => esc(m.name.split(' ')[0])).join(', ')}</span></span><span class="tm-selbar-a"><button type="button" class="tm-x" data-sel-clear>Clear</button><button type="button" class="btn btn-primary btn-sm" data-dw-open>Change role</button></span></div>` : ''}`;
+    const invitesHtml = invites.length ? `<h3 class="set-sub">Waiting to accept <span class="set-opt">${invites.length}</span></h3><ul class="tm-list" aria-label="Pending invites">${invites.map(([v, i]) => invite(v, i)).join('')}</ul>` : '';
     box.innerHTML = `
       ${previewBar(t)}
-      <ul class="tm-list" aria-label="People in ${esc(cur.name)}">${visible.map((m) => member(m, t.members.indexOf(m))).join('')}</ul>
-      ${invites.length ? `<h3 class="set-sub">Waiting to accept <span class="set-opt">${invites.length}</span></h3><ul class="tm-list" aria-label="Pending invites">${invites.map(([v, i]) => invite(v, i)).join('')}</ul>` : ''}
       ${canInvite ? `<form class="tm-invite" id="tm-form" novalidate>
         <h3 class="set-sub">Invite people</h3>
         ${bulk ? bulkReview(c) : `<div class="tm-bulk" id="tm-bulk"><span><b>Inviting many people?</b> Upload an Excel file with their emails, roles and groups.</span><span class="tm-bulk-acts"><button type="button" class="tm-x" data-bulk-template>Download the template</button><button type="button" class="btn btn-secondary btn-sm" data-bulk-pick>Upload Excel file</button></span></div>
@@ -174,23 +240,105 @@
         <input type="file" id="tm-bulk-file" accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
         <div class="tm-one"${bulk ? ' hidden' : ' style="display:grid;gap:1rem"'}>
         <div class="set-f"><label for="tm-emails">Work emails</label><input class="input" id="tm-emails" type="text" inputmode="email" autocomplete="off" placeholder="name@company.com, another@company.com"><p class="set-err" id="tm-err" role="alert"></p></div>
-        ${c.grants.length > 1 ? `<div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="tm-role" value="${r}"${r === pick ? ' checked' : ''}><b>${ROLES[r][0]}</b><span>${ROLES[r][1]}</span></label>`).join('')}</div></div>`
+        ${c.grants.length > 1 ? `<div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="tm-role" value="${r}"${r === pick ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d" id="tm-role-d">${ROLES[pick][1]}</p></div>`
           : `<input type="hidden" name="tm-role" value="${pick}"><p class="tm-note">As a manager, you invite users, into the groups you are in.</p>`}
         <div class="tm-scope" data-scope="owner" hidden><p class="tm-note">An owner sees and does everything on ${family().map((o) => esc(o.name)).join(', ')}${family().length > 1 ? '' : ''}, and on any subsidiary added later.</p></div>
         ${others.length && c.role === 'owner' ? `<div class="tm-scope" data-scope="admin" hidden><span class="tm-lbl">Also make them admin of</span><div class="tm-checks">${others.map((o) => `<label><input type="checkbox" name="also" value="${esc(o.id)}"><span>${esc(o.name)}</span></label>`).join('')}</div></div>` : ''}
         <div class="tm-scope" data-scope="groups" hidden><span class="tm-lbl">Groups &mdash; the pages they&rsquo;ll open</span>${groupChecks(c, [], 'ig')}<p class="set-err" id="tm-gerr" role="alert"></p></div>
         <div class="set-foot"><span class="tm-sent" role="status">${flash}</span><button type="submit" class="btn btn-primary btn-sm" id="tm-go">Send invite</button></div>
         </div>
-      </form>` : '<p class="tm-note">Users can&rsquo;t invite people. Ask a manager or an admin of this company.</p>'}`;
-    flash = ''; bulkErr = '';
+      </form>` : '<p class="tm-note">Users can&rsquo;t invite people. Ask a manager or an admin of this company.</p>'}
+      ${invitesHtml}
+      ${peopleHtml}`;
+    flash = ''; bulkErr = ''; roleMsg = '';
     showScope();
     paintGroups(); paintPerms();
+  };
+  // ---- changing several people's role at once -----------------------------------------------------
+  // Tick people; a bar sticks to the bottom of the list with who is selected. "Change role" opens a
+  // drawer with the role, the groups (left empty, each keeps their own), and everyone selected:
+  // their role and groups now, what they become, and anything stopping it — all in one view.
+  const sel = new Set(), changed = new Set();
+  let roleMsg = '', dRole = 'user';
+  const dGroups = new Set();
+  const dw = document.createElement('div');
+  dw.className = 'tm-dw'; dw.hidden = true;
+  dw.innerHTML = '<div class="tm-dw-scrim" data-dw-close></div><aside class="tm-dw-panel" role="dialog" aria-modal="true" aria-labelledby="tm-dw-t" tabindex="-1"></aside>';
+  document.body.appendChild(dw);
+  const panel = dw.querySelector('.tm-dw-panel');
+  const plan = (c) => [...sel].map((i) => [i, c.t.members[i]]).filter(([, m]) => m).map(([i, m]) => {
+    const to = dRole, ng = grouped(to) ? (dGroups.size ? [...dGroups] : (m.groups || [])) : [];
+    const fg = grouped(m.role) ? (m.groups || []) : [];
+    const same = m.role === to && fg.join() === ng.join();
+    const problem = !canEdit(c, m) ? 'You can&rsquo;t change them' : grouped(to) && !ng.length ? 'Needs a group' : '';
+    return { i, m, to, fg, ng, same, problem };
+  });
+  const gl = (t, ids, r) => (grouped(r) ? ids.map((id) => gName(t, id)).filter(Boolean).map(esc).join(', ') || 'No groups' : r === 'owner' ? 'Every page · parent and subsidiaries' : 'Every page of this company');
+  const paintDrawer = () => {
+    const c = ctx(), t = c.t, rows = plan(c);
+    const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
+    panel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-dw-t">Change role</h3><p>${rows.length} ${rows.length === 1 ? 'person' : 'people'} selected</p></div><button type="button" class="tm-dw-x" data-dw-close aria-label="Close">&times;</button></header>
+      <div class="tm-dw-b">
+        <div class="set-f"><span class="tm-lbl">New role</span><div class="tm-roles" role="radiogroup" aria-label="New role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="dw-role" value="${r}"${r === dRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[dRole][1]}</p></div>
+        ${grouped(dRole) ? `<div class="set-f"><span class="tm-lbl">Groups <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span></span>${groupChecks(c, [...dGroups], 'dg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
+        <div class="set-f"><span class="tm-lbl">What changes</span>
+          <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
+            <span class="tm-pic" aria-hidden="true">${esc(initials(r.m.name))}</span>
+            <span class="tm-plan-t"><b>${esc(r.m.name)}</b>
+              ${r.m.role === r.to ? `<span class="tm-plan-c"><span class="tm-stay">${ROLES[r.to][0]}</span></span>` : `<span class="tm-plan-c"><span class="tm-from">${ROLES[r.m.role][0]}</span><span aria-hidden="true">&rarr;</span><span class="tm-to">${ROLES[r.to][0]}</span></span>`}
+              ${gl(t, r.fg, r.m.role) === gl(t, r.ng, r.to) ? `<small>${gl(t, r.ng, r.to)}</small>` : `<small><span class="tm-from">${gl(t, r.fg, r.m.role)}</span> &rarr; <span class="tm-to">${gl(t, r.ng, r.to)}</span></small>`}
+              ${r.problem ? `<span class="co-badge b-over">${r.problem}</span>` : r.same ? '<span class="co-badge b-neu">No change</span>' : ''}</span>
+            <button type="button" class="tm-x" data-unsel="${r.i}" aria-label="Take ${esc(r.m.name)} out">Remove</button></li>`).join('')}</ul></div>
+      </div>
+      <footer class="tm-dw-f"><span>${moving} change${moving === 1 ? '' : 's'}${stuck ? ` &middot; ${stuck} to sort out` : ''}</span><span class="tm-selbar-a"><button type="button" class="tm-x" data-dw-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-dw-apply${moving && !stuck ? '' : ' disabled'}>Apply ${moving || ''} change${moving === 1 ? '' : 's'}</button></span></footer>`;
+  };
+  let dwBack = null;
+  const openDrawer = () => { dwBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintDrawer(); panel.focus(); };
+  const closeDrawer = () => { dw.hidden = true; document.documentElement.style.overflow = ''; if (dwBack && dwBack.isConnected) dwBack.focus(); else { const b = box.querySelector('[data-dw-open]'); if (b) b.focus(); } };
+  dw.addEventListener('click', (e) => {
+    if (e.target.closest('[data-dw-close]')) { closeDrawer(); return; }
+    const u = e.target.closest('[data-unsel]');
+    if (u) { sel.delete(+u.dataset.unsel); paint(); if (!sel.size) closeDrawer(); else paintDrawer(); return; }
+    if (e.target.closest('[data-dw-apply]')) {
+      const c = ctx(), t = c.t, rows = plan(c).filter((r) => !r.same && !r.problem);
+      rows.forEach((r) => { r.m.role = r.to; r.m.groups = r.ng; });
+      save(cur.id, t);
+      changed.clear(); rows.forEach((r) => changed.add(r.i));
+      sel.clear(); dGroups.clear(); closeDrawer(); paint();
+      // the toast: how many, and to what (one role and one set of groups, or "new roles")
+      const roles = [...new Set(rows.map((r) => r.to))], gs = [...new Set(rows.map((r) => gl(t, r.ng, r.to)))];
+      const to = roles.length === 1 ? `${ROLES[roles[0]][0]}${gs.length === 1 && grouped(roles[0]) ? ` &middot; ${gs[0]}` : ''}` : 'their new roles';
+      toast(`<b>${rows.length} ${rows.length === 1 ? 'user was' : 'users were'} successfully changed</b><span>${roles.length === 1 ? 'Now ' : 'Moved to '}${to}</span>`);
+      setTimeout(() => { changed.clear(); box.querySelectorAll('.is-changed').forEach((li) => li.classList.remove('is-changed')); }, 2400);
+    }
+  });
+  dw.addEventListener('change', (e) => {
+    if (e.target.name === 'dw-role') { dRole = e.target.value; paintDrawer(); const r = panel.querySelector(`[name="dw-role"][value="${dRole}"]`); if (r) r.focus(); return; }
+    if (e.target.name === 'dg') { e.target.checked ? dGroups.add(e.target.value) : dGroups.delete(e.target.value); const v = e.target.value; paintDrawer(); const g = panel.querySelector(`[name="dg"][value="${v}"]`); if (g) g.focus(); }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !dw.hidden) closeDrawer(); });
+  // a toast at the bottom of the screen, centred on the team card (the side menu takes the left of
+  // the screen, so the window's own centre sits off the table); gone after a few seconds, or on its ×
+  const toast = (html) => {
+    document.querySelectorAll('.tm-toast').forEach((x) => x.remove());
+    const el = document.createElement('div');
+    el.className = 'tm-toast' + (A.previewing() ? ' is-raised' : ''); el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite');
+    el.innerHTML = `<span class="tm-toast-i" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="tm-toast-t">${html}</span><button type="button" class="tm-toast-x" aria-label="Dismiss">&times;</button>`;
+    document.body.appendChild(el);
+    const card = document.getElementById('team');
+    const place = () => { if (!el.isConnected) { removeEventListener('resize', place); return; } const r = card ? card.getBoundingClientRect() : null; el.style.left = (r && r.width ? r.left + r.width / 2 : innerWidth / 2) + 'px'; };
+    place(); addEventListener('resize', place);
+    const go = () => { el.classList.add('is-out'); setTimeout(() => { el.remove(); removeEventListener('resize', place); }, 250); };
+    el.querySelector('button').addEventListener('click', go);
+    let tm = setTimeout(go, 5000);
+    el.addEventListener('mouseenter', () => clearTimeout(tm)); el.addEventListener('mouseleave', () => { tm = setTimeout(go, 2500); });
   };
   // previewing the page as someone else on the team
   const previewBar = (t) => manages(teamOf(cur.id).members.find((m) => m.you).role) ? `<div class="tm-as"><span>See the app as someone else on the team would: only the pages they can open.</span><label for="tm-as">Preview as <select class="input" id="tm-as">${t.members.map((m) => `<option value="${m.you ? 'you' : esc(m.email)}"${(m.you ? 'you' : m.email) === as ? ' selected' : ''}>${m.you ? 'You' : esc(m.name)} &middot; ${ROLES[m.role][0]}${grouped(m.role) && (m.groups || []).length ? ' (' + m.groups.map((g) => gName(t, g)).filter(Boolean).map(esc).join(', ') + ')' : ''}</option>`).join('')}</select></label></div>` : '';
   const pickedRole = () => { const r = box.querySelector('[name="tm-role"]:checked') || box.querySelector('input[type="hidden"][name="tm-role"]'); return r ? r.value : null; };
   const showScope = () => {
     const r = pickedRole();
+    const d = box.querySelector('#tm-role-d'); if (d && ROLES[r]) d.textContent = ROLES[r][1];
     box.querySelectorAll('#tm-form .tm-scope').forEach((s) => { s.hidden = !(s.dataset.scope === r || (s.dataset.scope === 'groups' && grouped(r))); });
   };
 
@@ -384,6 +532,8 @@
     // previewing: the whole app, as them (js/access.js), so the page reloads
     if (e.target.id === 'tm-as') { A.preview(e.target.value === 'you' ? null : e.target.value); location.reload(); return; }
     if (e.target.name === 'tm-role') { showScope(); return; }
+    if (e.target.matches('[data-sel]')) { const i = +e.target.dataset.sel; e.target.checked ? sel.add(i) : sel.delete(i); paint(); const b = box.querySelector(`[data-sel="${i}"]`); if (b) b.focus({ preventScroll: true }); return; }
+    if (e.target.matches('[data-sel-all]')) { const c = ctx(); c.t.members.forEach((m, i) => { if (e.target.checked && canEdit(c, m)) sel.add(i); else sel.delete(i); }); paint(); return; }
     if (e.target.name === 'ig') { const ge = document.getElementById('tm-gerr'); if (ge) ge.textContent = ''; return; }
     const ef = e.target.closest('[data-save]');
     if (ef && e.target.name === 'role') {
@@ -395,6 +545,8 @@
   box.addEventListener('click', (e) => {
     const c = ctx(), t = c.t;
     if (e.target.closest('[data-bulk-template]')) { template(); return; }
+    if (e.target.closest('[data-sel-clear]')) { sel.clear(); paint(); return; }
+    if (e.target.closest('[data-dw-open]')) { openDrawer(); return; }
     if (e.target.closest('[data-bulk-pick]')) { const f = box.querySelector('#tm-bulk-file'); f.value = ''; f.click(); return; }
     if (e.target.closest('[data-bulk-cancel]')) { bulk = null; paint(); return; }
     if (e.target.closest('[data-bulk-send]')) {
