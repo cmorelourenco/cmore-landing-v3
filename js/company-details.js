@@ -551,7 +551,7 @@
     </div>`;
   };
 
-  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : 'Registration, tax and social security, and the rest of the company&rsquo;s own papers.'} ALMA asks for them one section at a time.</span>${window.CMGuided ? `<button type="button" class="btn btn-primary btn-sm" data-alma-area="${key}">Add them with ALMA</button>` : ''}</div>`;
+  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : 'Registration, tax and social security, and the rest of the company&rsquo;s own papers.'} ALMA asks for them one section at a time.</span>${window.DOC_MODEL.ORG ? `<button type="button" class="btn btn-primary btn-sm" data-alma-area="${key}">Add them with ALMA</button>` : ''}</div>`;
   // ALMA, on a section of a company added in this session (js/guided-upload.js): she comes up on
   // her own when it's empty, each time it's opened; afterwards the page comes back with what was filed
   let asked = null;
@@ -563,7 +563,7 @@
   const askIfEmpty = () => {
     if (area === asked) return;
     asked = area;
-    if (area && window.DOC_MODEL.ORG && !DATA.some((d) => d.area === area) && window.CMGuided && window.CMGuided.asks(area).length) setTimeout(() => askALMA(area), 250);
+    if (area && window.DOC_MODEL.ORG && !DATA.some((d) => d.area === area)) setTimeout(() => { if (window.CMGuided && window.CMGuided.asks(area).length) askALMA(area); }, 250);
   };
   const none = () => '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
 

@@ -157,7 +157,7 @@ window.DOC_MODEL = (() => {
   const profileOf = (o) => {
     const construction = o.sector === 'Construction';
     return { country: o.country || 'PT', sector: construction ? 'construction' : 'other', entityType: o.people === '0' ? 'self_employed' : 'company',
-      employees: EMP[o.people] != null ? EMP[o.people] : 5, services: construction ? ['construction_work'] : [], equipmentCount: 0, usClients: false };
+      employees: EMP[o.people] != null ? EMP[o.people] : 5, services: construction ? ['construction_work'] : [], equipmentCount: o.ownEquipment === false ? 0 : 1, usClients: false };
   };
   const ORG = (() => {
     try {
@@ -274,7 +274,7 @@ window.DOC_MODEL = (() => {
   // the areas this company has: open by its profile, with at least one document in them
   // (a company added in this session keeps Company, Workers and Equipment even while they're empty)
   // (and only the ones the person looking can open: js/access.js)
-  const AREAS = Object.keys(AREA_META).filter((k) => (ORG && k !== 'products') || R.AREA_OPEN[k](PROFILE) && DOCS.some((d) => d.area === k && d.status !== 'archived'))
+  const AREAS = Object.keys(AREA_META).filter((k) => (ORG && (k === 'company' || k === 'workers' || (k === 'equipment' && PROFILE.equipmentCount > 0))) || !ORG && R.AREA_OPEN[k](PROFILE) && DOCS.some((d) => d.area === k && d.status !== 'archived'))
     .filter((k) => !window.CMAccess || CMAccess.can('documents.' + k))
     .map((k) => Object.assign({ key: k }, AREA_META[k]));
   const AREA_TITLE = Object.fromEntries(AREAS.map((a) => [a.key, a.title]));

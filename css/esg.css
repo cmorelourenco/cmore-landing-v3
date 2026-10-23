@@ -893,3 +893,9 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* a machine's page: same bones as a worker's; the inspection note wears the caution tint */
 .cd-machine .cd-area-head h2 .soft { font-weight: 300; }
 .cd-restricted.cd-attn { background: var(--color-caution-subtle); color: var(--color-caution); }
+
+/* Buttons never grow into banners: a call to action is as wide as its words, up to a cap, even
+   where its container would stretch it (a flex column, a grid cell). Form-width buttons on the
+   sign-up pages (.btn-block) are the one exception — they match the fields above them. */
+.btn:not(.btn-block) { max-width: 20rem; }
+.cd-none .btn, .co-card > .btn, .tm-note .btn { align-self: center; justify-self: center; }

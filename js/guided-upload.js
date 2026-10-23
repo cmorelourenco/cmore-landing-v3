@@ -41,8 +41,9 @@
   };
   const TYPICAL = { workers: [{ nationality: profile.country, specialRisk: false, certifiedOperator: false, employmentType: 'permanent' }], equipment: [{ yearBuilt: 2020, measuring: false, certified: false }] };
   const asks = (area) => {
+    if (area === 'equipment' && !profile.equipmentCount) return []; // it said it brings no machines
     if (area === 'company') return R.documentsFor(CAT, profile).map((x) => x.doc).filter((d) => d.category === 'company' && d.requirement === 'mandatory' && d.level === 'company');
-    const p = Object.assign({}, profile, area === 'equipment' ? { equipmentCount: 1 } : { employees: Math.max(1, profile.employees) });
+    const p = Object.assign({}, profile, area === 'equipment' ? {} : { employees: Math.max(1, profile.employees) });
     return R.documentsFor(CAT, p).map((x) => x.doc).filter((d) => d.category === area && ['mandatory', 'if_applicable'].includes(d.requirement)
       && (d.level === 'all_workers' || R.subjectsFor(d, TYPICAL[area] || [], p).length));
   };
@@ -50,10 +51,10 @@
   const has = (area) => accepted(asks(area)).length > 0 || Object.values(saved.files).some((f) => f.ok && f.area === area);
 
   // ---- the company homepage: "Profile completion", its Documents card and table --------------------
-  // completion: the company's documents, and its workers' when it has employees, accepted out of
-  // all of them (equipment counts once there are machines). The strip's link opens ALMA on the
+  // completion: the company's documents, its workers' when it has employees and its equipment's
+  // when it brings machines to site, accepted out of all of them. The strip's link opens ALMA on the
   // first section with something missing.
-  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : []).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d })));
+  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d })));
   const strip = () => {
     const box = document.querySelector('#empty .co-strip');
     if (!box) return;
