@@ -670,7 +670,7 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
     $('#cancel').hidden = true; // the company exists now: nothing left to cancel
     const items = [...document.querySelectorAll('#setup li')];
     items.forEach((li, i) => setTimeout(() => li.classList.add('is-done'), reduced ? 0 : 500 + i * 650));
-    setTimeout(() => O.go(org, { guided: true }), reduced ? 300 : 2700);
+    setTimeout(() => O.go(org), reduced ? 300 : 2700); // ALMA asks for documents section by section (js/guided-upload.js)
   });
 })();
 </script>

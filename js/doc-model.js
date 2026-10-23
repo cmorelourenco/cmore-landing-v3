@@ -224,13 +224,15 @@ window.DOC_MODEL = (() => {
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
     const area = c.category;
-    const kind = LEVEL_OF[c.level];
+    // a company added in this session has no worker or machine records yet: what it uploaded for
+    // its workers or machines is one document each, not a roster
+    const kind = ORG ? null : LEVEL_OF[c.level];
     const st = D.state[c.code];
     const base = { id: DOCS.length, code: c.code, name: en(c.name), section: en(c.section), area, cat: c, ask,
       requirement: LBL.requirement[c.requirement], req: c.requirement, sharing: LBL.sharing[c.sharing], level: c.level };
     let doc;
     // a company added in this session lists only what it has uploaded and accepted
-    if (ORG && (kind || !D.state[c.code])) return;
+    if (ORG && !D.state[c.code]) return;
     if (kind) {
       // one per worker, machine or product: the rules say which records it covers
       const all = D.records[kind].map((r, i) => Object.assign({ i }, r));

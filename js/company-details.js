@@ -551,7 +551,20 @@
     </div>`;
   };
 
-  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : 'Nothing uploaded here yet.'} Drop them on ALMA above and she files them here.</span></div>`;
+  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : 'Registration, tax and social security, and the rest of the company&rsquo;s own papers.'} ALMA asks for them one section at a time.</span>${window.CMGuided ? `<button type="button" class="btn btn-primary btn-sm" data-alma-area="${key}">Add them with ALMA</button>` : ''}</div>`;
+  // ALMA, on a section of a company added in this session (js/guided-upload.js): she comes up on
+  // her own when it's empty, each time it's opened; afterwards the page comes back with what was filed
+  let asked = null;
+  const askALMA = (key, files) => {
+    if (!window.CMGuided || !window.DOC_MODEL.ORG) return false;
+    window.CMGuided.open(key, { files, onClose: (changed) => { if (changed) location.href = `company-details.html?area=${key}`; } });
+    return true;
+  };
+  const askIfEmpty = () => {
+    if (area === asked) return;
+    asked = area;
+    if (area && window.DOC_MODEL.ORG && !DATA.some((d) => d.area === area) && window.CMGuided && window.CMGuided.asks(area).length) setTimeout(() => askALMA(area), 250);
+  };
   const none = () => '<div class="co-card cd-none"><b class="co-row-n">No document matches that.</b><span class="co-subtle">Try a wider search, or fewer filters.</span><button type="button" class="btn btn-quiet btn-sm" data-clear>Clear the search and filters</button></div>';
 
   // the breadcrumb, the back button, and the title/subtitle/stats above the list
@@ -589,6 +602,7 @@
 
   function render() {
     if (typeof syncCards === 'function') syncCards();
+    askIfEmpty();
     updateHeader();
     const deep = detail !== null || worker !== null || machine !== null;
     tools.hidden = deep;
@@ -619,6 +633,7 @@
 
   groupsEl.addEventListener('click', (e) => {
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
+    const al = e.target.closest('[data-alma-area]'); if (al) { askALMA(al.dataset.almaArea); return; }
     const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); toTop(); return; }
     const who = e.target.closest('[data-worker]'); if (who) { area = 'workers'; detail = null; machine = null; worker = +who.dataset.worker; render(); toTop(); return; }
     const what = e.target.closest('[data-machine]'); if (what) { area = 'equipment'; detail = null; worker = null; machine = +what.dataset.machine; render(); toTop(); return; }
@@ -685,6 +700,14 @@
   // ALMA's drop: takes a file by drag or by browsing, then files it against the first company
   // document that is expired or needs attention. Prototype: the file never leaves the machine.
   const drop = document.getElementById('cd-drop'), file = document.getElementById('cd-file');
+  // a company added in this session: dropping here (or pressing it) is ALMA's guided upload for the
+  // section you're in, Company when you're at the top
+  if (drop && window.DOC_MODEL.ORG) {
+    const into = () => (area && window.CMGuided && window.CMGuided.asks(area).length ? area : 'company');
+    drop.addEventListener('click', (e) => { e.preventDefault(); e.stopImmediatePropagation(); askALMA(into()); }, true);
+    drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopImmediatePropagation(); askALMA(into()); } }, true);
+    drop.addEventListener('drop', (e) => { e.preventDefault(); e.stopImmediatePropagation(); drop.classList.remove('is-over'); askALMA(into(), e.dataTransfer.files); }, true);
+  }
   if (drop && file) {
     const t = document.getElementById('cd-drop-t'), dsub = document.getElementById('cd-drop-s'), acts = document.getElementById('cd-drop-acts');
     let picked = null, state = 'idle';
@@ -728,6 +751,9 @@
   // arriving from elsewhere (the home page's "Documents requiring attention", a notification)
   // already knowing which document: open straight to it
   const openCode = new URLSearchParams(location.search).get('open');
+  // or which section (?area=workers)
+  const openArea = new URLSearchParams(location.search).get('area');
+  if (openArea && AREAS.some((a) => a.key === openArea)) area = openArea;
   const openDoc = openCode && DOCS.find((d) => d.code === openCode);
   if (openDoc) {
     area = openDoc.area;

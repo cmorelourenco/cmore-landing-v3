@@ -139,9 +139,14 @@
 @media (prefers-reduced-motion: reduce) { .tm-toast { animation: none; } }
 .tm-list > li.is-changed { animation: tm-changed 2.4s ease; }
 @keyframes tm-changed { 0%, 40% { background: color-mix(in oklab, var(--color-ok, #a6d8a0) 35%, transparent); } 100% { background: transparent; } }
-/* the selection: a bar that sticks to the bottom of the screen while the list is in view */
-.tm-selbar { position: sticky; bottom: 1rem; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.625rem 0.75rem 0.625rem 1rem;
+/* the selection: a bar pinned to the bottom of the screen, lined up with the team card, for as
+   long as anyone is selected — wherever the page is scrolled */
+.tm-selbar { position: fixed; bottom: 1.5rem; left: 50%; translate: -50% 0; width: min(44rem, calc(100vw - 2rem)); z-index: 85; animation: tm-sel-in .25s var(--ease-brand, ease); display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.625rem 0.75rem 0.625rem 1rem;
   border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); box-shadow: 0 12px 28px -12px rgba(0,0,0,.45); }
+.tm-selbar.is-raised { bottom: 5rem; } /* above the preview bar */
+@keyframes tm-sel-in { from { opacity: 0; transform: translateY(10px); } }
+.tm-list.has-bar { margin-bottom: 4.5rem; } /* room for the bar under the last person */
+@media (prefers-reduced-motion: reduce) { .tm-selbar { animation: none; } }
 .tm-selbar-t { display: flex; align-items: baseline; gap: 0.625rem; min-width: 0; font-size: 0.875rem; }
 .tm-selbar-t span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: color-mix(in oklab, var(--color-off-white) 70%, transparent); }
 .tm-selbar-a { flex: none; display: flex; align-items: center; gap: 1rem; }
@@ -227,8 +232,8 @@
     [...sel].forEach((i) => { if (!editable.includes(i)) sel.delete(i); });
     const peopleHtml = `<div class="tm-ph"><h3 class="set-sub">People in ${esc(cur.name)} <span class="set-opt">${visible.length}</span></h3>${selecting ? `<label class="tm-all"><input type="checkbox" data-sel-all${editable.length && editable.every((i) => sel.has(i)) ? ' checked' : ''}>Select all</label>` : ''}</div>
       ${roleMsg}
-      <ul class="tm-list${selecting ? ' is-sel' : ''}" aria-label="People in ${esc(cur.name)}">${visible.map((m) => member(m, t.members.indexOf(m))).join('')}</ul>
-      ${sel.size ? `<div class="tm-selbar" role="region" aria-label="Selected people"><span class="tm-selbar-t"><b>${sel.size} selected</b><span>${[...sel].map((i) => t.members[i]).filter(Boolean).map((m) => esc(m.name.split(' ')[0])).join(', ')}</span></span><span class="tm-selbar-a"><button type="button" class="tm-x" data-sel-clear>Clear</button><button type="button" class="btn btn-primary btn-sm" data-dw-open>Change role</button></span></div>` : ''}`;
+      <ul class="tm-list${selecting ? ' is-sel' : ''}${sel.size ? ' has-bar' : ''}" aria-label="People in ${esc(cur.name)}">${visible.map((m) => member(m, t.members.indexOf(m))).join('')}</ul>
+      ${sel.size ? `<div class="tm-selbar${A.previewing() ? ' is-raised' : ''}" role="region" aria-label="Selected people"><span class="tm-selbar-t"><b>${sel.size} selected</b><span>${[...sel].map((i) => t.members[i]).filter(Boolean).map((m) => esc(m.name.split(' ')[0])).join(', ')}</span></span><span class="tm-selbar-a"><button type="button" class="tm-x" data-sel-clear>Clear</button><button type="button" class="btn btn-primary btn-sm" data-dw-open>Change role</button></span></div>` : ''}`;
     const invitesHtml = invites.length ? `<h3 class="set-sub">Waiting to accept <span class="set-opt">${invites.length}</span></h3><ul class="tm-list" aria-label="Pending invites">${invites.map(([v, i]) => invite(v, i)).join('')}</ul>` : '';
     box.innerHTML = `
       ${previewBar(t)}
@@ -251,6 +256,7 @@
       ${invitesHtml}
       ${peopleHtml}`;
     flash = ''; bulkErr = ''; roleMsg = '';
+    placeBar();
     showScope();
     paintGroups(); paintPerms();
   };
@@ -317,6 +323,15 @@
     if (e.target.name === 'dg') { e.target.checked ? dGroups.add(e.target.value) : dGroups.delete(e.target.value); const v = e.target.value; paintDrawer(); const g = panel.querySelector(`[name="dg"][value="${v}"]`); if (g) g.focus(); }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !dw.hidden) closeDrawer(); });
+  // the selection bar, over the team card's middle and as wide as its content
+  const placeBar = () => {
+    const bar = box.querySelector('.tm-selbar'), card = document.getElementById('team');
+    if (!bar || !card) return;
+    const r = card.getBoundingClientRect();
+    bar.style.left = r.left + r.width / 2 + 'px';
+    bar.style.width = Math.min(r.width - 32, innerWidth - 32) + 'px';
+  };
+  addEventListener('resize', placeBar);
   // a toast at the bottom of the screen, centred on the team card (the side menu takes the left of
   // the screen, so the window's own centre sits off the table); gone after a few seconds, or on its ×
   const toast = (html) => {
