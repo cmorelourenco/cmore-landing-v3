@@ -1,4 +1,5 @@
-/* My suppliers (suppliers.html): a card for each supplier, and — with ?id= — the supplier's own
+/* My suppliers (suppliers.html): at a glance, a matrix of every supplier against what they can
+   share (one dot each, as in Documents › Workers); then a card for each supplier, and — with ?id= — the supplier's own
    page: who they are, what they share with you, and a table for each consent they have given, with
    the documents it lets you see. A document opens in the drawer, as everywhere else: the supplier's
    file, its status, and what the catalog says about it. The data is js/suppliers.js. */
@@ -18,6 +19,18 @@
 .sp-filt button { padding: 0.375rem 0.875rem; border: 0; border-radius: 0.4375rem; background: none; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
 .sp-filt button[aria-pressed="true"] { background: var(--color-graphite); color: var(--color-off-white); }
 .sp-filt b { margin-left: 0.375rem; font-weight: 600; opacity: .7; }
+.sp-glance { margin-bottom: 2rem; }
+.sp-glance-h, .sp-cards-h { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+.sp-glance-h h2, .sp-cards-h { font-size: 1.125rem; font-weight: 600; }
+.sp-glance-h span { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sp-mx-wrap { margin-top: 0; overflow-x: auto; }
+.sp-tbl.sp-mx { min-width: 44rem; table-layout: auto; }
+.sp-mx th, .sp-mx td { padding-inline: 0.875rem; }
+.sp-mx th.c, .sp-mx td.c { text-align: center; white-space: normal; width: auto; }
+.sp-mx th.c { font-size: 0.6875rem; line-height: 1.3; }
+.sp-mx th:first-child { width: 24%; }
+.sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
+.cd-dot.is-wait { background: transparent; border: 2px dashed var(--color-sand-400); box-sizing: border-box; }
 .sp-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
 .sp-card { display: grid; gap: 0.875rem; height: 100%; padding: 1.25rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface); color: inherit; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; }
 .sp-card:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -16px rgba(52, 52, 52, .25); transform: translateY(-1px); }
@@ -102,15 +115,41 @@
       <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
     </a></li>`;
   };
+  // at a glance: a row per supplier, a column per kind of consent, the worst status in each
+  const AREAS = ['Company & legal', 'Insurance', 'Workers on site', 'Health & safety', 'Equipment on site', 'Certifications'];
+  const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
+  const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
+  const overall = (k) => (k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Consent pending', 'b-neu'] : ['All in order', 'b-ok']);
+  const matrix = (shown) => {
+    const cols = AREAS.filter((a) => shown.some((s) => s.consents.some((c) => c.title === a)));
+    const cell = (s, a) => {
+      const cs = s.consents.filter((c) => c.title === a);
+      const given = cs.filter((c) => c.state === 'given');
+      if (given.length) {
+        const docs = given.flatMap((c) => c.docs), worst = docs.reduce((w, d) => (RANKS[d.status] > RANKS[w] ? d.status : w), 'valid');
+        const n = docs.filter((d) => RANKS[d.status] > 0).length;
+        const say = n ? `${n} of ${docs.length} need${n === 1 ? 's' : ''} a look` : `${docs.length} document${docs.length === 1 ? '' : 's'}, all valid`;
+        return `<td class="c"><span class="cd-dot is-${TONE[worst]}" title="${esc(a)}: ${say}"></span><span class="sr-only">${esc(a)}: ${say}</span></td>`;
+      }
+      if (cs.length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
+      return `<td class="c"><span class="cd-dash" title="No consent for this">&mdash;</span></td>`;
+    };
+    const rows = shown.map((s) => { const [l, c] = overall(S.stats(s)); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc(s.services[0])} &middot; ${esc(s.city)}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
+    const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
+    return `<section class="sp-glance" aria-labelledby="sp-glance-h"><div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>
+      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c">${esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>No consent for it</span><span>Open a supplier for the documents behind each dot.</span></p></section>`;
+  };
   const list = () => {
     const all = S.list(), n = { all: all.length, attention: all.filter((s) => S.stats(s).bad).length, pending: all.filter((s) => S.stats(s).pending).length };
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     const shown = all.filter((s) => (filt === 'all' || (filt === 'attention' ? S.stats(s).bad : S.stats(s).pending)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
-      .sort((a, b) => S.stats(b).bad - S.stats(a).bad || a.name.localeCompare(b.name));
+      // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
+      .sort((a, b) => { const x = S.stats(a), y = S.stats(b); return y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); });
     const F = [['all', 'All'], ['attention', 'Need attention'], ['pending', 'Consent pending']];
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
         <div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div></div>
-      ${shown.length ? `<ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
+      ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
   };
 
   // ---- one supplier: who they are, and a table for each consent -----------------------------------
@@ -191,8 +230,9 @@
     const st = e.target.closest('[data-step]'); if (st && !st.disabled) { at.i += +st.dataset.step; drawDoc(); }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && at) closeDoc(); });
-  box.addEventListener('click', (e) => { const r = e.target.closest('[data-doc]'); if (r) openDoc(r.dataset.doc); });
-  box.addEventListener('keydown', (e) => { const r = e.target.closest('[data-doc]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openDoc(r.dataset.doc); } });
+  const goSup = (r) => { location.href = `suppliers.html?id=${encodeURIComponent(r.dataset.sup)}`; };
+  box.addEventListener('click', (e) => { const r = e.target.closest('[data-doc]'); if (r) { openDoc(r.dataset.doc); return; } const g = e.target.closest('[data-sup]'); if (g) goSup(g); });
+  box.addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const r = e.target.closest('[data-doc]'), g = e.target.closest('[data-sup]'); if (r) { e.preventDefault(); openDoc(r.dataset.doc); } else if (g) { e.preventDefault(); goSup(g); } });
 
   if (id && !sup) { box.innerHTML = '<div class="co-card sp-none">That supplier isn&rsquo;t in your list. <a href="suppliers.html">See all your suppliers</a>.</div>'; return; }
   if (sup) page(sup); else list();
