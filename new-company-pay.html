@@ -301,6 +301,9 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
 /* ---- New company: the cards on the account, above the Card tab's fields ---- */
 .saved { display: grid; gap: .25rem; margin: 0; padding: 0; list-style: none; }
 .saved[hidden] { display: none; }
+.sepa-new { display: contents; }
+.sepa-new[hidden] { display: none; }
+#sepa-saved:not([hidden]) { padding: .25rem 0 .5rem; }
 .crd { position: relative; display: flex; align-items: center; gap: .875rem; padding: .25rem 0; }
 .saved.pick .crd { cursor: pointer; }
 .crd input { position: absolute; opacity: 0; pointer-events: none; }
@@ -399,11 +402,15 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
           <!-- SEPA -->
           <div class="pane" data-pane="sepa">
             <div class="pane-head"><b>SEPA direct debit</b><span>EUR accounts, EU/EEA</span></div>
+            <div id="sepa-saved" hidden></div>
+            <div id="sepa-new" class="sepa-new">
             <div class="field"><label for="sepa-name">Account holder</label><input autocomplete="off" id="sepa-name" class="input" type="text" placeholder="Company or person named on the account"></div>
             <div class="field"><label for="sepa-iban">IBAN</label><input autocomplete="off" id="sepa-iban" class="input" type="text" placeholder="PT50 0000 0000 0000 0000 0000 0"></div>
             <div class="two">
               <div class="field"><label for="sepa-country">Country</label><select id="sepa-country" class="input"><option>Portugal</option><option>Spain</option><option>France</option><option>Germany</option><option>Other</option></select></div>
               <div class="field"><label for="sepa-vat">VAT number <small>Optional</small></label><input autocomplete="off" id="sepa-vat" class="input" type="text" placeholder="PT 123 456 789"></div>
+            </div>
+            <label class="save"><input type="checkbox" id="sepa-save" checked>Save this account to your account for next time</label>
             </div>
             <p class="note">By providing your IBAN you authorise <span class="nb">C-MORE</span> and its payment provider to send instructions to your bank to debit your account for this plan. Debits usually settle in 3–5 business days.</p>
           </div>
@@ -449,7 +456,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
             </div>
             <span class="enc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Encrypted · VAT calculated at payment</span>
           </div>
-          <p class="proto">Prototype: nothing is charged, and nothing you type leaves this page.<br>Only a saved card&rsquo;s brand, last four digits and expiry are kept.</p>
+          <p class="proto">Prototype: nothing is charged, and nothing you type leaves this page.<br>Only a saved card&rsquo;s brand, last four digits and expiry, or an account&rsquo;s last four, are kept.</p>
         </aside>
 
         <div class="co-back"><a class="btn btn-secondary" href="my-company.html?filled" id="co-back" data-back>Cancel</a></div>
@@ -579,7 +586,10 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   // ---- the Card tab: the cards on the account, or a new one ------------------------
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const CARDS_KEY = 'cm-cards-' + O.persona;
-  const cards = () => { let c = []; try { c = JSON.parse(localStorage.getItem(CARDS_KEY) || '[]'); } catch (e) {} return [{ id: 'signup', brand: 'visa', last4: '4242', exp: '08/28' }].concat(c); };
+  // the saved payment methods: cards (the one saved at sign-up first, or the demo's own) and accounts
+  const stored = () => { let c = []; try { c = JSON.parse(localStorage.getItem(CARDS_KEY) || '[]') || []; } catch (e) {} return c; };
+  const cards = () => { const c = stored().filter((x) => x.kind !== 'sepa'); const s = c.find((x) => x.id === 'signup'); return [s || { id: 'signup', brand: 'visa', last4: '4242', exp: '08/28' }].concat(c.filter((x) => x.id !== 'signup')); };
+  const accounts = () => stored().filter((x) => x.kind === 'sepa');
   const BRAND = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex' };
   const brandOf = (n) => (/^4/.test(n) ? 'visa' : /^(5[1-5]|2[2-7])/.test(n) ? 'mastercard' : /^3[47]/.test(n) ? 'amex' : '');
   const saved = document.getElementById('saved'), newcard = document.getElementById('newcard');
@@ -587,6 +597,21 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   const list = cards();
   saved.classList.toggle('pick', list.length > 1);
   saved.innerHTML = list.map((c, i) => `<li><label class="crd"><input type="radio" name="card" value="${esc(c.id)}"${i === 0 ? ' checked' : ''}${list.length > 1 ? '' : ' tabindex="-1"'}><span class="dot" aria-hidden="true"></span><span class="mark ${c.brand}">${c.brand === 'visa' ? 'VISA' : BRAND[c.brand] || 'CARD'}</span><span class="t"><span>${BRAND[c.brand] || 'Card'} ending ${esc(c.last4)}</span><small>Expires ${esc(c.exp)}${c.id === 'signup' ? ' &middot; the card from your sign-up' : ''}</small></span></label></li>`).join('');
+  // the SEPA tab, the same way: a saved account, with the fields for a different one a click away
+  let sepaNew = !accounts().length;
+  const sepaSaved = document.getElementById('sepa-saved'), sepaFields = document.getElementById('sepa-new');
+  const paintSepa = () => {
+    const a = accounts()[0];
+    sepaSaved.hidden = !a || sepaNew; sepaFields.hidden = !!a && !sepaNew;
+    if (a) sepaSaved.innerHTML = `<div class="crd sepa-crd"><span class="mark">IBAN</span><span class="t"><span>Account ending ${esc(a.last4)}</span><small>${esc(a.country || '')}${a.holder ? ' &middot; ' + esc(a.holder) : ''} &middot; saved ${esc(a.added || '')}</small></span></div>`;
+    const t = document.getElementById('sepa-toggle');
+    if (a) {
+      const link = t || Object.assign(document.createElement('button'), { type: 'button', className: 'link-btn card-link', id: 'sepa-toggle' });
+      link.textContent = sepaNew ? 'Use saved account' : 'Use a different account';
+      if (!t) { sepaSaved.after(link); link.addEventListener('click', () => { sepaNew = !sepaNew; paintSepa(); if (sepaNew) document.getElementById('sepa-name').focus(); }); }
+    }
+  };
+  paintSepa();
   // "Add new card" swaps the card on file for the fields; "Use saved card" swaps back
   let adding = false;
   const addLink = document.getElementById('add-card');
@@ -630,9 +655,21 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
       let card = cards().find((c) => c.id === (document.querySelector('[name="card"]:checked') || {}).value);
       if (useNew()) {
         card = checkCard(); if (!card) return;
-        if (document.getElementById('cc-save').checked) { try { localStorage.setItem(CARDS_KEY, JSON.stringify(cards().slice(1).concat(card))); } catch (e) {} }
+        if (document.getElementById('cc-save').checked) { try { localStorage.setItem(CARDS_KEY, JSON.stringify(stored().concat(card))); } catch (e) {} }
       }
       paidWith = `${BRAND[card.brand] || 'Card'} ending ${card.last4}`;
+    }
+    // SEPA: the saved account, or a new one (kept for next time when ticked)
+    if (!how && method === 'sepa') {
+      const acct = accounts()[0];
+      if (acct && !sepaNew) paidWith = `SEPA direct debit, account ending ${acct.last4}`;
+      else {
+        const iban = document.getElementById('sepa-iban').value.replace(/\s/g, '').toUpperCase();
+        if (iban.length >= 15) {
+          paidWith = `SEPA direct debit, account ending ${iban.slice(-4)}`;
+          if (document.getElementById('sepa-save').checked) { try { localStorage.setItem(CARDS_KEY, JSON.stringify(stored().concat({ id: 'a' + Date.now().toString(36), kind: 'sepa', last4: iban.slice(-4), country: iban.slice(0, 2), holder: document.getElementById('sepa-name').value.trim(), added: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) }))); } catch (e) {} }
+        }
+      }
     }
     try { sessionStorage.setItem('cm-newco-paid', JSON.stringify({ plan, cur, total, paidWith })); } catch (e) {}
     document.querySelectorAll('.card input:not([type=radio]):not([type=checkbox])').forEach((i) => { i.value = ''; });

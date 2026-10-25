@@ -177,6 +177,8 @@ select.input { appearance: none; padding-right: 2.5rem; cursor: pointer;
 .summary .due span { font-size: 1rem; color: var(--color-sand-400); }
 .summary .due strong { font-size: 2.25rem; font-weight: 600; letter-spacing: -.03em; line-height: 1; }
 .consents { display: flex; flex-direction: column; gap: .75rem; }
+.save { display: flex; align-items: center; gap: .5rem; margin-top: .25rem; font-size: .875rem; color: var(--color-ink-muted); cursor: pointer; }
+.save input { width: 1rem; height: 1rem; accent-color: var(--color-graphite); }
 .consent { position: relative; display: flex; align-items: flex-start; gap: .625rem; cursor: pointer; font-size: .9375rem; line-height: 1.5; color: var(--color-sand-400); }
 .consent input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .consent .box { width: 22px; height: 22px; margin-top: 1px; flex: none; border-radius: 6px; border: 1.5px solid var(--color-sand-600); display: flex; align-items: center; justify-content: center; transition: background-color .15s, border-color .15s; }
@@ -347,6 +349,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
               <div class="field"><label for="cc-country">Country</label><select id="cc-country" class="input"><option>Portugal</option><option>Spain</option><option>France</option><option>Germany</option><option>United Kingdom</option><option>Other</option></select></div>
               <div class="field"><label for="cc-vat">VAT number <small>Optional</small></label><input autocomplete="off" id="cc-vat" class="input" type="text" placeholder="PT 123 456 789"></div>
             </div>
+            <label class="save"><input type="checkbox" id="cc-save" checked>Save this card to your account for next time</label>
           </div>
           <!-- SEPA -->
           <div class="pane" data-pane="sepa">
@@ -358,6 +361,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
               <div class="field"><label for="sepa-vat">VAT number <small>Optional</small></label><input autocomplete="off" id="sepa-vat" class="input" type="text" placeholder="PT 123 456 789"></div>
             </div>
             <p class="note">By providing your IBAN you authorise <span class="nb">C-MORE</span> and its payment provider to send instructions to your bank to debit your account for this plan. Debits usually settle in 3–5 business days.</p>
+            <label class="save"><input type="checkbox" id="sepa-save" checked>Save this account for next time</label>
           </div>
           <!-- Invoice -->
           <div class="pane" data-pane="invoice">
@@ -398,7 +402,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
             </div>
             <span class="enc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Encrypted · VAT calculated at payment</span>
           </div>
-          <p class="proto">Prototype: nothing is charged, and nothing you type leaves this page.</p>
+          <p class="proto">Prototype: nothing is charged, and nothing you type leaves this page.<br>Only a saved card&rsquo;s brand, last four digits and expiry, or an account&rsquo;s last four, are kept.</p>
         </aside>
 
         <div class="co-back"><a class="btn btn-secondary" href="payment.html" id="co-back" data-back>Back</a></div>
@@ -511,8 +515,28 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   select('card');
 
   // ---- pay: prototype, so nothing is sent; the fields are cleared and ALMA takes over ----
+  // a payment method saved for next time (adding a company, js/company-switcher.js clears it on log
+  // out): only a card's brand, last four digits and expiry, or an account's last four — never the rest
+  const keepMethod = () => {
+    const on = document.querySelector('.pane.on'), d = (id) => (document.getElementById(id) || {}).value || '';
+    const digits = (v) => v.replace(/\D/g, ''), KEY = 'cm-cards-miguel';
+    let list = []; try { list = JSON.parse(localStorage.getItem(KEY) || '[]') || []; } catch (e) {}
+    const added = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    if (on && on.dataset.pane === 'card' && document.getElementById('cc-save').checked) {
+      const n = digits(d('cc-number')), e = digits(d('cc-exp'));
+      if (n.length < 12) return;
+      const brand = /^4/.test(n) ? 'visa' : /^(5[1-5]|2[2-7])/.test(n) ? 'mastercard' : /^3[47]/.test(n) ? 'amex' : 'card';
+      list = list.filter((c) => c.id !== 'signup').concat({ id: 'signup', kind: 'card', brand, last4: n.slice(-4), exp: e.length === 4 ? `${e.slice(0, 2)}/${e.slice(2)}` : '—', added });
+    } else if (on && on.dataset.pane === 'sepa' && (document.getElementById('sepa-save') || {}).checked) {
+      const iban = d('sepa-iban').replace(/\s/g, '').toUpperCase();
+      if (iban.length < 15) return;
+      list = list.filter((c) => c.id !== 'sepa-signup').concat({ id: 'sepa-signup', kind: 'sepa', last4: iban.slice(-4), country: iban.slice(0, 2), holder: d('sepa-name').trim(), added });
+    } else return;
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+  };
   const proceed = () => {
-    document.querySelectorAll('.card input').forEach((i) => { i.value = ''; });
+    keepMethod();
+    document.querySelectorAll('.card input:not([type=checkbox])').forEach((i) => { i.value = ''; });
     const go = () => { location.href = 'register.html#done'; }; // paid: the welcome, then the empty company page
     if (reduced) return go();
     const veil = document.createElement('div');
