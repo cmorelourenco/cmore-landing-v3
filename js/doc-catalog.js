@@ -969,7 +969,7 @@ window.DOC_CATALOG = {
    "sharing": "standard",
    "phase": "MVP",
    "legalBasis": "DL 159/99; DL 273/2003 art. 21(2)(f)",
-   "titles": "Apólice de acidentes de trabalho — trabalhador independente",
+   "titles": "Apólice de acidentes de trabalho: trabalhador independente",
    "usuallyIssuedBy": "Insurer",
    "recognitionCues": "Trabalhador independente; acidentes de trabalho; recibo",
    "confusedWith": [
@@ -1356,7 +1356,7 @@ window.DOC_CATALOG = {
    },
    "name": {
     "en": "Annual H&S Activity Report",
-    "pt": "Relatório Único — Anexo D"
+    "pt": "Relatório Único: Anexo D"
    },
    "description": {
     "en": "Annex D of the Single Report (Relatório Único): the company's annual report on its occupational health and safety activity.",
@@ -1377,7 +1377,7 @@ window.DOC_CATALOG = {
    "sharing": "standard",
    "phase": "MVP",
    "legalBasis": "Ordinance 55/2010",
-   "titles": "Relatório Único — Anexo D",
+   "titles": "Relatório Único: Anexo D",
    "usuallyIssuedBy": "Company (submitted to the Government)",
    "recognitionCues": "Relatório Único; Anexo D; ano de referência",
    "confusedWith": [
@@ -1722,7 +1722,7 @@ window.DOC_CATALOG = {
    "sharing": "requesting_client",
    "phase": "MVP",
    "legalBasis": "Contractual",
-   "titles": "Código de Ética e Conduta — declaração de adesão",
+   "titles": "Código de Ética e Conduta: declaração de adesão",
    "usuallyIssuedBy": "Client (signed by the contractor)",
    "recognitionCues": "Client's name and logo; code of ethics / conduct; signature",
    "confusedWith": [
@@ -2595,7 +2595,7 @@ window.DOC_CATALOG = {
    "sharing": "standard",
    "phase": "MVP",
    "legalBasis": "US Internal Revenue Code",
-   "titles": "Form W-9 — Request for Taxpayer Identification Number and Certification",
+   "titles": "Form W-9: Request for Taxpayer Identification Number and Certification",
    "usuallyIssuedBy": "Company (IRS form)",
    "recognitionCues": "Form W-9; TIN; EIN; federal tax classification; signature",
    "confusedWith": [
@@ -4980,7 +4980,7 @@ window.DOC_CATALOG = {
    "sharing": "standard",
    "phase": "MVP",
    "legalBasis": "Law 102/2009 art. 20(3)",
-   "titles": "Designação de trabalhadores — primeiros socorros, combate a incêndios e evacuação",
+   "titles": "Designação de trabalhadores: primeiros socorros, combate a incêndios e evacuação",
    "usuallyIssuedBy": "Company",
    "recognitionCues": "Primeiros socorros; combate a incêndio; evacuação; nomes",
    "confusedWith": [],
@@ -7719,126 +7719,126 @@ window.DOC_CATALOG = {
    "compliant": "—"
   },
   {
-   "object": "Contractor — profile",
+   "object": "Contractor: profile",
    "status": "Setting up",
    "color": "Grey",
    "rule": "Onboarding not finished",
    "compliant": "—"
   },
   {
-   "object": "Contractor — profile",
+   "object": "Contractor: profile",
    "status": "Incomplete",
    "color": "Red",
    "rule": "Any required document Missing, File missing, Needs attention, Expired or Rejected",
    "compliant": "—"
   },
   {
-   "object": "Contractor — profile",
+   "object": "Contractor: profile",
    "status": "Complete with alerts",
    "color": "Amber",
    "rule": "None of the above, but something Expiring",
    "compliant": "—"
   },
   {
-   "object": "Contractor — profile",
+   "object": "Contractor: profile",
    "status": "Complete",
    "color": "Green",
    "rule": "All required documents Valid or Not applicable",
    "compliant": "—"
   },
   {
-   "object": "Contractor — client",
+   "object": "Contractor: client",
    "status": "Invited",
    "color": "Grey",
    "rule": "Invitation sent, not accepted",
    "compliant": "—"
   },
   {
-   "object": "Contractor — client",
+   "object": "Contractor: client",
    "status": "Awaiting share",
    "color": "Grey",
    "rule": "Accepted, sharing not authorized",
    "compliant": "—"
   },
   {
-   "object": "Contractor — client",
+   "object": "Contractor: client",
    "status": "Not qualified",
    "color": "Red",
    "rule": "A required document is missing, expired, rejected or not shared",
    "compliant": "—"
   },
   {
-   "object": "Contractor — client",
+   "object": "Contractor: client",
    "status": "Qualified with alerts",
    "color": "Amber",
    "rule": "All fine, something Expiring",
    "compliant": "—"
   },
   {
-   "object": "Contractor — client",
+   "object": "Contractor: client",
    "status": "Qualified",
    "color": "Green",
    "rule": "All required documents valid and shared",
    "compliant": "—"
   },
   {
-   "object": "Contractor — client",
+   "object": "Contractor: client",
    "status": "Share revoked",
    "color": "Grey",
    "rule": "Revoked; client keeps read-only site records for the retention period",
    "compliant": "—"
   },
   {
-   "object": "Site — compliance",
+   "object": "Site: compliance",
    "status": "Not compliant",
    "color": "Red",
    "rule": "A client or site document is missing, expired or rejected, or an allocated worker lacks a valid fitness certificate or is not in this month's insurance",
    "compliant": "—"
   },
   {
-   "object": "Site — compliance",
+   "object": "Site: compliance",
    "status": "Compliant with alerts",
    "color": "Amber",
    "rule": "Something expires before the planned exit date",
    "compliant": "—"
   },
   {
-   "object": "Site — compliance",
+   "object": "Site: compliance",
    "status": "Compliant",
    "color": "Green",
    "rule": "Everything valid until the planned exit date",
    "compliant": "—"
   },
   {
-   "object": "Site — entry",
+   "object": "Site: entry",
    "status": "Pending",
    "color": "Grey",
    "rule": "Not decided",
    "compliant": "—"
   },
   {
-   "object": "Site — entry",
+   "object": "Site: entry",
    "status": "Authorized",
    "color": "Green",
    "rule": "Decided by a person; available when compliance is green or amber",
    "compliant": "—"
   },
   {
-   "object": "Site — entry",
+   "object": "Site: entry",
    "status": "Authorized with exception",
    "color": "Orange",
    "rule": "Compliance red; written reason mandatory and logged",
    "compliant": "—"
   },
   {
-   "object": "Site — entry",
+   "object": "Site: entry",
    "status": "Refused",
    "color": "Red",
    "rule": "With reason",
    "compliant": "—"
   },
   {
-   "object": "Site — entry",
+   "object": "Site: entry",
    "status": "Exited",
    "color": "Grey",
    "rule": "Exit date recorded; starts 1-year retention",
@@ -7958,7 +7958,7 @@ window.DOC_CATALOG = {
    {
     "group": "Identification",
     "field": "Legal form",
-    "type": "List by country — PT: Sociedade por quotas (Lda.), Sociedade unipessoal por quotas, Sociedade anónima (S.A.), Empresário em nome individual, Cooperativa, Associação / Fundação, Other · US: LLC, Corporation (C-Corp / S-Corp), Partnership, Sole proprietorship, Other",
+    "type": "List by country: PT: Sociedade por quotas (Lda.), Sociedade unipessoal por quotas, Sociedade anónima (S.A.), Empresário em nome individual, Cooperativa, Associação / Fundação, Other · US: LLC, Corporation (C-Corp / S-Corp), Partnership, Sole proprietorship, Other",
     "required": "Yes",
     "source": "Alma (CO-01 / UN-02) or user",
     "visibleToClients": "Yes",

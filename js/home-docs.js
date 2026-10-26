@@ -1,7 +1,7 @@
 /* The company homepage's documents: the counts in "Your compliance", the profile-completion strip
    and the "Documents requiring attention" table, all read from the same model as the Documents
    page (js/doc-model.js), so the two always agree. Supplier documents (the last rows) are the
-   suppliers' own and stay as they are. */
+   suppliers' own and stay as they are; the company's own take a new file from their row. */
 window.HOME_DOCS = (() => {
   const M = window.DOC_MODEL;
   const tbl = document.querySelector('#filled .co-docs-tbl');
@@ -23,7 +23,7 @@ window.HOME_DOCS = (() => {
       return `${bad.length} ${noun[bad.length === 1 ? 0 : 1]}: ` + Object.entries(by).map(([s, n]) => `${n} ${M.STATUS[s][0].toLowerCase()}`).join(', ') + '.';
     }
     if (d.note) return d.note;
-    return d.status === 'missing' ? (M.canNa(d) ? 'Not uploaded yet &mdash; or mark it not applicable.' : 'Not uploaded yet.') : '';
+    return d.status === 'missing' ? (M.canNa(d) ? 'Not uploaded yet, or mark it not applicable.' : 'Not uploaded yet.') : '';
   };
   const supplierRows = [...tbl.tBodies[0].rows].filter((r) => !r.dataset.code).map((r) => r.outerHTML).join('');
   const go = (code) => { location.href = `company-details.html?open=${encodeURIComponent(code)}`; };
@@ -33,7 +33,9 @@ window.HOME_DOCS = (() => {
     // the table: the most urgent first, the suppliers' own after them
     tbl.tBodies[0].innerHTML = need.slice(0, SHOW).map((d) => {
       const [label, cls] = M.STATUS[d.status];
-      return `<tr data-code="${d.code}" tabindex="0" role="link"><td><span class="n">${M.esc(d.name)}</span><span class="d">${why(d)}</span></td><td>Your company</td><td class="c">${CAT[d.area] || 'Company'}</td><td class="c">${dateOf(d)}</td><td class="c"><span class="co-badge ${cls}">${label}</span></td></tr>`;
+      // a file for it from here too: Upload / Replace beside its status, or dropped onto the row (js/doc-upload.js)
+      const up = window.CMUpload ? window.CMUpload.button(`doc:${d.id}`, !d.kind && !window.CMUpload.NO_FILE.includes(d.status), d.name, true) : '';
+      return `<tr data-code="${d.code}" tabindex="0" role="link"${up ? ` data-drop="doc:${d.id}"` : ''}><td><span class="n">${M.esc(d.name)}</span><span class="d">${why(d)}</span></td><td>Your company</td><td class="c">${CAT[d.area] || 'Company'}</td><td class="c">${dateOf(d)}</td><td class="c"><span class="co-docs-st"><span class="co-badge ${cls}">${label}</span>${up}</span></td></tr>`;
     }).join('') + supplierRows;
     const all = tbl.closest('.co-sec').querySelector('.co-pager-all');
     if (all) all.textContent = need.length > SHOW ? `View all ${need.length} in Documents` : 'View all';
@@ -58,6 +60,7 @@ window.HOME_DOCS = (() => {
   };
   tbl.tBodies[0].addEventListener('click', (e) => { const r = e.target.closest('tr[data-code]'); if (r) go(r.dataset.code); });
   tbl.tBodies[0].addEventListener('keydown', (e) => { const r = e.target.closest('tr[data-code]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(r.dataset.code); } });
+  if (window.CMUpload) window.CMUpload.wire(tbl.tBodies[0], () => render());
   render();
   return { render };
 })();

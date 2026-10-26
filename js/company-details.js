@@ -48,6 +48,7 @@
   const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
   const X = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
   const dash = '<span class="co-subtle">&mdash;</span>';
+  const UPB = (spec, has, name, icon) => (window.CMUpload ? window.CMUpload.button(spec, has, name, icon) : '');
 
   // ---- one document's row ----------------------------------------------------------------------------
   // The catalog's columns, the same in every table: Document, Belongs to, Status, ALMA confidence,
@@ -69,7 +70,7 @@
     return d.status === 'attention' ? 58 + (h % 15) : 86 + (h % 14);
   };
   // shown as a tag, not a number — the same badge as the Status column, so the two read alike
-  const band = (p) => (p >= 90 ? ['High', 'b-ok', 'Read cleanly, and it matches the profile.'] : p >= 75 ? ['Medium', 'b-pend', 'Read well, but worth a glance.'] : ['Low', 'b-over', 'ALMA isn&rsquo;t sure of something here &mdash; check it against the file.']);
+  const band = (p) => (p >= 90 ? ['High', 'b-ok', 'Read cleanly, and it matches the profile.'] : p >= 75 ? ['Medium', 'b-pend', 'Read well, but worth a glance.'] : ['Low', 'b-over', 'ALMA isn&rsquo;t sure of something here. Check it against the file.']);
   const confCell = (p) => {
     if (p === 'reading') return '<span class="co-badge b-neu">Reading&hellip;</span>';
     if (p == null) return dash;
@@ -129,7 +130,10 @@
     const nv = hasRoster || NO_FILE.includes(d.status) || d.status === 'processing' ? 0 : versionsOf(d).length + 1;
     const opener = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>`
       : nv ? `<button type="button" class="cd-vbtn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}" aria-label="${nv} version${nv === 1 ? '' : 's'} of ${esc(d.name)}">${nv} version${nv === 1 ? '' : 's'}${CHEV_D}</button>` : dash;
-    const attrs = (hasRoster ? ` data-detail="${d.id}" role="link"` : ` data-open="${d.id}" role="button" aria-label="Open ${esc(d.name)}"`) + ` data-row-id="${d.id}" tabindex="0"`;
+    // a file for it: Upload or Replace on the row, or dropped onto the row (js/doc-upload.js)
+    const canUp = d.status !== 'archived' && d.status !== 'na' && !!window.CMUpload;
+    const up = canUp ? UPB(`doc:${d.id}`, !hasRoster && !NO_FILE.includes(d.status), d.name, hasRoster || nv > 0) : '';
+    const attrs = (hasRoster ? ` data-detail="${d.id}" role="link"` : ` data-open="${d.id}" role="button" aria-label="Open ${esc(d.name)}"`) + ` data-row-id="${d.id}" tabindex="0"` + (canUp ? ` data-drop="doc:${d.id}"` : '');
     const meta = [d.code || d.archivedCode, d.requirement, d.sharing !== 'Standard' ? d.sharing : ''].filter(Boolean).join(' &middot; ');
     // the reason a row is as it is (ALMA's note, or why it doesn't apply) gets a line of its own under
     // the row, across the whole table, rather than wrapping inside the narrow Document column
@@ -148,7 +152,7 @@
       `<td class="cd-ref">${d.ref || dash}</td>` +
       `<td class="cd-by">${d.by && !['missing', 'na', 'notrequested', 'notuploaded'].includes(d.status) ? esc(d.by).replace(/&amp;(\w+;)/g, '&$1') : dash}</td>` +
       `<td class="c">${d.issued === '—' ? dash : d.issued}</td><td class="c">${d.valid === '—' ? dash : d.valid}</td>` +
-      `<td class="cd-ed">${opener}</td></tr>` + noteRow + (isOpen ? history(d) : '');
+      `<td class="cd-ed"><span class="cd-ed-in">${up}${opener}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
   };
 
   // a row opened by its chevron: the current version, then each one it replaced, newest first;
@@ -241,7 +245,7 @@
     };
     dq('cdd-page').textContent = hasFile ? (v ? `Earlier version · replaced ${v.replaced}` : 'Current version') : view.status === 'na' ? 'Not applicable to this company' : view.status === 'processing' ? 'ALMA is reading it' : view.status === 'filemissing' ? 'Data typed in, no file yet' : 'No file yet';
     dq('cdd-conf').innerHTML = typeof conf === 'number' ? confCell(conf) : conf === 'reading' ? confCell(conf) : '';
-    const read = fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one &mdash; check it against the file.</span>' : ''}${cites[i] ? `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${i === citeOpen}" aria-controls="cdd-cite-${i}">${i === citeOpen ? 'Hide citation' : 'View citation'}</button>${citeHtml(cites[i], i)}` : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
+    const read = fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one. Check it against the file.</span>' : ''}${cites[i] ? `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${i === citeOpen}" aria-controls="cdd-cite-${i}">${i === citeOpen ? 'Hide citation' : 'View citation'}</button>${citeHtml(cites[i], i)}` : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>`).join('')}</tbody></table></section>` : '';
     const c = d.cat;
     const facts = [['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && !['on_request', 'optional'].includes(c.requirement) ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
       ['Renewal', esc(c.renewal || '—')], ['Expiry', esc(c.expiryRule || '—')], ['Shared with', c.sharing === 'standard' ? 'Every client you share your profile with' : esc(LBL.sharing[c.sharing])], ['Legal basis', esc(c.legalBasis || '—')]]
@@ -251,11 +255,11 @@
     // marked not applicable: the reason, who and when, and the way back
     const naCard = !v && d.status === 'na' ? `<section class="cdd-card cdd-na-on"><h4 class="eyebrow">Not applicable</h4><p class="cdd-na-r">&ldquo;${d.note}&rdquo;</p>
       <p class="cdd-na-m">${d.naBy ? `Marked by ${esc(d.naBy)}${d.naOn ? ' on ' + esc(d.naOn) : ''} &middot; ` : ''}Your clients see this reason, and it counts as compliant.</p>
-      ${canNa(d) ? '<button type="button" class="btn btn-quiet btn-sm" data-na-undo>Undo &mdash; it does apply</button>' : ''}</section>` : '';
+      ${canNa(d) ? '<button type="button" class="btn btn-quiet btn-sm" data-na-undo>Undo, it does apply</button>' : ''}</section>` : '';
     // the form: a reason from the catalog's 'Applies when', or one of your own
     const naForm = !v && dState.na && canNa(d) && d.status !== 'na' ? `<form class="cdd-card cdd-na-f" id="cdd-na-f" novalidate>
       <h4 class="eyebrow">Doesn&rsquo;t apply to us</h4>
-      <p class="cdd-desc">It applies ${esc((c.appliesWhen || '').charAt(0).toLowerCase() + (c.appliesWhen || '').slice(1))}. Tell your clients why it doesn&rsquo;t apply to you &mdash; they will see the reason.</p>
+      <p class="cdd-desc">It applies ${esc((c.appliesWhen || '').charAt(0).toLowerCase() + (c.appliesWhen || '').slice(1))}. Tell your clients why it doesn&rsquo;t apply to you. They will see the reason.</p>
       <div class="cdd-na-opts" role="radiogroup" aria-label="Reason">${reasonsFor(d).map((r, i) => `<label><input type="radio" name="na-r" value="${i}"><span>${r}</span></label>`).join('')}
         <label><input type="radio" name="na-r" value="own"><span>Another reason</span></label></div>
       <textarea class="cdd-na-t" id="cdd-na-t" rows="2" placeholder="In a sentence, why it doesn&rsquo;t apply" hidden></textarea>
@@ -303,7 +307,7 @@
     if (e.target.closest('[data-close]')) { closeDrawer(); return; }
     if (e.target.closest('[data-cdd-cur]')) { dState.v = 0; drawDoc(); return; }
     const up = e.target.closest('[data-cdd-up]');
-    if (up) { up.textContent = 'Prototype: drop it on ALMA at the top of the page'; up.disabled = true; return; }
+    if (up) { const d = docById(dState.list[dState.k]); if (window.CMUpload) window.CMUpload.open(`doc:${d.id}`, { onSaved: () => { render(); drawDoc(); } }); return; }
     if (e.target.closest('[data-na-open]')) { dState.na = true; drawDoc(); const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); return; }
     if (e.target.closest('[data-na-cancel]')) { dState.na = false; drawDoc(); return; }
     // a citation: open or close it in place, or show its line on the page
@@ -361,7 +365,7 @@
       && (skip === 'tag' || !detailFilter.tag.size || (it.tag && detailFilter.tag.has(it.tag)));
     const list = items.filter((it) => dKeep(it, null));
     const nOnD = detailFilter.status.size + detailFilter.tag.size;
-    const crumb = `<div class="cd-area-head"><h2 class="co-h-l">${esc(doc.name)}</h2><p class="co-muted">${doc.code} &middot; ${doc.requirement} &middot; one per ${NOUN[kind][0]}, ${items.length} on file.${doc.cat.condition ? ` <span class="co-subtle">Applies ${esc(doc.cat.appliesWhen.charAt(0).toLowerCase() + doc.cat.appliesWhen.slice(1))}.</span>` : ''}</p></div>`;
+    const crumb = `<div class="cd-area-head cd-area-head-up"><div><h2 class="co-h-l">${esc(doc.name)}</h2><p class="co-muted">${doc.code} &middot; ${doc.requirement} &middot; one per ${NOUN[kind][0]}, ${items.length} on file.${doc.cat.condition ? ` <span class="co-subtle">Applies ${esc(doc.cat.appliesWhen.charAt(0).toLowerCase() + doc.cat.appliesWhen.slice(1))}.</span>` : ''}</p></div>${window.CMUpload ? `<button type="button" class="btn btn-quiet btn-sm" data-up="doc:${doc.id}">Upload for several ${NOUN[kind][1]}</button>` : ''}</div>`;
     const statusVals = STATUSES.filter((s) => items.some((it) => it.status === s));
     const tagVals = tagLabel ? [...new Set(items.map((it) => it.tag).filter(Boolean))].sort() : [];
     const panelHtml = detailFiltOpen ? '<div class="co-filt-list">'
@@ -382,7 +386,7 @@
     const table = list.length
       ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl cd-roster-tbl"><thead><tr><th>${NOUN[kind][0][0].toUpperCase() + NOUN[kind][0].slice(1)}</th><th>Status</th><th>ALMA confidence</th><th>Reference no.</th><th>Issued by</th><th class="c">Expiry date</th><th></th></tr></thead><tbody>${list.map((it) => {
         const [label, cls] = STATUS[it.status]; const has = it.status !== 'missing';
-        return `<tr class="cd-row${go(it) ? ' is-rosterable' : ''}"${go(it)}${go(it) ? ' tabindex="0" role="link"' : ''}><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td><span class="co-badge ${cls}">${label}</span></td><td>${has ? confCell(it.status === 'attention' ? 61 : 86 + (hash(doc.code + it.i) % 14)) : dash}</td><td class="cd-ref">${has ? refOf(doc.code + it.i, it.exp) : dash}</td><td class="cd-by">${has ? esc(by) : dash}</td><td class="c">${has ? it.exp : dash}</td><td class="cd-ed">${go(it) ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</td></tr>`;
+        return `<tr class="cd-row${go(it) ? ' is-rosterable' : ''}"${go(it)}${go(it) ? ' tabindex="0" role="link"' : ''} data-drop="rec:${doc.code}:${it.i}"><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td><span class="co-badge ${cls}">${label}</span></td><td>${has ? confCell(it.status === 'attention' ? 61 : 86 + (hash(doc.code + it.i) % 14)) : dash}</td><td class="cd-ref">${has ? refOf(doc.code + it.i, it.exp) : dash}</td><td class="cd-by">${has ? esc(by) : dash}</td><td class="c">${has ? it.exp : dash}</td><td class="cd-ed"><span class="cd-ed-in">${UPB(`rec:${doc.code}:${it.i}`, has, `${doc.name} for ${it.name}`)}${go(it) ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</span></td></tr>`;
       }).join('')}</tbody></table></div>`
       : '<div class="co-card cd-none"><b class="co-row-n">Nothing matches that.</b></div>';
     groupsEl.innerHTML = `<div class="cd-detail">${crumb}${search}${table}</div>`;
@@ -467,28 +471,29 @@
     if (cols.length < 2) return '';
     const recs = D.records[key];
     const label = { workers: 'By worker', equipment: 'By machine', products: 'By product' }[key];
-    const rows = recs.map((_, i) => {
+    const rows = recs.map((rec, i) => {
+      if (rec.left) return ''; // no longer on the worker list
       const cells = cols.map((d) => { const r = d.roster.find((x) => x.i === i); return r ? r.status : null; });
       const worst = worstOf(cells.filter(Boolean));
       const [wl, wc] = STATUS[worst];
       const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : '';
-      return `<tr class="cd-row${go ? ' is-rosterable' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''}><td><span class="n">${recordName(key, i)}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (s
-        ? `<td class="c"><span class="cd-dot is-${TONE[s]}" title="${STATUS[s][0]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name}: ${STATUS[s][0]}</span></td>`
+      return `<tr class="cd-row${go ? ' is-rosterable' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (s
+        ? `<td class="c"><button type="button" class="cd-cell" data-up="rec:${cols[c].code}:${i}" title="${STATUS[s][0]} &middot; ${NO_FILE.includes(s) ? 'upload it' : 'replace it'}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name} for ${recordName(key, i)}: ${STATUS[s][0]}. ${NO_FILE.includes(s) ? 'Upload' : 'Replace'} it</span></button></td>`
         : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span>${go ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</td></tr>`;
     }).join('');
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
-    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.length} ${NOUN[key][1]}</span></div>
+    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${window.CMUpload ? `<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="area:${key}">Upload documents</button>` : ''}</div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c" title="${esc(d.name)}">${SHORT[d.code] || esc(d.name)}</th>`).join('')}<th>Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${key !== 'products' ? `<span>Open a ${NOUN[key][0]} for ${key === 'workers' ? 'their' : 'its'} profile and documents.</span>` : ''}</p></div>`;
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${key !== 'products' ? `<span>Open a ${NOUN[key][0]} for ${key === 'workers' ? 'their' : 'its'} profile and documents; a dot uploads or replaces that one.</span>` : ''}</p></div>`;
   };
 
   // the documents of one worker or machine: every per-record document that covers them
   const recordDocs = (kind, i) => DOCS.filter((d) => d.kind === kind && d.roster).map((d) => {
-    const r = d.roster.find((x) => x.i === i); return r ? { code: d.code, name: d.name, req: d.requirement, status: r.status, exp: r.exp } : null;
+    const r = d.roster.find((x) => x.i === i); return r ? { code: d.code, name: d.name, req: d.requirement, status: r.status, exp: r.exp, spec: `rec:${d.code}:${i}` } : null;
   }).filter(Boolean);
   const kv = (k, v) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`;
-  const docRow = (d) => { const [l, c] = STATUS[d.status]; return `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${d.code} &middot; ${d.req}</span></td><td class="c">${d.status === 'missing' ? '&mdash;' : d.exp}</td><td><span class="co-badge ${c}">${l}</span></td></tr>`; };
-  const docsCard = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th></tr></thead><tbody>${rows.map(docRow).join('')}</tbody></table></div>`;
+  const docRow = (d) => { const [l, c] = STATUS[d.status]; return `<tr${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.code} &middot; ${d.req}</span></td><td class="c">${d.status === 'missing' ? '&mdash;' : d.exp}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed">${d.spec ? UPB(d.spec, !NO_FILE.includes(d.status), d.name) : ''}</td></tr>`; };
+  const docsCard = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead><tbody>${rows.map(docRow).join('')}</tbody></table></div>`;
   const sitesCard = (list) => `<div class="co-card cd-card-pad"><ul class="cd-sites">${list.map((s) => { const [n, client] = SITES[s].split(' &middot; '); return `<li><span class="n">${n}</span><span class="co-subtle">${client}</span></li>`; }).join('')}</ul></div>`;
 
   // one worker: their profile, whether they may work here, their documents, and their sites.
@@ -496,7 +501,7 @@
   const renderWorker = (i) => {
     const p = PERSON[i];
     const per = recordDocs('workers', i);
-    const month = DOCS.filter((d) => d.level === 'all_workers' && d.req !== 'optional').map((d) => ({ code: d.code, name: d.name, req: 'Covers every worker', status: d.status, exp: d.valid }));
+    const month = DOCS.filter((d) => d.level === 'all_workers' && d.req !== 'optional').map((d) => ({ code: d.code, name: d.name, req: 'Covers every worker', status: d.status, exp: d.valid, spec: d.status === 'na' ? '' : `doc:${d.id}` }));
     const [wl, wc] = STATUS[worstOf(per.map((d) => d.status))];
     const right = p.permit
       ? `<span class="co-badge ${STATUS[p.permit.status][1]}">${p.permit.status === 'valid' ? 'Valid permit' : 'Permit expiring'}</span> <span class="co-subtle">${p.permit.type} &middot; ${p.permit.no} &middot; until ${p.permit.until}</span>`
@@ -528,8 +533,8 @@
     const opRow = (w) => { const r = op && op.roster.find((x) => x.i === w); const [l, c] = STATUS[r ? r.status : 'missing'];
       return `<tr class="cd-row is-rosterable" data-worker="${w}" tabindex="0" role="link" aria-label="Open ${WORKERS[w][0]}"><td><span class="n">${WORKERS[w][0]}</span><span class="d">${WORKERS[w][1]}</span></td><td class="c">${r ? r.exp : '&mdash;'}</td><td><span class="co-badge ${c}">${r ? 'Operator certificate ' + l.toLowerCase() : 'No certificate on file'}</span><span class="cd-row-open" aria-hidden="true">${CHEV_R}</span></td></tr>`; };
     groupsEl.innerHTML = `<div class="cd-detail cd-worker cd-machine">
-      <div class="cd-area-head"><h2 class="co-h-l">${m.type} <span class="soft">&mdash; ${m.brand === 'Ferreira (in&#8209;house)' ? m.model : m.brand + ' ' + m.model}</span></h2><p class="co-muted">${m.ref} &middot; built ${m.yearBuilt} &middot; ${m.owned.toLowerCase().replace(/&middot;.*$/, '').trim()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
-      ${next && next.status === 'attention' ? `<p class="cd-restricted cd-attn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Periodic inspection due ${next.exp} &mdash; book it, and drop the report on ALMA when it is done.</p>` : ''}
+      <div class="cd-area-head"><h2 class="co-h-l">${m.type} <span class="soft">&middot; ${m.brand === 'Ferreira (in&#8209;house)' ? m.model : m.brand + ' ' + m.model}</span></h2><p class="co-muted">${m.ref} &middot; built ${m.yearBuilt} &middot; ${m.owned.toLowerCase().replace(/&middot;.*$/, '').trim()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
+      ${next && next.status === 'attention' ? `<p class="cd-restricted cd-attn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Periodic inspection due ${next.exp}. Book it, and drop the report on ALMA when it is done.</p>` : ''}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Equipment profile</h3><span class="co-muted">Data only, no file</span></div>
         <div class="co-card cd-card-pad"><dl class="pd-grid">
           ${kv('Equipment type', m.type)}${kv('Brand', m.brand)}${kv('Model', m.model)}
@@ -691,8 +696,9 @@
   const syncCards = () => cards.forEach((c) => { const want = c.dataset.status && STATUS_SETS[c.dataset.status];
     c.classList.toggle('is-on', !!want && f.status.size === want.length && want.every((v) => f.status.has(v)) && nOn() === f.status.size && !f.q); });
 
-  // ALMA's drop: takes a file by drag or by browsing, then files it against the first company
-  // document that is expired or needs attention. Prototype: the file never leaves the machine.
+  // ALMA's drop: takes files by drag or by browsing and hands them to her upload (js/doc-upload.js),
+  // which works out what each one is and who it's for, and checks it before it's filed. Without it,
+  // a file goes to the first company document that is expired or needs attention.
   const drop = document.getElementById('cd-drop'), file = document.getElementById('cd-file');
   // a company added in this session: dropping here (or pressing it) is ALMA's guided upload for the
   // section you're in, Company when you're at the top
@@ -706,7 +712,12 @@
     const t = document.getElementById('cd-drop-t'), dsub = document.getElementById('cd-drop-s'), acts = document.getElementById('cd-drop-acts');
     let picked = null, state = 'idle';
     const setState = (st) => { state = st; drop.classList.toggle('has-file', st === 'file'); drop.classList.toggle('is-reading', st === 'reading'); drop.classList.toggle('is-filed', st === 'filed'); };
-    const took = (fl) => {
+    // ALMA works out what each file is and who it's for, and checks it, before anything is filed
+    const toALMA = (list) => window.CMUpload && !window.DOC_MODEL.ORG && list && list.length
+      && window.CMUpload.open(area && window.CMUpload.can(`area:${area}`) && area !== 'company' ? `area:${area}` : 'all', { files: list, onSaved: () => { render(); syncCards(); } });
+    file.multiple = !!window.CMUpload;
+    const took = (fl, all) => {
+      if (toALMA(all)) return;
       if (!fl || state === 'reading' || state === 'filed') return;
       picked = fl;
       t.textContent = 'Got it: ' + fl.name;
@@ -718,10 +729,10 @@
     drop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
     drop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === drop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
     file.addEventListener('click', (e) => e.stopPropagation());
-    file.addEventListener('change', () => took(file.files[0]));
+    file.addEventListener('change', () => took(file.files[0], file.files));
     drop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') drop.classList.add('is-over'); });
     drop.addEventListener('dragleave', () => drop.classList.remove('is-over'));
-    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); took(e.dataTransfer.files[0]); });
+    drop.addEventListener('drop', (e) => { e.preventDefault(); drop.classList.remove('is-over'); took(e.dataTransfer.files[0], e.dataTransfer.files); });
     document.getElementById('cd-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
     document.getElementById('cd-hand').addEventListener('click', (e) => {
       e.stopPropagation();
@@ -742,6 +753,10 @@
       }, 2200);
     });
   }
+
+  // every table here takes a file: a row's Upload / Replace, a matrix cell, a file dropped on a row
+  // (js/doc-upload.js); what ALMA files is on the page as soon as it's saved
+  if (window.CMUpload) window.CMUpload.wire(groupsEl, () => { render(); syncCards(); });
 
   // arriving from elsewhere (the home page's "Documents requiring attention", a notification)
   // already knowing which document: open straight to it

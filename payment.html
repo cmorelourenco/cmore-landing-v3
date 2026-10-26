@@ -353,7 +353,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
 
         <div class="actions">
           <button type="submit" class="btn btn-primary">Continue to checkout</button>
-          <a class="link-btn" href="register.html#password" id="pay-back">Back</a>
+          <a class="link-btn" href="register.html#company" id="pay-back">Back</a>
         </div>
       </form>
     </div>
@@ -561,7 +561,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
     setTimeout(() => { location.href = next; }, 1250);
   });
 
-  // Back goes to the sign-up's last step (register.html#password), which that page remembers for this tab.
+  // Back goes to the sign-up's last step, the company's NIPC (register.html#company), which that page remembers for this tab.
   document.querySelectorAll('[data-back]').forEach((a) => a.addEventListener('click', (e) => {
     if (reduced || e.metaKey || e.ctrlKey || e.shiftKey) return;
     e.preventDefault();

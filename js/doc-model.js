@@ -30,13 +30,29 @@ window.DOC_MODEL = (() => {
     ['Gon&ccedil;alo Pires', 'Laborer'], ['M&aacute;rio Dias', 'Crane operator'], ['Rodrigo Cardoso', 'Welder'],
     ['Eduardo Batista', 'Mason'], ['Daniel Moreira', 'Laborer'], ['Pedro Antunes', 'Safety officer'],
   ];
+  // the crew as changed by a new worker list, once the user approved it (js/doc-upload.js): who
+  // joined (added at the end, so everyone else keeps their documents), who left, whose job changed.
+  // Kept for this tab.
+  const CREW_KEY = 'cm-crew' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {} }; } })();
+  const CREW_BASE = WORKERS.length;
+  if (PERSONA === 'miguel') {
+    crew.added.forEach(([n, r]) => WORKERS.push([n, r]));
+    Object.entries(crew.roles).forEach(([i, r]) => { if (WORKERS[i]) WORKERS[i][1] = r; });
+  }
+  const saveCrew = (patch) => {
+    crew.added = crew.added.concat(patch.added || []);
+    crew.left = [...new Set(crew.left.concat(patch.left || []))];
+    Object.assign(crew.roles, patch.roles || {});
+    try { sessionStorage.setItem(CREW_KEY, JSON.stringify(crew)); } catch (e) {}
+  };
   const EQUIPMENT = [
-    ['Excavator &mdash; CAT 320', 'EQ&#8209;014'], ['Tower crane &mdash; Liebherr 1060', 'EQ&#8209;002'],
-    ['Scissor lift &mdash; Genie GS&#8209;1932', 'EQ&#8209;021'], ['Welding set &mdash; Lincoln 210', 'EQ&#8209;033'],
-    ['Concrete mixer &mdash; CM&#8209;500', 'EQ&#8209;009 &middot; built 1991'], ['Plate compactor &mdash; CP&#8209;120', 'EQ&#8209;041'],
-    ['Dump truck &mdash; Volvo A25', 'EQ&#8209;017'], ['Backhoe loader &mdash; JCB 3CX', 'EQ&#8209;006'],
-    ['Generator &mdash; Atlas Copco QAS60', 'EQ&#8209;028'], ['Light tower &mdash; Allmand Maxi&#8209;Lite', 'EQ&#8209;035'],
-    ['Compressor &mdash; Ingersoll Rand 185', 'EQ&#8209;019'], ['Laser level &mdash; Leica Rugby 640', 'EQ&#8209;044'],
+    ['Excavator &middot; CAT 320', 'EQ&#8209;014'], ['Tower crane &middot; Liebherr 1060', 'EQ&#8209;002'],
+    ['Scissor lift &middot; Genie GS&#8209;1932', 'EQ&#8209;021'], ['Welding set &middot; Lincoln 210', 'EQ&#8209;033'],
+    ['Concrete mixer &middot; CM&#8209;500', 'EQ&#8209;009 &middot; built 1991'], ['Plate compactor &middot; CP&#8209;120', 'EQ&#8209;041'],
+    ['Dump truck &middot; Volvo A25', 'EQ&#8209;017'], ['Backhoe loader &middot; JCB 3CX', 'EQ&#8209;006'],
+    ['Generator &middot; Atlas Copco QAS60', 'EQ&#8209;028'], ['Light tower &middot; Allmand Maxi&#8209;Lite', 'EQ&#8209;035'],
+    ['Compressor &middot; Ingersoll Rand 185', 'EQ&#8209;019'], ['Laser level &middot; Leica Rugby 640', 'EQ&#8209;044'],
   ];
   // the products a company supplies, one per row in Products (none for this demo company)
   // Beatriz's products (the same ones as on her company page and product sheets)
@@ -69,7 +85,9 @@ window.DOC_MODEL = (() => {
       since: `${1 + (i * 11) % 27} ${MONTHS[(i * 7) % 12]} ${2011 + (i * 3) % 14}`,
       id: non ? ['Passport (Brazil)', 'FX' + (480211 + i * 917), `${12 + i % 15} ${MONTHS[(i * 3) % 12]} 2031`] : i === 12 ? ['DNI (Spain)', '4' + (7130000 + i * 4211) + 'K', `9 ${MONTHS[(i * 3) % 12]} 2030`] : ['Citizen card', String(13000000 + i * 391733).slice(0, 8) + ' 0 ZY' + (i % 9), `${4 + i % 20} ${MONTHS[(i * 7) % 12]} ${2028 + i % 5}`],
       permit: non ? { type: non[2], no: non[3], until: non[4], status: non[5] } : null,
-      sites: [[0], [0, 2], [1], [0], [0], [2], [1], [0, 1, 2], [2], [0], [1], [0], [2], [1], [0], [2], [1], [0], [1], [0], [2], [0], [2], [0, 1]][i],
+      sites: [[0], [0, 2], [1], [0], [0], [2], [1], [0, 1, 2], [2], [0], [1], [0], [2], [1], [0], [2], [1], [0], [1], [0], [2], [0], [2], [0, 1]][i] || [0],
+      // joined from an approved worker list (no documents yet), or no longer on it
+      isNew: i >= CREW_BASE, left: crew.left.includes(i),
       // what the rules read (doc-rules.js FACTS)
       specialRisk: SPECIAL_RISK.includes(i), certifiedOperator: OPERATORS.includes(i), employmentType: i % 6 === 5 ? 'fixed_term' : 'permanent',
     };
@@ -77,7 +95,7 @@ window.DOC_MODEL = (() => {
   // each machine's profile (the catalog's Equipment profile form)
   const RENTALS = { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
   const MACHINE = EQUIPMENT.map(([label, ref], i) => {
-    const [type, model] = label.split(' &mdash; ');
+    const [type, model] = label.split(' &middot; ');
     const brand = model.split(' ')[0] === 'CM&#8209;500' ? 'Ferreira (in&#8209;house)' : model.split(/ |&#8209;/)[0].replace('Allmand', 'Allmand Bros');
     const operators = i === 1 ? [4, 19] : i === 0 || i === 7 ? [4] : i === 6 ? [19] : [];
     return {
@@ -108,7 +126,7 @@ window.DOC_MODEL = (() => {
       state: {
         'CO-01': ['valid', '3 Jan 2026', '3 Jan 2027', '', { ref: '4417&#8209;2209&#8209;1180' }],
         'CO-02': ['valid', '12 Mar 2024', 'No expiry', '', { ref: '514 228 930' }],
-        'CO-03': ['expired', '15 Aug 2024', '15 Aug 2026', 'Expired 15 August &mdash; drop the renewed one on me.', { ref: 'Alvar&aacute; 81204&#8209;PUB' }],
+        'CO-03': ['expired', '15 Aug 2024', '15 Aug 2026', 'Expired 15 August. Drop the renewed one on me.', { ref: 'Alvar&aacute; 81204&#8209;PUB' }],
         'CO-04': ['na', '', '', 'We don&rsquo;t transport other companies&rsquo; goods.', { naBy: 'Helena Ferreira', naOn: '14 Mar 2026' }],
         'CO-05': ['valid', '12 Dec 2025', '12 Dec 2026'],
         'CO-06': ['valid', '1 Sep 2026', '1 Dec 2026'],
@@ -116,7 +134,7 @@ window.DOC_MODEL = (() => {
         'CO-08': ['valid', '1 Jan 2026', '31 Dec 2026', '', { ref: 'AT 0091&#8209;448210', by: 'Fidelidade' }],
         'CO-10': ['expiring', '3 Nov 2025', '3 Nov 2026', 'Asked for by 2 clients.', { ref: 'RC 77&#8209;104382', by: 'Fidelidade' }],
         'CO-11': ['valid', '14 Apr 2026', '14 Apr 2027', '', { by: 'Allianz Portugal' }],
-        'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'I couldn&rsquo;t read the service model &mdash; check the highlighted field.', { edited: true, by: 'Prevenir &ndash; Seguran&ccedil;a no Trabalho, Lda.' }],
+        'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'I couldn&rsquo;t read the service model. Check the highlighted field.', { edited: true, by: 'Prevenir &ndash; Seguran&ccedil;a no Trabalho, Lda.' }],
         'CO-13': ['valid', '10 Feb 2025', 'No expiry', '', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
         'CO-14': ['valid', '31 Mar 2026', 'Next report, Apr 2027'],
         'CO-15': ['valid', '1 Jul 2026', '1 Jan 2027', 'Asked for by 1 client.'],
@@ -174,7 +192,7 @@ window.DOC_MODEL = (() => {
         'UN-10': ['valid', '14 Apr 2026', '14 Apr 2027', 'Silver medal, 61/100.', { ref: 'EV&#8209;2026&#8209;77310', by: 'EcoVadis' }],
         'UN-15': ['valid', '28 Mar 2026', 'Next year&rsquo;s, Mar 2027', 'FY 2025, audited. Asked for by 2 clients.', { by: 'Deloitte &amp; Touche LLP' }],
         'UN-18': ['valid', '9 Jan 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'Veridian Harvest Co.' }],
-        'UN-19': ['attention', '2 Oct 2026', 'Next report, Oct 2027', 'ALMA could not read the Scope 3 total &mdash; check the highlighted field.', { by: 'Veridian Harvest Co.' }],
+        'UN-19': ['attention', '2 Oct 2026', 'Next report, Oct 2027', 'ALMA could not read the Scope 3 total. Check the highlighted field.', { by: 'Veridian Harvest Co.' }],
         'UN-22': ['valid', '20 Feb 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'Veridian Harvest Co.' }],
         'UN-23': ['missing', '', '', 'A client asked on 2 Oct.'],
       },
@@ -240,10 +258,10 @@ window.DOC_MODEL = (() => {
 
   // ---- the areas --------------------------------------------------------------------------------
   const AREA_META = {
-    company: { title: 'Company', sub: 'Who you are, your licences, tax, insurance, policies and certifications.', long: 'Where you&rsquo;ll find everything about the company itself &mdash; who you are, your licences, tax, insurance, policies and how you run health &amp; safety.', icon: '<path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>' },
-    workers: { title: 'Workers', sub: 'Monthly payroll and social security, and what each worker is cleared for.', long: 'Where you&rsquo;ll find all your worker documentation &mdash; the monthly payroll and social security, and what each worker is cleared for.', icon: '<path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>' },
-    equipment: { title: 'Equipment', sub: 'Every machine: conformity, inspections, maintenance and manuals.', long: 'Where you&rsquo;ll find all your equipment documentation &mdash; every machine you bring, its checks and its paperwork.', icon: '<path d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17 2.496 24.03m8.924-8.86-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m0 0a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276a4.5 4.5 0 0 1-4.486 6.336l-.144-.004"/>' },
-    products: { title: 'Products', sub: 'What you supply: declarations, technical and safety sheets, certifications.', long: 'Where you&rsquo;ll find the documents for each product you supply &mdash; declarations, technical and safety sheets, and certifications.', icon: '<path d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>' },
+    company: { title: 'Company', sub: 'Who you are, your licences, tax, insurance, policies and certifications.', long: 'Where you&rsquo;ll find everything about the company itself: who you are, your licences, tax, insurance, policies and how you run health &amp; safety.', icon: '<path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>' },
+    workers: { title: 'Workers', sub: 'Monthly payroll and social security, and what each worker is cleared for.', long: 'Where you&rsquo;ll find all your worker documentation: the monthly payroll and social security, and what each worker is cleared for.', icon: '<path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>' },
+    equipment: { title: 'Equipment', sub: 'Every machine: conformity, inspections, maintenance and manuals.', long: 'Where you&rsquo;ll find all your equipment documentation: every machine you bring, its checks and its paperwork.', icon: '<path d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17 2.496 24.03m8.924-8.86-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m0 0a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276a4.5 4.5 0 0 1-4.486 6.336l-.144-.004"/>' },
+    products: { title: 'Products', sub: 'What you supply: declarations, technical and safety sheets, certifications.', long: 'Where you&rsquo;ll find the documents for each product you supply: declarations, technical and safety sheets, and certifications.', icon: '<path d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>' },
   };
   // which records a per-record level is about, and what to call them
   const LEVEL_OF = { per_worker: 'workers', per_equipment: 'equipment', per_product: 'products' };
@@ -251,7 +269,7 @@ window.DOC_MODEL = (() => {
   const BY_LEVEL = { all_workers: 'For all workers', per_worker: 'For each worker', per_equipment: 'For each machine', per_product: 'For each product' };
   const recordName = (kind, i) => (kind === 'workers' ? WORKERS[i][0] : kind === 'equipment' ? EQUIPMENT[i][0] : PRODUCTS[i][0]);
   const recordSub = (kind, i) => (kind === 'workers' ? WORKERS[i][1] : kind === 'equipment' ? EQUIPMENT[i][1] : PRODUCTS[i][1]);
-  const recordTag = (kind, i) => (kind === 'workers' ? WORKERS[i][1] : kind === 'equipment' ? EQUIPMENT[i][0].split(' &mdash; ')[0] : null);
+  const recordTag = (kind, i) => (kind === 'workers' ? WORKERS[i][1] : kind === 'equipment' ? EQUIPMENT[i][0].split(' &middot; ')[0] : null);
 
   // ---- every document this company is asked for ---------------------------------------------------
   // the issuer the catalog expects, trimmed to its first name for the table
@@ -262,6 +280,12 @@ window.DOC_MODEL = (() => {
     const year = (issued.match(/\d{4}/) || ['2026'])[0];
     return `${year}/${String(n).padStart(5, '0')}`;
   };
+  // a document filed again (dropped on ALMA, uploaded from any table, on any page): its new state,
+  // kept for this tab, so the Documents page and the company homepage both see it. A worker's or a
+  // machine's own copy of a per-record document is kept under '<code>#<record>'.
+  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const keepUpdates = () => { try { sessionStorage.setItem(UP_KEY, JSON.stringify(updates)); } catch (e) {} };
   const shown = R.documentsFor(CAT, PROFILE);
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
@@ -278,12 +302,13 @@ window.DOC_MODEL = (() => {
     if (kind) {
       // one per worker, machine or product: the rules say which records it covers
       const all = D.records[kind].map((r, i) => Object.assign({ i }, r));
-      let covers = R.subjectsFor(c, all, PROFILE).map((r) => r.i);
+      let covers = R.subjectsFor(c, all, PROFILE).filter((r) => !r.left).map((r) => r.i);
       const pr = D.perRecord[c.code] || {};
       if (c.requirement === 'on_request') covers = covers.filter((i) => (pr.requested || []).includes(i));
       if (c.requirement === 'optional') covers = covers.filter((i) => (pr.have || []).includes(i));
-      const statusOf = (i) => { const o = (pr.over || {})[i]; if (o) return o[0]; return pr.def ? pr.def[0] : 'missing'; };
-      const expOf = (i) => { const o = (pr.over || {})[i]; if (o) return o[1] || '—'; return pr.def ? pr.def[1](i) : '—'; };
+      const upOf = (i) => updates[`${c.code}#${i}`];
+      const statusOf = (i) => { if (upOf(i)) return upOf(i).status; if (all[i] && all[i].isNew) return 'missing'; const o = (pr.over || {})[i]; if (o) return o[0]; return pr.def ? pr.def[0] : 'missing'; };
+      const expOf = (i) => { if (upOf(i)) return upOf(i).exp; if (all[i] && all[i].isNew) return '—'; const o = (pr.over || {})[i]; if (o) return o[1] || '—'; return pr.def ? pr.def[1](i) : '—'; };
       const roster = covers.map((i) => ({ i, status: statusOf(i), exp: expOf(i) }));
       const status = roster.length ? worstOf(roster.map((r) => r.status))
         : c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'na';
@@ -377,16 +402,23 @@ window.DOC_MODEL = (() => {
     naMarks[d.code] = d.orig.status === 'na' ? { undone: true } : undefined; if (!naMarks[d.code]) delete naMarks[d.code]; saveNa();
     Object.assign(d, { status: back, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' }); d.text = textOf(d);
   };
-  // a document filed again (dropped on ALMA, on any page): its new state, kept for this tab, so
-  // the Documents page and the company homepage both see it
-  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
-  const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   DOCS.forEach((d) => { if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); });
   const saveDoc = (code, patch) => {
     const d = DOCS.find((x) => x.code === code && !x.kind); if (!d) return null;
     updates[code] = Object.assign(updates[code] || {}, patch);
-    try { sessionStorage.setItem(UP_KEY, JSON.stringify(updates)); } catch (e) {}
+    keepUpdates();
     Object.assign(d, patch); d.text = textOf(d);
+    return d;
+  };
+  // one worker's or machine's copy of a per-record document: { status, exp }; the document's own
+  // status follows its roster, as when the page is drawn
+  const saveRecord = (code, i, patch) => {
+    const d = DOCS.find((x) => x.code === code && x.kind); if (!d) return null;
+    const r = d.roster.find((x) => x.i === i); if (!r) return null;
+    updates[`${code}#${i}`] = Object.assign(updates[`${code}#${i}`] || {}, patch);
+    keepUpdates();
+    Object.assign(r, patch);
+    d.status = worstOf(d.roster.map((x) => x.status)); d.text = textOf(d);
     return d;
   };
   // the documents that need the company now, most urgent first
@@ -397,5 +429,5 @@ window.DOC_MODEL = (() => {
   const needing = () => DOCS.filter((d) => counted(d) && RANK[d.status] > 0).sort((a, b) => rank(a) - rank(b));
   const DATA = DOCS.map((d) => Object.assign(d, { text: textOf(d) }));
 
-  return { ORG, profileOf, saveDoc, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { ORG, profileOf, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

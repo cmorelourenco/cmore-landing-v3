@@ -59,7 +59,7 @@ window.ESG_DATA = {
          {
           "src": "Code-of-Ethics-and-Conduct-2026.pdf",
           "loc": "Cover · Revision history",
-          "quote": "Revision 4 — approved by the Board of Directors on 12 March 2025 and effective from 1 April 2025.",
+          "quote": "Revision 4, approved by the Board of Directors on 12 March 2025 and effective from 1 April 2025.",
           "match": "approved by the Board of Directors on 12 March 2025"
          }
         ]
@@ -164,7 +164,7 @@ window.ESG_DATA = {
       "by": "alma",
       "v": "yes",
       "conf": "high",
-      "why": "The Data Privacy policy covers employees, suppliers, customers and other stakeholders, and cites the LGPD — the full scope the question asks about.",
+      "why": "The Data Privacy policy covers employees, suppliers, customers and other stakeholders, and cites the LGPD: the full scope the question asks about.",
       "src": "Data-Privacy-and-GDPR-Policy.docx",
       "cite": [
        {
@@ -200,7 +200,7 @@ window.ESG_DATA = {
        {
         "src": "Information-Security-Training-Matrix.xlsx",
         "loc": "Sheet “Annual plan” · rows 12–34",
-        "quote": "Information Security & Data Privacy Awareness — mandatory, all staff, annual refresh; 2025 completion 96% (312 of 325 employees). Records retained in the LMS.",
+        "quote": "Information Security & Data Privacy Awareness: mandatory, all staff, annual refresh; 2025 completion 96% (312 of 325 employees). Records retained in the LMS.",
         "match": "mandatory, all staff, annual refresh"
        }
       ]
@@ -314,7 +314,7 @@ window.ESG_DATA = {
         "by": "alma",
         "v": "48",
         "conf": "low",
-        "why": "The manual describes the process but the only figure is in an annex table for 2025, which may not be the last twelve months — please check it.",
+        "why": "The manual describes the process but the only figure is in an annex table for 2025, which may not be the last twelve months. Please check it.",
         "src": "Responsibility-Manual.pdf",
         "cite": [
          {
@@ -485,7 +485,7 @@ window.ESG_DATA = {
      "g": "Sanctions and exposure",
      "a": {
       "by": "flag",
-      "why": "This is a declaration about your own operations — it isn't in the documents."
+      "why": "This is a declaration about your own operations. It isn't in the documents."
      }
     },
     {
@@ -589,7 +589,7 @@ window.ESG_DATA = {
       "by": "alma",
       "v": "a-compliance-officer",
       "conf": "medium",
-      "why": "The manual names a Compliance Officer as accountable and the Audit Committee as the reporting line — so the officer, though the Board holds the ultimate duty.",
+      "why": "The manual names a Compliance Officer as accountable and the Audit Committee as the reporting line, so the officer, though the Board holds the ultimate duty.",
       "src": "Responsibility-Manual.pdf",
       "cite": [
        {
@@ -664,7 +664,7 @@ window.ESG_DATA = {
          {
           "src": "Human-Rights-Policy.pdf",
           "loc": "Page 2 · Document control",
-          "quote": "Issue 3 — reviewed and approved February 2025; next review February 2027.",
+          "quote": "Issue 3, reviewed and approved February 2025; next review February 2027.",
           "match": "reviewed and approved February 2025"
          }
         ]
@@ -724,7 +724,7 @@ window.ESG_DATA = {
       "cite": [
        {
         "src": "Human-Rights-Policy.pdf",
-        "loc": "Page 11 · Annex II — Awareness programme",
+        "loc": "Page 11 · Annex II, Awareness programme",
         "quote": "Human rights awareness is delivered annually to all employees through induction, targeted training for managers, and quarterly dialogue sessions on the shop floor.",
         "match": "delivered annually to all employees through induction"
        }
@@ -781,7 +781,7 @@ window.ESG_DATA = {
       "by": "alma",
       "v": "yes",
       "conf": "high",
-      "why": "Working hours, overtime, the time bank and breaks all follow the collective agreement and are recorded electronically — the question's full list.",
+      "why": "Working hours, overtime, the time bank and breaks all follow the collective agreement and are recorded electronically: the question's full list.",
       "src": "Responsibility-Manual.pdf",
       "cite": [
        {
@@ -832,7 +832,7 @@ window.ESG_DATA = {
       "by": "alma",
       "v": "yes",
       "conf": "high",
-      "why": "The policy states freedom of association and collective bargaining without interference, discrimination or retaliation — the exact wording the question looks for.",
+      "why": "The policy states freedom of association and collective bargaining without interference, discrimination or retaliation: the exact wording the question looks for.",
       "src": "Human-Rights-Policy.pdf",
       "cite": [
        {
@@ -953,7 +953,7 @@ window.ESG_DATA = {
       "by": "alma",
       "v": "The Code of Ethics prohibits discrimination on any ground, with mandatory annual training and a confidential reporting channel handled by the Ethics Committee.",
       "conf": "medium",
-      "why": "Drafted from the non-discrimination section — Code of Ethics, mandatory annual training and a confidential channel reviewed by the Ethics Committee.",
+      "why": "Drafted from the non-discrimination section: Code of Ethics, mandatory annual training and a confidential channel reviewed by the Ethics Committee.",
       "src": "Code-of-Ethics-and-Conduct-2026.pdf",
       "cite": [
        {
@@ -1001,7 +1001,7 @@ window.ESG_DATA = {
      "val": "text",
      "a": {
       "by": "flag",
-      "why": "The documents mention diversity programmes but don't describe them — this needs your words."
+      "why": "The documents mention diversity programmes but don't describe them. This needs your words."
      }
     },
     {
@@ -1178,7 +1178,7 @@ window.ESG_DATA = {
       "by": "alma",
       "v": "yes",
       "conf": "high",
-      "why": "PGR and PCMSO are maintained, PPE is controlled and occupational health checks run on schedule — the legal requirements the question lists.",
+      "why": "PGR and PCMSO are maintained, PPE is controlled and occupational health checks run on schedule: the legal requirements the question lists.",
       "src": "Health-Safety-and-Environment-Manual.pdf",
       "cite": [
        {
@@ -1337,7 +1337,7 @@ window.ESG_DATA = {
        "val": "text",
        "a": {
         "by": "alma",
-        "v": "IBAMA — licence LO-1187/2023, valid to 31 March 2027.",
+        "v": "IBAMA: licence LO-1187/2023, valid to 31 March 2027.",
         "conf": "high",
         "why": "The annex reproduces the licence with its number, issuer and expiry.",
         "src": "Environmental-Impact-Assessment-2024.pdf",
@@ -1481,7 +1481,7 @@ window.ESG_DATA = {
        {
         "src": "GHG-Inventory-2025.xlsx",
         "loc": "Sheet “Summary” · rows 8–19",
-        "quote": "Scope 1: 412,800 tCO2e; Scope 2 (market-based): 96,400 tCO2e — 2025, all sites.",
+        "quote": "Scope 1: 412,800 tCO2e; Scope 2 (market-based): 96,400 tCO2e, 2025, all sites.",
         "match": "Scope 1: 412,800 tCO2e; Scope 2 (market-based): 96,400 tCO2e"
        }
       ]
@@ -1553,7 +1553,7 @@ window.ESG_DATA = {
         "by": "alma",
         "v": "no",
         "conf": "low",
-        "why": "Scope 3 is listed as planned rather than reported, so I read this as a No — but a screening may exist outside this file.",
+        "why": "Scope 3 is listed as planned rather than reported, so I read this as a No, but a screening may exist outside this file.",
         "src": "GHG-Inventory-2025.xlsx",
         "cite": [
          {
@@ -2054,7 +2054,7 @@ window.ESG_DATA = {
      "help": "List the streams, their classification and the volumes sent for final disposal over the reporting period.",
      "a": {
       "by": "flag",
-      "why": "The plan names the streams but not the volumes for this period — this needs your figures."
+      "why": "The plan names the streams but not the volumes for this period. This needs your figures."
      }
     },
     {
@@ -2319,7 +2319,7 @@ window.ESG_DATA = {
          {
           "src": "Information-Security-Policy.pdf",
           "loc": "Page 1 · Document control",
-          "quote": "Version 5 — approved 9 July 2025 by the Information Security Committee.",
+          "quote": "Version 5, approved 9 July 2025 by the Information Security Committee.",
           "match": "approved 9 July 2025"
          }
         ]
@@ -2418,8 +2418,8 @@ window.ESG_DATA = {
        {
         "src": "ISO-27001-Certificate.pdf",
         "loc": "Certificate · Scope",
-        "quote": "ISO/IEC 27001:2022 — certificate 0192/2024, covering the information security management system for corporate and plant IT services; valid to 4 October 2027.",
-        "match": "ISO/IEC 27001:2022 — certificate 0192/2024"
+        "quote": "ISO/IEC 27001:2022, certificate 0192/2024, covering the information security management system for corporate and plant IT services; valid to 4 October 2027.",
+        "match": "ISO/IEC 27001:2022, certificate 0192/2024"
        }
       ]
      }
@@ -2492,7 +2492,7 @@ window.ESG_DATA = {
         "by": "alma",
         "v": "yes",
         "conf": "low",
-        "why": "An annual exercise is required, but the last one recorded here is dated November 2024 — that may be outside the twelve months, so please confirm.",
+        "why": "An annual exercise is required, but the last one recorded here is dated November 2024. That may be outside the twelve months, so please confirm.",
         "src": "Information-Security-Policy.pdf",
         "cite": [
          {
@@ -2643,7 +2643,7 @@ window.ESG_DATA = {
      },
      "subs": [
       {
-       "t": "How far back can the material be traced — mine, smelter or first processor?",
+       "t": "How far back can the material be traced: mine, smelter or first processor?",
        "ty": "text",
        "val": "text",
        "a": {
@@ -2986,11 +2986,11 @@ window.ESG_DATA = {
   "where": {
    "Code-of-Ethics-and-Conduct-2026.pdf": {
     "loc": "Cover · Revision history",
-    "quote": "Revision 5 — effective 1 January 2026, valid to 31 December 2026."
+    "quote": "Revision 5, effective 1 January 2026, valid to 31 December 2026."
    },
    "Code-of-Ethics-and-Conduct-2025.pdf": {
     "loc": "Cover · Revision history",
-    "quote": "Revision 4 — effective 1 April 2025, valid to 31 December 2025."
+    "quote": "Revision 4, effective 1 April 2025, valid to 31 December 2025."
    },
    "Certificate-of-Insurance-2026.pdf": {
     "loc": "Certificate · Period of cover",
@@ -2998,7 +2998,7 @@ window.ESG_DATA = {
    },
    "Responsibility-Manual.pdf": {
     "loc": "Page 2 · Document control",
-    "quote": "Issue 6 — approved 30 June 2025; next review 30 June 2027."
+    "quote": "Issue 6, approved 30 June 2025; next review 30 June 2027."
    },
    "Anti-Corruption-and-Bribery-Policy.pdf": {
     "loc": "Page 1 · Document control",
@@ -3022,7 +3022,7 @@ window.ESG_DATA = {
    },
    "Information-Security-Training-Matrix.xlsx": {
     "loc": "Sheet “Control” · row 2",
-    "quote": "Plan year 2025 — matrix current to 27 September 2027."
+    "quote": "Plan year 2025, matrix current to 27 September 2027."
    },
    "GHG-Inventory-2025.xlsx": {
     "loc": "Sheet “Control” · row 4",

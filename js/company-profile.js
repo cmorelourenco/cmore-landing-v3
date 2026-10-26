@@ -19,7 +19,7 @@
   const dirty = (f) => fields(f).some((i) => i.value.trim() !== (p[i.dataset.k] || ''));
   const CHECK = {
     name: (v) => (!v ? 'The company needs its legal name.' : ''),
-    people: (v) => (v && !/^\d{1,6}$/.test(v) ? 'People is a whole number — 24, for example.' : ''),
+    people: (v) => (v && !/^\d{1,6}$/.test(v) ? 'People is a whole number: 24, for example.' : ''),
     // the tax number's shape follows the country: a Portuguese NIPC (nine digits), a US EIN, or anything elsewhere
     tax: (v) => { const c = (document.querySelector('#cp-country') || {}).value || p.country; if (!v) return ''; if (c === 'Portugal') return /^\d{9}$/.test(v.replace(/\s/g, '')) ? '' : 'A NIPC is nine digits, like 514 228 930.'; if (c === 'United States') return /^\d{2}-?\d{7}$/.test(v) ? '' : 'An EIN is nine digits, written 12-3456789.'; return ''; },
     email: (v) => (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'That does not look like an email address.' : ''),

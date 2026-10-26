@@ -151,7 +151,7 @@ window.ESG_REPORT = (() => {
     const n = D.c.answered, alma = D.c.alma;
     return page(A, null, `<div style="position:absolute;left:50px;top:50px;width:610px">
       <div class="rp-h" style="font-size:40px;color:#96958e">About this report</div>
-      <p style="margin-top:22px;font-size:13.5px;line-height:1.7;color:#4a4a4a">This report sets out how ${esc(D.p.trading || D.p.name)} stands on environmental, social and governance matters, as declared in the ESG Questionnaire submitted on C&#8209;MORE on ${dateLong(D.when)}. It covers the nine areas the questionnaire asks about — from governance and human rights to climate, water, waste, biodiversity, information security and product traceability.</p>
+      <p style="margin-top:22px;font-size:13.5px;line-height:1.7;color:#4a4a4a">This report sets out how ${esc(D.p.trading || D.p.name)} stands on environmental, social and governance matters, as declared in the ESG Questionnaire submitted on C&#8209;MORE on ${dateLong(D.when)}. It covers the nine areas the questionnaire asks about, from governance and human rights to climate, water, waste, biodiversity, information security and product traceability.</p>
       <p style="margin-top:12px;font-size:13.5px;line-height:1.7;color:#4a4a4a">${n} of ${D.c.total} questions were answered. ${alma} of those answers were drafted by ALMA, C&#8209;MORE's assistant, from ${D.docs.length} document${D.docs.length === 1 ? '' : 's'} the company provided, each with the passage it was read from; the company reviewed every one of them before submitting, and answered the rest itself.</p>
       <p style="margin-top:12px;font-size:13.5px;line-height:1.7;color:#4a4a4a">The ESG score of ${D.sc.global} out of 100 weighs how good the answers are, not only how many there are: having a policy in place counts for more than not having one, and a sanction or a fine counts against. The red flags and the action plan at the end of the report show where the company can improve, one action for every gap.</p>
       <div style="margin-top:24px;font-size:14px;color:#4a4a4a">${esc(D.person)}</div><div style="font-size:14px;color:#96958e;margin-top:2px">On behalf of ${esc(D.p.name)}</div></div>
@@ -234,7 +234,7 @@ window.ESG_REPORT = (() => {
       <div class="rp-right">${first.map((it) => qa(it, k)).join('')}</div>`));
     for (let i = 0; i < rest.length; i += 10) {
       const chunk = rest.slice(i, i + 10), L = chunk.slice(0, 5), R = chunk.slice(5);
-      out.push(page(A, k, `<div style="position:absolute;left:74px;top:56px;width:552px"><div style="font-size:15px;font-weight:600;color:${C[k].main};margin-bottom:22px">${esc(x.title)} <span style="font-weight:400;color:#96958e">— answers ${i + 6} to ${i + 5 + chunk.length}</span></div>${L.map((it) => qa(it, k)).join('')}</div>
+      out.push(page(A, k, `<div style="position:absolute;left:74px;top:56px;width:552px"><div style="font-size:15px;font-weight:600;color:${C[k].main};margin-bottom:22px">${esc(x.title)} <span style="font-weight:400;color:#96958e">· answers ${i + 6} to ${i + 5 + chunk.length}</span></div>${L.map((it) => qa(it, k)).join('')}</div>
         <div style="position:absolute;left:708px;top:98px;width:552px">${R.map((it) => qa(it, k)).join('')}</div>
         ${R.length ? '' : photo(next(k))}`));
     }

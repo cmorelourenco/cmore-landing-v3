@@ -140,7 +140,7 @@
 .tm-list > li.is-changed { animation: tm-changed 2.4s ease; }
 @keyframes tm-changed { 0%, 40% { background: color-mix(in oklab, var(--color-ok, #a6d8a0) 35%, transparent); } 100% { background: transparent; } }
 /* the selection: a bar pinned to the bottom of the screen, lined up with the team card, for as
-   long as anyone is selected — wherever the page is scrolled */
+   long as anyone is selected, wherever the page is scrolled */
 .tm-selbar { position: fixed; bottom: 1.5rem; left: 50%; translate: -50% 0; width: min(44rem, calc(100vw - 2rem)); z-index: 85; animation: tm-sel-in .25s var(--ease-brand, ease); display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.625rem 0.75rem 0.625rem 1rem;
   border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); box-shadow: 0 12px 28px -12px rgba(0,0,0,.45); }
 .tm-selbar.is-raised { bottom: 5rem; } /* above the preview bar */
@@ -249,7 +249,7 @@
           : `<input type="hidden" name="tm-role" value="${pick}"><p class="tm-note">As a manager, you invite users, into the groups you are in.</p>`}
         <div class="tm-scope" data-scope="owner" hidden><p class="tm-note">An owner sees and does everything on ${family().map((o) => esc(o.name)).join(', ')}${family().length > 1 ? '' : ''}, and on any subsidiary added later.</p></div>
         ${others.length && c.role === 'owner' ? `<div class="tm-scope" data-scope="admin" hidden><span class="tm-lbl">Also make them admin of</span><div class="tm-checks">${others.map((o) => `<label><input type="checkbox" name="also" value="${esc(o.id)}"><span>${esc(o.name)}</span></label>`).join('')}</div></div>` : ''}
-        <div class="tm-scope" data-scope="groups" hidden><span class="tm-lbl">Groups &mdash; the pages they&rsquo;ll open</span>${groupChecks(c, [], 'ig')}<p class="set-err" id="tm-gerr" role="alert"></p></div>
+        <div class="tm-scope" data-scope="groups" hidden><span class="tm-lbl">Groups: the pages they&rsquo;ll open</span>${groupChecks(c, [], 'ig')}<p class="set-err" id="tm-gerr" role="alert"></p></div>
         <div class="set-foot"><span class="tm-sent" role="status">${flash}</span><button type="submit" class="btn btn-primary btn-sm" id="tm-go">Send invite</button></div>
         </div>
       </form>` : '<p class="tm-note">Users can&rsquo;t invite people. Ask a manager or an admin of this company.</p>'}

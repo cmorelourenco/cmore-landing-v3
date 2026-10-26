@@ -12,7 +12,7 @@
   ring.style.setProperty('--p', sc + '%');
   document.getElementById('co-score').textContent = sc;
   if (s.submitted) link.href = 'esg-results.html';
-  const note = s.submitted ? 'From your submitted questionnaire · View dashboard' : `From ${c.answered} of ${c.total} answers — keep going`;
+  const note = s.submitted ? 'From your submitted questionnaire · View dashboard' : `From ${c.answered} of ${c.total} answers. Keep going`;
   document.getElementById('co-score-note').textContent = note;
   link.setAttribute('aria-label', `Company score ${sc} of 100. ${note}.`);
 })();

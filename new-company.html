@@ -553,7 +553,7 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
   const readTax = (raw) => {
     const v = raw.toUpperCase().replace(/[\s.\-]/g, '');
     if (!v) return null;
-    if (/^\d{9}$/.test(v)) return nifOk(v) ? { country: 'PT', name: 'Portugal', kind: 'NIF', value: v } : { error: 'That NIF doesn’t check out — the last digit doesn’t match. A typo?' };
+    if (/^\d{9}$/.test(v)) return nifOk(v) ? { country: 'PT', name: 'Portugal', kind: 'NIF', value: v } : { error: 'That NIF doesn’t check out: the last digit doesn’t match. A typo?' };
     const m = /^([A-Z]{2})([A-Z0-9]{8,12})$/.exec(v);
     if (m && EU[m[1]]) {
       if (m[1] === 'PT' && !nifOk(m[2])) return { error: 'That Portuguese VAT number doesn’t check out. A typo?' };

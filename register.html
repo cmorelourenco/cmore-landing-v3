@@ -197,7 +197,27 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .rules li::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 1px; background: var(--color-sand-400); transition: background-color .2s var(--ease-brand); }
 .rules li.ok { color: var(--color-ink); }
 .rules li.ok::before { background: var(--color-positive); }
-.field-verify { margin-top: 0.75rem; } /* clear air after the list of rules */
+.field-verify { margin-top: 0.75rem; }
+/* ---- The company step: ALMA's checks, the company found, the request ---- */
+.chk { list-style: none; margin: 1.75rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
+.chk li { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9375rem; color: var(--color-ink-subtle); transition: color .2s; }
+.chk li::before { content: ""; flex: none; width: 1.25rem; height: 1.25rem; border-radius: 999px; border: 2px solid var(--color-line); box-sizing: border-box; }
+.chk li.is-on { color: var(--color-ink); }
+.chk li.is-on::before { border-color: var(--color-coral); border-right-color: transparent; animation: chk-spin .8s linear infinite; }
+.chk li.is-ok { color: var(--color-ink); }
+.chk li.is-ok::before { border: 0; background: var(--color-positive, #3d7a2c) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='white'%3E%3Cpath fill-rule='evenodd' d='M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0Z'/%3E%3C/svg%3E") center / 0.875rem no-repeat; }
+.chk li.is-hit { color: var(--color-ink); font-weight: 500; }
+.chk li.is-hit::before { border: 0; background: var(--color-coral) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23343434'%3E%3Cpath d='M10 4a1.2 1.2 0 0 1 1.2 1.2v5a1.2 1.2 0 0 1-2.4 0v-5A1.2 1.2 0 0 1 10 4Zm0 9.4a1.3 1.3 0 1 1 0 2.6 1.3 1.3 0 0 1 0-2.6Z'/%3E%3C/svg%3E") center / 0.875rem no-repeat; }
+@keyframes chk-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .chk li.is-on::before { animation: none; } }
+.found { margin-top: 1.75rem; display: flex; gap: 1rem; align-items: center; padding: 1.25rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface, #fff); }
+.found img, .found .found-mono { flex: none; width: 3.5rem; height: 3.5rem; border-radius: 0.5rem; object-fit: cover; }
+.found .found-mono { display: grid; place-items: center; background: var(--color-graphite); color: var(--color-off-white); font-weight: 600; }
+.found b { display: block; font-size: 1.0625rem; font-weight: 600; }
+.found span { display: block; margin-top: 0.125rem; font-size: 0.875rem; color: var(--color-ink-subtle); line-height: 1.45; }
+.toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 50; transform: translate(-50%, 1rem); display: flex; align-items: center; gap: 0.625rem; width: max-content; max-width: calc(100vw - 2rem); padding: 0.75rem 1rem; border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; line-height: 1.4; box-shadow: 0 12px 32px -12px rgba(0, 0, 0, .4); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
+.toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+.toast svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-ok, #a6d8a0); } /* clear air after the list of rules */
 .match { margin-top: 0.125rem; font-size: 0.9375rem; line-height: 1.4; display: flex; align-items: center; gap: 0.625rem; color: var(--color-ink-muted); }
 .match:empty { display: none; }
 .match::before { content: ""; flex: none; width: 8px; height: 8px; border-radius: 1px; background: var(--color-sand-400); }
@@ -468,7 +488,41 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         </form>
       </section>
 
-      <!-- 4. Done -->
+      <!-- 4. The company: its NIPC, checked by ALMA. Not on C-MORE yet: on to the plan and payment.
+           Already on it: ask its owners and admins to let you in, and that's where sign-up ends. -->
+      <section class="step" data-step="company" aria-labelledby="t-company">
+        <p class="eyebrow">Your company</p>
+        <h1 class="title" id="t-company">Your company.</h1>
+        <p class="subtitle">Give us its NIPC and ALMA checks it, so every client finds the same company, and only once.</p>
+        <form class="form" id="f-company" novalidate>
+          <div class="field">
+            <label for="nipc">Company NIPC</label>
+            <input class="input" id="nipc" name="nipc" type="text" inputmode="numeric" autocomplete="off" placeholder="9 digits, e.g. 516 482 300" maxlength="11" required>
+            <p class="err" id="nipc-err" role="alert"></p>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="nipc-go" disabled>Check it with ALMA</button>
+          <div class="back-row"><button type="button" class="link-btn" id="company-back">Back</button></div>
+        </form>
+        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: try<br><button type="button" class="link-btn" data-nipc="516482300">516 482 300 (new to C&#8209;MORE)</button><br><button type="button" class="link-btn" data-nipc="514228930">514 228 930 (already on C&#8209;MORE)</button></p>
+      </section>
+
+      <section class="step" data-step="nipc-check" aria-labelledby="t-nipc-check">
+        <p class="eyebrow">ALMA</p>
+        <h1 class="title" id="t-nipc-check">Checking it.</h1>
+        <p class="subtitle">NIPC <b class="nipc-n" style="font-weight:500;color:var(--color-ink)"></b></p>
+        <ul class="chk" id="nipc-steps" aria-live="polite"></ul>
+      </section>
+
+      <section class="step" data-step="nipc-taken" aria-labelledby="t-nipc-taken">
+        <p class="eyebrow">Your company</p>
+        <h1 class="title" id="t-nipc-taken">Already here.</h1>
+        <p class="subtitle">That NIPC is already on C&#8209;MORE. Ask the company to add you.</p>
+        <div class="found" id="found"></div>
+        <div class="actions" style="margin-top:1.5rem"><button type="button" class="btn btn-primary btn-block" id="req-open">Request access</button></div>
+        <div class="back-row" style="margin-top:1rem"><button type="button" class="link-btn" data-to="company">That&rsquo;s not my company. Use a different NIPC</button></div>
+      </section>
+
+      <!-- 5. Done -->
       <section class="step" data-step="done" aria-labelledby="t-done">
         <div class="me">
           <button type="button" class="me-pic" id="d-avatar" aria-label="Add a profile picture"><span class="me-ini" id="d-mono">MF</span><span class="me-img" id="d-pic"></span><span class="me-cam" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 4h-5L8 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3l-1.5-2Z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
@@ -559,7 +613,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     person = { ...EXAMPLE, via: b.dataset.sso };
     b.lastChild.textContent = label;
     document.querySelectorAll('[data-sso]').forEach((x) => (x.disabled = false));
-    toPayment();
+    toCompanyStep();
   }));
 
   // ---- 2. code ---------------------------------------------------------------
@@ -628,9 +682,82 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   $('#f-password').addEventListener('submit', (e) => {
     e.preventDefault();
     if (!checkRules()) { pwErr.textContent = 'Your password needs everything on the list.'; pwIn.classList.add('is-bad'); pwIn.focus(); return; }
-    if (flow === 'reset') finishReset(); else toPayment();
+    if (flow === 'reset') finishReset(); else toCompanyStep();
   });
 
+  // ---- 4. the company: its NIPC, checked by ALMA -----------------------------------
+  // A valid NIPC no company on C-MORE has: on to the plan and payment, as its owner. One that is
+  // already here: the person asks its owners and admins to be let in, and sign-up ends there.
+  // Prototype: C-MORE's companies are the demo's.
+  const ON_CMORE = {
+    514228930: { name: 'Ferreira Constru&ccedil;&otilde;es, Lda.', logo: 'images/ferreira-logo.webp', },
+  };
+  const nipcIn = $('#nipc'), nipcErr = $('#nipc-err'), nipcGo = $('#nipc-go');
+  const digits = (v) => v.replace(/\D/g, '');
+  const spaced = (d) => d.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+  // a Portuguese NIPC: nine digits, a company's starting 5, 6, 8 or 9, and its check digit (mod 11)
+  const validNipc = (d) => {
+    if (!/^[1235689]\d{8}$/.test(d)) return false;
+    const r = [...d.slice(0, 8)].reduce((a, c, i) => a + c * (9 - i), 0) % 11;
+    return +d[8] === (r < 2 ? 0 : 11 - r);
+  };
+  let nipc = '', company = null;
+  function toCompanyStep() {
+    nipcIn.value = nipc ? spaced(nipc) : ''; nipcErr.textContent = ''; nipcIn.classList.remove('is-bad');
+    nipcGo.disabled = !nipcIn.value.trim();
+    show('company');
+  }
+  nipcIn.addEventListener('input', () => { nipcErr.textContent = ''; nipcIn.classList.remove('is-bad'); nipcGo.disabled = !nipcIn.value.trim(); });
+  document.querySelectorAll('[data-nipc]').forEach((b) => b.addEventListener('click', () => { nipcIn.value = spaced(b.dataset.nipc); nipcIn.dispatchEvent(new Event('input')); nipcIn.focus(); }));
+  // Back: the password for the email route; a provider sign-up had no password, so its start
+  $('#company-back').addEventListener('click', () => show(person && person.via !== 'Email' ? 'signup' : 'password'));
+  const lines = (box, list) => { box.innerHTML = list.map((t) => `<li>${t}</li>`).join(''); return [...box.children]; };
+  $('#f-company').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const d = digits(nipcIn.value);
+    if (d.length !== 9) { nipcErr.textContent = 'A NIPC has nine digits.'; nipcIn.classList.add('is-bad'); nipcIn.focus(); return; }
+    company = ON_CMORE[d] || null;
+    if (!company && !validNipc(d)) { nipcErr.textContent = 'That isn\u2019t a valid NIPC. Check the digits against your company\u2019s tax card.'; nipcIn.classList.add('is-bad'); nipcIn.focus(); return; }
+    nipc = d;
+    document.querySelectorAll('.nipc-n').forEach((n) => { n.textContent = spaced(d); });
+    show('nipc-check');
+    // ALMA's checks, one after the other: the number itself, the business register, C-MORE
+    const steps = lines($('#nipc-steps'), ['Checking the number and its check digit', 'Looking it up in the business register', 'Looking for it on C&#8209;MORE']);
+    for (const li of steps) { li.classList.add('is-on'); await wait(750); li.classList.remove('is-on'); li.classList.add('is-ok'); }
+    const last = steps[2];
+    if (company) {
+      last.classList.remove('is-ok'); last.classList.add('is-hit'); last.innerHTML = 'Already on C&#8209;MORE';
+      await wait(600);
+      // only its logo and name: nothing else about a company is shown to someone who isn't in it yet
+      // (no people, address or activity), so the step can't be used to fish for who to target
+      $('#found').innerHTML = `${company.logo ? `<img src="${company.logo}" alt="">` : `<span class="found-mono">${initials(company.name)}</span>`}<span><b>${company.name}</b></span>`;
+      resetRequest();
+      show('nipc-taken');
+    } else {
+      // new to C-MORE: straight on to the plan and payment, as its owner
+      last.innerHTML = 'Not on C&#8209;MORE yet';
+      await wait(500);
+      person.nipc = nipc; toPayment();
+    }
+  });
+
+  // ---- the request to join a company already on C-MORE ------------------------------------
+  // One click: the request goes to the company's owners and admins, who choose the role and access.
+  // That is where sign-up ends for this person: the answer comes by email.
+  let request = null, toastT = 0;
+  const toast = (html) => {
+    let t = $('#toast');
+    if (!t) { t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; t.setAttribute('role', 'status'); document.body.appendChild(t); }
+    t.innerHTML = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd"/></svg><span>' + html + '</span>';
+    t.classList.add('is-on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('is-on'), 4500);
+  };
+  const resetRequest = () => { request = null; const b = $('#req-open'); b.disabled = false; b.textContent = 'Request access'; };
+  $('#req-open').addEventListener('click', () => {
+    request = { nipc, groups: [], on: new Date().toDateString() };
+    const b = $('#req-open'); b.disabled = true; b.textContent = 'Access requested';
+    toast(`Request sent to ${company.name}. We&rsquo;ll email ${esc(person.email)} when they answer.`);
+    try { sessionStorage.setItem('cm-access-request', JSON.stringify(Object.assign({ person }, request))); } catch (err) {}
+  });
   // ---- on to payment ------------------------------------------------------------
   // The account exists; next is how to pay (payment.html, then checkout.html). The
   // welcome is prepared now and remembered for this tab, so checkout can come back to
@@ -765,17 +892,17 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     saveDone();
     if (showIt) show('done');
   }
-  // Back from the payment page (register.html#password): the password step again for
-  // the email route; a provider sign-up has no password step, so it lands on the start.
-  if (location.hash === '#password') {
+  // Back from the payment page (register.html#company): the company step, with its NIPC
+  if (location.hash === '#company' || location.hash === '#password') {
     try {
       const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null');
-      if (p && p.via === 'Email') {
+      if (p) {
         person = p;
         nameIn.value = p.name; emailIn.value = p.email; ready();
         $('#code-email').textContent = p.email; $('#pw-email').textContent = p.email;
-        show('password');
-      } else if (p) { nameIn.value = p.name; emailIn.value = p.email; ready(); }
+        nipc = p.nipc || '';
+        toCompanyStep();
+      }
     } catch (e) {}
   }
   // after checkout (register.html#done): the welcome screen, as it was prepared

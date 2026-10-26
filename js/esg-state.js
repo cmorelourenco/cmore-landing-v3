@@ -36,10 +36,10 @@ window.ESG = (() => {
   // ---- what counts as an answer -------------------------------------------------------------
   const THIS_YEAR = new Date().getFullYear();
   const RULES = {
-    year: (t) => (!/^\d{4}$/.test(t) ? 'Give the year as four digits — 2025, for example.' : +t > THIS_YEAR ? 'That year has not happened yet. Give the year it was actually done.' : +t < 1900 ? 'That looks too far back to be right — check the year.' : ''),
-    count: (t) => (/[.,]/.test(t) ? 'Give this as a whole number.' : !/^\d{1,6}$/.test(t) ? 'Digits only — 48, for example.' : ''),
-    when: (t) => { const m = t.match(/(1[89]\d{2}|20\d{2})/); return !m ? 'Give at least the year — “July 2025”, or 2025.' : +m[1] > THIS_YEAR ? 'That date has not happened yet.' : ''; },
-    text: (t) => (t.length < 12 ? 'Say a little more — this needs at least 12 characters.' : !/[A-Za-zÀ-ɏ]{3}/.test(t) ? 'This should be written out, not just figures or symbols.' : ''),
+    year: (t) => (!/^\d{4}$/.test(t) ? 'Give the year as four digits: 2025, for example.' : +t > THIS_YEAR ? 'That year has not happened yet. Give the year it was actually done.' : +t < 1900 ? 'That looks too far back to be right. Check the year.' : ''),
+    count: (t) => (/[.,]/.test(t) ? 'Give this as a whole number.' : !/^\d{1,6}$/.test(t) ? 'Digits only: 48, for example.' : ''),
+    when: (t) => { const m = t.match(/(1[89]\d{2}|20\d{2})/); return !m ? 'Give at least the year: “July 2025”, or 2025.' : +m[1] > THIS_YEAR ? 'That date has not happened yet.' : ''; },
+    text: (t) => (t.length < 12 ? 'Say a little more. This needs at least 12 characters.' : !/[A-Za-zÀ-ɏ]{3}/.test(t) ? 'This should be written out, not just figures or symbols.' : ''),
   };
   const problem = (q, v) => (q.ty === 'text' && v && v.trim() ? (RULES[q.val] || RULES.text)(v.trim()) : '');
   const has = (v) => v != null && String(v).trim() !== '';
@@ -83,8 +83,8 @@ window.ESG = (() => {
     first = first || key; }); return { ok: !gaps && !review && !bad, gaps, review, bad, first }; };
 
   // ---- ALMA's answers go in where nothing is there yet; what you already answered stays yours ----
-  const DECLARE = 'This is a declaration about your own operations — it isn’t something I can read from documents.';
-  const NOT_FOUND = 'I found the Yes above, but not this detail in the documents — it needs you.';
+  const DECLARE = 'This is a declaration about your own operations. It isn’t something I can read from documents.';
+  const NOT_FOUND = 'I found the Yes above, but not this detail in the documents. It needs you.';
   // her planned answer goes in (follow-ups too, where empty or forced); a redone answer is hers again, review and all
   const entry = (s, q, key, force) => {
     const a = q.a; if (!a || a.by !== 'alma') return false;
@@ -113,12 +113,12 @@ window.ESG = (() => {
       m++;
       const a = q.a, v = a && (a.by === 'alma' || a.by === 'user') ? a.v : null;
       if (has(s.v[key]) || !v || (q.ty === 'text' && problem(q, v))) {
-        if (!has(s.v[key])) s.meta[key] = { by: 'flag', why: `I looked again in ${file}, and it doesn’t cover this one either — it still needs you.` };
+        if (!has(s.v[key])) s.meta[key] = { by: 'flag', why: `I looked again in ${file}, and it doesn’t cover this one either. It still needs you.` };
         return;
       }
       if (a.by === 'alma') entry(s, q, key);
       else s.meta[key] = { by: 'alma', conf: 'medium', orig: v, src: file,
-        why: `This question was still unanswered. ${file} covers it, so I’ve answered it from there — please check I read it the way you meant.`,
+        why: `This question was still unanswered. ${file} covers it, so I’ve answered it from there. Please check I read it the way you meant.`,
         cite: [{ src: file, loc: 'New document', quote: 'The new document addresses what this question asks and states that it is in place.', match: 'states that it is in place' }] };
       s.v[key] = v; s.na[key] = false; n++;
     });

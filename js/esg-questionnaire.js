@@ -18,7 +18,7 @@
   };
   const svg = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]}</svg>`;
   const tool = (k, label) => `<button type="button" class="esgq-tool" aria-label="${label}" title="${label}">${svg(k)}</button>`;
-  const CONF = { high: ['High confidence', 'is-ok', 'The documents state this directly.'], medium: ['Medium confidence', 'is-mid', 'Reasonably evidenced — worth a glance.'], low: ['Low confidence', 'is-low', 'Thin evidence — please check this answer.'] };
+  const CONF = { high: ['High confidence', 'is-ok', 'The documents state this directly.'], medium: ['Medium confidence', 'is-mid', 'Reasonably evidenced, worth a glance.'], low: ['Low confidence', 'is-low', 'Thin evidence. Please check this answer.'] };
 
   // ---- building the cards ---------------------------------------------------------------------
   const field = (q, key) => {
@@ -81,13 +81,13 @@
     const answeredRow = na || (ESG.has(v) && !p);
     if (m && m.by === 'alma' && !m.rejected) {
       tags.push(chip('Answered by ALMA', 'is-alma', 'Read from ' + (m.src || (q.a && q.a.src) || 'your documents')));
-      if (m.approved) tags.push(chip('Approved by you', 'is-you', 'You approved ALMA’s answer — she was unsure of it.'));
+      if (m.approved) tags.push(chip('Approved by you', 'is-you', 'You approved ALMA’s answer, though she was unsure of it.'));
       else { const c = CONF[m.conf] || CONF.medium; tags.push(chip(c[0], c[1], c[2])); }
       if (m.edited) tags.push(chip('Edited by you', 'is-you', 'You changed ALMA’s answer.'));
       else if (m.commented) tags.push(chip('Commented by you', 'is-you', 'You commented on ALMA’s answer.'));
     } else if (m && m.rejected) tags.push(chip('Edited by you', 'is-you', 'You turned down ALMA’s answer.'));
     if (answeredRow && s.alma && s.alma.applied && (!m || m.by === 'flag' || m.rejected)) tags.push(chip('Answered by you', 'is-you'));
-    if (ESG.rowNeeds(s, q, key)) tags.push(chip('Needs you', 'is-needs', m.rejected ? 'You turned down ALMA’s answer — this needs one from you.' : m.by === 'flag' ? why : CONF.low[2]));
+    if (ESG.rowNeeds(s, q, key)) tags.push(chip('Needs you', 'is-needs', m.rejected ? 'You turned down ALMA’s answer. This needs one from you.' : m.by === 'flag' ? why : CONF.low[2]));
     const pending = m && m.by === 'alma' && m.conf === 'low' && !m.approved && !m.edited && !m.commented && !m.rejected && !locked;
     const n = talk(key), cb = rowEl.querySelector(`[data-comment="${CSS.escape(key)}"]`), cn = cb.querySelector('.esgq-tool-n');
     cn.hidden = !n; cn.textContent = n; cb.classList.toggle('has-n', !!n); cb.setAttribute('aria-label', n ? `Comments, ${n}` : 'Comments');
@@ -211,7 +211,7 @@
       a.title = S.needs && !s.submitted ? `${S.needs} need${S.needs === 1 ? 's' : ''} you` : '';
     });
     const r = ESG.ready(s);
-    document.getElementById('esgq-lead').textContent = s.submitted ? 'Submitted — your answers are locked while they are reviewed.' : 'Nothing here is shared until you choose to submit it.';
+    document.getElementById('esgq-lead').textContent = s.submitted ? 'Submitted. Your answers are locked while they are reviewed.' : 'Nothing here is shared until you choose to submit it.';
     // Submit stays where it is once used, greyed out and saying why; View dashboard waits beside it until then
     // one or the other: Submit until it is in, then View dashboard in its place
     [submitBtn, document.getElementById('esgq-submit-end')].forEach((b) => { b.hidden = !!s.submitted; b.setAttribute('aria-disabled', String(!r.ok)); });
@@ -391,7 +391,7 @@
     if (st === 'reading') {
       const docs = ESG.reading(s).docs, pct = ESG.almaPct(s), i = Math.min(docs.length - 1, Math.floor((pct / 100) * docs.length));
       pt.textContent = 'Reading your documents';
-      ps.textContent = `${docs[i].name} · ${i + 1} of ${docs.length}. ` + (s.alma.pending ? 'I’ll tell you what changed when I’m done.' : 'You can keep answering meanwhile — I won’t touch anything you have filled in.');
+      ps.textContent = `${docs[i].name} · ${i + 1} of ${docs.length}. ` + (s.alma.pending ? 'I’ll tell you what changed when I’m done.' : 'You can keep answering meanwhile. I won’t touch anything you have filled in.');
       pm.hidden = false; pm.querySelector('i').style.width = pct + '%';
       if (shownState !== st) { pa.innerHTML = ''; pa.dataset.v = ''; }
       if (!tick) tick = setInterval(() => { if (ESG.status(s) !== 'reading') { clearInterval(tick); tick = null; finish(); } else panel(); }, 300);
@@ -401,7 +401,7 @@
         : L.mode === 'gaps' ? (L.n ? `I answered ${L.n} of the ${pl(L.m, 'question')} that were still empty.` : 'The new documents don’t answer any of the questions still empty.')
         : L.mode === 'pick' ? `I looked again at ${pl(L.n, 'answer')} with the new documents; everything else is untouched.`
         : `I started over and answered ${pl(L.n, 'question')} from all ${L.docs} documents.`;
-      ps.textContent = c.needs ? `${c.needs} still need${c.needs === 1 ? 's' : ''} you — they’re marked below. Check my answers, then submit when everything is in.` : 'Nothing is waiting on you. Have a last look, then submit.';
+      ps.textContent = c.needs ? `${c.needs} still need${c.needs === 1 ? 's' : ''} you, they’re marked below. Check my answers, then submit when everything is in.` : 'Nothing is waiting on you. Have a last look, then submit.';
       pm.hidden = true;
       const want = c.needs ? 'needs' : 'none';
       if (pa.dataset.v !== want) { pa.dataset.v = want; pa.innerHTML = '<button type="button" class="btn btn-quiet btn-sm" id="qd-more">Add documents</button>' + (c.needs ? '<button type="button" class="btn btn-quiet btn-sm" id="qd-needs">Show what needs you</button>' : ''); }
@@ -440,7 +440,7 @@
     s = ESG.load();
     if (how) { ESG.handMore(s, docs, how.mode, how.keys); panel(); return; } // she reads them here, and says what changed
     ESG.handTo(s, docs); panel();
-    dialog({ alma: true, h: 'I’ll take it from here', p: 'I have your documents and I’m reading them now. You don’t need to wait here — I’ll let you know the moment I’m done. You’ll see every answer, and what I read it from, before anything is submitted.',
+    dialog({ alma: true, h: 'I’ll take it from here', p: 'I have your documents and I’m reading them now. You don’t need to wait here. I’ll let you know the moment I’m done. You’ll see every answer, and what I read it from, before anything is submitted.',
       acts: [['Stay here', 'btn-quiet', null], ['Back to Questionnaires', 'btn-primary', 'questionnaires.html']] });
   };
   drop.addEventListener('click', (e) => {

@@ -741,15 +741,15 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* the document tables: the catalog's eight columns, the same in every area */
 .cd-tbl.cd-doc-tbl { min-width: 64rem; }
 .cd-tbl.cd-doc-tbl th:nth-child(n) { width: auto; }
-.cd-tbl.cd-doc-tbl th:nth-child(1) { width: 17.5%; }
+.cd-tbl.cd-doc-tbl th:nth-child(1) { width: 16%; }
 .cd-tbl.cd-doc-tbl th:nth-child(2) { width: 7%; }
 .cd-tbl.cd-doc-tbl th:nth-child(3) { width: 12.5%; }
 .cd-tbl.cd-doc-tbl td:nth-child(3), .cd-tbl.cd-doc-tbl td:nth-child(4) { overflow: visible; }
-.cd-tbl.cd-doc-tbl th:nth-child(4) { width: 15%; }
+.cd-tbl.cd-doc-tbl th:nth-child(4) { width: 13.5%; }
 .cd-tbl.cd-doc-tbl th:nth-child(5) { width: 9.5%; }
 .cd-tbl.cd-doc-tbl th:nth-child(6) { width: 10.5%; }
 .cd-tbl.cd-doc-tbl th:nth-child(7), .cd-tbl.cd-doc-tbl th:nth-child(8) { width: 8.5%; }
-.cd-tbl.cd-doc-tbl th:last-child { width: 11%; }
+.cd-tbl.cd-doc-tbl th:last-child { width: 14%; } /* room for Upload / Replace beside the versions */
 .cd-tbl.cd-doc-tbl td { vertical-align: top; }
 .cd-tbl.cd-doc-tbl td:nth-child(n+2) { padding-top: 1.0625rem; }
 .cd-tbl.cd-doc-tbl td:nth-child(2) { white-space: normal; overflow: visible; }
@@ -884,8 +884,9 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cd-restricted svg { flex: none; width: 1.125rem; height: 1.125rem; }
 .cd-worker .pd-kv dd .co-badge { margin-right: 0.375rem; }
 .cd-tbl.cd-wk-tbl th:nth-child(n) { width: auto; }
-.cd-tbl.cd-wk-tbl th:first-child { width: 62%; }
-.cd-tbl.cd-wk-tbl th:nth-child(2) { width: 20%; }
+.cd-tbl.cd-wk-tbl th:first-child { width: 52%; }
+.cd-tbl.cd-wk-tbl th:nth-child(2) { width: 18%; }
+.cd-tbl.cd-wk-tbl th:nth-child(4) { width: 9rem; } /* Upload / Replace */
 .cd-sites { display: grid; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
 .cd-sites li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-mid-beige); font-size: 0.9375rem; }
 .cd-sites li:last-child { padding-bottom: 0; border-bottom: 0; }

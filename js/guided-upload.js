@@ -40,8 +40,8 @@
   const profile = DM.profileOf(org);
   const AREA = {
     company: { title: 'Company', what: 'company documents', who: `A ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE needs these N.` },
-    workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you in WHERE. One file each for now &mdash; once you add your team, I&rsquo;ll ask for them person by person.' },
-    equipment: { title: 'Equipment', what: 'equipment documents', who: 'These N cover the machines you bring to site. One file each for now &mdash; once you add your machines, I&rsquo;ll ask for them machine by machine.' },
+    workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you in WHERE. One file each for now. Once you add your team, I&rsquo;ll ask for them person by person.' },
+    equipment: { title: 'Equipment', what: 'equipment documents', who: 'These N cover the machines you bring to site. One file each for now. Once you add your machines, I&rsquo;ll ask for them machine by machine.' },
   };
   const TYPICAL = { workers: [{ nationality: profile.country, specialRisk: false, certifiedOperator: false, employmentType: 'permanent' }], equipment: [{ yearBuilt: 2020, measuring: false, certified: false }] };
   const asks = (area) => {
@@ -294,7 +294,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
           <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span></span></button>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${total ? `${total} file${total === 1 ? '' : 's'} so far, <span class="soft">add more or carry on.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
-        <p class="lead">${A.who.replace('WHERE', where).replace('N', n)} Drop your files on me &mdash; as many as you have. I&rsquo;ll read them and tell you which is which.</p>
+        <p class="lead">${A.who.replace('WHERE', where).replace('N', n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
         <div class="gs-pane gs-two">
           <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
           <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
@@ -317,7 +317,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
         <p class="gs-sum">${summary}</p>
         <dl class="gs-fields">${fields}</dl>
-        ${flagged ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly &mdash; the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
+        ${flagged ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly: the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
         <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button><button class="link-btn" type="button" data-remove="${d.code}">Remove</button>`}</span>
           <span>${ed ? `<button class="link-btn" type="button" data-cancel>Cancel</button><button class="gs-acc" type="button" data-save="${d.code}">${OK}Save changes</button>`
             : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-accept="${d.code}">${OK}Accept</button>`}</span></footer>
@@ -373,14 +373,14 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     const checks = (extra) => unchecked().map((d) => {
       const f = saved.files[d.code];
       return [`${f.file} → ${d.name.en}`, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
-    }).concat(extra.map((name) => [name, `Not one of the ${A.title.toLowerCase()} documents I asked for &mdash; I&rsquo;ve kept it in your documents.`, null]));
+    }).concat(extra.map((name) => [name, `Not one of the ${A.title.toLowerCase()} documents I asked for. I&rsquo;ve kept it in your documents.`, null]));
     const validating = () => {
       const all = checking.rows.length, done = Math.min(checking.at, all);
       const rows = checking.rows.map(([n, why, code], i) => `<li class="${i < done ? (code ? 'is-ok' : 'is-in') : i === done ? 'is-reading' : ''}"><span class="gs-ic">${i < done ? (code ? OK : FILE) : i === done ? SPIN : ''}</span><span><span class="gs-n">${esc(n)}</span><span class="gs-d">${i < done ? why : i === done ? 'Reading&hellip;' : 'Waiting'}</span></span><span></span></li>`).join('');
       return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1" aria-live="polite">${done === all ? 'All read.' : 'Reading your files&hellip;'}</h1>
-        <p class="lead">${done === all ? (checking.rows.some((r) => r[2]) ? 'Every document I recognised checks out with the body that issued it. Next, what I read.' : 'None of these is a document I asked for here &mdash; I&rsquo;ve kept them in your documents.') : 'I&rsquo;m reading each file, working out which document it is, and confirming its code with the body that issued it.'}</p>
+        <p class="lead">${done === all ? (checking.rows.some((r) => r[2]) ? 'Every document I recognised checks out with the body that issued it. Next, what I read.' : 'None of these is a document I asked for here. I&rsquo;ve kept them in your documents.') : 'I&rsquo;m reading each file, working out which document it is, and confirming its code with the body that issued it.'}</p>
         <div class="gs-pane"><ul class="gs-list" aria-label="Checks">${rows}</ul></div>`;
     };
     const validate = () => {
@@ -420,7 +420,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       const rows = [['Holder', company, false], ['Tax number', esc(taxShown || '—'), false]].concat(FIELDS.map(([k, l]) => [label(k, l), esc(f[k]), flagged && f.flag === k]));
       const conf = (flag, i) => (f.edited ? 98 : flag ? 52 : Math.min(99, f.conf + (hash(d.code + i) % 7) - 3));
       const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
-      const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here &mdash; I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
+      const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here. I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
         + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${citeAt === i}">${citeAt === i ? 'Hide citation' : 'View citation'}</button>`
         + `<figure class="esgq-src cdd-src"${citeAt === i ? '' : ' hidden'}><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td>`
         + `<td>${tag(conf(fl, i))}</td></tr>`).join('')}</tbody></table></section>`;

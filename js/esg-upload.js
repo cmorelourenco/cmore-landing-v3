@@ -22,8 +22,8 @@ window.ESG_UPLOAD = (() => {
   };
   // how far she trusts what she read off each one
   const confOf = (d) => {
-    if (d.source === 'library') return ['From Documents', '', 'Already in your Documents — I read this one when it was added.'];
-    if (/^(jpe?g|png)$/.test(ext(d.name))) return ['Low confidence', 'is-low', 'An image rather than text — read by OCR, so worth a check.'];
+    if (d.source === 'library') return ['From Documents', '', 'Already in your Documents. I read this one when it was added.'];
+    if (/^(jpe?g|png)$/.test(ext(d.name))) return ['Low confidence', 'is-low', 'An image rather than text, read by OCR, so worth a check.'];
     if (d.until) return ['Medium confidence', 'is-mid', 'The date on this one came from you, not from the document.'];
     if (!D.valid[d.name]) return ['Low confidence', 'is-low', 'No validity date found in the file itself.'];
     if (/^(xlsx|txt)$/.test(ext(d.name))) return ['Medium confidence', 'is-mid', 'A spreadsheet: the figures read cleanly, the wording less so.'];
@@ -60,7 +60,7 @@ window.ESG_UPLOAD = (() => {
     [...files].forEach((f) => {
       if (picked.some((p) => p.name === f.name && p.size === f.size)) return;
       const d = { id: ++uid, name: f.name, size: f.size, source: 'files' };
-      if (!TYPES.includes(ext(f.name))) d.bad = 'Unsupported format — use PDF, XLSX, DOCX, TXT, JPG or PNG.';
+      if (!TYPES.includes(ext(f.name))) d.bad = 'Unsupported format. Use PDF, XLSX, DOCX, TXT, JPG or PNG.';
       else if (f.size > MAX) d.bad = 'This file is larger than 10 MB.';
       if (fromVerdict && !d.bad) { d.checking = true; d.added = true; setTimeout(() => { d.checking = false; render(); }, 1600); }
       picked.push(d);
@@ -80,7 +80,7 @@ window.ESG_UPLOAD = (() => {
     <button type="button" class="up-rm" data-rm="${d.id}" aria-label="Remove ${esc(d.name)}">${ICON.x}</button></div>`;
   const pickStage = () => {
     $('#up-h').textContent = second ? 'Give me more to read' : 'Let me fill in your questionnaire';
-    $('#up-p').textContent = second ? 'Add documents and tell me what to do with them — fill what is still empty, look again at some answers, or start over. You review every change.'
+    $('#up-p').textContent = second ? 'Add documents and tell me what to do with them. Fill what is still empty, look again at some answers, or start over. You review every change.'
       : 'Give me your company’s policy documents and I’ll find the answers in them. You review every one before anything is submitted.';
     $('#up-alma').classList.remove('is-reading');
     const n = good().length;
@@ -94,7 +94,7 @@ window.ESG_UPLOAD = (() => {
       <div class="up-sec"><span class="up-k">${second ? 'New documents' : 'Selected'}</span>${picked.length ? `<div class="up-list">${picked.map(rowPick).join('')}</div>` : `<p class="co-subtle" style="font-size:.9375rem">${second ? 'Add a document to have me look again.' : 'Nothing selected yet.'}</p>`}</div>
       ${second ? readBox() + (n ? redoBox() : '') : ''}
       <details class="up-help"><summary>What helps me most ${ICON.chev}</summary><div class="up-help-in">
-        Send documents that contain the information you’re answering about — not just cover pages or table-of-contents summaries. The most useful are usually:
+        Send documents that contain the information you’re answering about, not just cover pages or table-of-contents summaries. The most useful are usually:
         <ul><li><b>Health, safety &amp; environment</b> policies, manuals and risk assessments</li><li><b>Ethics &amp; compliance</b>: code of conduct, anti-corruption, whistleblowing</li><li><b>Insurance &amp; safety record</b>: certificates of insurance, liability</li>
         <li><b>Company records</b>: registration, financial statements</li><li><b>Quality &amp; certifications</b>: quality manual, ISO certificates, licences</li><li><b>Training &amp; people</b>: training matrices, org charts, handbooks</li></ul>
         <p class="up-tip">Descriptive file names help me match each document to the right questions.</p></div></details>`;
@@ -144,9 +144,9 @@ window.ESG_UPLOAD = (() => {
   ];
   const redoBox = () => {
     const total = new Set(second.groups.flatMap((g) => g.keys)).size, k = chosen().length;
-    return `<section class="up-redo" aria-labelledby="up-redo-h"><h3 id="up-redo-h">New documents — what should I redo?</h3><p>I’ll read the new documents either way. This is about the answers that are already in.</p>
+    return `<section class="up-redo" aria-labelledby="up-redo-h"><h3 id="up-redo-h">New documents: what should I redo?</h3><p>I’ll read the new documents either way. This is about the answers that are already in.</p>
       ${CHOICES.map(([v, t, d]) => `<label class="up-choice${scope === v ? ' is-on' : ''}"><input type="radio" name="up-scope" value="${v}"${scope === v ? ' checked' : ''}><span><b>${t}</b><span>${d}</span></span></label>`
-        + (v === 'pick' && scope === 'pick' ? `<div class="up-tags"><div class="up-tags-h"><span>${k ? `${k} of ${pl(total, 'answer')} selected` : 'Nothing selected — tick the tags whose answers I should redo'}</span><span><button type="button" class="link-btn" data-tags="all">Select all</button> · <button type="button" class="link-btn" data-tags="none">Clear</button></span></div>
+        + (v === 'pick' && scope === 'pick' ? `<div class="up-tags"><div class="up-tags-h"><span>${k ? `${k} of ${pl(total, 'answer')} selected` : 'Nothing selected. Tick the tags whose answers I should redo'}</span><span><button type="button" class="link-btn" data-tags="all">Select all</button> · <button type="button" class="link-btn" data-tags="none">Clear</button></span></div>
           <ul>${second.groups.map((g) => `<li><label class="${g.keys.length ? '' : 'is-empty'}"><input type="checkbox" data-tag="${g.key}"${ticked.has(g.key) ? ' checked' : ''}${g.keys.length ? '' : ' disabled'}><span class="chip ${g.cls}">${g.label}</span><span class="up-tags-n">${g.keys.length ? pl(g.keys.length, 'answer') : 'none'}</span></label></li>`).join('')}</ul></div>` : '')).join('')}
     </section>`;
   };
@@ -157,7 +157,7 @@ window.ESG_UPLOAD = (() => {
     picked = picked.filter((d) => !d.bad);
     stage = 'check'; open.clear(); editing = null;
     $('#up-h').textContent = 'Checking your documents';
-    $('#up-p').textContent = 'Every document has a shelf life — I make sure each one is still in force before I answer anything from it.';
+    $('#up-p').textContent = 'Every document has a shelf life. I make sure each one is still in force before I answer anything from it.';
     $('#up-alma').classList.add('is-reading');
     $('#up-body').innerHTML = '';
     $('#up-foot').innerHTML = '';
@@ -192,7 +192,7 @@ window.ESG_UPLOAD = (() => {
     if (d.bad) return rowPick(d);
     const [ct, cc, tip] = confOf(d), w = where(d), on = open.has(d.id), u = until(d);
     const meta = [size(d.size)].concat(d.source === 'library' ? ['From Documents'] : [], d.added ? ['just added'] : [], d.until ? ['date changed'] : []).join(' · ');
-    const say = expired(d) ? '<span class="vd-say">This document seems to have expired.</span>' : d.na ? '<span class="vd-say">Set aside — I won’t read this one.</span>' : '';
+    const say = expired(d) ? '<span class="vd-say">This document seems to have expired.</span>' : d.na ? '<span class="vd-say">Set aside. I won’t read this one.</span>' : '';
     const iso = u ? u.toISOString().slice(0, 10) : '';
     return `<div class="vd-row${expired(d) ? ' is-expired' : ''}${d.na ? ' is-na' : ''}"><div class="vd-main"><span class="up-ico">${ICON.doc}</span>
       <span class="up-name"><b>${esc(d.name)}</b><small><span>${meta}</span>${say}${d.checking ? '' : `<button type="button" class="vd-more" data-more="${d.id}" aria-expanded="${on}">${on ? 'Hide details' : 'View details'}</button>`}</small></span>
@@ -217,12 +217,12 @@ window.ESG_UPLOAD = (() => {
     else if (ex.length) {
       const one = ex.length === 1;
       h = one ? 'One of these documents has expired' : `${ex.length} of these documents have expired`;
-      p = one ? 'I can’t answer from it as it is. Press the date to give it a new one if it’s still in force, or set it aside as not applicable — or take it out and add a current version.'
-        : 'I can’t answer from them as they are. Press a date to give it a new one if it’s still in force, or set it aside as not applicable — or take it out and add a current version.';
+      p = one ? 'I can’t answer from it as it is. Press the date to give it a new one if it’s still in force, or set it aside as not applicable, or take it out and add a current version.'
+        : 'I can’t answer from them as they are. Press a date to give it a new one if it’s still in force, or set it aside as not applicable, or take it out and add a current version.';
     } else if (!read.length) { h = 'Nothing left for me to read'; p = 'Everything is marked not applicable, so there is nothing for me to read.'; }
     else {
-      h = 'All checked — ready to read';
-      p = `All ${read.length} document${read.length === 1 ? ' is' : 's are'} current` + (na.length ? `, and ${na.length} ${na.length === 1 ? 'is' : 'are'} set aside as not applicable` : '') + ' — I’m ready to read. You’ll see every answer before anything is submitted.';
+      h = 'All checked, ready to read';
+      p = `All ${read.length} document${read.length === 1 ? ' is' : 's are'} current` + (na.length ? `, and ${na.length} ${na.length === 1 ? 'is' : 'are'} set aside as not applicable` : '') + '. I’m ready to read. You’ll see every answer before anything is submitted.';
     }
     $('#up-h').textContent = h; $('#up-p').textContent = p;
     $('#up-body').innerHTML = `<div class="vd-list">${list.map(rowVerdict).join('')}</div>`;
