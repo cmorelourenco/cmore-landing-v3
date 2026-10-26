@@ -52,7 +52,7 @@
   const forget = () => {
     try {
       ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
-      ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
+      ['cm-org', 'cm-newco-paid', 'cm-newco-id', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
       // and what was filed for the companies added (their guided upload, marks and updates), and
       // the crew changes approved from a worker list (js/doc-upload.js)
       Object.keys(sessionStorage).filter((k) => /^cm-(guided|na|doc-updates|crew)(-|$)/.test(k)).forEach((k) => sessionStorage.removeItem(k));

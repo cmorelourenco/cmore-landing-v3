@@ -484,6 +484,8 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   // only an owner adds companies; Cancel and the logo go back to the company you were in
   const O = window.CMOrgs;
   if (!O || O.role !== 'owner') { location.replace('my-company.html?filled'); return; }
+  // the company's number comes first (new-company.html): without it, there's nothing to pay for yet
+  try { if (!sessionStorage.getItem('cm-newco-id')) { location.replace('new-company.html'); return; } } catch (e) {}
   const back = O.current().state === 'filled' ? 'my-company.html?filled' : 'my-company.html?page';
   document.querySelectorAll('[data-back]').forEach((a) => a.setAttribute('href', back));
   // ---- currency: USD, EUR or CNY, carried between the plan picker and checkout ----

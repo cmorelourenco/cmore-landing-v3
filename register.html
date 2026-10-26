@@ -552,6 +552,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   </main>
 </div>
 
+<script src="js/company-id.js"></script>
 <script>
 (() => {
   const qs = new URLSearchParams(location.search);
@@ -696,41 +697,12 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   // the EU it's the VAT number. A valid number no company on C-MORE has: on to the plan and
   // payment, as its owner. One that is already here: the person asks to be let in, and sign-up
   // ends there. Prototype: C-MORE's companies are the demo's; the registers aren't contacted.
-  const luhn = (d) => [...d].reverse().reduce((a, c, i) => { let n = +c; if (i % 2) { n *= 2; if (n > 9) n -= 9; } return a + n; }, 0) % 10 === 0;
-  const ptOk = (d) => { if (!/^[1235689]\d{8}$/.test(d)) return false; const r = [...d.slice(0, 8)].reduce((a, c, i) => a + c * (9 - i), 0) % 11; return +d[8] === (r < 2 ? 0 : 11 - r); };
-  const itOk = (d) => { const s = [...d.slice(0, 10)].reduce((a, c, i) => { let n = +c; if (i % 2) { n *= 2; if (n > 9) n -= 9; } return a + n; }, 0); return (10 - (s % 10)) % 10 === +d[10]; };
-  const beOk = (d) => 97 - (+d.slice(0, 8) % 97) === +d.slice(8);
-  // [name of the number, example, what it looks like, the check, has a check digit, the register]
-  const ID = {
-    PT: ['NIPC', '516 482 300', 'nine digits', (v) => /^\d{9}$/.test(v) && ptOk(v), true, 'the Portuguese business register'],
-    ES: ['NIF', 'B12345674', 'a letter, seven digits and a control character', (v) => /^[A-HJNP-SUVW]\d{7}[0-9A-J]$/.test(v), true, 'the Registro Mercantil'],
-    FR: ['SIREN', '732 829 320', 'nine digits', (v) => /^\d{9}$/.test(v) && luhn(v), true, 'the Sirene register'],
-    DE: ['Handelsregister number', 'HRB 123456', 'HRA or HRB and its number', (v) => /^HR[AB]\d{3,6}[A-Z]?$/.test(v), false, 'the Handelsregister'],
-    IT: ['Partita IVA', '01234567897', 'eleven digits', (v) => /^\d{11}$/.test(v) && itOk(v), true, 'the Registro delle Imprese'],
-    NL: ['KvK number', '12345678', 'eight digits', (v) => /^\d{8}$/.test(v), false, 'the KvK business register'],
-    BE: ['enterprise number', '0403 170 701', 'ten digits, starting with 0 or 1', (v) => /^[01]\d{9}$/.test(v) && beOk(v), true, 'the Crossroads Bank for Enterprises'],
-    IE: ['CRO number', '123456', 'up to six digits', (v) => /^\d{4,6}$/.test(v), false, 'the CRO register'],
-    GB: ['company number', '01234567', 'eight digits, or two letters and six digits', (v) => /^(\d{8}|[A-Z]{2}\d{6})$/.test(v), false, 'Companies House'],
-    US: ['EIN', '12-3456789', 'nine digits', (v) => /^\d{9}$/.test(v), false, 'the IRS records'],
-  };
-  const EU = { AT: 'Austria', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark', EE: 'Estonia', FI: 'Finland', GR: 'Greece', HU: 'Hungary', LV: 'Latvia',
-    LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', PL: 'Poland', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', SE: 'Sweden' };
-  const NAMES = Object.assign({ PT: 'Portugal', ES: 'Spain', FR: 'France', DE: 'Germany', IT: 'Italy', NL: 'Netherlands', BE: 'Belgium', IE: 'Ireland', GB: 'United Kingdom', US: 'United States' }, EU);
-  // the rest of the EU: the VAT number, with or without its country prefix
-  const rule = (c) => ID[c] || ['VAT number', `${c === 'GR' ? 'EL' : c}123456789`, '8 to 12 characters, with or without the country code', (v) => /^[A-Z0-9]{8,12}$/.test(v.replace(new RegExp('^' + (c === 'GR' ? 'EL' : c)), '')), false, 'VIES, the EU&rsquo;s VAT register'];
-  const clean = (c, v) => { const x = v.toUpperCase().replace(/[\s.\-\/]/g, ''); return c === 'PT' && /^PT\d{9}$/.test(x) ? x.slice(2) : x; };
-  const shown = (c, v) => (c === 'PT' || c === 'FR' ? v.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') : c === 'BE' ? v.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3') : c === 'US' ? v.replace(/^(\d{2})(\d{7})$/, '$1&#8209;$2') : c === 'DE' ? v.replace(/^(HR[AB])/, '$1 ') : esc(v));
-  const ON_CMORE = {
-    'PT:514228930': { name: 'Ferreira Constru&ccedil;&otilde;es, Lda.', logo: 'images/ferreira-logo.webp' },
-    'US:714482019': { name: 'Veridian Harvest Co.', logo: 'images/veridian-logo.svg' },
-  };
+  const { rule, NAMES, clean, shown, label: labelFor } = window.CMCompanyId; // js/company-id.js
   const coSel = $('#co-country'), nipcIn = $('#nipc'), nipcErr = $('#nipc-err'), nipcGo = $('#nipc-go');
-  coSel.innerHTML = ['PT', 'ES', 'FR', 'DE', 'IT', 'NL', 'BE', 'IE', 'GB', 'US'].map((c) => `<option value="${c}">${NAMES[c]}</option>`).join('')
-    + `<optgroup label="Elsewhere in the EU">${Object.entries(EU).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${c}">${n}</option>`).join('')}</optgroup>`;
-  const labelFor = (c) => { const r = rule(c); return r[0].charAt(0).toUpperCase() + r[0].slice(1); };
+  coSel.innerHTML = window.CMCompanyId.options();
   const paintCountry = () => {
     const c = coSel.value, r = rule(c);
-    $('#nipc-l').textContent = `Company ${r[0]}`;
+    $('#nipc-l').textContent = window.CMCompanyId.field(c);
     nipcIn.placeholder = `e.g. ${r[1]}`;
     nipcIn.inputMode = /^\d|^\d{2}-/.test(r[1]) && !/[A-Z]/.test(r[1]) ? 'numeric' : 'text';
     $('#nipc-hint').innerHTML = `${labelFor(c)}: ${r[2]}.`;
@@ -739,7 +711,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   let nipc = '', country = 'PT', company = null;
   function toCompanyStep() {
     coSel.value = country; paintCountry();
-    nipcIn.value = nipc ? shown(country, nipc).replace(/&#8209;/g, '-') : ''; nipcErr.textContent = ''; nipcIn.classList.remove('is-bad');
+    nipcIn.value = nipc ? window.CMCompanyId.plain(country, nipc) : ''; nipcErr.textContent = ''; nipcIn.classList.remove('is-bad');
     nipcGo.disabled = !nipcIn.value.trim();
     show('company');
   }
@@ -747,14 +719,14 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   nipcIn.addEventListener('input', () => { nipcErr.textContent = ''; nipcIn.classList.remove('is-bad'); nipcGo.disabled = !nipcIn.value.trim(); });
   document.querySelectorAll('[data-nipc]').forEach((b) => b.addEventListener('click', () => {
     const [c, v] = b.dataset.nipc.split(':'); coSel.value = c; paintCountry();
-    nipcIn.value = shown(c, v).replace(/&#8209;/g, '-'); nipcIn.dispatchEvent(new Event('input')); nipcIn.focus();
+    nipcIn.value = window.CMCompanyId.plain(c, v); nipcIn.dispatchEvent(new Event('input')); nipcIn.focus();
   }));
   $('#company-back').addEventListener('click', () => show(person && person.via !== 'Email' ? 'signup' : 'password'));
   const lines = (box, list) => { box.innerHTML = list.map((t) => `<li>${t}</li>`).join(''); return [...box.children]; };
   $('#f-company').addEventListener('submit', async (e) => {
     e.preventDefault();
     const c = coSel.value, r = rule(c), v = clean(c, nipcIn.value);
-    company = ON_CMORE[`${c}:${v}`] || null;
+    company = window.CMCompanyId.find(c, v);
     if (!company && !r[3](v)) { nipcErr.textContent = `That doesn\u2019t look like a ${r[0]} from ${NAMES[c]}: it should be ${r[2]}, like ${r[1]}. Check the number, or the country.`; nipcIn.classList.add('is-bad'); nipcIn.focus(); return; }
     nipc = v; country = c;
     document.querySelectorAll('.nipc-n').forEach((n) => { n.innerHTML = shown(c, v); });
@@ -793,7 +765,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   $('#req-open').addEventListener('click', () => {
     request = { country, nipc, groups: [], on: new Date().toDateString() };
     const b = $('#req-open'); b.disabled = true; b.textContent = 'Access requested';
-    toast(`Request sent to ${company.name}. We&rsquo;ll email ${esc(person.email)} when they answer.`);
+    toast(`Request sent to ${company.name.replace(/\.$/, '')}. We&rsquo;ll email ${esc(person.email)} when they answer.`);
     try { sessionStorage.setItem('cm-access-request', JSON.stringify(Object.assign({ person }, request))); } catch (err) {}
   });
   // ---- on to payment ------------------------------------------------------------
