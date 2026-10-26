@@ -493,33 +493,38 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
       <section class="step" data-step="company" aria-labelledby="t-company">
         <p class="eyebrow">Your company</p>
         <h1 class="title" id="t-company">Your company.</h1>
-        <p class="subtitle">Give us its NIPC and ALMA checks it, so every client finds the same company, and only once.</p>
+        <p class="subtitle">Where it&rsquo;s registered and its company number. ALMA checks it, so every client finds the same company, and only once.</p>
         <form class="form" id="f-company" novalidate>
           <div class="field">
-            <label for="nipc">Company NIPC</label>
-            <input class="input" id="nipc" name="nipc" type="text" inputmode="numeric" autocomplete="off" placeholder="9 digits, e.g. 516 482 300" maxlength="11" required>
+            <label for="co-country">Country</label>
+            <select class="input" id="co-country" name="country" autocomplete="country"></select>
+          </div>
+          <div class="field">
+            <label for="nipc" id="nipc-l">Company NIPC</label>
+            <input class="input" id="nipc" name="nipc" type="text" inputmode="numeric" autocomplete="off" placeholder="9 digits, e.g. 516 482 300" maxlength="20" required aria-describedby="nipc-hint">
+            <p class="hint" id="nipc-hint"></p>
             <p class="err" id="nipc-err" role="alert"></p>
           </div>
           <button class="btn btn-primary btn-block" type="submit" id="nipc-go" disabled>Check it with ALMA</button>
           <div class="back-row"><button type="button" class="link-btn" id="company-back">Back</button></div>
         </form>
-        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: try<br><button type="button" class="link-btn" data-nipc="516482300">516 482 300 (new to C&#8209;MORE)</button><br><button type="button" class="link-btn" data-nipc="514228930">514 228 930 (already on C&#8209;MORE)</button></p>
+        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: try<br><button type="button" class="link-btn" data-nipc="PT:516482300">Portugal &middot; 516 482 300 (new to C&#8209;MORE)</button><br><button type="button" class="link-btn" data-nipc="PT:514228930">Portugal &middot; 514 228 930 (already on C&#8209;MORE)</button><br><button type="button" class="link-btn" data-nipc="US:714482019">United States &middot; 71&#8209;4482019 (already on C&#8209;MORE)</button></p>
       </section>
 
       <section class="step" data-step="nipc-check" aria-labelledby="t-nipc-check">
         <p class="eyebrow">ALMA</p>
         <h1 class="title" id="t-nipc-check">Checking it.</h1>
-        <p class="subtitle">NIPC <b class="nipc-n" style="font-weight:500;color:var(--color-ink)"></b></p>
+        <p class="subtitle"><span class="nipc-k">NIPC</span> <b class="nipc-n" style="font-weight:500;color:var(--color-ink)"></b></p>
         <ul class="chk" id="nipc-steps" aria-live="polite"></ul>
       </section>
 
       <section class="step" data-step="nipc-taken" aria-labelledby="t-nipc-taken">
         <p class="eyebrow">Your company</p>
         <h1 class="title" id="t-nipc-taken">Already here.</h1>
-        <p class="subtitle">That NIPC is already on C&#8209;MORE. Ask the company to add you.</p>
+        <p class="subtitle">That <span class="nipc-k">NIPC</span> is already on C&#8209;MORE. Ask the company to add you.</p>
         <div class="found" id="found"></div>
         <div class="actions" style="margin-top:1.5rem"><button type="button" class="btn btn-primary btn-block" id="req-open">Request access</button></div>
-        <div class="back-row" style="margin-top:1rem"><button type="button" class="link-btn" data-to="company">That&rsquo;s not my company. Use a different NIPC</button></div>
+        <div class="back-row" style="margin-top:1rem"><button type="button" class="link-btn" data-to="company">That&rsquo;s not my company. Use a different number</button></div>
       </section>
 
       <!-- 5. Done -->
@@ -685,44 +690,77 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     if (flow === 'reset') finishReset(); else toCompanyStep();
   });
 
-  // ---- 4. the company: its NIPC, checked by ALMA -----------------------------------
-  // A valid NIPC no company on C-MORE has: on to the plan and payment, as its owner. One that is
-  // already here: the person asks its owners and admins to be let in, and sign-up ends there.
-  // Prototype: C-MORE's companies are the demo's.
+  // ---- 4. the company: its country and company number, checked by ALMA ------------------
+  // Every country identifies a company its own way: the field, its example and its check follow
+  // the country chosen (a NIPC in Portugal, a SIREN in France, an EIN in the US…); elsewhere in
+  // the EU it's the VAT number. A valid number no company on C-MORE has: on to the plan and
+  // payment, as its owner. One that is already here: the person asks to be let in, and sign-up
+  // ends there. Prototype: C-MORE's companies are the demo's; the registers aren't contacted.
+  const luhn = (d) => [...d].reverse().reduce((a, c, i) => { let n = +c; if (i % 2) { n *= 2; if (n > 9) n -= 9; } return a + n; }, 0) % 10 === 0;
+  const ptOk = (d) => { if (!/^[1235689]\d{8}$/.test(d)) return false; const r = [...d.slice(0, 8)].reduce((a, c, i) => a + c * (9 - i), 0) % 11; return +d[8] === (r < 2 ? 0 : 11 - r); };
+  const itOk = (d) => { const s = [...d.slice(0, 10)].reduce((a, c, i) => { let n = +c; if (i % 2) { n *= 2; if (n > 9) n -= 9; } return a + n; }, 0); return (10 - (s % 10)) % 10 === +d[10]; };
+  const beOk = (d) => 97 - (+d.slice(0, 8) % 97) === +d.slice(8);
+  // [name of the number, example, what it looks like, the check, has a check digit, the register]
+  const ID = {
+    PT: ['NIPC', '516 482 300', 'nine digits', (v) => /^\d{9}$/.test(v) && ptOk(v), true, 'the Portuguese business register'],
+    ES: ['NIF', 'B12345674', 'a letter, seven digits and a control character', (v) => /^[A-HJNP-SUVW]\d{7}[0-9A-J]$/.test(v), true, 'the Registro Mercantil'],
+    FR: ['SIREN', '732 829 320', 'nine digits', (v) => /^\d{9}$/.test(v) && luhn(v), true, 'the Sirene register'],
+    DE: ['Handelsregister number', 'HRB 123456', 'HRA or HRB and its number', (v) => /^HR[AB]\d{3,6}[A-Z]?$/.test(v), false, 'the Handelsregister'],
+    IT: ['Partita IVA', '01234567897', 'eleven digits', (v) => /^\d{11}$/.test(v) && itOk(v), true, 'the Registro delle Imprese'],
+    NL: ['KvK number', '12345678', 'eight digits', (v) => /^\d{8}$/.test(v), false, 'the KvK business register'],
+    BE: ['enterprise number', '0403 170 701', 'ten digits, starting with 0 or 1', (v) => /^[01]\d{9}$/.test(v) && beOk(v), true, 'the Crossroads Bank for Enterprises'],
+    IE: ['CRO number', '123456', 'up to six digits', (v) => /^\d{4,6}$/.test(v), false, 'the CRO register'],
+    GB: ['company number', '01234567', 'eight digits, or two letters and six digits', (v) => /^(\d{8}|[A-Z]{2}\d{6})$/.test(v), false, 'Companies House'],
+    US: ['EIN', '12-3456789', 'nine digits', (v) => /^\d{9}$/.test(v), false, 'the IRS records'],
+  };
+  const EU = { AT: 'Austria', BG: 'Bulgaria', HR: 'Croatia', CY: 'Cyprus', CZ: 'Czechia', DK: 'Denmark', EE: 'Estonia', FI: 'Finland', GR: 'Greece', HU: 'Hungary', LV: 'Latvia',
+    LT: 'Lithuania', LU: 'Luxembourg', MT: 'Malta', PL: 'Poland', RO: 'Romania', SK: 'Slovakia', SI: 'Slovenia', SE: 'Sweden' };
+  const NAMES = Object.assign({ PT: 'Portugal', ES: 'Spain', FR: 'France', DE: 'Germany', IT: 'Italy', NL: 'Netherlands', BE: 'Belgium', IE: 'Ireland', GB: 'United Kingdom', US: 'United States' }, EU);
+  // the rest of the EU: the VAT number, with or without its country prefix
+  const rule = (c) => ID[c] || ['VAT number', `${c === 'GR' ? 'EL' : c}123456789`, '8 to 12 characters, with or without the country code', (v) => /^[A-Z0-9]{8,12}$/.test(v.replace(new RegExp('^' + (c === 'GR' ? 'EL' : c)), '')), false, 'VIES, the EU&rsquo;s VAT register'];
+  const clean = (c, v) => { const x = v.toUpperCase().replace(/[\s.\-\/]/g, ''); return c === 'PT' && /^PT\d{9}$/.test(x) ? x.slice(2) : x; };
+  const shown = (c, v) => (c === 'PT' || c === 'FR' ? v.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') : c === 'BE' ? v.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1 $2 $3') : c === 'US' ? v.replace(/^(\d{2})(\d{7})$/, '$1&#8209;$2') : c === 'DE' ? v.replace(/^(HR[AB])/, '$1 ') : esc(v));
   const ON_CMORE = {
-    514228930: { name: 'Ferreira Constru&ccedil;&otilde;es, Lda.', logo: 'images/ferreira-logo.webp', },
+    'PT:514228930': { name: 'Ferreira Constru&ccedil;&otilde;es, Lda.', logo: 'images/ferreira-logo.webp' },
+    'US:714482019': { name: 'Veridian Harvest Co.', logo: 'images/veridian-logo.svg' },
   };
-  const nipcIn = $('#nipc'), nipcErr = $('#nipc-err'), nipcGo = $('#nipc-go');
-  const digits = (v) => v.replace(/\D/g, '');
-  const spaced = (d) => d.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
-  // a Portuguese NIPC: nine digits, a company's starting 5, 6, 8 or 9, and its check digit (mod 11)
-  const validNipc = (d) => {
-    if (!/^[1235689]\d{8}$/.test(d)) return false;
-    const r = [...d.slice(0, 8)].reduce((a, c, i) => a + c * (9 - i), 0) % 11;
-    return +d[8] === (r < 2 ? 0 : 11 - r);
+  const coSel = $('#co-country'), nipcIn = $('#nipc'), nipcErr = $('#nipc-err'), nipcGo = $('#nipc-go');
+  coSel.innerHTML = ['PT', 'ES', 'FR', 'DE', 'IT', 'NL', 'BE', 'IE', 'GB', 'US'].map((c) => `<option value="${c}">${NAMES[c]}</option>`).join('')
+    + `<optgroup label="Elsewhere in the EU">${Object.entries(EU).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${c}">${n}</option>`).join('')}</optgroup>`;
+  const labelFor = (c) => { const r = rule(c); return r[0].charAt(0).toUpperCase() + r[0].slice(1); };
+  const paintCountry = () => {
+    const c = coSel.value, r = rule(c);
+    $('#nipc-l').textContent = `Company ${r[0]}`;
+    nipcIn.placeholder = `e.g. ${r[1]}`;
+    nipcIn.inputMode = /^\d|^\d{2}-/.test(r[1]) && !/[A-Z]/.test(r[1]) ? 'numeric' : 'text';
+    $('#nipc-hint').innerHTML = `${labelFor(c)}: ${r[2]}.`;
+    document.querySelectorAll('.nipc-k').forEach((k) => { k.textContent = r[0]; });
   };
-  let nipc = '', company = null;
+  let nipc = '', country = 'PT', company = null;
   function toCompanyStep() {
-    nipcIn.value = nipc ? spaced(nipc) : ''; nipcErr.textContent = ''; nipcIn.classList.remove('is-bad');
+    coSel.value = country; paintCountry();
+    nipcIn.value = nipc ? shown(country, nipc).replace(/&#8209;/g, '-') : ''; nipcErr.textContent = ''; nipcIn.classList.remove('is-bad');
     nipcGo.disabled = !nipcIn.value.trim();
     show('company');
   }
+  coSel.addEventListener('change', () => { paintCountry(); nipcErr.textContent = ''; nipcIn.classList.remove('is-bad'); });
   nipcIn.addEventListener('input', () => { nipcErr.textContent = ''; nipcIn.classList.remove('is-bad'); nipcGo.disabled = !nipcIn.value.trim(); });
-  document.querySelectorAll('[data-nipc]').forEach((b) => b.addEventListener('click', () => { nipcIn.value = spaced(b.dataset.nipc); nipcIn.dispatchEvent(new Event('input')); nipcIn.focus(); }));
-  // Back: the password for the email route; a provider sign-up had no password, so its start
+  document.querySelectorAll('[data-nipc]').forEach((b) => b.addEventListener('click', () => {
+    const [c, v] = b.dataset.nipc.split(':'); coSel.value = c; paintCountry();
+    nipcIn.value = shown(c, v).replace(/&#8209;/g, '-'); nipcIn.dispatchEvent(new Event('input')); nipcIn.focus();
+  }));
   $('#company-back').addEventListener('click', () => show(person && person.via !== 'Email' ? 'signup' : 'password'));
   const lines = (box, list) => { box.innerHTML = list.map((t) => `<li>${t}</li>`).join(''); return [...box.children]; };
   $('#f-company').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const d = digits(nipcIn.value);
-    if (d.length !== 9) { nipcErr.textContent = 'A NIPC has nine digits.'; nipcIn.classList.add('is-bad'); nipcIn.focus(); return; }
-    company = ON_CMORE[d] || null;
-    if (!company && !validNipc(d)) { nipcErr.textContent = 'That isn\u2019t a valid NIPC. Check the digits against your company\u2019s tax card.'; nipcIn.classList.add('is-bad'); nipcIn.focus(); return; }
-    nipc = d;
-    document.querySelectorAll('.nipc-n').forEach((n) => { n.textContent = spaced(d); });
+    const c = coSel.value, r = rule(c), v = clean(c, nipcIn.value);
+    company = ON_CMORE[`${c}:${v}`] || null;
+    if (!company && !r[3](v)) { nipcErr.textContent = `That doesn\u2019t look like a ${r[0]} from ${NAMES[c]}: it should be ${r[2]}, like ${r[1]}. Check the number, or the country.`; nipcIn.classList.add('is-bad'); nipcIn.focus(); return; }
+    nipc = v; country = c;
+    document.querySelectorAll('.nipc-n').forEach((n) => { n.innerHTML = shown(c, v); });
     show('nipc-check');
     // ALMA's checks, one after the other: the number itself, the business register, C-MORE
-    const steps = lines($('#nipc-steps'), ['Checking the number and its check digit', 'Looking it up in the business register', 'Looking for it on C&#8209;MORE']);
+    const steps = lines($('#nipc-steps'), [r[4] ? 'Checking the number and its check digit' : 'Checking the number&rsquo;s format', `Looking it up in ${r[5]}`, 'Looking for it on C&#8209;MORE']);
     for (const li of steps) { li.classList.add('is-on'); await wait(750); li.classList.remove('is-on'); li.classList.add('is-ok'); }
     const last = steps[2];
     if (company) {
@@ -737,7 +775,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
       // new to C-MORE: straight on to the plan and payment, as its owner
       last.innerHTML = 'Not on C&#8209;MORE yet';
       await wait(500);
-      person.nipc = nipc; toPayment();
+      person.nipc = nipc; person.country = country; toPayment();
     }
   });
 
@@ -753,7 +791,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   };
   const resetRequest = () => { request = null; const b = $('#req-open'); b.disabled = false; b.textContent = 'Request access'; };
   $('#req-open').addEventListener('click', () => {
-    request = { nipc, groups: [], on: new Date().toDateString() };
+    request = { country, nipc, groups: [], on: new Date().toDateString() };
     const b = $('#req-open'); b.disabled = true; b.textContent = 'Access requested';
     toast(`Request sent to ${company.name}. We&rsquo;ll email ${esc(person.email)} when they answer.`);
     try { sessionStorage.setItem('cm-access-request', JSON.stringify(Object.assign({ person }, request))); } catch (err) {}
@@ -900,7 +938,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         person = p;
         nameIn.value = p.name; emailIn.value = p.email; ready();
         $('#code-email').textContent = p.email; $('#pw-email').textContent = p.email;
-        nipc = p.nipc || '';
+        nipc = p.nipc || ''; country = p.country || 'PT';
         toCompanyStep();
       }
     } catch (e) {}
