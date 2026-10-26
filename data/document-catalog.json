@@ -1,6 +1,6 @@
 {
  "source": "Document_List_v2.xlsx",
- "generated": "2026-10-23",
+ "generated": "2026-10-26",
  "labels": {
   "requirement": {
    "mandatory": "Mandatory",
@@ -2413,6 +2413,450 @@
    ]
   },
   {
+   "code": "UN-01",
+   "category": "company",
+   "section": {
+    "en": "Identification and registration",
+    "pt": "Identificação e registo"
+   },
+   "name": {
+    "en": "Certificate of Good Standing",
+    "pt": "Certificado de Good Standing"
+   },
+   "description": {
+    "en": "Certificate from the Secretary of State confirming the company is registered and in good standing in its state.",
+    "pt": "Certificado do Secretary of State que confirma que a empresa está registada e em situação regular no seu estado."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "mandatory",
+   "condition": null,
+   "appliesWhen": "US companies",
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Issue date + 1 year",
+   "renewal": "Annual",
+   "checks": "Legal name = organization; status = active / good standing",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "State corporate law",
+   "titles": "Certificate of Good Standing; Certificate of Existence; Certificate of Status",
+   "usuallyIssuedBy": "Secretary of State",
+   "recognitionCues": "Secretary of State; good standing; entity number; state seal",
+   "confusedWith": [
+    "UN-02"
+   ],
+   "fields": [
+    {
+     "name": "Legal name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "State of registration",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Entity number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Status (good standing / not)",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (issue date + 1 year)",
+     "type": "Date",
+     "requiredToSave": false,
+     "extractedByAlma": false,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-02",
+   "category": "company",
+   "section": {
+    "en": "Identification and registration",
+    "pt": "Identificação e registo"
+   },
+   "name": {
+    "en": "Articles of Incorporation",
+    "pt": "Documento de Constituição"
+   },
+   "description": {
+    "en": "Document filed with the state to create the company (articles of incorporation or of organization).",
+    "pt": "Documento registado no estado que constitui a empresa (articles of incorporation ou of organization)."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "optional",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "No expiry",
+   "renewal": null,
+   "checks": "Legal name = organization",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "State corporate law",
+   "titles": "Articles of Incorporation; Articles of Organization; Certificate of Formation",
+   "usuallyIssuedBy": "Secretary of State",
+   "recognitionCues": "Articles; filed; formation date; registered agent",
+   "confusedWith": [
+    "UN-01"
+   ],
+   "fields": [
+    {
+     "name": "Legal name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "State",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (formation date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-03",
+   "category": "company",
+   "section": {
+    "en": "Tax and social security",
+    "pt": "Situação fiscal e contributiva"
+   },
+   "name": {
+    "en": "Form W-9",
+    "pt": "Formulário W-9"
+   },
+   "description": {
+    "en": "IRS form in which a US supplier certifies its taxpayer identification number (TIN / EIN).",
+    "pt": "Formulário do IRS em que um fornecedor americano certifica o seu número de identificação fiscal (TIN / EIN)."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "mandatory",
+   "condition": null,
+   "appliesWhen": "US suppliers",
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "No expiry",
+   "renewal": "On change",
+   "checks": "TIN format valid; legal name = organization; signed",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "US Internal Revenue Code",
+   "titles": "Form W-9 — Request for Taxpayer Identification Number and Certification",
+   "usuallyIssuedBy": "Company (IRS form)",
+   "recognitionCues": "Form W-9; TIN; EIN; federal tax classification; signature",
+   "confusedWith": [
+    "UN-04"
+   ],
+   "fields": [
+    {
+     "name": "Legal name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Business name",
+     "type": "Text",
+     "requiredToSave": false,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Federal tax classification",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "TIN / EIN",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Address",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Signatory",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (signature date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-04",
+   "category": "company",
+   "section": {
+    "en": "Tax and social security",
+    "pt": "Situação fiscal e contributiva"
+   },
+   "name": {
+    "en": "Form W-8BEN-E",
+    "pt": "Formulário W-8BEN-E"
+   },
+   "description": {
+    "en": "IRS form in which a non-US company certifies its foreign status, for US withholding tax purposes.",
+    "pt": "Formulário do IRS em que uma empresa não americana certifica o seu estatuto estrangeiro, para efeitos de retenção na fonte nos EUA."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "non_us_for_us_clients",
+   "appliesWhen": "Non-US suppliers working for US clients",
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "End of the 3rd calendar year after signature",
+   "renewal": "Every 3 years",
+   "checks": "Legal name = organization; country; signed",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "US Internal Revenue Code",
+   "titles": "Form W-8BEN-E",
+   "usuallyIssuedBy": "Company (IRS form)",
+   "recognitionCues": "Form W-8BEN-E; Chapter 3 status; foreign TIN; signature",
+   "confusedWith": [
+    "UN-03"
+   ],
+   "fields": [
+    {
+     "name": "Legal name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Country of incorporation",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Chapter 3 status",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Foreign tax number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Signatory",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (signature date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (end of the 3rd calendar year after signature)",
+     "type": "Date",
+     "requiredToSave": false,
+     "extractedByAlma": false,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-05",
+   "category": "company",
+   "section": {
+    "en": "Insurance",
+    "pt": "Seguros"
+   },
+   "name": {
+    "en": "Certificate of Insurance (COI)",
+    "pt": "Certificado de Seguro (COI)"
+   },
+   "description": {
+    "en": "Certificate issued by the insurance broker summarising the company's policies and limits, usually naming the client as additional insured.",
+    "pt": "Certificado emitido pelo mediador que resume as apólices e os limites da empresa, normalmente com o cliente como segurado adicional."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "mandatory",
+   "condition": null,
+   "appliesWhen": "US companies",
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document (earliest policy end)",
+   "renewal": "Annual",
+   "checks": "Insured = organization; client named as certificate holder / additional insured when required; policies in force",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "Contractual",
+   "titles": "Certificate of Liability Insurance (ACORD 25)",
+   "usuallyIssuedBy": "Insurance broker (producer)",
+   "recognitionCues": "ACORD 25; producer; insured; coverages; limits; certificate holder",
+   "confusedWith": [
+    "CO-10",
+    "CO-08"
+   ],
+   "fields": [
+    {
+     "name": "Insured",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Producer (broker)",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Insurers",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Policy numbers",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Coverage types and limits",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Certificate holder / additional insured",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (earliest policy end)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
    "code": "UN-06",
    "category": "company",
    "section": {
@@ -2488,6 +2932,258 @@
      "extractedByAlma": true,
      "editableByUser": true,
      "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-07",
+   "category": "company",
+   "section": {
+    "en": "Information security",
+    "pt": "Segurança da informação"
+   },
+   "name": {
+    "en": "Privacy and Data Security Agreement",
+    "pt": "Acordo de Privacidade e Segurança de Dados"
+   },
+   "description": {
+    "en": "Agreement setting how the company protects the client's data under US privacy and security rules.",
+    "pt": "Acordo que define como a empresa protege os dados do cliente ao abrigo das regras americanas de privacidade e segurança."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "handles_client_data",
+   "appliesWhen": "If the company handles client data",
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "No expiry",
+   "renewal": "On change",
+   "checks": "Parties identified; signed by both",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "US federal and state privacy laws",
+   "titles": "Data Security Agreement; Privacy Addendum",
+   "usuallyIssuedBy": "Client and company",
+   "recognitionCues": "Confidentiality; security safeguards; breach notification",
+   "confusedWith": [
+    "UN-06"
+   ],
+   "fields": [
+    {
+     "name": "Parties",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Scope",
+     "type": "Text",
+     "requiredToSave": false,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Signatories",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (signature date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-08",
+   "category": "company",
+   "section": {
+    "en": "Public contracts",
+    "pt": "Contratos públicos"
+   },
+   "name": {
+    "en": "SAM.gov Registration",
+    "pt": "Registo SAM.gov"
+   },
+   "description": {
+    "en": "Proof that the company is registered in the US System for Award Management, required for federal contracts.",
+    "pt": "Comprovativo de registo no System for Award Management dos EUA, exigido para contratos federais."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "on_request",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document",
+   "renewal": "Annual",
+   "checks": "Legal name = organization; registration active",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "US Federal Acquisition Regulation",
+   "titles": "SAM.gov entity registration",
+   "usuallyIssuedBy": "US General Services Administration",
+   "recognitionCues": "SAM; Unique Entity ID (UEI); CAGE code; active registration",
+   "confusedWith": [],
+   "fields": [
+    {
+     "name": "Legal name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Unique Entity ID (UEI)",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "CAGE code",
+     "type": "Text",
+     "requiredToSave": false,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Registration status",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (activation date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-09",
+   "category": "company",
+   "section": {
+    "en": "Information security",
+    "pt": "Segurança da informação"
+   },
+   "name": {
+    "en": "SOC 2 Type II Report",
+    "pt": "Relatório SOC 2 Tipo II"
+   },
+   "description": {
+    "en": "Independent auditor's report on the design and operating effectiveness of the company's security controls over a period.",
+    "pt": "Relatório de um auditor independente sobre o desenho e a eficácia dos controlos de segurança da empresa durante um período."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "on_request",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Period end + 1 year",
+   "renewal": "Annual",
+   "checks": "Service organization = company; report period; opinion",
+   "sharing": "requesting_client",
+   "phase": "MVP",
+   "legalBasis": "AICPA SOC 2",
+   "titles": "SOC 2 Type II Report",
+   "usuallyIssuedBy": "Independent auditor (CPA firm)",
+   "recognitionCues": "SOC 2; Type II; Trust Services Criteria; auditor's opinion; period",
+   "confusedWith": [
+    "UN-25",
+    "CO-21"
+   ],
+   "fields": [
+    {
+     "name": "Service organization",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Auditor",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Trust services criteria",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Opinion (unqualified / qualified)",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issue date (report period start)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Report period end",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Expiry date (period end + 1 year)",
+     "type": "Date",
+     "requiredToSave": false,
+     "extractedByAlma": false,
+     "editableByUser": true,
+     "visibleToClients": false
     }
    ]
   },
@@ -2735,6 +3431,180 @@
      "type": "Date",
      "requiredToSave": false,
      "extractedByAlma": false,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-13",
+   "category": "company",
+   "section": {
+    "en": "Health and safety",
+    "pt": "Segurança e saúde"
+   },
+   "name": {
+    "en": "OSHA 300A Summary",
+    "pt": "Resumo OSHA 300A"
+   },
+   "description": {
+    "en": "Annual summary of work-related injuries and illnesses that US employers must post.",
+    "pt": "Resumo anual de lesões e doenças relacionadas com o trabalho que os empregadores americanos têm de afixar."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "on_request",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Issue date + 1 year",
+   "renewal": "Annual",
+   "checks": "Year = last year; signed by a company executive",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "OSHA 29 CFR 1904",
+   "titles": "OSHA Form 300A",
+   "usuallyIssuedBy": "Company (OSHA form)",
+   "recognitionCues": "Form 300A; total hours worked; recordable cases; days away",
+   "confusedWith": [
+    "UN-12"
+   ],
+   "fields": [
+    {
+     "name": "Establishment",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Year",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Total hours worked",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Recordable cases",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Days-away cases",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Signatory",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (issue date + 1 year)",
+     "type": "Date",
+     "requiredToSave": false,
+     "extractedByAlma": false,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-14",
+   "category": "company",
+   "section": {
+    "en": "Health and safety",
+    "pt": "Segurança e saúde"
+   },
+   "name": {
+    "en": "Experience Modification Rate Letter",
+    "pt": "Carta de EMR"
+   },
+   "description": {
+    "en": "Letter stating the company's workers' compensation experience modification rate, a common US safety indicator.",
+    "pt": "Carta com o fator de modificação da experiência (EMR) do seguro de acidentes de trabalho, indicador de segurança comum nos EUA."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "on_request",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document",
+   "renewal": "Annual",
+   "checks": "EMR value present; effective date",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "Client practice",
+   "titles": "Experience Modification Rate (EMR) letter / worksheet",
+   "usuallyIssuedBy": "Insurer or rating bureau (e.g. NCCI)",
+   "recognitionCues": "EMR; experience mod; effective date; rating bureau",
+   "confusedWith": [
+    "UN-05"
+   ],
+   "fields": [
+    {
+     "name": "EMR value",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issuer (insurer or rating bureau)",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (effective date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
      "editableByUser": true,
      "visibleToClients": true
     }
@@ -3824,6 +4694,83 @@
     },
     {
      "name": "Issue date (approval date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-32",
+   "category": "company",
+   "section": {
+    "en": "Certifications",
+    "pt": "Certificações"
+   },
+   "name": {
+    "en": "Diversity Certification",
+    "pt": "Certificação de Diversidade (MBE / WBE / SBE)"
+   },
+   "description": {
+    "en": "Certificate that the company is minority-, women- or small-business-owned, issued by a certifying agency.",
+    "pt": "Certificado de que a empresa é detida por minorias, por mulheres ou é uma pequena empresa, emitido por uma entidade certificadora."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "optional",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "company",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document",
+   "renewal": "By expiry",
+   "checks": "Company = organization",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "US certification programmes",
+   "titles": "MBE / WBE / SBE certificate",
+   "usuallyIssuedBy": "Certifying agency (e.g. NMSDC, WBENC, SBA)",
+   "recognitionCues": "MBE; WBE; SBE; certification number",
+   "confusedWith": [],
+   "fields": [
+    {
+     "name": "Certification type (MBE / WBE / SBE)",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Certifying agency",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Certificate number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date",
      "type": "Date",
      "requiredToSave": true,
      "extractedByAlma": true,
@@ -5876,6 +6823,156 @@
     },
     {
      "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-29",
+   "category": "products",
+   "section": {
+    "en": "Certifications",
+    "pt": "Certificações"
+   },
+   "name": {
+    "en": "UL Certification",
+    "pt": "Certificação UL"
+   },
+   "description": {
+    "en": "Certificate or listing from UL confirming a product meets US safety standards.",
+    "pt": "Certificado ou listagem da UL que confirma que um produto cumpre as normas de segurança dos EUA."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "on_request",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "per_product",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document",
+   "renewal": "By expiry",
+   "checks": "Product = record",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "US product safety standards",
+   "titles": "UL Certificate of Compliance; UL Listing",
+   "usuallyIssuedBy": "UL Solutions",
+   "recognitionCues": "UL mark; file number; standard",
+   "confusedWith": [
+    "PR-08"
+   ],
+   "fields": [
+    {
+     "name": "Product",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "UL file / certificate number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Standard",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": false,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-30",
+   "category": "products",
+   "section": {
+    "en": "Technical and safety",
+    "pt": "Técnico e segurança"
+   },
+   "name": {
+    "en": "Proposition 65 Compliance Declaration",
+    "pt": "Declaração Proposition 65"
+   },
+   "description": {
+    "en": "Manufacturer's declaration on whether a product sold in California needs a Proposition 65 warning.",
+    "pt": "Declaração do fabricante sobre se um produto vendido na Califórnia precisa de aviso Proposition 65."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "on_request",
+   "condition": null,
+   "appliesWhen": null,
+   "level": "per_product",
+   "hasIssueDate": true,
+   "expiryRule": "No expiry",
+   "renewal": "On change",
+   "checks": "Product = record; signed",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "California Proposition 65",
+   "titles": "Proposition 65 statement",
+   "usuallyIssuedBy": "Product manufacturer",
+   "recognitionCues": "Prop 65; warning; listed chemicals; California",
+   "confusedWith": [
+    "PR-07"
+   ],
+   "fields": [
+    {
+     "name": "Product",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Warning required",
+     "type": "Yes/No",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Signatory",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
      "type": "Date",
      "requiredToSave": true,
      "extractedByAlma": true,

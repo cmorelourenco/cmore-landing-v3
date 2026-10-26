@@ -10,7 +10,7 @@ How the Documents area decides what a company is asked for. The prototype runs o
 
 Adding a document, renaming one, changing its requirement or moving it between EU and US means editing the workbook and regenerating. No code changes.
 
-For now the prototype works for an EU company, so documents only for US companies (Scope `US`) are left out when the catalog is generated; `EU + US` documents stay. `tools/catalog2js.py` also reads a row that repeats the code above it with Scope, Requirement and Level empty as a variant of that document: CO-21 is ISO 9001, and ISO 14001, ISO 45001, ISO 27001 and Others become CO-21.1 to CO-21.4, with the rest of CO-21's details and fields.
+Every scope is kept: a company sees only the documents for its own region, so Ferreira (Portugal) never sees a US document and Veridian Harvest Co. (United States) does. `tools/catalog2js.py` also reads a row that repeats the code above it with Scope, Requirement and Level empty as a variant of that document: CO-21 is ISO 9001, and ISO 14001, ISO 45001, ISO 27001 and Others become CO-21.1 to CO-21.4, with the rest of CO-21's details and fields.
 
 ## The catalog (`document-catalog.json`)
 

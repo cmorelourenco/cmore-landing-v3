@@ -5,7 +5,7 @@
    Prototype: companies you add live in this browser (localStorage), per demo person; the one
    you're in lives in this tab (sessionStorage), and the pages read cm-company as they already do. */
 (() => {
-  const persona = 'miguel'; // the one demo company
+  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel'; // the two demo people (the page's head decides)
   const get = (store, k, d) => { try { const v = store.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const set = (store, k, v) => { try { store.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -17,6 +17,7 @@
 
   const HOME = {
     miguel: { id: 'home', name: 'Ferreira Construções, Lda.', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
+    beatriz: { id: 'home', name: 'Veridian Harvest Co.', logo: '<span class="cs-mono cs-leaf"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg></span>', state: 'filled', country: 'US', sector: 'Other' },
   }[persona];
   const KEY = 'cm-orgs-' + persona, LINKS = 'cm-org-links-' + persona, LAST = 'cm-last-org-' + persona;
 
@@ -50,7 +51,7 @@
   };
   const forget = () => {
     try {
-      ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
+      ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
       ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
       // and what was filed for the companies added (their guided upload, marks and updates)
       Object.keys(sessionStorage).filter((k) => /^cm-(guided|na|doc-updates)-/.test(k)).forEach((k) => sessionStorage.removeItem(k));
@@ -92,6 +93,8 @@
 .cs-chip:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .cs-logo { flex: none; width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; overflow: hidden; display: grid; place-items: center; }
 .cs-logo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cs-leaf { background: linear-gradient(155deg, #4a9636, var(--color-positive) 60%, #2f5f23); }
+.cs-leaf svg { width: 62%; height: 62%; }
 .cs-mono { display: grid; place-items: center; width: 100%; height: 100%; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; font-weight: 600; }
 .cs-id { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
 .cs-id b { font-size: 0.875rem; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

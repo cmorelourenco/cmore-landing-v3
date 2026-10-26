@@ -12,7 +12,8 @@
       if (cmPerson) { sessionStorage.setItem('cm-person', JSON.stringify(cmPerson)); if (localStorage.getItem('cm-last-company') === 'filled') sessionStorage.setItem('cm-company', 'filled'); } }
   } catch (e) {}
   if (!cmPerson) location.replace('register.html?login');
-  document.documentElement.dataset.persona = 'miguel'; // the one demo company on this branch
+  // who is signed in: Miguel (Ferreira Construções) by default, or Beatriz (Veridian Harvest Co.)
+  document.documentElement.dataset.persona = (cmPerson && /beatriz/i.test((cmPerson.email || '') + ' ' + (cmPerson.name || ''))) ? 'beatriz' : 'miguel';
 </script>
 <meta name="robots" content="noindex">
 <style>

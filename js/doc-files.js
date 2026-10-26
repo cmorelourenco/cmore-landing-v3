@@ -12,8 +12,10 @@ window.CMFiles = (() => {
     r.onupgradeneeded = () => r.result.createObjectStore(STORE);
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   }));
-  const org = () => { try { return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null') || 'home'; } catch (e) { return 'home'; } };
-  const key = (code) => `${org()}:${code}`;
+  const beatriz = document.documentElement.dataset.persona === 'beatriz';
+  const org = () => { try { return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + (beatriz ? 'beatriz' : 'miguel')) || 'null') || 'home'; } catch (e) { return 'home'; } };
+  // Beatriz's files are kept apart from Miguel's (both companies are 'home' to their person)
+  const key = (code) => `${beatriz ? 'beatriz:' : ''}${org()}:${code}`;
   const put = (code, file) => (!file ? Promise.resolve(false) : db().then((d) => new Promise((res) => {
     const tx = d.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).put({ name: file.name, type: file.type || '', size: file.size || 0, blob: file, at: Date.now() }, key(code));

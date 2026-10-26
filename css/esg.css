@@ -899,3 +899,9 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
    sign-up pages (.btn-block) are the one exception — they match the fields above them. */
 .btn:not(.btn-block) { max-width: 20rem; }
 .cd-none .btn, .co-card > .btn, .tm-note .btn { align-self: center; justify-self: center; }
+
+/* Two demo people share these pages: whoever isn't signed in has their own markup hidden */
+html[data-persona="beatriz"] .persona-miguel-only { display: none !important; }
+html:not([data-persona="beatriz"]) .persona-beatriz-only { display: none !important; }
+/* blocks that belong to Miguel's demo company only: left alone for him, hidden for Beatriz */
+html[data-persona="beatriz"] [data-only="miguel"] { display: none !important; }

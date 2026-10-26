@@ -17,7 +17,7 @@
    this tab, with a bar at the bottom to leave it.
    Prototype: the team lives in this browser and is forgotten on log out (js/company-switcher.js). */
 window.CMAccess = (() => {
-  const persona = 'miguel';
+  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
   const KEY = 'cm-team-' + persona; // { orgId: { members: [...], invites: [...], groups: [...] } }
   const AS_KEY = 'cm-view-as';
   const get = (store, k, d) => { try { const v = store.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -46,27 +46,39 @@ window.CMAccess = (() => {
     ['ecosystem', 'C‑MORE ecosystem', 'Finding and connecting with companies'],
     ['clients', 'My clients', 'The companies you supply'],
     ['suppliers', 'My suppliers', 'The companies that supply you'],
-  ];
+  ].concat(persona === 'beatriz' ? [['documents.products', 'Documents · Products', 'Declarations, technical and safety sheets, EUDR']] : []);
   const PAGE_NAME = Object.fromEntries(PAGES.map(([k, n]) => [k, n]));
-  const DEFAULT_GROUPS = () => [
+  // Beatriz's company exports commodities: its groups follow sourcing, not sites
+  const DEFAULT_GROUPS = () => (persona === 'beatriz' ? [
+    { id: 'g-src', name: 'Sourcing', content: ['documents.products', 'suppliers'] },
+    { id: 'g-fin', name: 'Finance', content: ['documents.company', 'consents'] },
+    { id: 'g-sus', name: 'Sustainability', content: ['documents.products', 'questionnaires'] },
+    { id: 'g-legal', name: 'Legal & compliance', content: ['documents.company', 'consents', 'questionnaires'] },
+  ] : [
     { id: 'g-hr', name: 'HR', content: ['documents.workers'] },
     { id: 'g-fin', name: 'Financial', content: ['documents.company', 'consents'] },
     { id: 'g-hs', name: 'Health & safety', content: ['documents.workers', 'documents.equipment', 'projects'] },
     { id: 'g-legal', name: 'Legal & compliance', content: ['documents.company', 'consents', 'questionnaires'] },
-  ];
+  ]);
   // an older demo's groups covered parts of the content: each part, to the page it's on
   const OLD = { registration: 'documents.company', tax: 'documents.company', insurance: 'documents.company', hs: 'documents.company', certifications: 'documents.company',
     data: 'documents.company', contracts: 'documents.company', workers: 'documents.workers', equipment: 'documents.equipment', questionnaires: 'questionnaires', consents: 'consents' };
 
-  const me = Object.assign({ name: 'Miguel Ferreira', email: '' }, get(sessionStorage, 'cm-person', {}) || {});
+  const me = Object.assign({ name: persona === 'beatriz' ? 'Beatriz Nogueira' : 'Miguel Ferreira', email: '' }, get(sessionStorage, 'cm-person', {}) || {});
   // the people already on the demo company
-  const SEED = () => [
+  const SEED = () => (persona === 'beatriz' ? [
+    { name: me.name, email: me.email || 'beatriz@veridianharvest.com', role: 'owner', you: true },
+    { name: 'Daniel Okafor', email: 'daniel@veridianharvest.com', role: 'admin', since: 'Feb 2026', title: 'Head of sourcing' },
+    { name: 'Priya Raman', email: 'priya@veridianharvest.com', role: 'manager', since: 'May 2026', title: 'Sustainability analyst', groups: ['g-sus'] },
+    { name: 'Lena Hoffmann', email: 'lena@veridianharvest.com', role: 'manager', since: 'Jul 2026', title: 'Sourcing manager, cocoa', groups: ['g-src'] },
+    { name: 'Marcus Bell', email: 'marcus.bell@bellcpa.com', role: 'user', since: 'Aug 2026', title: 'Accountant, external', groups: ['g-fin'] },
+  ] : [
     { name: me.name, email: me.email || 'miguel@ferreiraconstrucoes.pt', role: 'owner', you: true },
     { name: 'Helena Ferreira', email: 'helena@ferreiraconstrucoes.pt', role: 'admin', since: 'Mar 2026' },
     { name: 'Nuno Silva', email: 'nuno.silva@ferreiraconstrucoes.pt', role: 'manager', since: 'Apr 2026', title: 'Safety officer', groups: ['g-hs'] },
     { name: 'Sofia Marques', email: 'sofia.marques@ferreiraconstrucoes.pt', role: 'manager', since: 'May 2026', title: 'People & payroll', groups: ['g-hr'] },
     { name: 'Ana Rocha', email: 'ana.rocha@contabilidade-rocha.pt', role: 'user', since: 'Jun 2026', title: 'Accountant, external', groups: ['g-fin'] },
-  ];
+  ]);
   // an older demo's team: super admin is owner, Member is user, projects gave way to groups
   const fix = (t) => {
     [].concat(t.members, t.invites).forEach((x) => { if (x.role === 'super_admin') x.role = 'owner'; if (!ROLES[x.role]) x.role = 'user'; if (!x.groups) x.groups = []; delete x.projects; });
@@ -79,7 +91,7 @@ window.CMAccess = (() => {
     const t = all()[id];
     if (t) return fix(t);
     // a company you add starts with just you, as its owner, and the usual groups, empty
-    return { members: id === 'home' ? SEED() : [{ name: me.name, email: me.email || 'miguel@ferreiraconstrucoes.pt', role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
+    return { members: id === 'home' ? SEED() : [{ name: me.name, email: me.email || (persona === 'beatriz' ? 'beatriz@veridianharvest.com' : 'miguel@ferreiraconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
   };
   const save = (id, t) => { const a = all(); a[id] = t; set(localStorage, KEY, a); };
   const orgId = () => get(sessionStorage, 'cm-org', null) || get(localStorage, 'cm-last-org-' + persona, null) || 'home';

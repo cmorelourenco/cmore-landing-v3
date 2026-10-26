@@ -16,7 +16,8 @@ window.DOC_MODEL = (() => {
   // ---- the demo company -------------------------------------------------------------------------
   // Miguel's: a Portuguese construction company with its own crews and machines (Company, Workers,
   // Equipment). Products would appear for a company that supplies materials; this one doesn't.
-  const PERSONA = 'miguel';
+  // who is signed in (the page's head decides): Miguel's company, or Beatriz's (Veridian Harvest Co.)
+  const PERSONA = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
 
   // Miguel's crew: [name, job category]
   const WORKERS = [
@@ -38,7 +39,14 @@ window.DOC_MODEL = (() => {
     ['Compressor &mdash; Ingersoll Rand 185', 'EQ&#8209;019'], ['Laser level &mdash; Leica Rugby 640', 'EQ&#8209;044'],
   ];
   // the products a company supplies, one per row in Products (none for this demo company)
-  const PRODUCTS = [];
+  // Beatriz's products (the same ones as on her company page and product sheets)
+  const PRODUCTS = PERSONA === 'beatriz' ? [
+    ['Roasted coffee beans', 'VH&#8209;COF&#8209;201'], ['Green coffee beans', 'VH&#8209;COF&#8209;110'], ['Cocoa butter', 'VH&#8209;COC&#8209;410'],
+    ['Dark chocolate couverture, 70%', 'VH&#8209;COC&#8209;702'], ['Crude palm oil', 'VH&#8209;PLM&#8209;100'], ['Refined soybean oil', 'VH&#8209;SOY&#8209;220'],
+    ['Natural rubber sheets (RSS3)', 'VH&#8209;RUB&#8209;300'], ['Sawn tropical hardwood', 'VH&#8209;WOD&#8209;510'], ['Frozen beef cuts', 'VH&#8209;BEF&#8209;020'],
+    ['Soy protein concentrate', 'VH&#8209;SOY&#8209;410'],
+  ] : [];
+  const PRODUCT = PRODUCTS.map(([name, sku]) => ({ name, sku }));
 
   // each worker's profile (the catalog's Worker profile form): made up but consistent. Two are
   // Brazilian, so the rules ask them for a residence permit (WK-16); everyone else is EU.
@@ -146,6 +154,36 @@ window.DOC_MODEL = (() => {
         ['WK-02', 'August 2026', 'Replaced 14 Sep 2026'],
         ['WK-01', 'August 2026', 'Replaced 30 Sep 2026'],
         ['EQ-03', 'Tower crane &middot; inspection of Mar 2025', 'Replaced 14 Mar 2026'],
+      ],
+    },
+    // Beatriz's: a US commodity exporter that supplies materials to European roasters and
+    // chocolatiers (Company, Products). Her documents are the US ones; her products carry their own.
+    beatriz: {
+      company: 'Veridian Harvest Co.',
+      profile: { country: 'US', sector: 'other', entityType: 'company', employees: 60, services: ['material_supply'], equipmentCount: 0, usClients: true },
+      line: 'United States &middot; Agricultural commodities &middot; 60 employees &middot; supplies materials',
+      facts: { 'ein|tax number|tin': '71&#8209;4482019', 'address': '400 Poydras St, Suite 1850, New Orleans, LA 70130', 'state|jurisdiction': 'Louisiana',
+        'naics|activity codes': 'NAICS 424510, 424590', 'entity type|classification': 'Limited liability company', 'officers|representative': 'Beatriz Nogueira (CEO)' },
+      records: { workers: [], equipment: [], products: PRODUCT },
+      state: {
+        'UN-01': ['valid', '12 Jan 2026', '12 Jan 2027', '', { ref: '34918227K', by: 'Louisiana Secretary of State' }],
+        'UN-02': ['valid', '14 Mar 2011', 'No expiry', '', { ref: '34918227K', by: 'Louisiana Secretary of State' }],
+        'UN-03': ['valid', '5 Feb 2026', 'No expiry', '', { ref: 'EIN 71&#8209;4482019', by: 'Veridian Harvest Co.' }],
+        'UN-05': ['expiring', '1 Nov 2025', '1 Nov 2026', 'The earliest policy ends in 6 days.', { ref: 'ACORD 25 &middot; 2025&#8209;1187', by: 'Marsh McLennan Agency', edited: true }],
+        'UN-07': ['valid', '3 Jun 2026', 'No expiry', '', { by: 'Veridian Harvest Co.' }],
+        'UN-10': ['valid', '14 Apr 2026', '14 Apr 2027', 'Silver medal, 61/100.', { ref: 'EV&#8209;2026&#8209;77310', by: 'EcoVadis' }],
+        'UN-15': ['valid', '28 Mar 2026', 'Next year&rsquo;s, Mar 2027', 'FY 2025, audited. Asked for by 2 clients.', { by: 'Deloitte &amp; Touche LLP' }],
+        'UN-18': ['valid', '9 Jan 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'Veridian Harvest Co.' }],
+        'UN-19': ['attention', '2 Oct 2026', 'Next report, Oct 2027', 'ALMA could not read the Scope 3 total &mdash; check the highlighted field.', { by: 'Veridian Harvest Co.' }],
+        'UN-22': ['valid', '20 Feb 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'Veridian Harvest Co.' }],
+        'UN-23': ['missing', '', '', 'A client asked on 2 Oct.'],
+      },
+      perRecord: {
+        'UN-30': { requested: [3, 2, 0], def: ['valid', () => 'Reviewed yearly'], over: { 2: ['expiring', '30 Oct 2026'], 0: ['missing'] } },
+      },
+      archive: [
+        ['UN-05', 'Version of 1 Nov 2024', 'Replaced 1 Nov 2025'],
+        ['UN-01', 'Version of 10 Jan 2025', 'Replaced 12 Jan 2026'],
       ],
     },
   };
@@ -298,7 +336,7 @@ window.DOC_MODEL = (() => {
   // Only a 'Mandatory if applicable' document can be marked Not applicable, always with a reason
   // the company's clients will see; it then counts as compliant, and it can be undone (back to
   // what it was). Prototype: marks are kept for this tab (sessionStorage), on top of the demo's.
-  const NA_KEY = 'cm-na' + (ORG ? '-' + ORG.id : '');
+  const NA_KEY = 'cm-na' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const naMarks = (() => { try { return JSON.parse(sessionStorage.getItem(NA_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveNa = () => { try { sessionStorage.setItem(NA_KEY, JSON.stringify(naMarks)); } catch (e) {} };
   const me = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || 'You'; } catch (e) { return 'You'; } })();
@@ -341,7 +379,7 @@ window.DOC_MODEL = (() => {
   };
   // a document filed again (dropped on ALMA, on any page): its new state, kept for this tab, so
   // the Documents page and the company homepage both see it
-  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '');
+  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   DOCS.forEach((d) => { if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); });
   const saveDoc = (code, patch) => {

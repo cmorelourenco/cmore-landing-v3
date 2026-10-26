@@ -116,7 +116,7 @@
     </a></li>`;
   };
   // at a glance: a row per supplier, a column per kind of consent, the worst status in each
-  const AREAS = ['Company & legal', 'Insurance', 'Workers on site', 'Health & safety', 'Equipment on site', 'Certifications'];
+  const AREAS = S.WORDS.AREAS;
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
   const overall = (k) => (k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Consent pending', 'b-neu'] : ['All in order', 'b-ok']);
@@ -159,18 +159,18 @@
     if (crumb) crumb.innerHTML = `<a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="suppliers.html">My suppliers</a><span aria-hidden="true">/</span><span aria-current="page">${esc(s.name)}</span>`;
     const back = document.querySelector('.eco-crumbs-back'); if (back) { back.href = 'suppliers.html'; back.setAttribute('aria-label', 'Back to My suppliers'); }
     if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier</span><h1>${esc(s.name)}</h1>
-        <p>${esc(s.services.join(', '))} &middot; ${esc(s.city)} &middot; NIPC ${esc(s.nipc)} &middot; ${s.workers} people &middot; supplier since ${esc(s.since)} &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p></div></div>`;
+        <p>${esc(s.services.join(', '))} &middot; ${esc(s.city)} &middot; ${S.WORDS.id} ${esc(s.nipc)} &middot; ${s.workers} people &middot; supplier since ${esc(s.since)} &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p></div></div>`;
     const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending');
     // the card's title is the table's first row, so the consent's badge sits in the Expiry date
     // column, level with the title
     const consent = (c) => `<article class="sp-consent">
         <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp"></colgroup><thead>
-          <tr class="sp-ch"><td colspan="3" class="sp-ch-t"><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : 'For all your projects'} &middot; given on ${esc(c.granted)} &middot; ${c.docs.length} document${c.docs.length === 1 ? '' : 's'}</p></td><td class="sp-ch-b"><span class="co-badge b-ok">Consent given</span></td></tr>
+          <tr class="sp-ch"><td colspan="3" class="sp-ch-t"><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; given on ${esc(c.granted)} &middot; ${c.docs.length} document${c.docs.length === 1 ? '' : 's'}</p></td><td class="sp-ch-b"><span class="co-badge b-ok">Consent given</span></td></tr>
           <tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th><th class="c">Expiry date</th></tr></thead>
           <tbody>${c.docs.map((d, i) => `<tr class="sp-row" data-doc="${esc(c.id)}:${i}" tabindex="0" role="button" aria-label="Open ${esc(d.name)}"><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}${d.note ? ' &middot; ' + esc(d.note) : ''}</span></td><td class="hide-s">${esc(d.requirement)}</td><td>${tag(d.status)}</td><td class="c">${esc(d.valid === 'No expiry' ? 'No expiry' : d.valid)}</td></tr>`).join('')}</tbody></table>
       </article>`;
     const ask = (c) => `<article class="sp-consent is-pending" data-ask="${esc(c.id)}">
-        <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : 'For all your projects'} &middot; you asked on ${esc(c.granted)}</p></div><span class="co-badge b-pend">Waiting for their answer</span></header>
+        <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; you asked on ${esc(c.granted)}</p></div><span class="co-badge b-pend">Waiting for their answer</span></header>
         <div class="sp-wait"><span>${CLOCK}Until they say yes you can&rsquo;t see: ${c.docs.map((d) => esc(d.name)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}">Send a reminder</button></div>
       </article>`;
     box.innerHTML = `<div class="sp-kpis">
@@ -178,7 +178,7 @@
         <div class="sp-kpi${k.bad ? ' is-bad' : ''}"><span>Need attention</span><b>${k.bad}</b><small>${k.bad ? 'Missing or expired' : k.soon ? `${k.soon} expiring or in review` : 'Nothing to chase'}</small></div>
         <div class="sp-kpi"><span>Consents</span><b>${k.given}</b><small>${k.pending ? `${k.pending} waiting for their answer` : 'All answered'}</small></div>
       </div>
-      <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Consents they&rsquo;ve given you</h2><p>What ${esc(s.name)} lets you see, and for which projects. The documents stay current: when they renew one, you see the new one.</p>
+      <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Consents they&rsquo;ve given you</h2><p>What ${esc(s.name)} lets you see, and for which ${S.WORDS.scope}. The documents stay current: when they renew one, you see the new one.</p>
         ${given.length ? given.map(consent).join('') : '<div class="co-card sp-none">They haven&rsquo;t given you a consent yet.</div>'}</section>
       ${pending.length ? `<section class="sp-sec" aria-labelledby="sp-asked"><h2 id="sp-asked">Waiting for their answer</h2><p>Consents you asked for that ${esc(s.name)} hasn&rsquo;t answered yet.</p>${pending.map(ask).join('')}</section>` : ''}`;
   };
@@ -212,7 +212,7 @@
     const kv = (k, v) => (v ? `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>` : '');
     dq('sp-dw-body').innerHTML = fileHtml
       + `<section class="cdd-card"><h4 class="eyebrow">This document</h4><dl class="pd-facts cdd-facts">${kv('Status', tag(d.status))}${kv('Expiry date', esc(d.valid === '—' ? 'Not on file' : d.valid))}${d.note ? kv('Note', esc(d.note)) : ''}${kv('Issued by', esc((cat.usuallyIssuedBy || '').split(';')[0]))}${kv('Section', esc(d.section))}</dl></section>`
-      + `<section class="cdd-card"><h4 class="eyebrow">Shared under</h4><dl class="pd-facts cdd-facts">${kv('Consent', esc(c.title))}${kv('For', c.project ? esc(c.project) : 'All your projects')}${kv('Given on', esc(c.granted))}${kv('Stays current', 'When they renew it, you see the new one')}</dl></section>`
+      + `<section class="cdd-card"><h4 class="eyebrow">Shared under</h4><dl class="pd-facts cdd-facts">${kv('Consent', esc(c.title))}${kv('For', c.project ? esc(c.project) : `All your ${S.WORDS.scope}`)}${kv('Given on', esc(c.granted))}${kv('Stays current', 'When they renew it, you see the new one')}</dl></section>`
       + `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${cat.description ? `<p class="cdd-desc">${esc(cat.description.en)}</p>` : ''}<dl class="pd-facts cdd-facts">${kv('Requirement', esc(d.requirement))}${kv('Renewal', esc(cat.renewal || '—'))}${kv('Expiry', esc(cat.expiryRule || '—'))}${kv('Legal basis', esc(cat.legalBasis || '—'))}</dl></section>`;
     dq('sp-dw-n').textContent = `${at.i + 1} of ${c.docs.length} in ${c.title}`;
     dw.querySelector('[data-step="-1"]').disabled = at.i === 0;

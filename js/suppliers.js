@@ -9,10 +9,20 @@ window.CM_SUPPLIERS = (() => {
   const C = window.DOC_CATALOG || { docs: [], labels: { requirement: {} } };
   const byCode = Object.fromEntries(C.docs.map((d) => [d.code, d]));
   const slug = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).join('-');
-  const PROJECTS = { sj: 'São João Hospital, east wing', en13: 'EN13 resurfacing, Vila do Conde', go: 'Garcia de Orta school renovation', qb: 'Quinta da Boavista apartments' };
+  // Beatriz (Veridian Harvest Co.) buys commodities: her suppliers are farms, cooperatives and mills, and
+  // a consent covers one of her products where Miguel's covers one of his projects
+  const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
+  const PROJECTS = BEATRIZ ? { rc: 'Roasted coffee beans', cb: 'Cocoa butter', dc: 'Dark chocolate couverture, 70%', cpo: 'Crude palm oil', soy: 'Refined soybean oil', rub: 'Natural rubber sheets (RSS3)' } : { sj: 'São João Hospital, east wing', en13: 'EN13 resurfacing, Vila do Conde', go: 'Garcia de Orta school renovation', qb: 'Quinta da Boavista apartments' };
 
   // what a consent can cover, and the documents that come with it
-  const SETS = {
+  const SETS = BEATRIZ ? {
+    legal: ['Company & legal', ['UN-01', 'UN-02', 'UN-03']],
+    insurance: ['Insurance', ['UN-05']],
+    esg: ['Sustainability', ['UN-18', 'UN-19', 'UN-22']],
+    hs: ['Health & safety', ['UN-11', 'UN-12']],
+    financial: ['Financial', ['UN-15', 'UN-17']],
+    certs: ['Certifications', ['UN-10']],
+  } : {
     legal: ['Company & legal', ['CO-01', 'CO-02', 'CO-06', 'CO-07', 'CO-03']],
     insurance: ['Insurance', ['CO-08', 'CO-10', 'CO-11']],
     workers: ['Workers on site', ['WK-01', 'WK-02', 'WK-11', 'WK-15']],
@@ -23,7 +33,31 @@ window.CM_SUPPLIERS = (() => {
   // [name, city, services, workers, since, NIPC, contact, consents, problems]
   //   consents: [set, project (or null for all projects), granted, state]  — state: given | pending
   //   problems: { code: [status, expiry, note] } — anything not valid
-  const RAW = [
+  const RAW = BEATRIZ ? [
+    ['Asankragwa Cocoa Farmers', 'Tarkwa, Ghana', ['Cocoa beans'], 840, '2025', 'C0004518272', 'office@asankragwacocoa.org',
+      [['legal', null, '4 Mar 2025', 'given'], ['esg', 'cb', '4 Mar 2025', 'given'], ['hs', 'cb', '19 Oct 2026', 'pending']],
+      { 'UN-22': ['missing', '', 'Geolocation is missing for 3 plots — ALMA asked them for it.'], 'UN-19': ['expired', '30 Sep 2026', 'Expired 30 September — the 2026 report is on its way.'] }],
+    ['Sumatra Agro Palm', 'Medan, Indonesia', ['Crude palm oil', 'Palm kernel'], 1260, '2024', '01.337.815.2-121.000', 'trade@sumatraagropalm.co.id',
+      [['legal', null, '11 Jan 2024', 'given'], ['esg', 'cpo', '11 Jan 2024', 'given'], ['certs', null, '11 Jan 2024', 'given']],
+      { 'UN-18': ['missing', '', 'No environmental policy shared yet.'], 'UN-10': ['expiring', '8 Nov 2026', ''] }],
+    ['Kuapa Kokoo Union', 'Kumasi, Ghana', ['Cocoa beans'], 2100, '2023', 'C0001190335', 'info@kuapakokoo.com',
+      [['legal', null, '2 Feb 2023', 'given'], ['esg', 'dc', '2 Feb 2023', 'given'], ['financial', null, '15 Oct 2026', 'pending']],
+      { 'UN-22': ['processing', '', 'Child labour cases under remediation — updated statement in review.'] }],
+    ['Cooxupé cooperative', 'Guaxupé, Brazil', ['Green coffee (Arabica)'], 1900, '2022', '20.770.566/0001-00', 'export@cooxupe.com.br',
+      [['legal', null, '7 Jun 2022', 'given'], ['insurance', null, '7 Jun 2022', 'given'], ['esg', 'rc', '7 Jun 2022', 'given'], ['certs', null, '7 Jun 2022', 'given']], {}],
+    ['PT Sawit Makmur', 'Pekanbaru, Indonesia', ['Fresh fruit bunches', 'Crude palm oil'], 640, '2025', '02.511.204.6-216.000', 'sales@sawitmakmur.co.id',
+      [['legal', null, '20 May 2025', 'given'], ['esg', 'cpo', '20 May 2025', 'given']], { 'UN-19': ['expiring', '2 Nov 2026', ''] }],
+    ['Agropecuária Rio Verde', 'Rio Verde, Brazil', ['Soybeans'], 210, '2024', '08.214.633/0001-47', 'comercial@agrorioverde.com.br',
+      [['legal', null, '9 Sep 2024', 'given'], ['insurance', null, '9 Sep 2024', 'given'], ['esg', 'soy', '9 Sep 2024', 'given']], {}],
+    ['Finca El Mirador', 'Huila, Colombia', ['Green coffee (Arabica)'], 35, '2025', '900.418.227-3', 'ventas@fincaelmirador.co',
+      [['legal', null, '13 Aug 2025', 'given'], ['esg', 'rc', '13 Aug 2025', 'given']], {}],
+    ['Tiense Suiker', 'Tienen, Belgium', ['Beet sugar'], 1100, '2023', 'BE 0401.024.618', 'sales@tiensesuiker.be',
+      [['legal', null, '1 Dec 2023', 'given'], ['insurance', null, '1 Dec 2023', 'given'], ['financial', null, '1 Dec 2023', 'given'], ['certs', null, '1 Dec 2023', 'given']], { 'UN-17': ['expiring', '31 Oct 2026', ''] }],
+    ['Thai Rubber Estates Ltd', 'Surat Thani, Thailand', ['Natural rubber latex'], 480, '2026', '0105548031127', 'export@thairubberestates.co.th',
+      [['legal', null, '22 Jan 2026', 'given'], ['esg', 'rub', '22 Jan 2026', 'given']], {}],
+    ['Madeireira Floresta Norte', 'Belém, Brazil', ['Logs (Ipê, Jatobá)'], 90, '2026', '15.902.441/0001-08', 'contato@florestanorte.com.br',
+      [['legal', null, '6 Oct 2026', 'pending']], {}],
+  ] : [
     ['Madeiras do Norte', 'Paredes', ['Lumber supply', 'Carpentry'], 21, '2026', '509 812 334', 'geral@madeirasdonorte.pt',
       [['legal', null, '12 Feb 2026', 'given'], ['insurance', null, '12 Feb 2026', 'given'], ['workers', 'sj', '3 Mar 2026', 'given'], ['hs', 'sj', '14 Oct 2026', 'pending']],
       { 'CO-08': ['expired', '30 Sep 2026', 'Expired 30 September — ALMA asked them for the renewed one.'], 'WK-11': ['missing', '', 'Two workers on São João have no fitness certificate.'], 'CO-03': ['expiring', '9 Nov 2026', ''] }],
@@ -80,5 +114,8 @@ window.CM_SUPPLIERS = (() => {
     const ok = uniq.filter((d) => d.status === 'valid').length;
     return { shared: uniq.length, bad, soon, ok, pct: uniq.length ? Math.round((ok / uniq.length) * 100) : 0, given: s.consents.filter((c) => c.state === 'given').length, pending: s.consents.filter((c) => c.state === 'pending').length };
   };
-  return { list: () => LIST, byId: (id) => LIST.find((s) => s.id === id) || null, stats, STATUS };
+  // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
+  const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products', AREAS: Object.values(SETS).map((x) => x[0]) }
+    : { id: 'NIPC', scope: 'projects', AREAS: ['Company & legal', 'Insurance', 'Workers on site', 'Health & safety', 'Equipment on site', 'Certifications'] };
+  return { WORDS, list: () => LIST, byId: (id) => LIST.find((s) => s.id === id) || null, stats, STATUS };
 })();

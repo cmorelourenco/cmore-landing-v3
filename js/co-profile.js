@@ -16,12 +16,25 @@ window.CO_PROFILE = (() => {
         { name: 'CUF', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2026' },
       ],
     },
+    beatriz: {
+      name: 'Veridian Harvest Co.', trading: '', activity: 'Agricultural commodity exporter', people: '60', form: 'Louisiana LLC', tax: '71-4482019',
+      street: '400 Poydras St, Suite 1850', city: 'New Orleans', region: 'LA', postcode: '70130', country: 'United States',
+      email: 'info@veridianharvest.com', cc: '+1', phone: '(504) 555-0192', website: 'veridianharvest.com',
+      logo: 'images/veridian-logo.svg',
+      consents: [
+        { name: 'Rotterdam Roasters BV', state: 'pending', what: 'EUDR due diligence statements, geolocation data', when: 'Asked 3 days ago' },
+        { name: 'Café Direct Hamburg GmbH', state: 'pending', what: 'supplier code of conduct, deforestation risk assessments', when: 'Asked 5 days ago' },
+        { name: 'Belgian Cocoa Works NV', state: 'accepted', what: 'Product overview, carbon footprint reports', when: 'Since 12 Aug 2026' },
+      ],
+    },
   };
+  // which demo person is signed in (the page's head decides): Miguel's company, or Beatriz's
+  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
   // the company you're in: the demo company, or one added in this session (js/company-switcher.js)
   const added = (() => {
     try {
-      const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null');
-      return id && id !== 'home' ? (JSON.parse(localStorage.getItem('cm-orgs-miguel') || '[]') || []).find((o) => o.id === id) || null : null;
+      const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + persona) || 'null');
+      return id && id !== 'home' ? (JSON.parse(localStorage.getItem('cm-orgs-' + persona) || '[]') || []).find((o) => o.id === id) || null : null;
     } catch (e) { return null; }
   })();
   const NAMES = { PT: 'Portugal', ES: 'Spain', US: 'United States', FR: 'France', DE: 'Germany', IT: 'Italy', NL: 'Netherlands', BE: 'Belgium' };
@@ -32,7 +45,7 @@ window.CO_PROFILE = (() => {
       email: '', cc: added.country === 'US' ? '+1' : '+351', phone: '', website: '', logo: '', consents: [],
     };
   }
-  const who = () => (added ? added.id : 'miguel');
+  const who = () => (added ? added.id : persona);
   const all = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } };
   const load = () => {
     const d = JSON.parse(JSON.stringify(DEFAULTS[who()])), saved = all()[who()] || {};

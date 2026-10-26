@@ -25,7 +25,8 @@
     if (!cmPerson) { cmPerson = JSON.parse(localStorage.getItem('cm-last-person') || 'null');
       if (cmPerson) { sessionStorage.setItem('cm-person', JSON.stringify(cmPerson)); if (localStorage.getItem('cm-last-company') === 'filled') sessionStorage.setItem('cm-company', 'filled'); } }
   } catch (e) {}
-  document.documentElement.dataset.persona = 'miguel'; // the one demo company on this branch
+  // who is signed in: Miguel (Ferreira Construções) by default, or Beatriz (Veridian Harvest Co.)
+  document.documentElement.dataset.persona = (cmPerson && /beatriz/i.test((cmPerson.email || '') + ' ' + (cmPerson.name || ''))) ? 'beatriz' : 'miguel';
   // whether the company has any data in it yet — ?filled, or a prior visit that finished
   // (or skipped) ALMA's intake — decides whether Projects/Shipments has anything to show
   var cmFilled = /[?&]filled\b/.test(location.search);
@@ -475,6 +476,22 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
 .co-btn-ghost:hover { background: var(--color-mid-beige); }
 .co-num { font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; color: var(--color-coral); }
 
+   No wider than their card — unlike the project table, these never scroll sideways — so a
+   name and its code or region stack on two lines instead, the same shape the project
+   table's own Client/Region columns use, which is also why these rows read the same height */
+.co-prod-tbl { table-layout: fixed; min-width: 0; }
+.co-prod-tbl th:nth-child(1) { width: 29%; } .co-prod-tbl th:nth-child(2) { width: 27%; } .co-prod-tbl th:nth-child(3) { width: 16%; }
+.co-prod-tbl th:nth-child(4) { width: 14%; } .co-prod-tbl th:nth-child(5) { width: 14%; }
+.co-prod-tbl th:last-child, .co-prod-tbl td:last-child { text-align: right; }
+/* a plain column truncates a long value rather than wrapping it; a column with a name and a
+   code or region underneath it is left to wrap normally, and the name truncates on its own */
+.co-prod-tbl td:not(:last-child) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.co-prod-tbl td:has(.d) { white-space: normal; overflow: visible; text-overflow: clip; }
+.co-prod-tbl td:last-child { white-space: nowrap; }
+.co-prod-tbl .n { display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Beatriz's company has no uploaded mark yet, just a monogram in her brand's colour */
+.co-logo-mono { display: grid; place-items: center; background: linear-gradient(155deg, #4a9636, var(--color-positive) 60%, #2f5f23); }
+.co-logo-mono svg { width: 58%; height: 58%; }
 /* profile completion */
 .co-strip { background: var(--color-surface); border-bottom: 1px solid var(--color-line); font-size: 0.875rem; color: var(--color-ink-muted); }
 .co-strip .co-wrap { min-height: 3rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.5rem; }
@@ -1632,7 +1649,7 @@ body { transition: background-color .9s ease; }
       <button type="button" class="hdr-bell" id="hdr-bell" aria-haspopup="true" aria-expanded="false" aria-controls="nt-panel" aria-label="Notifications, 6 new" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/></svg><span class="bell-count" data-sn-count>6</span></button>
       <div class="nt-panel" id="nt-panel" role="dialog" aria-label="Notifications">
         <div class="nt-head"><b>Notifications</b><button type="button" class="link-btn" id="nt-readall">Mark all as read</button></div>
-        <ul class="nt-list"><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>Construction licence expired</b><span>It ran out on 15 August. Drop the renewed one on ALMA.</span><small>Documents · 15 Aug</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>ALMA couldn&rsquo;t read your H&amp;S services contract</b><span>The service model is cut off in the scan &mdash; check it.</span><small>Documents · this week</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>Social Security clearance expires tomorrow</b><span>Social Security Clearance Certificate · 20 Oct.</span><small>Documents · today</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="consents"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Mota&#8209;Engil asked to see your insurance</b><span>Civil liability, workers&rsquo; compensation and tax clearance.</span><small>Consents · 2 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="consents"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Sonae MC asked to see your insurance</b><span>Everything in Insurance.</span><small>Consents · 6 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="projects"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>2 alerts on S&atilde;o Jo&atilde;o Hospital, east wing</b><span>ULS S&atilde;o Jo&atilde;o · two suppliers have expired documents.</span><small>Projects · yesterday</small></span><span class="nt-dot" aria-label="Unread"></span></a></li></ul>
+        <ul class="nt-list persona-miguel-only"><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>Construction licence expired</b><span>It ran out on 15 August. Drop the renewed one on ALMA.</span><small>Documents · 15 Aug</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>ALMA couldn&rsquo;t read your H&amp;S services contract</b><span>The service model is cut off in the scan &mdash; check it.</span><small>Documents · this week</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="docs"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>Social Security clearance expires tomorrow</b><span>Social Security Clearance Certificate · 20 Oct.</span><small>Documents · today</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="consents"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Mota&#8209;Engil asked to see your insurance</b><span>Civil liability, workers&rsquo; compensation and tax clearance.</span><small>Consents · 2 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="consents"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Sonae MC asked to see your insurance</b><span>Everything in Insurance.</span><small>Consents · 6 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="#" class="nt-item is-unread" data-go="projects"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>2 alerts on S&atilde;o Jo&atilde;o Hospital, east wing</b><span>ULS S&atilde;o Jo&atilde;o · two suppliers have expired documents.</span><small>Projects · yesterday</small></span><span class="nt-dot" aria-label="Unread"></span></a></li></ul><ul class="nt-list persona-beatriz-only"><li><a href="company-details.html?open=UN-05" class="nt-item is-unread"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>Certificate of insurance expires in 6 days</b><span>The earliest policy on your COI ends 1 November. Drop the renewal on ALMA.</span><small>Documents · today</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="company-details.html?open=UN-19" class="nt-item is-unread"><span class="nt-mark nt-pend" aria-hidden="true"></span><span class="nt-body"><b>ALMA couldn&rsquo;t read your Scope 3 total</b><span>Carbon footprint report &mdash; check the highlighted field.</span><small>Documents · this week</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="my-company.html?filled#consents" class="nt-item is-unread"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Rotterdam Roasters asked for your EUDR statements</b><span>Due diligence statements and plot geolocation data.</span><small>Consents · 3 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="my-company.html?filled#consents" class="nt-item is-unread"><span class="nt-mark nt-info" aria-hidden="true"></span><span class="nt-body"><b>Caf&eacute; Direct Hamburg asked to see your risk assessments</b><span>Supplier code of conduct, deforestation risk assessments.</span><small>Consents · 5 days ago</small></span><span class="nt-dot" aria-label="Unread"></span></a></li><li><a href="suppliers.html" class="nt-item is-unread"><span class="nt-mark nt-over" aria-hidden="true"></span><span class="nt-body"><b>A cocoa cooperative&rsquo;s plot data is missing</b><span>Asankragwa Cocoa Farmers &mdash; geolocation for 3 plots.</span><small>My suppliers · yesterday</small></span><span class="nt-dot" aria-label="Unread"></span></a></li></ul>
         <div class="nt-foot"><a href="#" onclick="return false">View all notifications</a></div>
       </div>
     </div>
@@ -1658,7 +1675,8 @@ body { transition: background-color .9s ease; }
     <div class="sn-collapse"><button type="button" id="sn-collapse" aria-controls="sn" aria-expanded="true" aria-label="Collapse menu" title="Collapse menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg></button></div>
     <a class="sn-item" href="#" data-sn="top" title="Company overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m2.25 12 8.954-8.955a1.126 1.126 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg><span class="sn-l">Company overview</span></a>
     <div class="sn-sep" role="separator"></div>
-    <a class="sn-item sn-proj" href="#" data-sn=".co-proj-sec" title="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg><span class="sn-l">Projects</span></a>
+    <a class="sn-item sn-proj" data-only="miguel" href="#" data-sn=".co-proj-sec" title="Projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg><span class="sn-l">Projects</span></a>
+    <a class="sn-item sn-proj persona-beatriz-only" href="#" data-sn=".co-prod-sec" title="Products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/></svg><span class="sn-l">Products</span></a>
     <a class="sn-item" href="company-details.html" data-sn="go" title="Documents"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/></svg><span class="sn-l">Documents</span></a>
     <a class="sn-item" href="questionnaires.html" data-sn="go" title="Questionnaires"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z"/></svg><span class="sn-l">Questionnaires</span></a>
     <div class="sn-sep" role="separator"></div>
@@ -1826,11 +1844,18 @@ body { transition: background-color .9s ease; }
       <div class="co-id">
       <div class="co-id-col">
       <span class="eyebrow">My company</span>
-      <div class="co-id-main">
+      <div class="co-id-main" data-only="miguel">
       <img class="co-logo" src="images/ferreira-logo.webp" alt="Ferreira Construction logo" width="88" height="88">
       <div class="co-id-l">
         <h1 class="co-name">Ferreira Constru&ccedil;&otilde;es, Lda.</h1>
         <span class="co-subtle" style="font-size:0.9375rem">General contractor · 24 people · NIPC 514&nbsp;228&nbsp;930 · Sociedade por quotas · Porto</span>
+      </div>
+      </div>
+      <div class="co-id-main persona-beatriz-only">
+      <span class="co-logo co-logo-mono" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg></span>
+      <div class="co-id-l">
+        <h1 class="co-name">Veridian Harvest Co.</h1>
+        <span class="co-subtle" style="font-size:0.9375rem">Agricultural commodity exporter · 60 people · EIN 71&#8209;4482019 · Louisiana LLC · New Orleans, LA</span>
       </div>
       </div>
       </div>
@@ -1859,21 +1884,21 @@ body { transition: background-color .9s ease; }
           <a href="#" class="co-k" data-go=".co-last-sec" id="co-k-cons" role="listitem">
             <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg><span>Consents</span><span class="co-k-arrow" aria-hidden="true"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></span></span>
             <span class="co-k-big"><span class="co-k-n">2</span><span class="co-k-nl">waiting for your answer</span></span>
-            <span class="co-k-d">Mota&#8209;Engil and Sonae MC asked to see your insurance.</span>
+            <span class="co-k-d" data-only="miguel">Mota&#8209;Engil and Sonae MC asked to see your insurance.</span><span class="co-k-d persona-beatriz-only">Rotterdam Roasters and Caf&eacute; Direct Hamburg asked to see your due diligence statements.</span>
             <span class="co-k-chips"><span class="co-k-chip co-k-ok" id="co-k-cons-ok"><b>1</b> accepted</span><span class="co-k-chip co-k-exp is-zero" id="co-k-cons-exp"><b>0</b> expired</span></span>
           </a>
           <a href="suppliers.html" class="co-k" id="co-k-sup" role="listitem">
             <span class="co-k-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/></svg><span>My suppliers</span><span class="co-k-arrow" aria-hidden="true"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1 0 1.06L9.08 10l3.71 3.71a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg></span></span>
             <span class="co-k-big"><span class="co-k-n">2</span><span class="co-k-nl">need your attention</span></span>
-            <span class="co-k-d">Madeiras do Norte and Prote&ccedil;&atilde;o Inc&ecirc;ndio Norte are behind on their papers.</span>
-            <span class="co-k-chips"><span class="co-k-chip co-k-miss" id="co-k-sup-miss"><b>3</b> papers missing</span><span class="co-k-chip co-k-exp" id="co-k-sup-exp"><b>1</b> expired</span></span>
+            <span class="co-k-d" data-only="miguel">Madeiras do Norte and Prote&ccedil;&atilde;o Inc&ecirc;ndio Norte are behind on their papers.</span><span class="co-k-d persona-beatriz-only">Asankragwa Cocoa Farmers and Sumatra Agro Palm are behind on their papers.</span>
+            <span class="co-k-chips" data-only="miguel"><span class="co-k-chip co-k-miss" id="co-k-sup-miss"><b>3</b> papers missing</span><span class="co-k-chip co-k-exp" id="co-k-sup-exp"><b>1</b> expired</span></span><span class="co-k-chips persona-beatriz-only"><span class="co-k-chip co-k-miss"><b>2</b> papers missing</span><span class="co-k-chip co-k-exp"><b>1</b> expired</span></span>
           </a>
       </div>
     </div>
   </section>
 
   <!-- Project overview: every project you are on, as owner or as supplier -->
-  <section class="co-sec co-proj-sec"><div class="co-wrap">
+  <section class="co-sec co-proj-sec" data-only="miguel"><div class="co-wrap">
       <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My projects</h3></div>
     <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project overview</h2><p class="co-muted">Where your company is working, and what needs attention on each site.</p></div>
     <div class="co-proj">
@@ -1895,6 +1920,24 @@ body { transition: background-color .9s ease; }
       <div class="co-pager-row">
         <nav class="co-pager" aria-label="Projects pages" data-pager-for="co-proj-filled"></nav>
         <a href="#" onclick="return false" class="co-link co-pager-all">View all</a>
+      </div>
+      </div>
+    </div>
+  </div></section>
+
+  <!-- Beatriz's company deals in commodities, not construction sites: the products she moves, in
+       place of the project table above; each opens its product sheet (product.html) -->
+  <section class="co-sec co-proj-sec co-prod-sec persona-beatriz-only" id="products"><div class="co-wrap">
+      <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My products</h3></div>
+    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Product overview</h2><p class="co-muted">What you move, how it is classified, and what it costs the climate.</p></div>
+    <div class="co-proj">
+      <div class="co-proj-block">
+      <div class="co-tools" data-stools-for="co-prod-filled"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by product, HS/CN code or risk input" aria-label="Search products" data-sq></label><div class="co-tools-r"><button type="button" class="link-btn co-tools-clear" data-sclear hidden>Clear filters</button><div class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="false" data-sfilt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n" data-sfilt-n hidden></span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button><div class="co-filt-panel" role="menu" aria-label="Filter products" data-sfilt-panel hidden></div></div></div></div>
+      <div class="co-card co-tbl-card">
+        <table class="co-tbl co-prod-tbl" id="co-prod-filled"><thead><tr><th>Product</th><th>BOM</th><th>Risk inputs</th><th class="c">PCF</th><th>Status</th></tr></thead><tbody><tr data-product="roasted-coffee"><td><span class="n">Roasted coffee beans</span><span class="d">0901.21</span></td><td><span class="n">100% Arabica, single origin</span></td><td>Coffee beans</td><td class="c">3.1 kg CO₂e/kg</td><td><span class="co-badge b-ok">In conformity</span></td></tr><tr data-product="green-coffee"><td><span class="n">Green coffee beans</span><span class="d">0901.11</span></td><td><span class="n">Single ingredient</span></td><td>Coffee beans</td><td class="c">1.8 kg CO₂e/kg</td><td><span class="co-badge b-ok">In conformity</span></td></tr><tr data-product="cocoa-butter"><td><span class="n">Cocoa butter</span><span class="d">1804.00</span></td><td><span class="n">Pressed from cocoa beans</span></td><td>Cocoa beans</td><td class="c">4.6 kg CO₂e/kg</td><td><span class="co-badge b-info">Pending approval</span></td></tr><tr data-product="dark-chocolate"><td><span class="n">Dark chocolate couverture, 70%</span><span class="d">1806.32</span></td><td><span class="n">Cocoa mass, cocoa butter, sugar (3 inputs)</span></td><td>Cocoa beans</td><td class="c">5.2 kg CO₂e/kg</td><td><span class="co-badge b-pend">Pending</span></td></tr><tr data-product="crude-palm-oil"><td><span class="n">Crude palm oil</span><span class="d">1511.10</span></td><td><span class="n">Single ingredient</span></td><td>Palm oil</td><td class="c">2.9 kg CO₂e/kg</td><td><span class="co-badge b-over">Non conform</span></td></tr><tr data-product="refined-soybean-oil"><td><span class="n">Refined soybean oil</span><span class="d">1507.90</span></td><td><span class="n">Single ingredient</span></td><td>Soybeans</td><td class="c">2.1 kg CO₂e/kg</td><td><span class="co-badge b-ok">In conformity</span></td></tr><tr data-product="natural-rubber"><td><span class="n">Natural rubber sheets (RSS3)</span><span class="d">4001.21</span></td><td><span class="n">Single ingredient</span></td><td>Natural rubber</td><td class="c">1.4 kg CO₂e/kg</td><td><span class="co-badge b-ok">In conformity</span></td></tr><tr data-product="sawn-hardwood"><td><span class="n">Sawn tropical hardwood</span><span class="d">4407.29</span></td><td><span class="n">Single ingredient</span></td><td>Timber</td><td class="c">0.6 kg CO₂e/kg</td><td><span class="co-badge b-info">Pending approval</span></td></tr><tr data-product="frozen-beef"><td><span class="n">Frozen beef cuts</span><span class="d">0202.30</span></td><td><span class="n">Single ingredient</span></td><td>Cattle</td><td class="c">27.0 kg CO₂e/kg</td><td><span class="co-badge b-pend">Pending</span></td></tr><tr data-product="soy-protein"><td><span class="n">Soy protein concentrate</span><span class="d">2304.00</span></td><td><span class="n">Defatted soybean meal, extracted (2 inputs)</span></td><td>Soybeans</td><td class="c">1.9 kg CO₂e/kg</td><td><span class="co-badge b-ok">In conformity</span></td></tr></tbody></table>
+      </div>
+      <div class="co-pager-row">
+        <nav class="co-pager" aria-label="Products pages" data-spager-for="co-prod-filled"></nav>
       </div>
       </div>
     </div>
@@ -1941,10 +1984,15 @@ body { transition: background-color .9s ease; }
     <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Who asked for your consents</h2><p class="co-muted">Clients asking to see your documents. Give or deny your consent to each one: nothing is shared until you say yes.</p></div>
     <div class="co-consents">
       <div class="co-card co-list">
-        <div>
+        <div data-only="miguel">
         <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Mota&#8209;Engil <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: civil liability, workers&rsquo; compensation, tax clearance. Asked 2 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
         <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Sonae MC <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: everything in Insurance. Asked 6 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
         <div class="co-row"><div class="co-row-t"><span class="co-row-n">CUF <span class="co-badge b-ok">Accepted</span></span><span class="co-subtle">Sees: Company &amp; legal, Insurance. Since 4 Sep 2026.</span></div><a href="#" onclick="return false" class="btn co-btn-ghost co-btn-sm">Manage</a></div>
+        </div>
+        <div class="persona-beatriz-only">
+        <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Rotterdam Roasters BV <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: EUDR due diligence statements, geolocation data. Asked 3 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
+        <div class="co-row co-req"><div class="co-row-t"><span class="co-row-n">Caf&eacute; Direct Hamburg GmbH <span class="co-badge b-pend">Pending</span></span><span class="co-subtle">Wants to see: supplier code of conduct, deforestation risk assessments. Asked 5 days ago.</span></div><div class="co-acts"><button type="button" class="btn btn-primary co-btn-sm" data-answer="Accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-answer="Declined">Decline</button></div></div>
+        <div class="co-row"><div class="co-row-t"><span class="co-row-n">Belgian Cocoa Works NV <span class="co-badge b-ok">Accepted</span></span><span class="co-subtle">Sees: Product overview, carbon footprint reports. Since 12 Aug 2026.</span></div><a href="#" onclick="return false" class="btn co-btn-ghost co-btn-sm">Manage</a></div>
         </div>
       </div>
     </div>
@@ -1960,6 +2008,74 @@ body { transition: background-color .9s ease; }
 </main>
 <script src="js/co-profile.js"></script>
 <script>CO_PROFILE.applyToCompanyPage();</script>
+<script>
+/* Beatriz's products table: the same search-and-page shape as projects,
+   but only one thing to filter by — Status, always the table's last column */
+(() => {
+  const PER = 10;
+  document.querySelectorAll('[data-spager-for]').forEach((nav) => {
+    const table = document.getElementById(nav.dataset.spagerFor); if (!table) return;
+    const body = table.tBodies[0], rows = [...body.rows], cols = table.tHead.rows[0].cells.length;
+    const tools = document.querySelector(`[data-stools-for="${table.id}"]`);
+    const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const data = rows.map((r) => ({ r, text: fold(r.innerText), status: r.cells[cols - 1].querySelector('.co-badge').textContent.trim() }));
+    const none = body.insertRow(); none.hidden = true; none.innerHTML = `<td colspan="${cols}" class="co-tbl-none">Nothing matches that. <button type="button" class="link-btn" data-sclear>Clear the search and filters</button></td>`;
+    const f = { q: '', status: new Set() };
+    let page = 1;
+    const keep = (d, skip) => (!f.q || d.text.includes(f.q)) && (skip === 'status' || !f.status.size || f.status.has(d.status));
+    const nOn = () => f.status.size;
+    const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
+    const X = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
+    let panel, btn;
+    const paint = () => {
+      const all = [...new Set(data.map((d) => d.status))];
+      panel.innerHTML = '<div class="co-filt-list"><div class="co-menu-h">Status</div>' + all.map((v) => {
+        const n = data.filter((d) => keep(d, 'status') && d.status === v).length;
+        return `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${f.status.has(v)}" data-v="${v}"><span class="co-menu-c">${TICK}</span>${v}<small>${n}</small></button>`;
+      }).join('') + `<div class="co-menu-sep" role="separator"></div><button type="button" class="co-menu-i" role="menuitem" data-sclear${nOn() ? '' : ' disabled'}><span class="co-menu-c">${X}</span>Clear filters</button></div>`;
+    };
+    if (tools) {
+      panel = tools.querySelector('[data-sfilt-panel]'); btn = tools.querySelector('[data-sfilt-btn]');
+      const open = (on) => { panel.hidden = !on; btn.setAttribute('aria-expanded', String(on)); if (on) { paint(); panel.firstElementChild.scrollTop = 0; } };
+      btn.addEventListener('click', (e) => { e.stopPropagation(); open(panel.hidden); if (!panel.hidden && e.detail === 0) panel.querySelector('.co-menu-i').focus({ preventScroll: true }); });
+      panel.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const i = e.target.closest('.co-menu-i'); if (!i || i.disabled) return;
+        if (i.hasAttribute('data-sclear')) { clear(); panel.querySelector('.co-menu-i').focus(); return; }
+        f.status.has(i.dataset.v) ? f.status.delete(i.dataset.v) : f.status.add(i.dataset.v); go(1); paint();
+        const again = panel.querySelector(`[data-v="${i.dataset.v}"]`); if (again) again.focus();
+      });
+      panel.addEventListener('keydown', (e) => {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        e.preventDefault();
+        const items = [...panel.querySelectorAll('.co-menu-i:not(:disabled)')], at = items.indexOf(document.activeElement);
+        items[(at + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+      });
+      document.addEventListener('click', (e) => { if (!tools.contains(e.target)) open(false); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) { open(false); btn.focus(); } });
+      tools.querySelector('[data-sq]').addEventListener('input', (e) => { f.q = fold(e.target.value.trim()); go(1); if (!panel.hidden) paint(); });
+    }
+    const clear = () => { f.q = ''; f.status.clear(); if (tools) tools.querySelector('[data-sq]').value = ''; go(1); if (panel && !panel.hidden) paint(); };
+    document.addEventListener('click', (e) => { const c = e.target.closest('[data-sclear]'); if (c && ((tools && tools.contains(c)) || none.contains(c))) clear(); });
+    function go(n) {
+      const shown = data.filter((d) => keep(d));
+      const pages = Math.max(1, Math.ceil(shown.length / PER));
+      page = Math.min(pages, Math.max(1, n));
+      rows.forEach((r) => (r.hidden = true));
+      shown.slice((page - 1) * PER, page * PER).forEach((d) => (d.r.hidden = false));
+      none.hidden = !!shown.length;
+      if (btn) { const n2 = nOn(), el = tools.querySelector('[data-sfilt-n]'); el.hidden = !n2; el.textContent = n2; tools.querySelector('.co-tools-clear').hidden = !(n2 || f.q); }
+      nav.hidden = pages < 2;
+      nav.innerHTML = (pages > 1 ? `<span class="co-pager-btns">` +
+        `<button type="button" class="co-pager-arrow" data-to="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Previous page"><span aria-hidden="true">←</span> Previous</button>` +
+        Array.from({ length: pages }, (_, k) => `<button type="button" data-to="${k + 1}"${k + 1 === page ? ' aria-current="page"' : ''} aria-label="Page ${k + 1}">${k + 1}</button>`).join('') +
+        `<button type="button" class="co-pager-arrow" data-to="${page + 1}"${page === pages ? ' disabled' : ''} aria-label="Next page">Next <span aria-hidden="true">→</span></button></span>` : '');
+    }
+    nav.addEventListener('click', (e) => { const b = e.target.closest('[data-to]'); if (b) go(+b.dataset.to); });
+    go(1);
+  });
+})();
+</script>
 <script src="js/doc-catalog.js"></script>
 <script>
 // ALMA's intake: each document she asks for carries the catalog's requirement, so the list reads
@@ -1991,6 +2107,7 @@ body { transition: background-color .9s ease; }
   // the demo account has its own picture; anyone else has their initials until they add one
   if (!photo && !(p && p.noPhoto)) {
     if (email.toLowerCase() === 'miguel@ferreiraconstrucoes.pt') photo = 'images/profile-miguel.webp';
+    else if (email.toLowerCase() === 'beatriz@veridianharvest.com') photo = 'images/profile-beatriz.webp';
   }
   const ini = name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
   document.querySelectorAll('[data-who-name]').forEach((n) => (n.textContent = name));
@@ -2045,6 +2162,12 @@ body { transition: background-color .9s ease; }
   // highlighted but not wired (there is no project page yet); Documents rows carry the
   // real document's code and open straight to it in the Documents section.
   document.querySelectorAll('.co-tbl tbody tr').forEach((tr) => { if (!tr.querySelector('.co-tbl-empty')) { tr.tabIndex = 0; tr.setAttribute('role', 'link'); } });
+  // Beatriz's product rows open the product sheet
+  document.querySelectorAll('.co-prod-tbl tbody tr[data-product]').forEach((tr) => {
+    const go = () => { location.href = `product.html?p=${encodeURIComponent(tr.dataset.product)}`; };
+    tr.addEventListener('click', go);
+    tr.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
   document.querySelectorAll('.co-docs-tbl tbody tr[data-code]').forEach((tr) => {
     const go = () => { location.href = `company-details.html?open=${encodeURIComponent(tr.dataset.code)}`; };
     tr.addEventListener('click', go);
@@ -2172,7 +2295,7 @@ body { transition: background-color .9s ease; }
   // a company just created gets ALMA's guided upload instead (js/guided-upload.js)
   // ... and once a new company's guided upload is done (or put off), the general one doesn't follow it
   // a company added in this session gets ALMA section by section instead (js/guided-upload.js)
-  const guidedDone = (() => { try { const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null'); return !!(id && id !== 'home'); } catch (e) { return false; } })();
+  const guidedDone = (() => { try { const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + (document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel')) || 'null'); return !!(id && id !== 'home'); } catch (e) { return false; } })();
   if (!arrive.has('welcome') && !arrive.has('teaser') && !arrive.has('guided') && !guidedDone && arrive.has('page')) overlay();
   document.getElementById('skip').addEventListener('click', close);
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intake.hidden) close(); });
@@ -2498,7 +2621,8 @@ body { transition: background-color .9s ease; }
   }));
   document.querySelectorAll('.co-k[data-go]').forEach((k) => k.addEventListener('click', (e) => { e.preventDefault(); const t = target(k.dataset.go); if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8, behavior: 'smooth' }); }));
   // the section in view is the one marked
-  const spy = ['.co-proj-sec', 'docs', '.co-last-sec'];
+  // Beatriz's company has products where Miguel's has projects
+  const spy = [root.dataset.persona === 'beatriz' ? '.co-prod-sec' : '.co-proj-sec', 'docs', '.co-last-sec'];
   const mark = () => {
     let on = 'top';
     // a hidden section collapses to a 0×0 box, which would otherwise still read as
@@ -2512,7 +2636,7 @@ body { transition: background-color .9s ease; }
   addEventListener('scroll', mark, { passive: true }); addEventListener('resize', mark);
   setTimeout(mark, 50);
   // arriving from another page at one of these sections (#projects, #documents, #consents)
-  const jump = { '#company': '.co-hero-id', '#projects': '.co-proj-sec', '#documents': 'docs', '#consents': '.co-last-sec' }[location.hash];
+  const jump = { '#company': '.co-hero-id', '#projects': '.co-proj-sec', '#products': '.co-prod-sec', '#documents': 'docs', '#consents': '.co-last-sec' }[location.hash];
   if (jump) setTimeout(() => { const t = target(jump); if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 72 - 8 }); }, 80);
   // the counts are kept by the notifications panel's script (what is unread, and none on the empty company)
 })();
@@ -2526,7 +2650,7 @@ body { transition: background-color .9s ease; }
    goes to its section on this page and is marked read; the counts follow what is unread. */
 (() => {
   const nt = document.getElementById('nt'), bell = document.getElementById('hdr-bell'); if (!nt) return;
-  const items = [...nt.querySelectorAll('.nt-item')];
+  const items = [...nt.querySelectorAll('.nt-item')].filter((i) => !i.closest(document.documentElement.dataset.persona === 'beatriz' ? '.persona-miguel-only' : '.persona-beatriz-only')); // only this person's
   const open = (on) => { nt.classList.toggle('is-open', on); bell.setAttribute('aria-expanded', String(on)); if (on) setTimeout(() => (items.find((i) => i.classList.contains('is-unread')) || items[0]).focus({ preventScroll: true }), 60); };
   const count = () => {
     const n = items.filter((i) => i.classList.contains('is-unread')).length;
@@ -2544,6 +2668,7 @@ body { transition: background-color .9s ease; }
   items.forEach((i) => i.addEventListener('click', (e) => {
     e.preventDefault();
     i.classList.remove('is-unread'); count(); open(false);
+    if (!i.dataset.go) { location.href = i.getAttribute('href'); return; } // Beatriz's notifications open their own page
     const t = section(i.dataset.go);
     if (t) scrollTo({ top: t.getBoundingClientRect().top + scrollY - 80, behavior: 'smooth' });
   }));

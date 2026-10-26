@@ -348,7 +348,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
           <button type="button" class="btn btn-sso" data-login-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
         </div>
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
-        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button></p>
+        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button><br><button type="button" class="link-btn" data-login-try="f">Beatriz Nogueira</button></p>
         <p class="hint" style="margin-top:0.5rem;text-align:center">New here? <a class="link-btn" href="register.html" data-to-signup>Get early access</a></p>
       </section>
 
@@ -503,7 +503,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const $ = (s) => document.querySelector(s);
   // a login starts clean: companies added in an earlier session (and cards added with them) are
   // gone, as they are after Log out — only each person's main company is part of the demo
-  const forgetCompanies = () => { try { ['miguel'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
+  const forgetCompanies = () => { try { ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
 
   // ---- steps ---------------------------------------------------------------
   const show = (name) => {
@@ -515,7 +515,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt' };
-  const EXAMPLES = { m: EXAMPLE };
+  const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com' } };
   const initials = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
 
   let person = null; // { name, email, via }
@@ -895,8 +895,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     const typed = liEmail.value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(typed)) { liErr.textContent = 'That does not look like an email address.'; liEmail.classList.add('is-bad'); liEmail.focus(); return; }
     liGo.disabled = true; liGo.textContent = 'Logging in…';
-    // the prototype only knows Miguel; any email logs in as him, the account the rest of the demo assumes
-    const match = EXAMPLES.m;
+    // Beatriz's email logs in as her; any other logs in as Miguel, the demo's default
+    const match = typed.toLowerCase() === EXAMPLES.f.email ? EXAMPLES.f : EXAMPLES.m;
     // remembered for this browser too, so a link opened in a new tab is still this person
     try { const who = JSON.stringify({ ...match, via: 'Email' }); sessionStorage.setItem('cm-person', who); sessionStorage.removeItem('cm-esg'); forgetCompanies(); localStorage.setItem('cm-last-person', who); localStorage.setItem('cm-last-company', 'filled'); } catch (err) {}
     await wait(600);
