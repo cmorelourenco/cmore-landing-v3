@@ -601,6 +601,10 @@
   };
 
   function render() {
+    // the side menu's Documents sections (js/company-switcher.js) and the address follow the section open
+    document.dispatchEvent(new CustomEvent('cm-docs-area', { detail: area }));
+    const q = new URLSearchParams(location.search);
+    if ((q.get('area') || null) !== area && !q.get('open')) { if (area) q.set('area', area); else q.delete('area'); window.history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
     if (typeof syncCards === 'function') syncCards();
     askIfEmpty();
     updateHeader();
@@ -622,6 +626,14 @@
   }
 
   const toTop = () => scrollTo({ top: 0, behavior: 'smooth' });
+  // the side menu's Documents sections (js/company-switcher.js): here, they open in place
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[data-sn-area]');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || !AREAS.some((x) => x.key === a.dataset.snArea)) return;
+    e.preventDefault();
+    area = a.dataset.snArea; detail = null; worker = null; machine = null; resetDetailFilter(); render(); toTop();
+    const scrim = document.getElementById('sn-scrim'); if (scrim && !scrim.hidden) scrim.click(); // the menu, as a drawer on a phone, closes
+  });
 
   crumbTrail.addEventListener('click', (e) => {
     const b = e.target.closest('[data-crumb]'); if (!b) return;

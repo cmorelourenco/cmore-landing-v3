@@ -206,3 +206,39 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
     go(o);
   });
 })();
+
+// The side menu's Documents, opened up: under it, its sections (the cards on the Documents page:
+// Company, Workers, Equipment, Products, whichever the company has). The pages that know them
+// (they load js/doc-model.js) keep the list for the others, per person and company.
+(() => {
+  const nav = document.querySelector('.sn-item[title="Documents"]');
+  if (!nav || nav.hidden || !window.CMOrgs) return;
+  const O = window.CMOrgs, org = O.current();
+  const KEY = `cm-doc-areas-${O.persona}${O.test ? '-test' : ''}-${org ? org.id : 'home'}`;
+  const read = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
+  let areas = null;
+  if (window.DOC_MODEL && window.DOC_MODEL.AREAS) {
+    areas = window.DOC_MODEL.AREAS.map((a) => [a.key, a.title]);
+    try { sessionStorage.setItem(KEY, JSON.stringify(areas)); } catch (e) {}
+  } else areas = read() || (O.persona === 'beatriz' ? [['company', 'Company'], ['products', 'Products']] : [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment']]);
+  if (!areas.length) return;
+  const css = `
+.sn-sub { display: grid; gap: 1px; margin: 0.125rem 0 0.375rem; padding-left: 2.75rem; }
+.sn-sub a { position: relative; display: flex; align-items: center; height: 2rem; margin-left: -0.625rem; padding: 0 0.625rem; border-radius: 0.375rem; font-size: 0.875rem;
+  color: var(--color-ink-subtle); text-decoration: none; white-space: nowrap; transition: background-color .14s ease, color .14s ease; }
+.sn-sub a::before { content: ""; position: absolute; left: -0.75rem; top: 0; bottom: 0; width: 1px; background: var(--color-line); }
+.sn-sub a:hover { background: var(--color-light-beige); color: var(--color-ink); }
+.sn-sub a.is-on { color: var(--color-ink); font-weight: 600; }
+.sn-sub a.is-on::before { width: 2px; left: -0.8125rem; background: var(--color-coral); }
+.sn-sub a:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
+html[data-sn="rail"] .sn-sub { display: none; }`;
+  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+  const sub = document.createElement('div');
+  sub.className = 'sn-sub'; sub.setAttribute('role', 'group'); sub.setAttribute('aria-label', 'Document sections');
+  sub.innerHTML = areas.map(([k, t]) => `<a href="company-details.html?area=${k}" data-sn-area="${k}">${t}</a>`).join('');
+  nav.after(sub);
+  // the section open on the Documents page (js/company-details.js says which, as it changes)
+  const mark = (k) => sub.querySelectorAll('a').forEach((a) => { const on = a.dataset.snArea === k; a.classList.toggle('is-on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  if (/company-details/.test(location.pathname)) mark(new URLSearchParams(location.search).get('area'));
+  document.addEventListener('cm-docs-area', (e) => mark(e.detail));
+})();
