@@ -65,6 +65,8 @@ window.CMAccess = (() => {
     data: 'documents.company', contracts: 'documents.company', workers: 'documents.workers', equipment: 'documents.equipment', questionnaires: 'questionnaires', consents: 'consents' };
 
   const me = Object.assign({ name: persona === 'beatriz' ? 'Beatriz Nogueira' : 'Miguel Ferreira', email: '' }, get(sessionStorage, 'cm-person', {}) || {});
+  // the test user (register.html) starts alone in its company: none of the demo's people
+  const test = /^test@c-more\.test$/i.test(me.email || '');
   // the people already on the demo company
   const SEED = () => (persona === 'beatriz' ? [
     { name: me.name, email: me.email || 'beatriz@veridianharvest.com', role: 'owner', you: true },
@@ -91,7 +93,7 @@ window.CMAccess = (() => {
     const t = all()[id];
     if (t) return fix(t);
     // a company you add starts with just you, as its owner, and the usual groups, empty
-    return { members: id === 'home' ? SEED() : [{ name: me.name, email: me.email || (persona === 'beatriz' ? 'beatriz@veridianharvest.com' : 'miguel@ferreiraconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
+    return { members: id === 'home' && !test ? SEED() : [{ name: me.name, email: me.email || (persona === 'beatriz' ? 'beatriz@veridianharvest.com' : 'miguel@ferreiraconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
   };
   const save = (id, t) => { const a = all(); a[id] = t; set(localStorage, KEY, a); };
   const orgId = () => get(sessionStorage, 'cm-org', null) || get(localStorage, 'cm-last-org-' + persona, null) || 'home';

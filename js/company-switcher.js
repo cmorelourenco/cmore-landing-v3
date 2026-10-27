@@ -21,9 +21,10 @@
   }[persona];
   // the test user (register.html) starts from nothing every time: logging out wipes all the demo
   // kept in this browser, whoever it belonged to; only cookies, language and the side menu stay.
-  // Until ALMA has filled its company, the company has no name yet either
+  // Its company is a new one, with no name yet: its documents are only what it uploads to ALMA,
+  // section by section (js/guided-upload.js, js/doc-model.js)
   const TEST = /^test@c-more\.test$/i.test(person.email || '');
-  if (TEST && get(sessionStorage, 'cm-company', null) !== 'filled') Object.assign(HOME, { name: 'Your company', logo: '', state: 'empty' });
+  if (TEST) Object.assign(HOME, { name: 'Your company', logo: '', state: 'empty', country: person.country || 'PT', tax: person.nipc || '' });
   const KEY = 'cm-orgs-' + persona, LINKS = 'cm-org-links-' + persona, LAST = 'cm-last-org-' + persona;
 
   // the companies, and how they hang together: links maps a subsidiary's id to its parent's
@@ -85,6 +86,19 @@
   // stays), how they hung together, which one you were in, and any card added along the way
   const out = document.getElementById('who-logout');
   if (out) out.addEventListener('click', () => forget());
+
+  // the test user's company, before ALMA has filled it, has nothing to tell anyone yet: the demo's
+  // notifications go, and the panel says so
+  if (TEST && HOME.state === 'empty' && cur.id === 'home') {
+    const nt = document.getElementById('nt');
+    if (nt) {
+      nt.querySelectorAll('.nt-item').forEach((i) => i.classList.remove('is-unread'));
+      nt.querySelectorAll('.nt-list').forEach((l, n) => { if (n) l.remove(); else l.outerHTML = '<p class="nt-none" style="margin:0;padding:1.5rem 1.25rem;text-align:center;font-size:0.875rem;line-height:1.5;color:var(--color-ink-subtle)">No notifications yet. They show up here once ALMA has your documents.</p>'; });
+      const ra = document.getElementById('nt-readall'); if (ra) ra.hidden = true;
+    }
+    document.querySelectorAll('[data-sn-count]').forEach((c) => { c.textContent = '0'; c.hidden = true; });
+    const bell = document.getElementById('hdr-bell'); if (bell) bell.setAttribute('aria-label', 'Notifications');
+  }
 
   // the account menu's "Create a new company" is for owners only
   if (role !== 'owner') document.querySelectorAll('[data-owner-only]').forEach((a) => a.remove());

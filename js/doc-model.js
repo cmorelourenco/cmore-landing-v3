@@ -219,9 +219,19 @@ window.DOC_MODEL = (() => {
     return { country: o.country || 'PT', sector: construction ? 'construction' : 'other', entityType: o.people === '0' ? 'self_employed' : 'company',
       employees: n != null ? n : 10, services: construction ? ['construction_work'] : [], equipmentCount: o.ownEquipment === false ? 0 : 1, usClients: false };
   };
+  // the test user (register.html): its company starts empty, like one just added, and is wiped on log out
+  const TEST_ORG = (() => {
+    try {
+      const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {};
+      if (!/^test@c-more\.test$/i.test(p.email || '')) return null;
+      return { id: 'home', name: 'Your company', country: p.country || 'PT', sector: 'Construction', tax: p.nipc || '', state: 'empty' };
+    } catch (e) { return null; }
+  })();
   const ORG = (() => {
     try {
       const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + PERSONA) || 'null');
+      // the test user's own company (register.html) is a new one too: it has only what it uploads to ALMA
+      if ((!id || id === 'home') && TEST_ORG) return TEST_ORG;
       if (!id || id === 'home') return null;
       return (JSON.parse(localStorage.getItem('cm-orgs-' + PERSONA) || '[]') || []).find((o) => o.id === id) || null;
     } catch (e) { return null; }

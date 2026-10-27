@@ -23,7 +23,7 @@
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
   if (!O || !CAT || !R || !DM) return;
   const org = O.current();
-  if (!org || org.id === 'home') return;
+  if (!org || (org.id === 'home' && !O.test)) return; // the test user's own company is a new one too
   const KEY = 'cm-guided-' + org.id;
   const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (e) { return null; } };
   const saved = Object.assign({ files: {}, extra: 0, areas: {} }, load() || {});
@@ -547,5 +547,9 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
   if (/[?&]guided\b/.test(location.search)) {
     history.replaceState(null, '', location.pathname + location.search.replace(/[?&]guided\b/, '').replace(/^&/, '?') + location.hash);
     if (!has('company')) open('company', { doneLabel: 'Go to my company', onClose: (c) => { if (c) location.reload(); } });
+  } else if (O.test && document.querySelector('#empty')) {
+    // the test user, back on its homepage: ALMA comes up on the first section with nothing in it yet
+    const empty = ['company', 'workers', 'equipment'].find((a) => asks(a).length && !has(a));
+    if (empty) setTimeout(() => open(empty, { doneLabel: 'Go to my company', onClose: (c) => { if (c) location.reload(); } }), 650);
   }
 })();
