@@ -2299,7 +2299,9 @@ body { transition: background-color .9s ease; }
   // ... and once a new company's guided upload is done (or put off), the general one doesn't follow it
   // a company added in this session gets ALMA section by section instead (js/guided-upload.js)
   const guidedDone = (() => { try { const id = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + (document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel')) || 'null'); return !!(id && id !== 'home'); } catch (e) { return false; } })();
-  if (!arrive.has('welcome') && !arrive.has('teaser') && !arrive.has('guided') && !guidedDone && arrive.has('page')) overlay();
+  // the test user (register.html) goes straight to the empty page: ALMA waits there until asked
+  const testUser = (() => { try { return /^test@c-more\.test$/i.test((JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).email || ''); } catch (e) { return false; } })();
+  if (!testUser && !arrive.has('welcome') && !arrive.has('teaser') && !arrive.has('guided') && !guidedDone && arrive.has('page')) overlay();
   document.getElementById('skip').addEventListener('click', close);
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && !intake.hidden) close(); });
 

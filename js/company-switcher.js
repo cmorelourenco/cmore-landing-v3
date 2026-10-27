@@ -19,6 +19,11 @@
     miguel: { id: 'home', name: 'Ferreira Construções, Lda.', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
     beatriz: { id: 'home', name: 'Veridian Harvest Co.', logo: '<span class="cs-mono cs-leaf"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg></span>', state: 'filled', country: 'US', sector: 'Other' },
   }[persona];
+  // the test user (register.html) starts from nothing every time: logging out wipes all the demo
+  // kept in this browser, whoever it belonged to; only cookies, language and the side menu stay.
+  // Until ALMA has filled its company, the company has no name yet either
+  const TEST = /^test@c-more\.test$/i.test(person.email || '');
+  if (TEST && get(sessionStorage, 'cm-company', null) !== 'filled') Object.assign(HOME, { name: 'Your company', logo: '', state: 'empty' });
   const KEY = 'cm-orgs-' + persona, LINKS = 'cm-org-links-' + persona, LAST = 'cm-last-org-' + persona;
 
   // the companies, and how they hang together: links maps a subsidiary's id to its parent's
@@ -49,8 +54,11 @@
     // a company just created opens with ALMA asking for its mandatory documents (js/guided-upload.js)
     location.href = st === 'filled' ? 'my-company.html?filled' : 'my-company.html?page' + (opts.guided ? '&guided' : '');
   };
+  const KEEP = ['cm-cookies', 'cm-lang', 'cm-sn-closed'];
+  const wipe = () => [sessionStorage, localStorage].forEach((st) => Object.keys(st).filter((k) => /^cm-/.test(k) && !KEEP.includes(k)).forEach((k) => st.removeItem(k)));
   const forget = () => {
     try {
+      if (TEST) wipe();
       ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
       ['cm-org', 'cm-newco-paid', 'cm-newco-id', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
       // and what was filed for the companies added (their guided upload, marks and updates), and
@@ -60,7 +68,7 @@
       if (window.indexedDB) indexedDB.deleteDatabase('cm-files');
     } catch (e) {}
   };
-  window.CMOrgs = { persona, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, go, forget };
+  window.CMOrgs = { persona, test: TEST, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, go, forget };
 
   // ALMA's intake marks the company filled when it's done: that's the company you're in
   const cur = current();
