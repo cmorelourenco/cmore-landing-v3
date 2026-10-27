@@ -69,13 +69,13 @@
     const h = hash(d.code + (d.archivedCode || '') + salt + PERSONA);
     return d.status === 'attention' ? 58 + (h % 15) : 86 + (h % 14);
   };
-  // shown as a tag, not a number — the same badge as the Status column, so the two read alike
+  // shown as a tag, the same badge as the Status column so the two read alike: "ALMA confidence 96%"
   const band = (p) => (p >= 90 ? ['High', 'b-ok', 'Read cleanly, and it matches the profile.'] : p >= 75 ? ['Medium', 'b-pend', 'Read well, but worth a glance.'] : ['Low', 'b-over', 'ALMA isn&rsquo;t sure of something here. Check it against the file.']);
   const confCell = (p) => {
     if (p === 'reading') return '<span class="co-badge b-neu">Reading&hellip;</span>';
     if (p == null) return dash;
     const [b, cls, why] = band(p);
-    return `<span class="co-badge ${cls}" title="${why}">${b} confidence</span>`;
+    return `<span class="co-badge ${cls}" title="${b}. ${why}">ALMA confidence ${p}%</span>`;
   };
   // a roster row reads as sure as its least sure record
   const rosterConf = (d) => { const l = d.roster.filter((r) => !NO_FILE.includes(r.status)).map((r) => (r.status === 'attention' ? 61 : 86 + (hash(d.code + r.i) % 14))); return l.length ? Math.min(...l) : null; };

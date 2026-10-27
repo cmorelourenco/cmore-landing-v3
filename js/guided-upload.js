@@ -222,7 +222,17 @@
 
 .gs .actions { flex-direction: column; align-items: center; gap: 1rem; } /* the CTA, and under it the way out */
 /* back and forth between steps: back on the left, on on the right */
-.gs .actions.gs-nav { flex-direction: row; align-items: center; justify-content: space-between; width: min(100%, 46rem); }
+/* back and on side by side; the way out centred under them, as far below as they are from the text */
+.gs .actions.gs-nav3 { --gs-gap: 1.75rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "back on" "skip skip"; align-items: center;
+  column-gap: 1rem; row-gap: var(--gs-gap); margin-top: var(--gs-gap); width: min(100%, 46rem); }
+.gs-nav3 > :nth-child(1) { grid-area: back; justify-self: start; } .gs-nav3 > :nth-child(2) { grid-area: skip; justify-self: center; } .gs-nav3 > :nth-child(3) { grid-area: on; justify-self: end; }
+.gs .actions.gs-nav3.no-skip { grid-template-areas: "back on"; }
+.gs-nav3.no-skip > :nth-child(2) { display: none; }
+.gs-back { display: inline-flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+.gs-back svg { width: 1rem; height: 1rem; }
+.gs-back:disabled { opacity: .4; cursor: default; text-decoration: none; }
+.gs .gs-nav3 .btn { min-width: 0; white-space: nowrap; }
+.gs-dock .actions.gs-nav3 { width: 100%; }
 .gs .btn:disabled { opacity: .45; cursor: default; }
 .gs-cards { display: grid; gap: 1rem; }
 .gs-card { border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); padding: 1.125rem 1.25rem; transition: border-color .2s; }
@@ -340,11 +350,24 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-dock #gs-body.is-end h1 { margin-top: clamp(0.75rem, 2vh, 1.25rem); }
 .gs-dock #gs-body.is-end .lead { margin-top: clamp(0.75rem, 2vh, 1.25rem); }
 .gs-dock #gs-body.is-end .gs-pane { margin-top: clamp(1.25rem, 3.5vh, 2rem); }
-.gs-dock #gs-body.is-end .actions { margin-top: clamp(1.5rem, 5vh, 3rem); gap: 1.25rem; }
-.gs-dock .intake-inner:has(#gs-body.is-end) { padding-bottom: clamp(1.5rem, 4vh, 3rem); }
+/* every step fills the panel, its buttons held at the foot of it however long the step is: a bar
+   that stays put while the step scrolls under it. A spacer (::after, ordered before the bar) keeps
+   room between the step and its buttons; at the end of a step the ring and her words sit centred */
+.gs-dock .intake-inner { display: flex; flex-direction: column; min-height: 100%; padding-bottom: 0; }
+.gs-dock .intake-screen { flex: 1; display: flex; flex-direction: column; }
+.gs-dock #gs-body { flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
+.gs-dock #gs-body > .gs-pane, .gs-dock #gs-body > .drop { align-self: stretch; }
+.gs-dock #gs-body::after { content: ""; order: 1; flex: 1 0 1.5rem; }
+.gs-dock #gs-body > .actions.gs-nav3 { order: 2; position: sticky; bottom: 0; z-index: 2; margin: 0 -1.75rem; width: calc(100% + 3.5rem); --gs-gap: 1rem;
+  padding: 1rem 1.75rem 1.25rem; background: var(--color-off-white); border-top: 1px solid var(--color-line); }
+.gs-dock #gs-body.is-end { align-items: center; }
+.gs-dock #gs-body.is-end::after { flex: 0 0 clamp(1.5rem, 5vh, 3rem); }
+.gs-dock #gs-body.is-end > :first-child { margin-top: auto; }
+.gs-dock #gs-body.is-end > .actions.gs-nav3 { margin-top: auto; border-top: 0; padding-top: 0; --gs-gap: clamp(1.5rem, 5vh, 3rem); } /* the skip as far below the buttons as they are below her words */
 /* a short screen: the section tag goes, and the steps sit closer, so the ring, her words and both buttons still fit */
 @media (max-height: 45rem) {
   .gs-dock #gs-body.is-end .gs-sec { display: none; }
+  .gs-dock #gs-body.is-end .gs-meter { margin-top: auto; }
   .gs-dock .intake-screen:has(#gs-body.is-end) { padding-top: 1rem; }
   .gs-dock .intake-screen:has(#gs-body.is-end) .gs-steps { margin-bottom: 1rem; }
 }
@@ -395,6 +418,12 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       };
     };
     const tour = opts.tour; // the onboarding (tour() below): where it is, the step after this one
+    // every step's buttons in one row: back on the left, the way out in the middle, on to the right
+    const BACK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.83 10l3.94 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>';
+    // back: a label, false for one with nowhere to go (shown, but disabled), or '' for none
+    const nav = (back, skip, primary) => `<div class="actions gs-nav3${skip ? '' : ' no-skip'}"><span>${back ? `<button class="link-btn gs-back" type="button" data-back>${BACK}${back}</button>` : back === false ? `<button class="link-btn gs-back" type="button" disabled>${BACK}Back</button>` : ''}</span><span>${skip || ''}</span><span>${primary}</span></div>`;
+    // back from the upload or the end: to the step before in the onboarding; the first has none
+    const backFrom1 = tour ? tour.back || false : '';
     const STEPS = [['Upload', `Your ${A.what}`], ['Review', 'Check what ALMA read'], ['Complete', `How complete ${A.title} is`]];
 
     wrap = document.createElement('div');
@@ -420,7 +449,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const confirmed = () => docs.filter((d) => (saved.files[d.code] || {}).ok);
     const pct = () => Math.round((confirmed().length / docs.length) * 100);
     // her confidence: how sure she is she read the document right, as a word and as a number
-    const confTag = (f) => { const [b, c] = f.conf >= 90 ? ['High', 'b-ok'] : f.conf >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="How sure ALMA is that she read it right">${b} confidence &middot; ${f.conf}%</span>`; };
+    const confTag = (f) => { const [b, c] = f.conf >= 90 ? ['High', 'b-ok'] : f.conf >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="${b}: how sure ALMA is that she read it right">ALMA confidence ${f.conf}%</span>`; };
     const reached = (i) => i === 0 || (i === 1 && filed().length > 0) || (i === 2 && !!st.reviewed);
     const paintSteps = () => {
       const at = st.step - 1;
@@ -453,8 +482,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
           <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
         </div>
-        <div class="actions"><button class="btn btn-primary" type="button" data-go="2"${np || read.length ? '' : ' disabled'}>Upload documents</button>
-          <button class="link-btn" type="button" data-close="${tour ? 'next' : ''}">${tour ? (tour.next ? 'Skip this step' : 'I&rsquo;ll do it later') : 'I&rsquo;ll do it later'}</button></div>`;
+        ${nav(backFrom1, `<button class="link-btn" type="button" data-close="${tour ? 'next' : ''}">${tour && tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>`,
+          `<button class="btn btn-primary" type="button" data-go="2"${np || read.length ? '' : ' disabled'}>Upload documents</button>`)}`;
     };
 
     // step 2: what she read, to accept or put right
@@ -487,8 +516,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <p class="gs-conf">The confidence on each is how sure I am that I read it right. Open one to see it field by field, with where I read it.</p>
           <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${editing != null ? '' : left ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept all</button>` : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`}</div>
           <div class="gs-cards">${list.map(card).join('')}</div></div>
-        <div class="actions gs-nav"><button class="link-btn" type="button" data-go="1">Back to upload</button>
-          <button class="btn btn-primary" type="button" data-confirm${list.length && !left && editing == null ? '' : ' disabled'}>Continue</button></div>
+        ${nav('Back to upload', tour ? `<button class="link-btn" type="button" data-close="next">${tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>` : '',
+          `<button class="btn btn-primary" type="button" data-confirm${list.length && !left && editing == null ? '' : ' disabled'}>Continue</button>`)}
         ${left ? `<p class="gs-d gs-hint">Accept ${left === 1 ? 'the last document' : `the ${left} documents left`} to continue.</p>` : ''}`;
     };
 
@@ -500,8 +529,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <p class="says">ALMA</p>
           <h1 id="gs-title" tabindex="-1">${area === 'registration' ? `${esc(nameOf.replace(/\.$/, ''))} is registered <span class="soft">on C&#8209;MORE.</span>` : `${A.title} is complete, <span class="soft">${esc(nameOf.replace(/\.$/, ''))}.</span>`}</h1>
           <p class="lead">Every one of your ${A.what} is in, checked and in Documents. I&rsquo;ll tell you when one is about to expire, and when a client asks for more.</p>
-          <div class="actions"><button class="btn btn-primary" type="button" data-close="next">${tour ? (tour.next ? `Next: ${tour.next}` : 'Go to my company') : opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button>
-            ${tour && tour.next ? '<button class="link-btn" type="button" data-close="end">Skip for now</button>' : ''}</div>`;
+          ${nav(backFrom1, tour && tour.next ? '<button class="link-btn" type="button" data-close="end">Skip for now</button>' : '',
+            `<button class="btn btn-primary" type="button" data-close="next">${tour ? (tour.next ? `Next: ${tour.next}` : 'Go to my company') : opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button>`)}`;
       }
       const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${local(d) ? `In ${where}: ${esc(local(d))}` : esc(d.description.en.split(/(?<=\.)\s/)[0])}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
       const one = missing.length === 1;
@@ -510,8 +539,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         <h1 id="gs-title" tabindex="-1">${A.title} is ${p}% complete.</h1>
         <p class="lead">${one ? 'One document is' : `${missing.length} documents are`} still missing here. Add ${one ? 'it' : 'them'} now, or later from ${A.title}.</p>
         <div class="gs-pane"><ul class="gs-list" aria-label="Still missing">${rows}</ul></div>
-        <div class="actions"><button class="btn btn-primary" type="button" data-more>Add ${one ? 'it' : 'them'} now</button>
-          <button class="link-btn" type="button" data-close="next">${tour && tour.next ? `Skip to ${tour.next.toLowerCase()}` : 'Skip for now'}</button></div>`;
+        ${nav(backFrom1, `<button class="link-btn" type="button" data-close="next">${tour && tour.next ? `Skip to ${tour.next.toLowerCase()}` : 'Skip for now'}</button>`,
+          `<button class="btn btn-primary" type="button" data-more>Add ${one ? 'it' : 'them'} now</button>`)}`;
     };
 
     // between upload and review: she reads each file and checks it at the source
@@ -577,7 +606,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // what she read: the holder first, then the document's own fields
       const rows = [['Holder', company, false], ['Tax number', esc(taxShown || '—'), false]].concat(FIELDS.map(([k, l]) => [label(k, l), esc(f[k]), flagged && f.flag === k]));
       const conf = (flag, i) => (f.edited ? 98 : flag ? 52 : Math.min(99, f.conf + (hash(d.code + i) % 7) - 3));
-      const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
+      const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="${b}">ALMA confidence ${p}%</span>`; };
       const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here. I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
         + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="false" aria-controls="gs-cite-${i}">View citation</button></td>`
         + `<td>${tag(conf(fl, i))}</td></tr>`
@@ -642,7 +671,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // on to the next step: this panel empties out under the next one (or while the page changes)
       // rather than vanishing
       const old = wrap; keep(); wrap = null; dwEl.remove(); document.removeEventListener('keydown', onKey);
-      if (tour && how === 'next' && tour.next) { old.classList.add('is-leaving'); setTimeout(() => old.remove(), 1200); } else old.remove();
+      if (tour && ((how === 'next' && tour.next) || how === 'back')) { old.classList.add('is-leaving'); setTimeout(() => old.remove(), 1200); } else old.remove();
       if (!tour) document.documentElement.classList.remove('intake-open');
       changedAny = JSON.stringify(accepted(docs).map((d) => d.code)) !== before;
       strip();
@@ -655,6 +684,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (checking) return;
       const code = (a) => t(`[data-${a}]`).getAttribute(`data-${a}`);
       if (t('[data-close]')) { e.preventDefault(); close(t('[data-close]').dataset.close || ''); return; }
+      // back: from the review to the upload; from the upload or the end (what she read is accepted
+      // by then, not to be reviewed again) to the step before in the onboarding
+      if (t('[data-back]')) { if (st.step === 2) goStep(1); else close('back'); return; }
       if (t('[data-peek]')) { openPeek(code('peek')); return; }
       if (t('#gs-drop') || t('[data-browse]')) { browse(); return; }
       if (t('[data-unpend]')) { st.pending.splice(+code('unpend'), 1); keep(); paint(); return; }
@@ -807,9 +839,11 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const n = areas.findIndex((x, j) => j > i && !t.passed.includes(x)); // the next step not done yet
       open(a, {
         files, skip: a === 'company' ? regCodes() : [],
-        tour: { at: i, steps: areas.map((x) => STEP[x]), done: areas.map((x) => t.passed.includes(x)), next: n >= 0 ? STEP[areas[n]] : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
+        tour: { at: i, steps: areas.map((x) => STEP[x]), done: areas.map((x) => t.passed.includes(x)), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
         onClose: (c, how) => {
           changed = changed || c;
+          // back: to the step before, as it was left (its page, if it lives elsewhere)
+          if (how === 'back') { t.passed = t.passed.filter((x) => x !== areas[i - 1]); keep(); step(i - 1, true); return; }
           if (how === 'next') { t.passed.push(a); keep(); if (n >= 0) { step(n, true); return; } }
           t.ended = true; t.on = null; keep(); // done, or Skip setup, Escape
           if (how === 'next' && !onHome) { leave('my-company.html?page'); return; } // "Go to my company"

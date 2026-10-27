@@ -741,11 +741,11 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 /* the document tables: the catalog's eight columns, the same in every area */
 .cd-tbl.cd-doc-tbl { min-width: 64rem; }
 .cd-tbl.cd-doc-tbl th:nth-child(n) { width: auto; }
-.cd-tbl.cd-doc-tbl th:nth-child(1) { width: 16%; }
+.cd-tbl.cd-doc-tbl th:nth-child(1) { width: 12%; }
 .cd-tbl.cd-doc-tbl th:nth-child(2) { width: 7%; }
 .cd-tbl.cd-doc-tbl th:nth-child(3) { width: 12.5%; }
 .cd-tbl.cd-doc-tbl td:nth-child(3), .cd-tbl.cd-doc-tbl td:nth-child(4) { overflow: visible; }
-.cd-tbl.cd-doc-tbl th:nth-child(4) { width: 13.5%; }
+.cd-tbl.cd-doc-tbl th:nth-child(4) { width: 18.5%; } /* room for "ALMA confidence 96%" */
 .cd-tbl.cd-doc-tbl th:nth-child(5) { width: 9.5%; }
 .cd-tbl.cd-doc-tbl th:nth-child(6) { width: 10.5%; }
 .cd-tbl.cd-doc-tbl th:nth-child(7), .cd-tbl.cd-doc-tbl th:nth-child(8) { width: 8.5%; }
@@ -756,9 +756,9 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cd-doc-tbl .cd-ref, .cd-doc-tbl .cd-by { font-size: 0.8125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cd-doc-tbl .cd-by { white-space: normal; line-height: 1.35; }
 .cd-doc-tbl .cd-ed { white-space: nowrap; text-align: right; }
-.cd-tbl.cd-roster-tbl th:nth-child(1) { width: 27%; }
+.cd-tbl.cd-roster-tbl th:nth-child(1) { width: 22%; }
 .cd-tbl.cd-roster-tbl th:nth-child(2) { width: 13%; }
-.cd-tbl.cd-roster-tbl th:nth-child(3) { width: 16%; }
+.cd-tbl.cd-roster-tbl th:nth-child(3) { width: 21%; } /* room for "ALMA confidence 96%" */
 .cd-tbl.cd-roster-tbl th:nth-child(4) { width: 14%; }
 .cd-tbl.cd-roster-tbl th:nth-child(5) { width: 16%; }
 .cd-tbl.cd-roster-tbl th:nth-child(6) { width: 10%; }

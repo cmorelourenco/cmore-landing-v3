@@ -386,7 +386,8 @@ window.CMUpload = (() => {
             <div><dt>${s.who ? 'Name on it' : 'Holder'}</dt><dd${r.how === 'guess' ? ' class="is-warn"' : ''}>${r.how === 'guess' ? WARN : OK}${esc(s.who || plain(M.D.company || 'Your company'))}</dd></div>
             <div><dt>Issued by</dt><dd>${OK}${esc(plain(M.issuerOf(s.d.cat) || 'The issuing body'))} &middot; ${esc(r.read.issued)}</dd></div>
             <div><dt>Valid until</dt><dd>${OK}${esc(r.read.valid)}</dd></div></dl>` : '';
-          const conf = s ? (r.how === 'sure' ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>') : '';
+          const pc = [...r.file.name].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 997, 7); // steady for the same file
+          const conf = s ? (r.how === 'sure' ? `<span class="co-badge b-ok">ALMA confidence ${90 + (pc % 9)}%</span>` : `<span class="co-badge b-pend">ALMA confidence ${76 + (pc % 12)}%</span>`) : '';
           return `<section class="cmu-r${r.on ? '' : ' is-off'}${ask ? ' is-ask' : ''}" aria-label="${esc(r.file.name)}">
             <div class="cmu-r-h"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(r.file.name)}</span>${conf}<label><input type="checkbox" data-on="${k}"${r.on ? ' checked' : ''}> Save it</label></div>
             ${r.note ? `<p class="cmu-note">${r.note}</p>` : ''}
