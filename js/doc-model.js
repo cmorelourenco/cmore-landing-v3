@@ -6,6 +6,21 @@
    so the homepage's counts and alerts always match the Documents page. */
 window.DOC_MODEL = (() => {
   const CAT = window.DOC_CATALOG || { docs: [], labels: {} };
+  // Prototype: Portugal's Certificate of Good Standing isn't in the catalog yet (only the US one,
+  // UN-01). A new Portuguese company is asked for it when it registers (js/guided-upload.js), so it
+  // is added here, in its own phase, out of every list but a new company's. Remove once Product
+  // adds it to the workbook.
+  if (CAT.docs.length && !CAT.docs.some((d) => d.code === 'CO-GS')) {
+    const us = CAT.docs.find((d) => d.code === 'UN-01') || {};
+    CAT.docs.push(Object.assign({}, us, {
+      code: 'CO-GS', phase: 'Registration', scope: ['EU'], countries: ['PT'],
+      name: { en: 'Certificate of Good Standing', pt: 'Certificado de Good Standing' },
+      description: { en: 'Certificate from the commercial registry confirming the company is registered, active and not in insolvency or liquidation.', pt: 'Certidão do registo comercial que confirma que a empresa está registada, ativa e sem processo de insolvência ou liquidação.' },
+      appliesWhen: 'Portuguese companies, when they register on C-MORE', expiryRule: 'Issue date + 6 months', renewal: 'Every 6 months',
+      legalBasis: 'Código do Registo Comercial', titles: 'Certificado de Good Standing; Certidão de matrícula', usuallyIssuedBy: 'Instituto dos Registos e do Notariado (IRN)',
+      recognitionCues: 'good standing; registo comercial; matrícula; IRN', confusedWith: ['CO-01'],
+    }));
+  }
   const R = window.DocRules;
   const LBL = CAT.labels || {};
   const en = (o) => (o && typeof o === 'object' ? o.en : o) || '';
@@ -296,7 +311,9 @@ window.DOC_MODEL = (() => {
   const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const keepUpdates = () => { try { sessionStorage.setItem(UP_KEY, JSON.stringify(updates)); } catch (e) {} };
-  const shown = R.documentsFor(CAT, PROFILE);
+  // a new company (ORG) is also asked for what registering it on C-MORE takes (phase
+  // 'Registration', added below for Portugal); the demo companies never see those
+  const shown = R.documentsFor(CAT, PROFILE, ORG ? { phases: ['MVP', 'Registration'] } : undefined).filter((x) => !x.doc.countries || x.doc.countries.includes(PROFILE.country));
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
     const area = c.category;

@@ -119,6 +119,54 @@
 .tm-rev tbody tr.is-bad td { color: var(--color-ink-subtle); }
 .tm-rev td small { display: block; color: var(--color-ink-subtle); }
 .tm-rev .co-badge { white-space: nowrap; }
+.tm-rev-q { position: relative; display: block; }
+.tm-rev-q svg { position: absolute; left: 0.75rem; top: 50%; translate: 0 -50%; width: 1rem; height: 1rem; color: var(--color-ink-subtle); pointer-events: none; }
+.tm-rev-q .input { width: 100%; padding-left: 2.25rem; }
+.tm-rev td[colspan] { padding: 1rem 0.75rem; text-align: center; color: var(--color-ink-subtle); }
+.tm-bulk.is-file { border-style: solid; border-color: var(--color-line); }
+.tm-bulk-f { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.tm-bulk-f small { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.tm-bulk-ico { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; background: color-mix(in oklab, var(--color-positive, #3d7a2c) 12%, transparent); color: var(--color-positive, #3d7a2c); }
+.tm-bulk-ico svg { width: 1.125rem; height: 1.125rem; }
+.tm-lv-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.tm-lv-tools .tm-rev-q { flex: 1 1 18rem; max-width: 26rem; }
+.tm-lv-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; }
+.tm-lv-chip { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.75rem; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-surface); font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
+.tm-lv-chip span { font-size: 0.75rem; color: var(--color-ink-subtle); }
+.tm-lv-chip:hover { border-color: var(--color-sand-400); }
+.tm-lv-chip[aria-pressed="true"] { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
+.tm-lv-chip[aria-pressed="true"] span { color: color-mix(in oklab, var(--color-off-white) 70%, transparent); }
+.tm-lv-div { width: 1px; height: 1.25rem; margin: 0 0.25rem; background: var(--color-line); }
+.tm-rev-q .input { height: 2.5rem; font-size: 0.875rem; }
+.tm-rev .tm-rev-wrap { max-height: 30rem; }
+.tm-rev table { font-size: 0.875rem; }
+.tm-rev tbody td { padding: 0.625rem 0.75rem; vertical-align: middle; }
+.tm-rev thead th { padding: 0.625rem 0.75rem; z-index: 1; }
+.tm-rev tbody tr[data-bulk-tr] { cursor: pointer; }
+.tm-rev tbody tr[data-bulk-tr]:hover { background: color-mix(in oklab, var(--color-light-beige) 60%, transparent); }
+.tm-rev tbody tr.is-picked, .tm-rev tbody tr.is-picked:hover { background: color-mix(in oklab, var(--color-coral) 6%, transparent); }
+.tm-rev tbody tr.is-changed { animation: tm-flash 2.4s ease; }
+@keyframes tm-flash { 0%, 40% { background: color-mix(in oklab, var(--color-positive, #3d7a2c) 14%, transparent); } }
+.tm-rev-edit { display: inline-grid; place-items: center; text-decoration: none; width: 2rem; height: 2rem; padding: 0; border-radius: 0.375rem; color: var(--color-ink-subtle); opacity: 0.55; }
+.tm-rev-edit svg { width: 1rem; height: 1rem; }
+.tm-rev tbody tr:hover .tm-rev-edit, .tm-rev-edit:focus-visible { opacity: 1; color: var(--color-ink); background: var(--color-surface); }
+.tm-rev-f { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1rem; font-size: 0.875rem; color: var(--color-ink-muted); }
+.tm-rev.has-bar { margin-bottom: 4.5rem; }
+.tm-lv-sort { display: inline-flex; align-items: center; gap: 0.375rem; border: 0; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; }
+.tm-lv-sort span { opacity: .55; }
+.tm-lv-sort:hover { color: var(--color-ink); }
+.tm-lv-p { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.tm-lv-p .tm-pic { width: 2rem; height: 2rem; font-size: 0.75rem; }
+.tm-lv-pt { min-width: 0; }
+.tm-lv-pt b { display: block; font-weight: 600; color: var(--color-ink); }
+.tm-lv-gs { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.tm-lv-g { padding: 0.125rem 0.5rem; border-radius: 0.3125rem; background: var(--color-light-beige); font-size: 0.75rem; font-weight: 500; color: var(--color-ink-muted); white-space: nowrap; }
+.tm-lv-none { color: var(--color-ink-subtle); font-size: 0.8125rem; }
+@media (max-width: 40rem) { .tm-rev table { min-width: 40rem; } .tm-rev-edit { opacity: 1; } }
+.tm-rev-a { display: flex; align-items: center; gap: 1rem; }
+.tm-rev th.tm-rev-c, .tm-rev td.tm-rev-c { width: 1rem; padding-right: 0; }
+.tm-rev th.tm-rev-c:last-child, .tm-rev td.tm-rev-c:last-child { padding: 0.25rem 1rem 0.25rem 0.5rem; vertical-align: middle; }
+.tm-rev tbody tr.is-picked { background: color-mix(in oklab, var(--color-coral) 6%, transparent); }
 .tm-ph { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 0.5rem; }
 .tm-all { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
 .tm-all input, .tm-sel { width: 1rem; height: 1rem; accent-color: var(--color-graphite); cursor: pointer; }
@@ -155,7 +203,7 @@
 .tm-dw { position: fixed; inset: 0; z-index: 90; }
 .tm-dw[hidden] { display: none; }
 .tm-dw-scrim { position: absolute; inset: 0; background: rgba(52, 52, 52, .32); animation: tm-fade .2s ease; }
-.tm-dw-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(32rem, 100vw); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--color-off-white);
+.tm-dw-panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(40rem, 100vw); /* the width of every drawer (css/esg.css .docd-panel) */ display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--color-off-white);
   box-shadow: -16px 0 40px -20px rgba(0,0,0,.35); animation: tm-in .28s var(--ease-brand, ease); outline: none; }
 @keyframes tm-in { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes tm-fade { from { opacity: 0; } }
@@ -392,14 +440,134 @@
       return Object.assign(out, { ok: true });
     });
   };
+  // a repaint keeps the list scrolled where it was
+  const keepRev = (fn) => { const w = box.querySelector('.tm-rev-wrap'), top = w ? w.scrollTop : 0; fn(); const w2 = box.querySelector('.tm-rev-wrap'); if (w2) w2.scrollTop = top; };
+  // The list read from the file, in the invite card: each person with their role, groups and
+  // whether they're ready, filtered by role or status, searched by name or email, sorted by a column.
+  // A person's row (or a few ticked) opens a drawer to set the role they're invited as, or to leave
+  // them out, before the invites go.
+  const XLS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13l4 5M13 13l-4 5"/></svg>';
+  const PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+  const SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  const initialsOf = (r) => ((r.name || r.email || '?').split(/[\s.@_-]+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || '?').toUpperCase();
+  const RANK = { owner: 0, admin: 1, manager: 2, user: 3 };
+  const bulkView = (rows) => {
+    const f = bulk.f || (bulk.f = { role: '', st: '' }), q = (bulk.q || '').trim().toLowerCase();
+    return (r) => (!f.role || r.role === f.role) && (!f.st || (f.st === 'ok') === r.ok) && (!q || `${r.email} ${r.name}`.toLowerCase().includes(q));
+  };
   const bulkReview = (c) => {
     const rows = checkRows(c, bulk.rows), ok = rows.filter((r) => r.ok).length, bad = rows.length - ok;
-    return `<div class="tm-rev">
-      <div class="tm-rev-h"><p><b>${esc(bulk.file)}</b> &middot; ${rows.length} ${rows.length === 1 ? 'person' : 'people'}: ${ok} ready${bad ? `, ${bad} to fix in the file` : ''}.</p><button type="button" class="tm-x" data-bulk-pick>Choose another file</button></div>
-      <div class="tm-rev-wrap"><table><thead><tr><th>Email</th><th>Role</th><th>Groups</th><th>Status</th></tr></thead><tbody>${rows.map((r) => `<tr class="${r.ok ? '' : 'is-bad'}"><td>${esc(r.email || '—')}${r.name ? `<small>${esc(r.name)}</small>` : ''}</td><td>${esc(r.roleText || '—')}</td><td>${esc(r.groupText || '—')}</td><td>${r.ok ? '<span class="co-badge b-ok">Ready</span>' : `<span class="co-badge b-over">${r.why}</span>`}</td></tr>`).join('')}</tbody></table></div>
-      ${bad ? '<p class="tm-perm-note" style="margin:0">Rows to fix are left out. Fix them in the file and upload it again, or send the ready ones now.</p>' : ''}
-      <div class="set-foot set-foot-l"><button type="button" class="btn btn-primary btn-sm" data-bulk-send${ok ? '' : ' disabled'}>Send ${ok} invite${ok === 1 ? '' : 's'}</button><button type="button" class="tm-x" data-bulk-cancel>Cancel</button></div>
+    const picked = bulk.picked || (bulk.picked = new Set()), f = bulk.f || (bulk.f = { role: '', st: '' }), sort = bulk.sort || { k: '', dir: 1 };
+    [...picked].forEach((i) => { if (!rows[i]) picked.delete(i); });
+    const hit = bulkView(rows);
+    const key = { name: (r) => (r.name || r.email).toLowerCase(), role: (r) => (r.role ? RANK[r.role] : 9), status: (r) => (r.ok ? 1 : 0) }[sort.k];
+    const order = rows.map((r, i) => i);
+    if (key) order.sort((x, y) => { const p = key(rows[x]), q2 = key(rows[y]); return (p < q2 ? -1 : p > q2 ? 1 : x - y) * sort.dir; });
+    const shown = order.filter((i) => hit(rows[i])), all = shown.length && shown.every((i) => picked.has(i));
+    const people = (n) => `${n} ${n === 1 ? 'person' : 'people'}`;
+    const chip = (k, v, label, n) => `<button type="button" class="tm-lv-chip" data-bulk-f="${k}:${v}" aria-pressed="${f[k] === v}">${label} <span>${n}</span></button>`;
+    const roles = ORDER.filter((r) => rows.some((x) => x.role === r));
+    const th = (k, label) => `<th${sort.k === k ? ` aria-sort="${sort.dir > 0 ? 'ascending' : 'descending'}"` : ''}><button type="button" class="tm-lv-sort" data-bulk-sort="${k}">${label}<span aria-hidden="true">${sort.k === k ? (sort.dir > 0 ? '&uarr;' : '&darr;') : '&varr;'}</span></button></th>`;
+    const groupsOf = (r) => r.groups.map((g) => gName(c.t, g)).filter(Boolean).map((n) => `<span class="tm-lv-g">${esc(n)}</span>`).join('') || `<span class="tm-lv-none">${esc(r.groupText || '—')}</span>`;
+    const tr = (i) => { const r = rows[i]; return `<tr class="${r.ok ? '' : 'is-bad'}${picked.has(i) ? ' is-picked' : ''}${bulkChanged.has(i) ? ' is-changed' : ''}"${hit(r) ? '' : ' hidden'} data-bulk-tr="${esc(`${r.email} ${r.name}`.toLowerCase())}" data-bulk-i="${i}" data-role="${r.role || ''}" data-ok="${r.ok ? 1 : 0}">
+      <td class="tm-rev-c"><input type="checkbox" class="tm-sel" data-bulk-row="${i}" aria-label="Select ${esc(r.name || r.email || 'this row')}"${picked.has(i) ? ' checked' : ''}></td>
+      <td><span class="tm-lv-p"><span class="tm-pic" aria-hidden="true">${esc(initialsOf(r))}</span><span class="tm-lv-pt"><b>${esc(r.name || r.email || '—')}</b>${r.name ? `<small>${esc(r.email || '—')}</small>` : ''}</span></span></td>
+      <td>${esc(r.roleText || '—')}</td><td><span class="tm-lv-gs">${groupsOf(r)}</span></td>
+      <td>${r.ok ? '<span class="co-badge b-ok">Ready</span>' : `<span class="co-badge b-over">${r.why}</span>`}</td>
+      <td class="tm-rev-c"><button type="button" class="tm-x tm-rev-edit" data-bulk-edit="${i}" aria-label="Change ${esc(r.name || r.email || 'this person')}&rsquo;s role" title="Change role">${PEN}</button></td></tr>`; };
+    const names = [...picked].map((i) => rows[i]).filter(Boolean).map((r) => esc((r.name || r.email).split(' ')[0]));
+    return `<div class="tm-rev${picked.size ? ' has-bar' : ''}">
+      <div class="tm-bulk is-file"><span class="tm-bulk-f"><span class="tm-bulk-ico">${XLS}</span><span><b>${esc(bulk.file)}</b><small>${people(rows.length)}: ${ok} ready${bad ? `, ${bad} to fix in the file` : ''}</small></span></span>
+        <span class="tm-bulk-acts"><button type="button" class="tm-x" data-bulk-pick>Choose another file</button></span></div>
+      <div class="tm-lv-tools">
+        <label class="tm-rev-q">${SEARCH}<input class="input" type="search" data-bulk-q placeholder="Search by name or email" aria-label="Search the list by name or email" value="${esc(bulk.q || '')}"></label>
+        <div class="tm-lv-chips" role="group" aria-label="Show">${chip('role', '', 'Everyone', rows.length)}${roles.map((r) => chip('role', r, ROLES[r][0] + 's', rows.filter((x) => x.role === r).length)).join('')}${bad ? `<span class="tm-lv-div" aria-hidden="true"></span>${chip('st', 'ok', 'Ready', ok)}${chip('st', 'bad', 'To fix', bad)}` : ''}</div>
+      </div>
+      <div class="tm-rev-wrap"><table><thead><tr><th class="tm-rev-c"><input type="checkbox" class="tm-sel" data-bulk-all aria-label="Select everyone shown"${all ? ' checked' : ''}></th>${th('name', 'Person')}${th('role', 'Role')}<th>Groups</th>${th('status', 'Status')}<th class="tm-rev-c"><span class="sr-only">Change role</span></th></tr></thead>
+        <tbody>${order.map(tr).join('')}<tr class="tm-rev-none"${shown.length ? ' hidden' : ''}><td colspan="6">No one on the list matches that.</td></tr></tbody></table></div>
+      <div class="tm-rev-f"><span>${bad ? 'Rows to fix are left out. Fix them in the file and upload it again, or send the ready ones now.' : `Showing ${shown.length} of ${people(rows.length)}. Select someone to change the role they&rsquo;re invited as.`}</span>
+        <span class="tm-selbar-a"><button type="button" class="tm-x" data-bulk-cancel>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-bulk-send${ok ? '' : ' disabled'}>Send ${ok} invite${ok === 1 ? '' : 's'}</button></span></div>
+      ${picked.size ? `<div class="tm-selbar${A.previewing() ? ' is-raised' : ''}" role="region" aria-label="Selected on the list"><span class="tm-selbar-t"><b>${picked.size} selected</b><span>${names.join(', ')}</span></span><span class="tm-selbar-a"><button type="button" class="tm-x" data-bulk-unpick>Clear</button><button type="button" class="tm-x" data-bulk-remove>Remove from the list</button><button type="button" class="btn btn-primary btn-sm" data-bulk-role>Change role</button></span></div>` : ''}
     </div>`;
+  };
+
+  // ---- the drawer: the role (and groups) the people picked on the list are invited with ---------------
+  const bulkChanged = new Set();
+  let bRole = 'user';
+  const bGroups = new Set();
+  const bdw = document.createElement('div');
+  bdw.className = 'tm-dw'; bdw.hidden = true;
+  bdw.innerHTML = '<div class="tm-dw-scrim" data-bdw-close></div><aside class="tm-dw-panel" role="dialog" aria-modal="true" aria-labelledby="tm-bdw-t" tabindex="-1"></aside>';
+  document.body.appendChild(bdw);
+  const bpanel = bdw.querySelector('.tm-dw-panel');
+  // each person picked: the role and groups they'd be invited with, and anything in the way
+  const bPlan = (c) => { const rows = checkRows(c, bulk.rows); return [...bulk.picked].filter((i) => rows[i]).map((i) => {
+    const r = rows[i], from = r.role || '', ng = grouped(bRole) ? (bGroups.size ? [...bGroups] : r.groups) : [];
+    const same = from === bRole && r.groups.join() === ng.join();
+    const problem = grouped(bRole) && !ng.length ? 'Needs a group' : '';
+    return { i, r, from, ng, same, problem };
+  }); };
+  const bGl = (c, ids, role) => (grouped(role) ? ids.map((id) => gName(c.t, id)).filter(Boolean).map(esc).join(', ') || 'No groups' : role === 'owner' ? 'Every page' : 'Every page of this company');
+  const paintBdw = () => {
+    const c = ctx(), rows = bPlan(c);
+    const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
+    const who = (r) => esc(r.r.name || r.r.email);
+    bpanel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-bdw-t">Invite as</h3><p>${rows.length} ${rows.length === 1 ? 'person' : 'people'} from ${esc(bulk.file)}</p></div><button type="button" class="tm-dw-x" data-bdw-close aria-label="Close">&times;</button></header>
+      <div class="tm-dw-b">
+        <div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="bdw-role" value="${r}"${r === bRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[bRole][1]}</p></div>
+        ${grouped(bRole) ? `<div class="set-f"><span class="tm-lbl">Groups${rows.length > 1 ? ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>' : ''}</span>${groupChecks(c, [...bGroups], 'bdg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
+        <div class="set-f"><span class="tm-lbl">Who</span>
+          <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
+            <span class="tm-pic" aria-hidden="true">${esc(initialsOf(r.r))}</span>
+            <span class="tm-plan-t"><b>${who(r)}</b>
+              ${r.from === bRole ? `<span class="tm-plan-c"><span class="tm-stay">${ROLES[bRole][0]}</span></span>` : `<span class="tm-plan-c"><span class="tm-from">${r.from ? ROLES[r.from][0] : esc(r.r.roleText || 'No role')}</span><span aria-hidden="true">&rarr;</span><span class="tm-to">${ROLES[bRole][0]}</span></span>`}
+              ${bGl(c, r.r.groups, r.from) === bGl(c, r.ng, bRole) ? `<small>${bGl(c, r.ng, bRole)}</small>` : `<small><span class="tm-from">${bGl(c, r.r.groups, r.from)}</span> &rarr; <span class="tm-to">${bGl(c, r.ng, bRole)}</span></small>`}
+              ${r.problem ? `<span class="co-badge b-over">${r.problem}</span>` : r.same ? '<span class="co-badge b-neu">No change</span>' : ''}</span>
+            ${rows.length > 1 ? `<button type="button" class="tm-x" data-bdw-unsel="${r.i}" aria-label="Take ${who(r)} out of this change">Remove</button>` : ''}</li>`).join('')}</ul></div>
+      </div>
+      <footer class="tm-dw-f"><button type="button" class="tm-x" data-bdw-drop>Leave ${rows.length === 1 ? 'them' : `these ${rows.length}`} out of the invites</button><span class="tm-selbar-a"><button type="button" class="tm-x" data-bdw-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-bdw-apply${moving && !stuck ? '' : ' disabled'}>Apply${rows.length > 1 && moving ? ` to ${moving}` : ''}</button></span></footer>`;
+  };
+  let bdwBack = null;
+  // opening it: the role picked is what most of them have now, the groups start empty (or theirs, for one)
+  const openBdw = () => {
+    const rows = checkRows(ctx(), bulk.rows), picked = [...bulk.picked].map((i) => rows[i]).filter(Boolean);
+    const count = {}; picked.forEach((r) => { if (r.role) count[r.role] = (count[r.role] || 0) + 1; });
+    const grants = ctx().grants, top = Object.keys(count).filter((r) => grants.includes(r)).sort((a, b) => count[b] - count[a])[0];
+    bRole = top || (grants.includes('user') ? 'user' : grants[0]);
+    bGroups.clear(); if (picked.length === 1) picked[0].groups.forEach((g) => bGroups.add(g));
+    bdwBack = document.activeElement; bdw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintBdw(); bpanel.focus();
+  };
+  const closeBdw = () => { bdw.hidden = true; document.documentElement.style.overflow = ''; if (bdwBack && bdwBack.isConnected) bdwBack.focus({ preventScroll: true }); };
+  bdw.addEventListener('click', (e) => {
+    if (e.target.closest('[data-bdw-close]')) { closeBdw(); return; }
+    const u = e.target.closest('[data-bdw-unsel]');
+    if (u) { bulk.picked.delete(+u.dataset.bdwUnsel); keepRev(() => paint()); if (!bulk.picked.size) closeBdw(); else paintBdw(); return; }
+    if (e.target.closest('[data-bdw-drop]')) {
+      const n = bulk.picked.size; closeBdw(); dropPicked();
+      toast(`<b>${n} ${n === 1 ? 'person' : 'people'} left out</b><span>They won&rsquo;t be invited.</span>`);
+      return;
+    }
+    if (e.target.closest('[data-bdw-apply]')) {
+      const c = ctx(), plan = bPlan(c).filter((r) => !r.same && !r.problem);
+      plan.forEach((r) => { const raw = bulk.rows[r.i]; raw.role = ROLES[bRole][0]; raw.groups = r.ng.map((id) => gName(c.t, id)).filter(Boolean).join('; '); });
+      bulkChanged.clear(); plan.forEach((r) => bulkChanged.add(r.i));
+      bulk.picked = new Set(); closeBdw(); keepRev(() => paint());
+      const gs = [...new Set(plan.map((r) => bGl(c, r.ng, bRole)))];
+      toast(`<b>${plan.length} ${plan.length === 1 ? 'person' : 'people'} will be invited as ${ROLES[bRole][0].toLowerCase()}${plan.length === 1 ? '' : 's'}</b><span>${grouped(bRole) && gs.length === 1 ? gs[0] : grouped(bRole) ? 'Each with their groups' : bGl(c, [], bRole)}</span>`);
+      setTimeout(() => { bulkChanged.clear(); box.querySelectorAll('tr.is-changed').forEach((x) => x.classList.remove('is-changed')); }, 2400);
+    }
+  });
+  bdw.addEventListener('change', (e) => {
+    if (e.target.name === 'bdw-role') { bRole = e.target.value; paintBdw(); const r = bpanel.querySelector(`[name="bdw-role"][value="${bRole}"]`); if (r) r.focus(); return; }
+    if (e.target.name === 'bdg') { e.target.checked ? bGroups.add(e.target.value) : bGroups.delete(e.target.value); paintBdw(); const g = bpanel.querySelector(`[name="bdg"][value="${e.target.value}"]`); if (g) g.focus(); }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !bdw.hidden) closeBdw(); });
+  // leaving the ticked people out of the list
+  const dropPicked = () => {
+    const p = bulk.picked;
+    bulk.rows = bulk.rows.filter((r, i) => !p.has(i)); bulk.picked = new Set(); bulkChanged.clear();
+    if (!bulk.rows.length) { bulk = null; flash = 'Everyone on the list was removed. Nothing was sent.'; paint(); return; }
+    keepRev(() => paint());
   };
 
   // reading the file: a CSV as text; an .xlsx is a zip of XML, opened with the browser's own inflate
@@ -461,8 +629,25 @@
     const ix = { email: at(/mail/, 0), name: at(/name|nome/, 1), role: at(/role|fun[cç]/, 2), groups: at(/group|grupo/, 3) };
     return (has ? rows.slice(1) : rows).map((r) => Object.fromEntries(Object.entries(ix).map(([k, i]) => [k, i >= 0 ? String(r[i] || '') : ''])));
   };
+  // prototype only: any file reads as a list of 20 to 30 made-up people, for every user, so the
+  // bulk invite can be tried without preparing a spreadsheet. Beatriz's (a US company) are American
+  const US = document.documentElement.dataset.persona === 'beatriz';
+  const FIRST = US ? ['Emily', 'James', 'Olivia', 'Michael', 'Ava', 'Daniel', 'Sophia', 'Ethan', 'Grace', 'Noah', 'Chloe', 'Ryan', 'Hannah', 'Lucas', 'Megan', 'Tyler', 'Lauren', 'Jacob', 'Natalie', 'Kevin', 'Abigail', 'Brandon', 'Madison', 'Austin', 'Rachel', 'Justin', 'Kayla', 'Aaron', 'Victoria', 'Logan'] : ['Ana', 'Bruno', 'Carla', 'Diogo', 'Eva', 'Filipe', 'Gabriela', 'Hugo', 'Inês', 'João', 'Leonor', 'Marco', 'Nádia', 'Óscar', 'Paula', 'Rui', 'Sara', 'Tiago', 'Vera', 'Xavier', 'Beatriz', 'Carlos', 'Daniela', 'Pedro', 'Marta', 'Rita', 'André', 'Joana', 'Luís', 'Sofia'];
+  const LAST = US ? ['Johnson', 'Miller', 'Davis', 'Garcia', 'Wilson', 'Anderson', 'Thomas', 'Moore', 'Jackson', 'Martin', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis'] : ['Costa', 'Pereira', 'Santos', 'Oliveira', 'Rodrigues', 'Martins', 'Sousa', 'Fernandes', 'Gomes', 'Lopes', 'Almeida', 'Ribeiro', 'Carvalho', 'Teixeira', 'Moreira'];
+  const fakeRows = (t) => {
+    const n = 20 + Math.floor(Math.random() * 11), start = Math.floor(Math.random() * FIRST.length);
+    const groups = t.groups.map((g) => g.name);
+    const plain = (x) => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return Array.from({ length: n }, (_, i) => {
+      const f = FIRST[(start + i) % FIRST.length], l = LAST[(start * 7 + i * 4) % LAST.length];
+      const role = i % 10 === 0 ? 'Admin' : i % 3 === 0 ? 'Manager' : 'User';
+      return { email: `${plain(f)}.${plain(l)}@example.test`, name: `${f} ${l}`, role, groups: role === 'Admin' ? '' : groups[i % groups.length] || '' };
+    });
+  };
+  const FAKE = true; // false reads the file for real (the parser below is kept for that)
   const takeFile = async (file) => {
     if (!file) return;
+    if (FAKE) { bulkErr = ''; bulk = { file: file.name, rows: fakeRows(ctx().t) }; paint(); return; }
     try {
       const cells = /\.csv$/i.test(file.name) || file.type === 'text/csv' ? cellsOf(await file.text()) : await xlsxRows(await file.arrayBuffer());
       const rows = toPeople(cells);
@@ -503,6 +688,21 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   box.addEventListener('change', (e) => { if (e.target.id === 'tm-bulk-file') takeFile(e.target.files[0]); });
+  // searching the Excel list: rows hide as you type (no repaint, so the field keeps its focus)
+  box.addEventListener('input', (e) => {
+    if (!e.target.matches('[data-bulk-q]') || !bulk) return;
+    bulk.q = e.target.value; const q = bulk.q.trim().toLowerCase(), f = bulk.f || {};
+    let n = 0;
+    box.querySelectorAll('[data-bulk-tr]').forEach((tr) => {
+      tr.hidden = !((!f.role || tr.dataset.role === f.role) && (!f.st || (f.st === 'ok') === (tr.dataset.ok === '1')) && (!q || tr.dataset.bulkTr.includes(q)));
+      if (!tr.hidden) n++;
+    });
+    const none = box.querySelector('.tm-rev-none'); if (none) none.hidden = !!n;
+    const rowsShown = [...box.querySelectorAll('[data-bulk-row]')].filter((c) => !c.closest('tr').hidden), all = box.querySelector('[data-bulk-all]');
+    if (all) all.checked = !!rowsShown.length && rowsShown.every((c) => c.checked);
+  });
+  // Enter in the list's search doesn't send the invite form
+  box.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('[data-bulk-q]')) e.preventDefault(); });
   ['dragover', 'dragenter'].forEach((ev) => box.addEventListener(ev, (e) => { const z = e.target.closest('#tm-bulk'); if (z) { e.preventDefault(); z.classList.add('is-over'); } }));
   box.addEventListener('dragleave', (e) => { const z = e.target.closest('#tm-bulk'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('is-over'); });
   box.addEventListener('drop', (e) => { const z = e.target.closest('#tm-bulk'); if (z) { e.preventDefault(); takeFile(e.dataTransfer.files[0]); } });
@@ -510,6 +710,7 @@
   box.addEventListener('submit', (e) => {
     e.preventDefault();
     const c = ctx(), t = c.t;
+    if (bulk && !e.target.closest('[data-save]')) return; // the file's list is sent from its own button
     // saving someone's role and groups
     const ef = e.target.closest('[data-save]');
     if (ef) {
@@ -548,6 +749,14 @@
     if (e.target.id === 'tm-as') { A.preview(e.target.value === 'you' ? null : e.target.value); location.reload(); return; }
     if (e.target.name === 'tm-role') { showScope(); return; }
     if (e.target.matches('[data-sel]')) { const i = +e.target.dataset.sel; e.target.checked ? sel.add(i) : sel.delete(i); paint(); const b = box.querySelector(`[data-sel="${i}"]`); if (b) b.focus({ preventScroll: true }); return; }
+    // the Excel list: who to leave out (the list keeps its scroll)
+    if (e.target.matches('[data-bulk-row], [data-bulk-all]') && bulk) {
+      const p = bulk.picked || (bulk.picked = new Set());
+      if (e.target.matches('[data-bulk-all]')) box.querySelectorAll('[data-bulk-row]').forEach((c) => { if (!c.closest('tr').hidden) { const i = +c.dataset.bulkRow; if (e.target.checked) p.add(i); else p.delete(i); } }); else { const i = +e.target.dataset.bulkRow; e.target.checked ? p.add(i) : p.delete(i); }
+      keepRev(() => paint());
+      const f = box.querySelector(e.target.matches('[data-bulk-all]') ? '[data-bulk-all]' : `[data-bulk-row="${e.target.dataset.bulkRow}"]`); if (f) f.focus({ preventScroll: true });
+      return;
+    }
     if (e.target.matches('[data-sel-all]')) { const c = ctx(); c.t.members.forEach((m, i) => { if (e.target.checked && canEdit(c, m)) sel.add(i); else sel.delete(i); }); paint(); return; }
     if (e.target.name === 'ig') { const ge = document.getElementById('tm-gerr'); if (ge) ge.textContent = ''; return; }
     const ef = e.target.closest('[data-save]');
@@ -564,6 +773,15 @@
     if (e.target.closest('[data-dw-open]')) { openDrawer(); return; }
     if (e.target.closest('[data-bulk-pick]')) { const f = box.querySelector('#tm-bulk-file'); f.value = ''; f.click(); return; }
     if (e.target.closest('[data-bulk-cancel]')) { bulk = null; paint(); return; }
+    const be = e.target.closest('[data-bulk-edit]') || (!e.target.closest('input, button, a, label, .tm-rev-c') && e.target.closest('tr[data-bulk-i]'));
+    if (be && bulk) { const i = +(be.dataset.bulkEdit || be.dataset.bulkI); bulk.picked = new Set([i]); keepRev(() => paint()); openBdw(); return; }
+    if (e.target.closest('[data-bulk-role]')) { openBdw(); return; }
+    if (e.target.closest('[data-bulk-unpick]')) { bulk.picked = new Set(); keepRev(() => paint()); return; }
+    const bf = e.target.closest('[data-bulk-f]');
+    if (bf) { const [k, v] = bf.dataset.bulkF.split(':'); bulk.f[k] = bulk.f[k] === v && v ? '' : v; keepRev(() => paint()); const b = box.querySelector(`[data-bulk-f="${bf.dataset.bulkF}"]`); if (b) b.focus({ preventScroll: true }); return; }
+    const bs = e.target.closest('[data-bulk-sort]');
+    if (bs) { const k = bs.dataset.bulkSort, o = bulk.sort || {}; bulk.sort = { k, dir: o.k === k ? -o.dir : 1 }; paint(); const b = box.querySelector(`[data-bulk-sort="${k}"]`); if (b) b.focus({ preventScroll: true }); return; }
+    if (e.target.closest('[data-bulk-remove]')) { dropPicked(); return; }
     if (e.target.closest('[data-bulk-send]')) {
       const ready = checkRows(c, bulk.rows).filter((r) => r.ok);
       ready.forEach((r) => t.invites.push({ email: r.email, name: r.name, role: r.role, groups: r.groups, also: r.role === 'owner' ? family().map((o) => o.id).filter((id) => id !== cur.id) : [], sent: today(), by: c.v.email }));

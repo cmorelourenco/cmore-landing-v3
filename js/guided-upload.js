@@ -16,8 +16,11 @@
    What is accepted is what Documents and the homepage show (js/doc-model.js reads it). Files
    beyond what she asked for are kept too, without a word about it at this stage.
    window.CMGuided.open(area) opens it; js/company-details.js opens it on an empty section.
-   Creating a company ends with it too: the new company's homepage opens (?guided) with ALMA asking
-   for its Company documents over it, and the page is only the user's once they upload or skip.
+   A new company's first look at its homepage (?guided after creating it, or the test user's) is an
+   onboarding instead (tour(), at the end): ALMA big over the page, then docked at its side, asking
+   step by step: Registration (the documents that show it exists; in Portugal the Certidão
+   Permanente, the Cartão de Pessoa Coletiva and a Certificate of Good Standing), the rest of the
+   Company documents, then Workers and Equipment. Any step, or all of it, can be skipped.
    Prototype: nothing is uploaded; what was read and accepted is kept for this tab, per company. */
 (() => {
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
@@ -39,16 +42,27 @@
   // company adds its people and machines they're asked for one by one.
   const profile = DM.profileOf(org);
   const AREA = {
+    registration: { title: 'Registration', what: 'registration documents', sec: 'Company', who: 'To put WHO on C-MORE, I need the N documents that show it&rsquo;s registered in WHERE.' },
     company: { title: 'Company', what: 'company documents', who: `A ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE needs these N.` },
     workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you in WHERE. One file each for now. Once you add your team, I&rsquo;ll ask for them person by person.' },
     equipment: { title: 'Equipment', what: 'equipment documents', who: 'These N cover the machines you bring to site. One file each for now. Once you add your machines, I&rsquo;ll ask for them machine by machine.' },
   };
   const TYPICAL = { workers: [{ nationality: profile.country, specialRisk: false, certifiedOperator: false, employmentType: 'permanent' }], equipment: [{ yearBuilt: 2020, measuring: false, certified: false }] };
+  // a new company is also asked for what registering it takes (phase 'Registration', js/doc-model.js)
+  const listFor = (p) => R.documentsFor(CAT, p, { phases: ['MVP', 'Registration'] }).map((x) => x.doc).filter((d) => !d.countries || d.countries.includes(p.country));
+  // Registration: the documents that show the company exists, the first thing asked of it. In
+  // Portugal the Certidão Permanente, the Cartão de Pessoa Coletiva and a Certificate of Good
+  // Standing; elsewhere the catalog's Identification and registration documents
+  const REG = { PT: ['CO-01', 'CO-02', 'CO-GS'] };
   const asks = (area) => {
     if (area === 'equipment' && !profile.equipmentCount) return []; // it said it brings no machines
-    if (area === 'company') return R.documentsFor(CAT, profile).map((x) => x.doc).filter((d) => d.category === 'company' && d.requirement === 'mandatory' && d.level === 'company');
+    if (area === 'company' || area === 'registration') {
+      const all = listFor(profile).filter((d) => d.category === 'company' && d.requirement === 'mandatory' && d.level === 'company');
+      if (area === 'company') return all;
+      return REG[profile.country] ? REG[profile.country].map((c) => all.find((d) => d.code === c)).filter(Boolean) : all.filter((d) => d.section.en === 'Identification and registration');
+    }
     const p = Object.assign({}, profile, area === 'equipment' ? {} : { employees: Math.max(1, profile.employees) });
-    return R.documentsFor(CAT, p).map((x) => x.doc).filter((d) => d.category === area && ['mandatory', 'if_applicable'].includes(d.requirement)
+    return listFor(p).filter((d) => d.category === area && ['mandatory', 'if_applicable'].includes(d.requirement)
       && (d.level === 'all_workers' || R.subjectsFor(d, TYPICAL[area] || [], p).length));
   };
   const accepted = (list) => list.filter((d) => (saved.files[d.code] || {}).ok);
@@ -59,11 +73,40 @@
   // when it brings machines to site, accepted out of all of them. The strip's link opens ALMA on the
   // first section with something missing.
   const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d })));
+  // the homepage follows along while ALMA asks, docked beside it: each part she changes (the strip,
+  // who the company is, its Documents card and table) shows its new state and catches the eye. With
+  // nothing accepted (again), each part goes back to how the page drew it
+  const LIVE = ['#empty .co-strip', '#empty .co-id-l', '#empty .co-k[data-go="docs"]', '#empty .co-sec:has(.co-docs-tbl)'];
+  let drawn = null;
   const strip = () => {
-    const box = document.querySelector('#empty .co-strip');
-    if (!box) return;
+    const els = LIVE.map((q) => document.querySelector(q));
+    if (!els[0]) return;
+    if (!drawn) drawn = els.map((el) => el && el.innerHTML);
+    const before = els.map((el) => el && el.innerHTML);
     const all = counted(), ok = all.filter((x) => (saved.files[x.d.code] || {}).ok);
-    if (!ok.length) return; // nothing yet: the page's own "Start company profile" stays
+    if (!ok.length) els.forEach((el, i) => { if (el) el.innerHTML = drawn[i]; });
+    else { paintStrip(els[0], all, ok); identity(); home(ok); }
+    // only on a change she made now, not when the page first draws what was already there
+    if (stripped) els.forEach((el, i) => { if (el && el.innerHTML !== before[i]) { el.classList.remove('gs-live'); void el.offsetWidth; el.classList.add('gs-live'); el.addEventListener('animationend', function off(e) { if (e.target === el) { el.classList.remove('gs-live'); el.removeEventListener('animationend', off); } }); } });
+    stripped = true;
+  };
+  let stripped = false;
+  // who the company is, as its registration documents say: each fact as soon as it's accepted
+  const identity = () => {
+    const box = document.querySelector('#empty .co-id-l');
+    if (!box) return;
+    const facts = asks('registration').filter((d) => (saved.files[d.code] || {}).ok).map((d) => {
+      const f = saved.files[d.code];
+      const v = d.code === 'CO-02' ? `<b>NIPC</b> ${esc(String(f.ref).replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'))}` : d.code === 'CO-01' ? `<b>Registered</b> in ${esc(where)}` : d.code === 'CO-GS' || d.code === 'UN-01' ? '<b>In good standing</b>' : `<b>${esc(d.name.en)}</b> ${esc(f.ref)}`;
+      return `<span class="gs-fact">${OK}${v}</span>`;
+    });
+    if (!facts.length) return;
+    const left = asks('registration').length - facts.length;
+    box.innerHTML = `<h1 class="co-name${org.id === 'home' && O.test ? ' co-name-empty' : ''}">${esc(nameOf)}</h1>
+      <span class="gs-facts">${facts.join('')}</span>
+      <span class="co-subtle" style="font-size:0.9375rem">${left ? `${left} more registration document${left === 1 ? '' : 's'} and this is complete.` : 'Sector, size and address next, from the rest of your documents.'}</span>`;
+  };
+  const paintStrip = (box, all, ok) => {
     const p = Math.round((ok.length / all.length) * 100), left = all.filter((x) => !ok.includes(x));
     const meter = box.querySelector('.co-meter'), bar = meter.firstElementChild;
     bar.style.width = p + '%'; bar.style.background = p === 100 ? 'var(--color-ok, #a6d8a0)' : '';
@@ -73,9 +116,8 @@
     const old = box.querySelector('.co-wrap > a'), a = old.cloneNode(false);
     a.removeAttribute('data-ce-start');
     if (p === 100) { a.href = 'company-details.html'; a.textContent = 'View documents'; }
-    else { a.href = '#'; a.textContent = 'Finish company profile'; a.addEventListener('click', (e) => { e.preventDefault(); open(left[0].area); }); }
+    else { a.href = '#'; a.textContent = 'Finish company profile'; a.addEventListener('click', (e) => { e.preventDefault(); if (!tour({ again: true })) open(left[0].area); }); }
     old.replaceWith(a);
-    home(ok);
   };
   const home = (ok) => {
     const card = document.querySelector('#empty .co-k[data-go="docs"]'), tbl = document.querySelector('#empty .co-docs-tbl');
@@ -117,10 +159,11 @@
     'CO-02': taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') || digits(h, 9),
     'CO-06': `${digits(h, 4)} ${digits(h + 2, 4)} ${digits(h + 5, 4)}`,
     'CO-07': `${digits(h + 1, 11)}`,
+    'CO-GS': `GS-${issued.getFullYear()}-${digits(h + 4, 6)}`,
   }[d.code] || `${issued.getFullYear()}/${String(h % 99991).padStart(5, '0')}`);
-  const CODE_LABEL = { 'CO-01': 'access code', 'CO-02': 'NIPC', 'CO-06': 'validation code', 'CO-07': 'certificate code' };
+  const CODE_LABEL = { 'CO-GS': 'certificate number', 'CO-01': 'access code', 'CO-02': 'NIPC', 'CO-06': 'validation code', 'CO-07': 'certificate code' };
   // how long a document lasts, from its catalog renewal: a month, three, four, or a year
-  const monthsOf = (d) => ({ 'CO-06': 3, 'CO-07': 4 }[d.code] || (/month/i.test(d.renewal || '') && !/6/.test(d.renewal || '') ? 1 : 12));
+  const monthsOf = (d) => ({ 'CO-06': 3, 'CO-07': 4, 'CO-GS': 6 }[d.code] || (/month/i.test(d.renewal || '') && !/6/.test(d.renewal || '') ? 1 : 12));
   // which document a file is: by the words in its name, else the next one still open
   const fold = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const WORDS = (d) => fold([d.name.en, local(d), d.code].join(' ')).split(/[^a-z0-9]+/)
@@ -177,7 +220,9 @@
 .gs-ic.is-file { border-style: solid; border-color: var(--color-line); color: var(--color-ink); }
 .gs-none { padding: 1rem; border: 1.5px dashed var(--color-sand-400); border-radius: 0.75rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-ink-subtle); }
 
-.gs .actions { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 1rem 1.5rem; }
+.gs .actions { flex-direction: column; align-items: center; gap: 1rem; } /* the CTA, and under it the way out */
+/* back and forth between steps: back on the left, on on the right */
+.gs .actions.gs-nav { flex-direction: row; align-items: center; justify-content: space-between; width: min(100%, 46rem); }
 .gs .btn:disabled { opacity: .45; cursor: default; }
 .gs-cards { display: grid; gap: 1rem; }
 .gs-card { border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); padding: 1.125rem 1.25rem; transition: border-color .2s; }
@@ -189,6 +234,30 @@
 .gs-peek { padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.2em; transition: text-decoration-color .15s; }
 .gs-peek:hover { text-decoration-color: var(--color-coral); }
 .gs-dw { z-index: 120; } /* over ALMA's overlay */
+/* the homepage beside her, catching up: what just changed glows for a moment */
+.gs-live { animation: gs-live 1.8s var(--ease-brand); border-radius: 0.75rem; }
+@keyframes gs-live { 0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-coral) 0%, transparent); background-color: color-mix(in oklab, var(--color-coral) 10%, transparent); }
+  30% { box-shadow: 0 0 0 6px color-mix(in oklab, var(--color-coral) 22%, transparent); } 100% { box-shadow: 0 0 0 0 transparent; } }
+/* from step to step: the page fades out and the next fades in; the panel's content does the same */
+html.tour-out main.page { opacity: 0; transition: opacity .3s ease; }
+html.tour-fading main.page { transition: opacity .45s ease; }
+.gs-dock.is-leaving { z-index: 49; pointer-events: none; }
+.gs-dock.is-leaving .intake-inner { opacity: 0; transition: opacity .25s ease; }
+.gs-dock.is-quiet .intake-inner { animation: gs-fade-in .4s ease both; }
+@keyframes gs-fade-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { html.tour-out main.page, html.tour-fading main.page { transition: none; } .gs-dock.is-quiet .intake-inner { animation: none; } }
+.gs-facts { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.gs-fact { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.3125rem 0.625rem; border-radius: 0.375rem; background: var(--color-surface); border: 1px solid var(--color-line); font-size: 0.875rem; color: var(--color-ink-muted); animation: rise .5s var(--ease-brand) both; }
+.gs-fact b { font-weight: 600; color: var(--color-ink); }
+.gs-fact svg { width: 0.875rem; height: 0.875rem; color: var(--color-positive, #3d7a2c); }
+@media (prefers-reduced-motion: reduce) { .gs-live, .gs-fact { animation: none; } }
+/* beside the docked panel, a document's preview slides out from under it, to its left; where
+   there isn't room for both, it comes over the panel as everywhere else */
+@media (min-width: 75rem) {
+  .gs-dw.is-under { z-index: 49; }
+  .gs-dw.is-under .docd-panel { right: 40rem; width: min(40rem, calc(100vw - 45rem)); box-shadow: -24px 0 48px -24px rgba(52, 52, 52, .35); }
+  .gs-dock.has-peek { box-shadow: -24px 0 60px -30px rgba(52, 52, 52, .35); }
+}
 .gs-dw .cd-fields td:last-child { width: 1%; white-space: nowrap; }
 .gs-card .co-badge { flex: none; }
 .gs-sum { margin-top: 0.625rem; font-size: 0.9375rem; line-height: 1.5; color: var(--color-ink-muted); }
@@ -216,11 +285,89 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-meter b { position: relative; display: block; font-size: 2.5rem; font-weight: 600; letter-spacing: -0.03em; color: var(--color-ink); text-align: center; }
 .gs-meter span { position: relative; display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); text-align: center; }
 @media (max-width: 40rem) { .gs-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); } .gs-sub { display: none; } .gs-lbl { font-size: 0.875rem; } .gs-list li { padding: 0.75rem 0.875rem; } }
-@media (prefers-reduced-motion: reduce) { .gs-steps::before { transition: none; } .is-reading .gs-ic svg { animation: none; } }`;
+@media (prefers-reduced-motion: reduce) { .gs-steps::before { transition: none; } .is-reading .gs-ic svg { animation: none; } }
+/* the onboarding: ALMA big over the page first, then docked at the side with the page in view */
+.gs-intro { z-index: 60; transition: background-color .6s var(--ease-brand), opacity .4s; }
+.gs-intro.is-gone { opacity: 0; }
+.gs-intro.is-flying { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; pointer-events: none; }
+.gs-intro.is-flying .intake-screen > :not(.gs-in-alma) { opacity: 0; transition: opacity .25s; }
+.gs-in-alma { cursor: default; transition: transform .85s var(--ease-brand); }
+.gs-in-alma::before { display: none; }
+.gs-in-steps { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; margin: 1.5rem 0 0; padding: 0; font-size: 0.875rem; color: var(--color-ink-muted); }
+.gs-in-steps li { display: flex; align-items: center; gap: 0.5rem; }
+.gs-in-steps span { width: 1.5rem; height: 1.5rem; display: grid; place-items: center; border-radius: 0.375rem; background: var(--color-mid-beige); font-size: 0.75rem; font-weight: 600; color: var(--color-ink); }
+.gs-dock.intake { left: auto; width: min(40rem, 100vw); /* a drawer's width, like every other (css/esg.css .docd-panel) */ background: var(--color-off-white); -webkit-backdrop-filter: none; backdrop-filter: none; border-left: 1px solid var(--color-line);
+  box-shadow: -24px 0 60px -30px rgba(52, 52, 52, .35), 0 0 0 100vmax color-mix(in oklab, var(--color-graphite) 7%, transparent); animation: gs-dock-in .6s var(--ease-brand) both; }
+.gs-dock.is-quiet { animation: none; }
+@keyframes gs-dock-in { from { transform: translateX(100%); } to { transform: none; } }
+.gs-dock .intake-inner { max-width: none; padding: 0 1.75rem 3rem; text-align: left; justify-items: stretch; }
+.gs-dock .intake-screen { min-height: 0; padding: 1.5rem 0 0; align-content: start; }
+.gs-dock.alma-ask, .gs-dock .alma-ask, .gs-dock #gs-body { justify-items: start; text-align: left; }
+.gs-dock .alma-ask :is(h1, h2) { font-size: 1.625rem; line-height: 1.15; }
+.gs-dock .alma-ask .lead { font-size: 0.9375rem; line-height: 1.5; }
+.gs-dock .alma-ask .says { margin-top: 1rem; }
+.gs-dock .gs-steps { width: 100%; margin: 0 0 1.5rem; }
+.gs-dock .gs-steps::before { top: calc(1rem - 1px); }
+.gs-dock .gs-node { width: 2rem; height: 2rem; font-size: 0.875rem; }
+.gs-dock .gs-steps li.is-on .gs-node { box-shadow: 0 0 0 4px var(--color-coral-tint, #f9e7e3); }
+.gs-dock .gs-lbl { font-size: 0.8125rem; }
+.gs-dock .gs-sub { display: none; }
+.gs-dock .gs-sec { margin: 0 0 1rem; }
+.gs-dock .drop.is-small { width: 100%; display: flex; align-items: center; gap: 1.25rem; padding: 0.875rem 1.25rem; border: 1.5px dashed var(--color-sand-400); border-radius: 0.75rem; background: var(--color-surface); text-align: left; cursor: pointer; transition: border-color .15s, background-color .15s; }
+.gs-dock .drop.is-small::before { display: none; }
+.gs-dock .drop.is-small:hover, .gs-dock .drop.is-small.is-over { border-color: var(--color-coral); transform: none; }
+.gs-dock .drop.is-small .alma-media { width: 4.5rem; flex: none; }
+.gs-dock .drop.is-small .drop-hint { position: static; translate: none; display: grid; gap: 0.125rem; white-space: normal; font-size: 0.9375rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--color-ink); }
+.gs-dock .drop.is-small .drop-hint small { font-size: 0.8125rem; font-weight: 400; color: var(--color-ink-subtle); }
+.gs-dock .gs-mini { width: 5rem; margin: 0; }
+.gs-dock .gs-pane { width: 100%; margin-top: 1.25rem; }
+.gs-dock .gs-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gs-dock .gs-card header { flex-wrap: wrap; }
+.gs-dock .actions { align-items: flex-start; }
+.gs-dock.alma-ask .actions .btn, .gs-dock .alma-ask .actions .btn { min-width: 0; }
+.gs-dock .gs-meter { width: 8rem; margin: 0; }
+.gs-dock .gs-meter b { font-size: 1.75rem; }
+.gs-dock .gs-hint { text-align: left; }
+.gs-dock #gs-body.is-end { justify-items: center; text-align: center; }
+.gs-dock #gs-body.is-end .gs-meter { margin: 0 auto; }
+.gs-dock #gs-body.is-end .actions { align-items: center; }
+.gs-dock #gs-body.is-end .gs-pane { text-align: left; }
+/* room to breathe, measured against the screen's height so the whole step still fits a short one */
+.gs-dock #gs-body.is-end .gs-sec { margin-bottom: clamp(1rem, 4vh, 2.5rem); }
+.gs-dock #gs-body.is-end .gs-meter { width: clamp(6.5rem, 18vh, 9.5rem); }
+.gs-dock #gs-body.is-end .gs-meter b { font-size: clamp(1.5rem, 4vh, 2rem); }
+.gs-dock #gs-body.is-end .says { margin-top: clamp(1.25rem, 4.5vh, 2.75rem); }
+.gs-dock #gs-body.is-end h1 { margin-top: clamp(0.75rem, 2vh, 1.25rem); }
+.gs-dock #gs-body.is-end .lead { margin-top: clamp(0.75rem, 2vh, 1.25rem); }
+.gs-dock #gs-body.is-end .gs-pane { margin-top: clamp(1.25rem, 3.5vh, 2rem); }
+.gs-dock #gs-body.is-end .actions { margin-top: clamp(1.5rem, 5vh, 3rem); gap: 1.25rem; }
+.gs-dock .intake-inner:has(#gs-body.is-end) { padding-bottom: clamp(1.5rem, 4vh, 3rem); }
+/* a short screen: the section tag goes, and the steps sit closer, so the ring, her words and both buttons still fit */
+@media (max-height: 45rem) {
+  .gs-dock #gs-body.is-end .gs-sec { display: none; }
+  .gs-dock .intake-screen:has(#gs-body.is-end) { padding-top: 1rem; }
+  .gs-dock .intake-screen:has(#gs-body.is-end) .gs-steps { margin-bottom: 1rem; }
+}
+.gs-tour { position: sticky; top: 0; z-index: 2; margin: 0 -1.75rem; padding: 1rem 1.75rem 0.875rem; background: var(--color-off-white); border-bottom: 1px solid var(--color-line); text-align: left; }
+.gs-tour-t { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.gs-tour-t .link-btn { flex: none; white-space: nowrap; }
+.gs-tour .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.gs-tour-bar { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.375rem; }
+.gs-tour-bar li { display: grid; gap: 0.375rem; font-size: 0.75rem; line-height: 1.25; color: var(--color-ink-subtle); }
+.gs-tour-bar li span { height: 4px; border-radius: 2px; background: var(--color-line); }
+.gs-tour-bar li.is-done span { background: var(--color-graphite); }
+.gs-tour-bar li.is-on span { background: var(--color-coral); }
+.gs-tour-bar li.is-on { font-weight: 600; color: var(--color-ink); }
+.gs-note { margin-bottom: 0.75rem; padding: 0.625rem 0.875rem; border-radius: 0.5rem; background: var(--color-coral-tint, #f9e7e3); font-size: 0.875rem; line-height: 1.5; color: var(--color-ink); }
+.gs-conf { margin-bottom: 0.75rem; font-size: 0.8125rem; line-height: 1.5; color: var(--color-ink-subtle); }
+button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-coral-deep); }
+@media (max-width: 40rem) { .gs-dock.intake { width: 100vw; border-left: 0; } .gs-tour-bar li { font-size: 0; gap: 0; } }
+@media (prefers-reduced-motion: reduce) { .gs-dock.intake { animation: none; } .gs-in-alma { transition: none; } }`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   const OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   const FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  const NO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
   const SPIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
   // her figure: the one the page already shows
   const almaHtml = () => { const s = document.querySelector('#empty .alma-media, .alma-media'); return s ? s.innerHTML : ''; };
@@ -229,7 +376,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
   let wrap = null;
   const open = (area, opts = {}) => {
     if (wrap || !AREA[area]) return;
-    const docs = asks(area);
+    const docs = asks(area).filter((d) => !(opts.skip || []).includes(d.code));
     if (!docs.length) return;
     const A = AREA[area];
     const st = saved.areas[area] = Object.assign({ step: 1, reviewed: false, pending: [], kept: [] }, saved.areas[area] || {});
@@ -247,26 +394,33 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         conf: flagged ? 76 + (h % 8) : 90 + (h % 9), flag: flagged ? 'valid' : null, ok: false, edited: false,
       };
     };
+    const tour = opts.tour; // the onboarding (tour() below): where it is, the step after this one
     const STEPS = [['Upload', `Your ${A.what}`], ['Review', 'Check what ALMA read'], ['Complete', `How complete ${A.title} is`]];
 
     wrap = document.createElement('div');
     wrap.className = 'intake over-page gs'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'gs-title');
-    wrap.innerHTML = `<div class="intake-inner"><div class="intake-screen alma-ask">
+    if (tour) wrap.classList.add('gs-dock');
+    if (tour && tour.quiet) wrap.classList.add('is-quiet'); // one step after another: the panel stays put
+    wrap.innerHTML = `<div class="intake-inner">${tour ? `<header class="gs-tour">
+          <div class="gs-tour-t"><span class="eyebrow">Set up ${esc(nameOf)} &middot; Step ${tour.at + 1} of ${tour.steps.length}</span><button class="link-btn" type="button" data-close="end">Skip setup</button></div>
+          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.steps.map((l, i) => `<li class="${i === tour.at ? 'is-on' : tour.done[i] ? 'is-done' : ''}"${i === tour.at ? ' aria-current="step"' : ''}><span></span>${esc(l)}</li>`).join('')}</ol>
+        </header>` : ''}<div class="intake-screen alma-ask">
         <ol class="gs-steps" id="gs-steps" aria-label="${A.title} documents"></ol>
         <div id="gs-body"></div>
         <input id="gs-file" type="file" multiple hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.heic">
       </div></div>`;
     document.body.appendChild(wrap);
-    document.documentElement.classList.add('intake-open');
+    if (!tour) document.documentElement.classList.add('intake-open'); // docked, the homepage can still be scrolled
     const $ = (id) => wrap.querySelector('#' + id);
     const alma = almaHtml;
-    let target = null, editing = null;
+    let target = null, editing = null, rejected = [];
     const held = {}; // the files themselves, by name, until each is filed (then js/doc-files.js keeps it)
 
     const filed = () => docs.filter((d) => saved.files[d.code]);
     const confirmed = () => docs.filter((d) => (saved.files[d.code] || {}).ok);
     const pct = () => Math.round((confirmed().length / docs.length) * 100);
-    const confTag = (f) => { const [b, c] = f.conf >= 90 ? ['High', 'b-ok'] : f.conf >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
+    // her confidence: how sure she is she read the document right, as a word and as a number
+    const confTag = (f) => { const [b, c] = f.conf >= 90 ? ['High', 'b-ok'] : f.conf >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="How sure ALMA is that she read it right">${b} confidence &middot; ${f.conf}%</span>`; };
     const reached = (i) => i === 0 || (i === 1 && filed().length > 0) || (i === 2 && !!st.reviewed);
     const paintSteps = () => {
       const at = st.step - 1;
@@ -276,7 +430,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         return `<li class="${i === at && !done ? 'is-on' : done ? 'is-done' : ''}"${i === at ? ' aria-current="step"' : ''}><button type="button" data-step="${i + 1}"${reached(i) && i !== at ? '' : ' disabled'}><span class="gs-node">${done ? OK : i + 1}</span><span class="gs-lbl">${l}</span><span class="gs-sub">${s}</span></button></li>`;
       }).join('');
     };
-    const sec = `<span class="gs-sec">Documents &rsaquo; ${A.title}</span>`;
+    const sec = `<span class="gs-sec">Documents &rsaquo; ${A.sec || A.title}</span>`;
 
     // step 1: what she's asking for, and the files added — two lists, not matched to each other yet
     const step1 = () => {
@@ -291,16 +445,16 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         .concat(st.kept.map((name) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Kept &middot; not one of the documents asked for here</span></span><span></span></li>`)).join('');
       const total = np + read.length + st.kept.length;
       return `${sec}<button class="drop is-small" id="gs-drop" type="button" aria-label="Add files"><span class="alma-media" aria-hidden="true">${alma()}</span>
-          <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span></span></button>
+          <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span>${tour ? '<small>PDF or photo, as many as you have.</small>' : ''}</span></button>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${total ? `${total} file${total === 1 ? '' : 's'} so far, <span class="soft">add more or carry on.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
-        <p class="lead">${A.who.replace('WHERE', where).replace('N', n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
+        <p class="lead">${A.who.replace('WHO', esc(nameOf)).replace('WHERE', where).replace('N', n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
         <div class="gs-pane gs-two">
           <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
           <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
         </div>
         <div class="actions"><button class="btn btn-primary" type="button" data-go="2"${np || read.length ? '' : ' disabled'}>Upload documents</button>
-          <button class="link-btn" type="button" data-close>I&rsquo;ll do it later</button></div>`;
+          <button class="link-btn" type="button" data-close="${tour ? 'next' : ''}">${tour ? (tour.next ? 'Skip this step' : 'I&rsquo;ll do it later') : 'I&rsquo;ll do it later'}</button></div>`;
     };
 
     // step 2: what she read, to accept or put right
@@ -318,9 +472,9 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         <p class="gs-sum">${summary}</p>
         <dl class="gs-fields">${fields}</dl>
         ${flagged ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly: the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
-        <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button><button class="link-btn" type="button" data-remove="${d.code}">Remove</button>`}</span>
+        <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button>`}</span>
           <span>${ed ? `<button class="link-btn" type="button" data-cancel>Cancel</button><button class="gs-acc" type="button" data-save="${d.code}">${OK}Save changes</button>`
-            : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-accept="${d.code}">${OK}Accept</button>`}</span></footer>
+            : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-accept="${d.code}">${OK}Accept</button>`}</span></footer>
       </article>`;
     };
     const step2 = () => {
@@ -328,11 +482,13 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">Here&rsquo;s what I read. <span class="soft">Does it look right?</span></h1>
-        <p class="lead">Accept each one, or change anything I got wrong. Once you continue, they go into ${A.title}.</p>
-        <div class="gs-pane"><div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${editing != null ? '' : left ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept all</button>` : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`}</div>
+        <p class="lead">Accept each one, change anything I got wrong, or reject one that isn&rsquo;t right. Once you continue, they go into ${A.sec || A.title}.</p>
+        <div class="gs-pane">${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
+          <p class="gs-conf">The confidence on each is how sure I am that I read it right. Open one to see it field by field, with where I read it.</p>
+          <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${editing != null ? '' : left ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept all</button>` : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`}</div>
           <div class="gs-cards">${list.map(card).join('')}</div></div>
-        <div class="actions"><button class="btn btn-primary" type="button" data-confirm${list.length && !left && editing == null ? '' : ' disabled'}>Continue</button>
-          <button class="link-btn" type="button" data-go="1">Back to upload</button></div>
+        <div class="actions gs-nav"><button class="link-btn" type="button" data-go="1">Back to upload</button>
+          <button class="btn btn-primary" type="button" data-confirm${list.length && !left && editing == null ? '' : ' disabled'}>Continue</button></div>
         ${left ? `<p class="gs-d gs-hint">Accept ${left === 1 ? 'the last document' : `the ${left} documents left`} to continue.</p>` : ''}`;
     };
 
@@ -342,9 +498,10 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       if (p === 100) {
         return `${sec}<div class="gs-meter is-full"><div><b>100%</b><span>complete</span></div></div>
           <p class="says">ALMA</p>
-          <h1 id="gs-title" tabindex="-1">${A.title} is complete, <span class="soft">${esc(nameOf.replace(/\.$/, ''))}.</span></h1>
+          <h1 id="gs-title" tabindex="-1">${area === 'registration' ? `${esc(nameOf.replace(/\.$/, ''))} is registered <span class="soft">on C&#8209;MORE.</span>` : `${A.title} is complete, <span class="soft">${esc(nameOf.replace(/\.$/, ''))}.</span>`}</h1>
           <p class="lead">Every one of your ${A.what} is in, checked and in Documents. I&rsquo;ll tell you when one is about to expire, and when a client asks for more.</p>
-          <div class="actions"><button class="btn btn-primary" type="button" data-close>${opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button></div>`;
+          <div class="actions"><button class="btn btn-primary" type="button" data-close="next">${tour ? (tour.next ? `Next: ${tour.next}` : 'Go to my company') : opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button>
+            ${tour && tour.next ? '<button class="link-btn" type="button" data-close="end">Skip for now</button>' : ''}</div>`;
       }
       const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${local(d) ? `In ${where}: ${esc(local(d))}` : esc(d.description.en.split(/(?<=\.)\s/)[0])}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
       const one = missing.length === 1;
@@ -354,7 +511,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         <p class="lead">${one ? 'One document is' : `${missing.length} documents are`} still missing here. Add ${one ? 'it' : 'them'} now, or later from ${A.title}.</p>
         <div class="gs-pane"><ul class="gs-list" aria-label="Still missing">${rows}</ul></div>
         <div class="actions"><button class="btn btn-primary" type="button" data-more>Add ${one ? 'it' : 'them'} now</button>
-          <button class="link-btn" type="button" data-close>Skip for now</button></div>`;
+          <button class="link-btn" type="button" data-close="next">${tour && tour.next ? `Skip to ${tour.next.toLowerCase()}` : 'Skip for now'}</button></div>`;
     };
 
     // between upload and review: she reads each file and checks it at the source
@@ -384,6 +541,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         <div class="gs-pane"><ul class="gs-list" aria-label="Checks">${rows}</ul></div>`;
     };
     const validate = () => {
+      rejected = [];
       const extra = assign(); keep();
       if (!unchecked().length && !extra.length) { goStep(filed().length ? 2 : 1); return; }
       checking = { rows: checks(extra), at: 0 }; editing = null; paint();
@@ -409,7 +567,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       </aside>`;
     document.body.appendChild(dwEl);
     const dq = (id) => dwEl.querySelector('#' + id);
-    let peek = null, peekBack = null, citeAt = null;
+    let peek = null, peekBack = null;
     const company = esc(org.name), taxShown = taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
     const paintPeek = () => {
       const d = docs.find((x) => x.code === peek), f = d && saved.files[d.code];
@@ -421,9 +579,10 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       const conf = (flag, i) => (f.edited ? 98 : flag ? 52 : Math.min(99, f.conf + (hash(d.code + i) % 7) - 3));
       const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
       const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here. I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
-        + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${citeAt === i}">${citeAt === i ? 'Hide citation' : 'View citation'}</button>`
-        + `<figure class="esgq-src cdd-src"${citeAt === i ? '' : ' hidden'}><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td>`
-        + `<td>${tag(conf(fl, i))}</td></tr>`).join('')}</tbody></table></section>`;
+        + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="false" aria-controls="gs-cite-${i}">View citation</button></td>`
+        + `<td>${tag(conf(fl, i))}</td></tr>`
+        // the citation: a row of its own under the field's, the table's full width, opened in place
+        + `<tr class="cdd-cite-row" id="gs-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>`;
       dq('gs-dw-t').textContent = d.name.en;
       dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
       dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f);
@@ -436,14 +595,16 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
       dq('gs-dw-acts').innerHTML = `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
     };
-    const openPeek = (code) => { peekBack = document.activeElement; peek = code; citeAt = null; dwEl.hidden = false; paintPeek(); setTimeout(() => dwEl.classList.add('is-open'), 20); dwEl.querySelector('.docd-panel').focus(); };
-    const closePeek = () => { if (dwEl.hidden) return; dwEl.classList.remove('is-open'); peek = null; setTimeout(() => { dwEl.hidden = true; }, 250); if (peekBack && peekBack.isConnected) peekBack.focus(); };
+    if (tour) dwEl.classList.add('is-under');
+    const openPeek = (code) => { peekBack = document.activeElement; peek = code; dwEl.hidden = false; wrap.classList.add('has-peek'); paintPeek(); setTimeout(() => dwEl.classList.add('is-open'), 20); dwEl.querySelector('.docd-panel').focus(); };
+    const closePeek = () => { if (dwEl.hidden) return; dwEl.classList.remove('is-open'); if (wrap) wrap.classList.remove('has-peek'); peek = null; setTimeout(() => { dwEl.hidden = true; }, 250); if (peekBack && peekBack.isConnected) peekBack.focus(); };
     dwEl.addEventListener('click', (e) => {
       const t = (sel) => e.target.closest(sel);
       if (t('[data-dwclose]')) { closePeek(); return; }
-      if (t('[data-cite]')) { const i = +t('[data-cite]').dataset.cite; citeAt = citeAt === i ? null : i; paintPeek(); return; }
+      // in place: repainting would reload the file above and move the scroll
+      if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
       if (t('[data-show]')) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
-      if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); paintPeek(); return; }
+      if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); strip(); closePeek(); return; } // accepted: back to the review, where its card now shows it
       if (t('[data-dwedit]')) { const c = peek; closePeek(); editing = c; paint(); const i = wrap.querySelector(`[data-card="${c}"] .is-flag input`) || wrap.querySelector(`[data-card="${c}"] input`); if (i) i.focus(); }
     });
 
@@ -451,6 +612,7 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     const paint = () => {
       paintSteps();
       $('gs-body').innerHTML = checking ? validating() : st.step === 1 ? step1() : st.step === 2 ? step2() : step3();
+      $('gs-body').classList.toggle('is-end', !checking && st.step === 3); // the complete step stands centred, in the panel too
       if (checking && checking.at === 0) { wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
       if (shownStep !== st.step) { shownStep = st.step; wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
     };
@@ -475,20 +637,24 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
     wrap.addEventListener('drop', (e) => { e.preventDefault(); if (checking) return; if (st.step === 2) goStep(1); take(e.dataTransfer.files); });
 
     const before = JSON.stringify(accepted(docs).map((d) => d.code));
-    const close = () => {
-      keep(); wrap.remove(); wrap = null; dwEl.remove(); document.removeEventListener('keydown', onKey);
-      document.documentElement.classList.remove('intake-open');
+    // how: 'next' moves the onboarding on, 'end' leaves it; '' (Escape, Later) is just closing
+    const close = (how = '') => {
+      // on to the next step: this panel empties out under the next one (or while the page changes)
+      // rather than vanishing
+      const old = wrap; keep(); wrap = null; dwEl.remove(); document.removeEventListener('keydown', onKey);
+      if (tour && how === 'next' && tour.next) { old.classList.add('is-leaving'); setTimeout(() => old.remove(), 1200); } else old.remove();
+      if (!tour) document.documentElement.classList.remove('intake-open');
       changedAny = JSON.stringify(accepted(docs).map((d) => d.code)) !== before;
       strip();
-      if (opts.onClose) opts.onClose(changedAny);
+      if (opts.onClose) opts.onClose(changedAny, how);
     };
-    const onKey = (e) => { if (e.key !== 'Escape' || !wrap) return; if (peek) { closePeek(); return; } if (editing == null && !checking) close(); };
+    const onKey = (e) => { if (e.key !== 'Escape' || !wrap) return; if (peek) { closePeek(); return; } if (editing == null && !checking) close(tour ? 'end' : ''); };
     document.addEventListener('keydown', onKey);
     wrap.addEventListener('click', (e) => {
       const t = (s) => e.target.closest(s);
       if (checking) return;
       const code = (a) => t(`[data-${a}]`).getAttribute(`data-${a}`);
-      if (t('[data-close]')) { e.preventDefault(); close(); return; }
+      if (t('[data-close]')) { e.preventDefault(); close(t('[data-close]').dataset.close || ''); return; }
       if (t('[data-peek]')) { openPeek(code('peek')); return; }
       if (t('#gs-drop') || t('[data-browse]')) { browse(); return; }
       if (t('[data-unpend]')) { st.pending.splice(+code('unpend'), 1); keep(); paint(); return; }
@@ -496,10 +662,10 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       if (t('[data-step]')) { const n = +code('step'); if (n === 2 && st.step === 1) validate(); else goStep(n); return; }
       if (t('[data-go]')) { const n = +code('go'); if (n === 2) validate(); else goStep(n); return; }
       if (t('[data-more]')) { goStep(1); return; }
-      if (t('[data-unaccept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = false; }); keep(); paint(); return; }
-      if (t('[data-accept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = true; }); keep(); paint(); return; }
-      if (t('[data-accept]')) { saved.files[code('accept')].ok = true; keep(); paint(); return; }
-      if (t('[data-unaccept]')) { saved.files[code('unaccept')].ok = false; keep(); paint(); return; }
+      if (t('[data-unaccept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = false; }); keep(); paint(); strip(); return; }
+      if (t('[data-accept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = true; }); keep(); paint(); strip(); return; }
+      if (t('[data-accept]')) { saved.files[code('accept')].ok = true; keep(); paint(); strip(); return; }
+      if (t('[data-unaccept]')) { saved.files[code('unaccept')].ok = false; keep(); paint(); strip(); return; }
       if (t('[data-edit]')) {
         editing = code('edit'); paint();
         const i = wrap.querySelector(`[data-card="${editing}"] .is-flag input`) || wrap.querySelector(`[data-card="${editing}"] input`); if (i) i.focus();
@@ -512,10 +678,16 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
         FIELDS.forEach(([k]) => { const v = el.querySelector(`input[name="${k}"]`).value.trim(); if (v && v !== f[k]) { f[k] = v; changed = true; } });
         // checked by a person: what's there now is what they say, so it reads as sure
         if (changed || f.flag) Object.assign(f, { edited: true, flag: null, conf: 98 });
-        f.ok = true; editing = null; keep(); paint(); return;
+        f.ok = true; editing = null; keep(); paint(); strip(); return;
+      }
+      if (t('[data-reject]')) {
+        // not this document, or not read right: the reading goes, and the document is asked for again
+        const c = code('reject'), d = docs.find((x) => x.code === c);
+        rejected.push(d.name.en); delete saved.files[c]; keep(); strip();
+        if (!filed().length) goStep(1); else paint(); return;
       }
       if (t('[data-remove]')) { delete saved.files[code('remove')]; keep(); if (!filed().length) goStep(1); else paint(); return; }
-      if (t('[data-confirm]')) { st.reviewed = true; goStep(3); return; }
+      if (t('[data-confirm]')) { st.reviewed = true; goStep(3); if (tour && tour.refresh) tour.refresh(); return; } // the Documents page behind her redraws with them
       // anywhere else on a card opens it in the drawer; its own buttons (above) keep their jobs, and
       // a card being edited stays put so its fields can be clicked into
       const cardEl = t('.gs-card');
@@ -535,21 +707,133 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
       if (!z) return;
       e.preventDefault(); e.stopImmediatePropagation();
       const files = e.type === 'drop' && e.dataTransfer ? e.dataTransfer.files : null;
-      if (e.type === 'drop' || e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) open('company', { files, onClose: (c) => { if (c) location.reload(); } });
+      if (e.type === 'drop' || e.type === 'click' || (e.type === 'keydown' && (e.key === 'Enter' || e.key === ' '))) {
+        if (!tour({ files, again: true })) open('company', { files, onClose: (c) => { if (c) location.reload(); } });
+      }
     };
     ['click', 'drop', 'keydown'].forEach((ev) => document.addEventListener(ev, intercept, true));
     document.addEventListener('dragover', (e) => { if (e.target.closest && e.target.closest('#empty #ce-drop')) { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
   }
   strip();
 
-  window.CMGuided = { open, asks, has, AREA };
-  // the end of creating a company: ALMA on its Company documents, over its homepage
+  // ---- the onboarding: a new company's first look at its homepage --------------------------------
+  // ALMA comes up big over the page, says hello and what she'll do; then she settles into a panel
+  // docked at the side, with the homepage still in view, and asks section by section: first the
+  // documents that show the company is registered, then the rest of the company's, then its
+  // workers' and its equipment's. Each step can be skipped; "Skip setup" (or Escape) leaves it all
+  // for later, on the empty homepage. Where it got to is kept, so coming back carries on from there.
+  const TOUR = ['registration', 'company', 'workers', 'equipment'];
+  const STEP = { registration: 'Registration', company: 'Company documents', workers: 'Workers', equipment: 'Equipment' };
+  const regCodes = () => asks('registration').map((d) => d.code);
+  const docsOf = (a) => (a === 'company' ? asks('company').filter((d) => !regCodes().includes(d.code)) : asks(a));
+  const complete = (a) => docsOf(a).every((d) => (saved.files[d.code] || {}).ok);
+  const first = (() => { try { return ((JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || '').split(/\s+/)[0]; } catch (e) { return ''; } })();
+  const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const intro = (areas, go, skip) => {
+    const el = document.createElement('div');
+    el.className = 'intake over-page gs gs-intro'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'gs-in-t');
+    el.innerHTML = `<div class="intake-inner"><div class="intake-screen alma-ask">
+        <span class="drop gs-in-alma" aria-hidden="true"><span class="alma-media">${almaHtml()}</span></span>
+        <p class="says rise d1">ALMA</p>
+        <h1 id="gs-in-t" class="rise d2" tabindex="-1">${first ? `Welcome, ${esc(first)}. ` : 'Welcome. '}<span class="soft">Let&rsquo;s put ${esc(nameOf)} on C&#8209;MORE.</span></h1>
+        <p class="lead rise d3">I&rsquo;ll set it up with you in ${areas.length} steps, starting with the documents that show your company is registered. You upload them, I read them, and you check what I read.</p>
+        <ol class="gs-in-steps rise d3">${areas.map((a, i) => `<li><span>${i + 1}</span>${STEP[a]}</li>`).join('')}</ol>
+        <div class="actions rise d4"><button class="btn btn-primary" type="button" data-in-go>Start with ${STEP[areas[0]].toLowerCase()}</button>
+          <button class="link-btn" type="button" data-in-skip>Skip, show me my company</button></div>
+      </div></div>`;
+    document.body.appendChild(el);
+    document.documentElement.classList.add('intake-open');
+    el.querySelector('#gs-in-t').focus({ preventScroll: true });
+    const done = () => { document.removeEventListener('keydown', onKey); };
+    const onKey = (e) => { if (e.key === 'Escape') { done(); leave(); skip(); } };
+    document.addEventListener('keydown', onKey);
+    const leave = () => { el.classList.add('is-gone'); document.documentElement.classList.remove('intake-open'); setTimeout(() => el.remove(), reduced() ? 0 : 400); };
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('[data-in-skip]')) { done(); leave(); skip(); return; }
+      if (!e.target.closest('[data-in-go]')) return;
+      done(); document.documentElement.classList.remove('intake-open');
+      // she moves into the panel: the panel comes in at the side, and her figure flies to its place in it
+      go();
+      const me = el.querySelector('.gs-in-alma'), to = wrap && wrap.querySelector('#gs-drop .alma-media, .gs-mini .alma-media');
+      if (reduced() || !me || !to) { el.remove(); return; }
+      me.style.animation = 'none'; if (to.closest('.drop')) to.closest('.drop').style.animation = 'none'; // she is the arrival
+      const a = me.getBoundingClientRect(), r = to.getBoundingClientRect();
+      // where her place in the panel will be once it has slid in
+      const dx = wrap.getBoundingClientRect().left - (innerWidth - wrap.offsetWidth), b = { left: r.left - dx, top: r.top, width: r.width, height: r.height };
+      to.style.opacity = '0';
+      el.classList.add('is-flying');
+      me.style.transform = `translate(${b.left - a.left + (b.width - a.width) / 2}px, ${b.top - a.top + (b.height - a.height) / 2}px) scale(${b.width / a.width})`;
+      setTimeout(() => { to.style.opacity = ''; el.remove(); }, 900);
+    });
+  };
+
+  // where each step happens: the homepage for the company's own documents (its top for Registration,
+  // its documents for the rest), the Documents page's section for Workers and Equipment
+  const onHome = !!document.querySelector('#empty');
+  const PLACE = { workers: 'company-details.html?area=workers', equipment: 'company-details.html?area=equipment' };
+  const here = (a) => (PLACE[a] ? /company-details/.test(location.pathname) && new URLSearchParams(location.search).get('area') === a : onHome);
+  // to another page: this one fades out, the next fades in (its head reads cm-tour-fade)
+  const leave = (url) => {
+    try { sessionStorage.setItem('cm-tour-fade', '1'); } catch (e) {}
+    document.documentElement.classList.add('tour-out');
+    setTimeout(() => { location.href = url; }, reduced() ? 0 : 320);
+  };
+  if (document.documentElement.classList.contains('tour-in')) {
+    try { sessionStorage.removeItem('cm-tour-fade'); } catch (e) {}
+    requestAnimationFrame(() => requestAnimationFrame(() => { document.documentElement.classList.add('tour-fading'); document.documentElement.classList.remove('tour-in'); }));
+  }
+  const show = (a) => {
+    if (!onHome) return;
+    const to = a === 'company' && document.querySelector('#empty .co-docs-sec');
+    const bar = document.querySelector('.top'); // the sticky header stays over the page: land below it
+    scrollTo({ top: to ? to.getBoundingClientRect().top + scrollY - (bar ? bar.offsetHeight : 0) - 8 : 0, behavior: reduced() ? 'auto' : 'smooth' });
+  };
+  // again: started from the homepage by hand, so a step skipped before is asked again if it's not done
+  const tour = (o = {}) => {
+    const t = saved.tour = Object.assign({ passed: [], ended: false }, saved.tour || {});
+    if (o.again) { t.ended = false; t.passed = t.passed.filter(complete); }
+    const areas = TOUR.filter((a) => docsOf(a).length);
+    const at = areas.findIndex((a) => !t.passed.includes(a));
+    if (at < 0) { t.ended = true; keep(); return false; }
+    keep();
+    let changed = false;
+    const step = (i, quiet, files) => {
+      const a = areas[i];
+      // each step where its documents live: Workers and Equipment on their Documents page
+      t.on = a; keep();
+      if (!here(a)) { leave(PLACE[a] || 'my-company.html?page'); return; }
+      show(a);
+      const n = areas.findIndex((x, j) => j > i && !t.passed.includes(x)); // the next step not done yet
+      open(a, {
+        files, skip: a === 'company' ? regCodes() : [],
+        tour: { at: i, steps: areas.map((x) => STEP[x]), done: areas.map((x) => t.passed.includes(x)), next: n >= 0 ? STEP[areas[n]] : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
+        onClose: (c, how) => {
+          changed = changed || c;
+          if (how === 'next') { t.passed.push(a); keep(); if (n >= 0) { step(n, true); return; } }
+          t.ended = true; t.on = null; keep(); // done, or Skip setup, Escape
+          if (how === 'next' && !onHome) { leave('my-company.html?page'); return; } // "Go to my company"
+          if (changed) location.reload();
+        },
+      });
+    };
+    if (o.intro) intro(areas.slice(at), () => step(at, false, o.files), () => { t.ended = true; keep(); });
+    else step(at, !!o.quiet, o.files);
+    return true;
+  };
+
+  window.CMGuided = { open, asks, has, AREA, tour };
+  // a new company's homepage, the first time and until its setup is done or skipped
+  const arrive = () => { const t = saved.tour; if (t && t.ended) return; tour({ intro: !t }); };
   if (/[?&]guided\b/.test(location.search)) {
+    // the end of creating a company
     history.replaceState(null, '', location.pathname + location.search.replace(/[?&]guided\b/, '').replace(/^&/, '?') + location.hash);
-    if (!has('company')) open('company', { doneLabel: 'Go to my company', onClose: (c) => { if (c) location.reload(); } });
+    setTimeout(arrive, reduced() ? 0 : 650);
   } else if (O.test && document.querySelector('#empty')) {
-    // the test user, back on its homepage: ALMA comes up on the first section with nothing in it yet
-    const empty = ['company', 'workers', 'equipment'].find((a) => asks(a).length && !has(a));
-    if (empty) setTimeout(() => open(empty, { doneLabel: 'Go to my company', onClose: (c) => { if (c) location.reload(); } }), 650);
+    // the test user's own company, after signing up or logging in
+    setTimeout(arrive, reduced() ? 0 : 650);
+  } else if (saved.tour && saved.tour.on && !saved.tour.ended) {
+    // a step on another page (Workers, Equipment): the panel is there already, as it was
+    tour({ quiet: true });
   }
 })();

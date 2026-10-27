@@ -6,6 +6,10 @@
 <title>My company · C-MORE</title>
 <meta name="robots" content="noindex">
 <script>
+  // arriving from a step of ALMA's setup on another page (js/guided-upload.js): the page fades in
+  try { if (sessionStorage.getItem('cm-tour-fade')) { document.documentElement.classList.add('tour-in'); document.write('<style>html.tour-in main.page { opacity: 0; }</style>'); } } catch (e) {}
+</script>
+<script>
   /* Before the first paint: unless ?page asks for the company page itself,
      this visit starts on ALMA. The class hides the page and paints the
      off-white the previous screen dissolved into, so the company home is

@@ -6,6 +6,10 @@
 <title>Documents · C-MORE</title>
 <meta name="robots" content="noindex">
 <script>
+  // arriving from a step of ALMA's setup on another page (js/guided-upload.js): the page fades in
+  try { if (sessionStorage.getItem('cm-tour-fade')) { document.documentElement.classList.add('tour-in'); document.write('<style>html.tour-in main.page { opacity: 0; }</style>'); } } catch (e) {}
+</script>
+<script>
   var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
   document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
   // who is signed in: the demo is Miguel's company (Ferreira Construction)
