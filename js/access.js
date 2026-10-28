@@ -17,15 +17,15 @@
    the side menu drops what they can't open, and a page they can't open says so. It is kept for
    this tab, with a bar at the bottom to leave it.
    Prototype: the team lives in this browser and is forgotten on log out (js/company-switcher.js). */
-// Coming soon, except for Miguel's own company (the demo), where the C-MORE ecosystem and Workers are
-// open already. Read by js/company-switcher.js, js/company-details.js and js/guided-upload.js.
+// Coming soon, except for Miguel's own company (the demo), where the C-MORE ecosystem, Workers and
+// Questionnaires are open already. Read by js/company-switcher.js, js/company-details.js and js/guided-upload.js.
 window.CM_SOON_OPEN = (() => {
   try {
     if (document.documentElement.dataset.persona === 'beatriz') return [];
     const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {};
     if (/^test@c-more\.test$/i.test(p.email || '')) return [];
     const org = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null') || 'home';
-    return org === 'home' ? ['ecosystem', 'workers'] : [];
+    return org === 'home' ? ['ecosystem', 'workers', 'questionnaires'] : [];
   } catch (e) { return []; }
 })();
 window.CMAccess = (() => {

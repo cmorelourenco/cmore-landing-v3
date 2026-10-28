@@ -277,6 +277,11 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
 .cm-soon-page h1 span { font-weight: 300; }
 .cm-soon-p { margin-top: 0.875rem; max-width: 30rem; font-size: 1.0625rem; line-height: 1.5; color: var(--color-ink-muted); }
 .cm-soon-page .btn { margin-top: 2rem; }
+/* inside a page's section (the homepage's projects): smaller, and nowhere to go back to */
+.cm-soon-page.is-inline { min-height: 0; padding: 1.5rem 0 1rem; }
+.cm-soon-page.is-inline .cm-soon-alma { width: min(11rem, 40vw); }
+.cm-soon-page.is-inline h1 { font-size: clamp(1.5rem, 3vw, 2rem); }
+.cm-soon-page.is-inline .btn { display: none; }
 #cdetails.is-soon :is(.cd-hero, #cd-drop, .cd-cards, .cd-sec > .co-wrap > .co-sub-head) { display: none; }
 #cdetails.is-soon .cm-soon-page { min-height: calc(100svh - 16rem); }`;
   document.head.appendChild(st);
@@ -286,7 +291,9 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
   const path = location.pathname.split('/').pop() || 'index.html', q = new URLSearchParams(location.search);
   const PAGES = { 'ecosystem.html': ['The C&#8209;MORE ecosystem', 'C-MORE ecosystem'], 'questionnaires.html': ['Questionnaires', 'Questionnaires', 'are'],
     'esg-questionnaire.html': ['Questionnaires', 'Questionnaires', 'are'], 'esg-results.html': ['Questionnaires', 'Questionnaires', 'are'] };
-  if ((window.CM_SOON_OPEN || []).includes('ecosystem')) delete PAGES['ecosystem.html'];
+  const OPEN = window.CM_SOON_OPEN || [];
+  if (OPEN.includes('ecosystem')) delete PAGES['ecosystem.html'];
+  if (OPEN.includes('questionnaires')) ['questionnaires.html', 'esg-questionnaire.html', 'esg-results.html'].forEach((k) => { delete PAGES[k]; });
   const page = q.get('soon') === 'clients' ? ['My clients', 'My clients'] : PAGES[path];
   const main = document.querySelector('main.page');
   if (page && main) {
@@ -299,7 +306,13 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
     clients.setAttribute('href', 'ecosystem.html?soon=clients'); clients.removeAttribute('data-sn');
     clients.addEventListener('click', (e) => { e.stopImmediatePropagation(); }, true);
   }
-  ['C-MORE ecosystem', 'Questionnaires', 'My clients'].filter((t) => !(t === 'C-MORE ecosystem' && (window.CM_SOON_OPEN || []).includes('ecosystem'))).forEach((t) => {
+  // Projects: coming soon for everyone. On the company homepage its section shows that, not the projects
+  const proj = document.querySelector('.co-proj-sec');
+  if (proj) {
+    proj.innerHTML = `<div class="co-wrap"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My projects</h3></div>${window.CM_SOON.screen('Projects', 'are')}</div>`;
+    proj.querySelector('.cm-soon-page').classList.add('is-inline');
+  }
+  ['Projects', 'C-MORE ecosystem', 'Questionnaires', 'My clients'].filter((t) => !OPEN.includes({ 'C-MORE ecosystem': 'ecosystem', Questionnaires: 'questionnaires' }[t])).forEach((t) => {
     const it = document.querySelector(`.sn-item[title="${t}"]`), l = it && it.querySelector('.sn-l');
     if (l) { it.classList.add('has-soon'); put(l); }
   });

@@ -76,14 +76,22 @@
 /* a page with parts, ticked: it takes the full width, its parts under it */
 .tm-page { display: grid; gap: 0.5rem; align-content: start; }
 .tm-page.is-open { grid-column: 1 / -1; }
-.tm-parts { display: grid; gap: 0.5rem; margin: 0 0 0.375rem 1.5rem; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); }
+.tm-parts { display: grid; gap: 0.875rem; margin: 0.25rem 0 0.75rem 1.5rem; padding: 0.875rem 1rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); }
 .tm-parts[hidden] { display: none; }
-.tm-parts-h { display: flex; flex-wrap: wrap; gap: 0.375rem 1.25rem; }
+.tm-parts-h { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
+.tm-parts-b { display: grid; gap: 0.5rem; padding-top: 0.875rem; border-top: 1px solid var(--color-line); }
+.tm-parts-b[hidden] { display: none; }
+.tm-parts-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.tm-parts-bar > span:last-child { display: flex; gap: 1rem; }
 .tm-parts-h label { align-items: center; font-size: 0.8125rem; font-weight: 500; }
-.tm-parts-l { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.25rem 1rem; max-height: 14rem; overflow-y: auto; }
-.tm-parts-l[hidden] { display: none; }
+.tm-parts-l { display: grid; grid-template-columns: 1fr; max-height: 18rem; overflow-y: auto; padding: 0.125rem 0.25rem 0.125rem 0; }
+/* one a line (a project's ID above its name), a rule between, so nothing crowds */
+.tm-parts-l .tm-part { padding: 0.5rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.tm-parts-l .tm-part:last-child { border-bottom: 0; }
+.tm-part > span { display: grid; gap: 0.0625rem; }
+.tm-checks .tm-part input { margin-top: 0.125rem; }
 .tm-part { font-size: 0.8125rem; }
-.tm-part b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-ink-subtle); }
+.tm-part b { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; color: var(--color-ink-subtle); }
 .tm-part-n { display: inline; font-size: 0.75rem; color: var(--color-ink-subtle); }
 .tm-scope[hidden] { display: none; }
 .tm-scope { display: grid; gap: 0.5rem; }
@@ -852,10 +860,14 @@
           const on = !!(g && g.content.includes(k)), sc = g && (g.scope || {})[k], pn = PART_NOUN(k);
           // a page with parts (Documents' sections, the projects): all of it, or only some
           const parts = PARTS[k] ? `<div class="tm-parts" data-parts-for="${k}"${on ? '' : ' hidden'}>
-              <div class="tm-parts-h" role="radiogroup" aria-label="How much of ${esc(n)}"><label><input type="radio" name="gs-${k}" value="all"${sc ? '' : ' checked'}><span>All ${pn[1]}</span></label><label><input type="radio" name="gs-${k}" value="some"${sc ? ' checked' : ''}><span>Only some ${pn[1]}</span></label></div>
-              <div class="tm-parts-l"${sc ? '' : ' hidden'}>${PARTS[k].map((x) => `<label class="tm-part"><input type="checkbox" name="gp-${k}" value="${esc(x)}"${!sc || sc.includes(x) ? ' checked' : ''}><span>${k === 'projects' ? `<b>${esc(x)}</b> ` : ''}${esc(PART_NAME(k, x))}</span></label>`).join('')}</div>
+              <div class="tm-parts-h" role="radiogroup" aria-label="How much of ${esc(n)}"><label><input type="radio" name="gs-${k}" value="all"${sc ? '' : ' checked'}><span>All ${pn[1]}</span></label><label><input type="radio" name="gs-${k}" value="some"${sc ? ' checked' : ''}><span>Selected ${pn[1]}</span></label></div>
+              <div class="tm-parts-b"${sc ? '' : ' hidden'}>
+                <div class="tm-parts-bar"><span data-parts-n>${sc ? sc.length : 0} of ${PARTS[k].length} selected</span><span><button type="button" class="tm-x" data-parts-all="${k}">Select all</button><button type="button" class="tm-x" data-parts-none="${k}">Clear</button></span></div>
+                <div class="tm-parts-l">${PARTS[k].map((x) => `<label class="tm-part"><input type="checkbox" name="gp-${k}" value="${esc(x)}"${sc && sc.includes(x) ? ' checked' : ''}><span>${k === 'projects' ? `<b>${esc(x)}</b>` : ''}<span>${esc(PART_NAME(k, x))}</span></span></label>`).join('')}</div>
+              </div>
             </div>` : '';
-          return `<div class="tm-page${PARTS[k] ? ' has-parts' : ''}${on && PARTS[k] ? ' is-open' : ''}"><label><input type="checkbox" name="gc" value="${k}"${on ? ' checked' : ''}><span>${n}<small>${d}</small></span></label>${parts}</div>`;
+          const soon = k === 'projects' && window.CM_SOON ? ' ' + window.CM_SOON.badge : ''; // not open at launch (js/company-switcher.js)
+          return `<div class="tm-page${PARTS[k] ? ' has-parts' : ''}${on && PARTS[k] ? ' is-open' : ''}"><label><input type="checkbox" name="gc" value="${k}"${on ? ' checked' : ''}><span>${n}${soon}<small>${d}</small></span></label>${parts}</div>`;
         }).join('')}</div></div>
         <p class="set-err" role="alert"></p></div>
         <footer class="tm-dw-f">${g ? `<button type="button" class="tm-x" data-gdel="${esc(g.id)}">Delete group</button>` : '<span></span>'}<span class="tm-selbar-a"><button type="button" class="tm-x" data-gdw-close>Cancel</button><button type="submit" class="btn btn-primary btn-sm">${g ? 'Save' : 'Create group'}</button></span></footer>
@@ -871,6 +883,7 @@
       </div>`).join('')}${can ? '<button type="button" class="tm-group-new" data-gnew>+ New group</button>' : ''}</div>
       ${shown.length || can ? '' : '<p class="tm-note">You aren&rsquo;t in any group yet.</p>'}`;
   };
+  const partsCount = (box) => { const all = box.querySelectorAll('.tm-part input'), n = [...all].filter((x) => x.checked).length; box.querySelector('[data-parts-n]').textContent = `${n} of ${all.length} selected`; };
   const gdw = document.createElement('div');
   gdw.className = 'tm-dw tm-gdw'; gdw.hidden = true;
   gdw.innerHTML = '<div class="tm-dw-scrim" data-gdw-close></div><aside class="tm-dw-panel" role="dialog" aria-modal="true" aria-labelledby="tm-gdw-t" tabindex="-1"></aside>';
@@ -890,6 +903,8 @@
     gdw.addEventListener('click', (e) => {
       const t = ctx().t;
       if (e.target.closest('[data-gdw-close]')) { closeGdw(); return; }
+      const pa = e.target.closest('[data-parts-all], [data-parts-none]');
+      if (pa) { const box = pa.closest('.tm-parts'), on = pa.hasAttribute('data-parts-all'); box.querySelectorAll('.tm-part input').forEach((x) => { x.checked = on; }); partsCount(box); return; }
       const gd = e.target.closest('[data-gdel]');
       if (gd) {
         const g = t.groups.find((x) => x.id === gd.dataset.gdel), n = t.members.filter((m) => (m.groups || []).includes(g.id)).length;
@@ -902,7 +917,8 @@
     gdw.addEventListener('change', (e) => {
       const f = e.target;
       if (f.name === 'gc') { const box = gdw.querySelector(`[data-parts-for="${f.value}"]`); if (box) { box.hidden = !f.checked; box.closest('.tm-page').classList.toggle('is-open', f.checked); } return; }
-      if (f.name && f.name.startsWith('gs-')) { const l = f.closest('.tm-parts').querySelector('.tm-parts-l'); l.hidden = f.value !== 'some'; }
+      if (f.name && f.name.startsWith('gs-')) { const l = f.closest('.tm-parts').querySelector('.tm-parts-b'); l.hidden = f.value !== 'some'; return; }
+      if (f.name && f.name.startsWith('gp-')) partsCount(f.closest('.tm-parts'));
     });
     gdw.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -916,7 +932,7 @@
       for (const k of content.filter((x) => PARTS[x])) {
         if ((f.querySelector(`[name="gs-${k}"]:checked`) || {}).value !== 'some') continue;
         const picked = [...f.querySelectorAll(`[name="gp-${k}"]:checked`)].map((x) => x.value);
-        if (!picked.length) { err.textContent = `Pick at least one of the ${PART_NOUN(k)[1]} of ${CNAME[k].replace(/&[^;]+;/g, ' ')}, or give it all of them.`; return; }
+        if (!picked.length) { const pn = PART_NOUN(k); err.textContent = `Pick at least one ${pn[0]}${k === 'projects' ? '' : ` of ${CNAME[k].replace(/&[^;]+;/g, ' ')}`}, or choose All ${pn[1]}.`; return; }
         if (picked.length < PARTS[k].length) scope[k] = picked;
       }
       if (f.dataset.gsave) Object.assign(t.groups.find((g) => g.id === f.dataset.gsave), { name, content, scope });
