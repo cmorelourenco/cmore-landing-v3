@@ -105,6 +105,41 @@ window.CM_SUPPLIERS = (() => {
       })),
     };
   });
+  // suppliers added in this tab (js/supplier-add.js): invited, with the documents asked of them,
+  // and nothing shared until they join and give their consent. Kept for the tab, per persona.
+  const ADD_KEY = 'cm-sup-added' + (BEATRIZ ? '-beatriz' : '');
+  const added = () => { try { return JSON.parse(sessionStorage.getItem(ADD_KEY) || '[]') || []; } catch (e) { return []; } };
+  const fromInvite = (a) => ({
+    id: a.id, name: a.name, city: a.city || a.countryName, services: a.services || [], workers: null, since: a.invited.split(' ').pop(), nipc: a.code, email: a.email,
+    status: 'invited', invite: a,
+    consents: [{ id: `${a.id}-0`, title: 'Documents you asked for', codes: a.docs, project: null, granted: a.invited, state: 'pending',
+      docs: a.docs.filter((c) => byCode[c]).map((c) => ({ code: c, name: (a.names && a.names[c]) || byCode[c].name.en, section: (a.sections && a.sections[c]) || byCode[c].section.en,
+        requirement: a.required.includes(c) ? 'Mandatory' : 'Optional', status: 'missing', valid: '—', note: '' })) }],
+  });
+  // where each one stands: invited (hasn't joined your list yet), pending consent (joined, but hasn't
+  // given you all the documents you asked for), accepted (everything asked for is shared)
+  LIST.forEach((s) => { s.status = s.consents.some((c) => c.state === 'pending') ? 'pending' : 'accepted'; });
+  const all = () => added().map(fromInvite).concat(LIST);
+  const SUP_STATUS = { invited: ['Invited', 'b-neu'], pending: ['Pending consent', 'b-pend'], accepted: ['Accepted', 'b-ok'] };
+  const addInvite = (a) => { const l = added(); l.unshift(a); try { sessionStorage.setItem(ADD_KEY, JSON.stringify(l)); } catch (e) {} };
+  // companies already on C-MORE that aren't your suppliers yet, by country and code (digits only).
+  // Prototype: made up, so the flow can find one.
+  const ON_CMORE = [
+    ['PT', '503117285', 'Pinturas Ribeiro, Lda.', 'Porto', ['Painting', 'Coatings']],
+    ['PT', '510774199', 'Serralharia Costa & Filhos', 'Braga', ['Metalwork']],
+    ['PT', '515223069', 'Isolamentos Atlântico', 'Aveiro', ['Insulation', 'Waterproofing']],
+    ['ES', 'B36512874', 'Grúas Galicia S.L.', 'Vigo, Spain', ['Crane hire']],
+    ['BR', '33401288000155', 'Fazenda Santa Clara', 'Patrocínio, Brazil', ['Green coffee (Arabica)']],
+    ['US', '814472019', 'Gulf Coast Packaging Inc.', 'Houston, Texas', ['Packaging']],
+  ].map(([country, code, name, city, services]) => ({ country, code, name, city, services }));
+  const norm = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const lookup = (country, code) => {
+    const k = norm(code);
+    const mine = all().find((s) => norm(s.nipc) === k);
+    if (mine) return { mine };
+    const on = ON_CMORE.find((x) => x.country === country && x.code === k);
+    return on ? { on } : {};
+  };
   const STATUS = { valid: ['Valid', 'b-ok'], expiring: ['Expiring', 'b-pend'], processing: ['Processing', 'b-neu'], missing: ['Missing', 'b-over'], expired: ['Expired', 'b-over'] };
   // what you can see of a supplier: the documents its standing consents cover, and how many need it
   const stats = (s) => {
@@ -117,5 +152,5 @@ window.CM_SUPPLIERS = (() => {
   // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
   const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products', AREAS: Object.values(SETS).map((x) => x[0]) }
     : { id: 'NIPC', scope: 'projects', AREAS: ['Company & legal', 'Insurance', 'Workers on site', 'Health & safety', 'Equipment on site', 'Certifications'] };
-  return { WORDS, list: () => LIST, byId: (id) => LIST.find((s) => s.id === id) || null, stats, STATUS };
+  return { WORDS, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
 })();

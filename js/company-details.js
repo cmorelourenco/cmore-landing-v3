@@ -49,6 +49,7 @@
   const X = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
   const dash = '<span class="co-subtle">&mdash;</span>';
   const UPB = (spec, has, name, icon) => (window.CMUpload ? window.CMUpload.button(spec, has, name, icon) : '');
+  const NA_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>';
 
   // ---- one document's row ----------------------------------------------------------------------------
   // The catalog's columns, the same in every table: Document, Belongs to, Status, ALMA confidence,
@@ -137,19 +138,20 @@
     const meta = [d.code || d.archivedCode, d.requirement, d.sharing !== 'Standard' ? d.sharing : ''].filter(Boolean).join(' &middot; ');
     // the reason a row is as it is (ALMA's note, or why it doesn't apply) gets a line of its own under
     // the row, across the whole table, rather than wrapping inside the narrow Document column
-    const naQ = canNa(d) && d.status === 'missing' ? `<button type="button" class="cd-na-q" data-na="${d.id}">Doesn&rsquo;t apply to you?</button>` : '';
+    // one with no file that may not apply: a button beside Upload, the same size, to say so
+    const naB = canNa(d) && ['missing', 'notuploaded'].includes(d.status) ? `<button type="button" class="cd-up cd-na-b" data-na="${d.id}" title="Mark ${esc(d.name)} as not applicable">${NA_I}<span>Not applicable</span></button>` : '';
     const plain = (h) => h.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/g, (m) => ({ '&rsquo;': '’', '&mdash;': '—', '&middot;': '·', '&amp;': '&', '&nbsp;': ' ' }[m] || ' '));
     const who = d.status === 'na' ? '<b>Not applicable</b>' : '<b class="is-alma">ALMA</b>';
     const citeAt = !d.kind && ['expired', 'expiring', 'attention'].includes(d.status) ? citeFor(d) : -1;
     const citeQ = citeAt >= 0 ? `<button type="button" class="cd-na-q" data-row-cite="${d.id}:${citeAt}">View citation</button>` : '';
-    const noteRow = d.note || naQ ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="5"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}${naQ}</span></td></tr>` : '';
+    const noteRow = d.note ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="5"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}</span></td></tr>` : '';
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}${noteRow ? ' has-note' : ''}"${attrs}>` +
       `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span></td>` +
       `<td>${d.valid === '—' ? dash : d.valid}</td>` +
-      `<td><span class="co-badge ${cls}">${label}</span></td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
-      `<td class="cd-ed"><span class="cd-ed-in">${up}${hasRoster ? opener : ''}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
+      `<td><span class="co-badge ${cls}">${label}</span></td>` +
+      `<td class="cd-ed"><span class="cd-ed-in">${naB}${up}${hasRoster ? opener : ''}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
   };
 
   // a row opened by its chevron: the current version, then each one it replaced, newest first;
@@ -257,12 +259,12 @@
     // the form: a reason from the catalog's 'Applies when', or one of your own
     const naForm = !v && dState.na && canNa(d) && d.status !== 'na' ? `<form class="cdd-card cdd-na-f" id="cdd-na-f" novalidate>
       <h4 class="eyebrow">Doesn&rsquo;t apply to us</h4>
-      <p class="cdd-desc">It applies ${esc((c.appliesWhen || '').charAt(0).toLowerCase() + (c.appliesWhen || '').slice(1))}. Tell your clients why it doesn&rsquo;t apply to you. They will see the reason.</p>
+      <p class="cdd-desc">${c.appliesWhen && d.req !== 'optional' ? `It applies ${esc(c.appliesWhen.charAt(0).toLowerCase() + c.appliesWhen.slice(1))}. ` : ''}Tell your clients why it doesn&rsquo;t apply to you. They will see the reason.</p>
       <div class="cdd-na-opts" role="radiogroup" aria-label="Reason">${reasonsFor(d).map((r, i) => `<label><input type="radio" name="na-r" value="${i}"><span>${r}</span></label>`).join('')}
         <label><input type="radio" name="na-r" value="own"><span>Another reason</span></label></div>
       <textarea class="cdd-na-t" id="cdd-na-t" rows="2" placeholder="In a sentence, why it doesn&rsquo;t apply" hidden></textarea>
       ${hasFile ? '<p class="cdd-na-w">Its current file stays in its versions, read-only.</p>' : ''}
-      <div class="cdd-na-acts"><button type="button" class="link-btn" data-na-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm" id="cdd-na-go" disabled>Mark as not applicable</button></div>
+      <div class="cdd-na-acts"><button type="submit" class="btn btn-primary btn-sm" id="cdd-na-go" disabled>Mark as not applicable</button></div>
     </form>` : '';
     // the file itself (js/doc-files.js): the one uploaded for it, or a plain note that the demo has none
     dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + about;
@@ -307,7 +309,6 @@
     const up = e.target.closest('[data-cdd-up]');
     if (up) { const d = docById(dState.list[dState.k]); if (window.CMUpload) window.CMUpload.open(`doc:${d.id}`, { onSaved: () => { render(); drawDoc(); } }); return; }
     if (e.target.closest('[data-na-open]')) { dState.na = true; drawDoc(); const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); return; }
-    if (e.target.closest('[data-na-cancel]')) { dState.na = false; drawDoc(); return; }
     // a citation: open or close it in place, or show its line on the page
     const cb = e.target.closest('[data-cite]');
     if (cb) {
@@ -428,7 +429,7 @@
   tools.querySelector('.co-tools-clear').addEventListener('click', clearAll);
 
   // four columns, and the row's upload at its end (the rest is in the document's drawer)
-  const DOC_THEAD = '<thead><tr><th>Document name</th><th>Expiration date</th><th>Status</th><th>ALMA confidence</th><th><span class="sr-only">Upload</span></th></tr></thead>';
+  const DOC_THEAD = '<thead><tr><th>Document name</th><th>Expiration date</th><th>ALMA confidence</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead>';
   const docTable = (docs) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl">${DOC_THEAD}<tbody>${docs.map(row).join('')}</tbody></table></div>`;
   const GROUP_NOTE = { 'On client request': 'Only needed once a client asks for it. Upload it ahead if you like.', Optional: 'Never required. Worth adding if it helps you win work.', Archived: 'Earlier versions, read-only, kept for audit.' };
   const group = (cat, docs, raw) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${GROUP_NOTE[raw] ? GROUP_NOTE[raw] + ' &middot; ' : ''}${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docTable(docs)}</div>`;

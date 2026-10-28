@@ -296,9 +296,16 @@ window.DOC_MODEL = (() => {
   const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const keepUpdates = () => { try { sessionStorage.setItem(UP_KEY, JSON.stringify(updates)); } catch (e) {} };
+  const companyOptional = (country) => window.CM_COMPANY_DOCS.optional(country);
   // a new company (ORG) is also asked for what registering it on C-MORE takes (any document in
   // phase 'Registration'); the demo companies never see those
-  const shown = R.documentsFor(CAT, PROFILE, ORG ? { phases: ['MVP', 'Registration'] } : undefined).filter((x) => !x.doc.countries || x.doc.countries.includes(PROFILE.country));
+  // Company: what the catalog makes mandatory, the optional list above (whatever its own conditions),
+  // and anything else the company has already filed; nothing more
+  const OPT = companyOptional(PROFILE.country), optOf = Object.fromEntries(OPT.map((d) => [d.code, d]));
+  const filedHere = (code) => D.state[code] && !['missing', 'na'].includes(D.state[code][0]);
+  const shown = R.documentsFor(CAT, PROFILE, ORG ? { phases: ['MVP', 'Registration'] } : undefined).filter((x) => !x.doc.countries || x.doc.countries.includes(PROFILE.country))
+    .filter(({ doc: c }) => c.category !== 'company' || (!optOf[c.code] && (c.requirement === 'mandatory' || filedHere(c.code))))
+    .concat(OPT.map((d) => ({ doc: d, ask: false }))); // in the list's order
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
     const area = c.category;
@@ -400,13 +407,17 @@ window.DOC_MODEL = (() => {
     handles_client_data: ['We don&rsquo;t handle our clients&rsquo; data'],
     imports_cbam: ['We don&rsquo;t import CBAM goods into the EU', 'We buy steel, cement and aluminium from EU suppliers only'],
   };
-  const reasonsFor = (d) => NA_REASONS[d.cat.condition] || ['This doesn&rsquo;t apply to our activity'];
-  const canNa = (d) => !d.kind && d.req === 'if_applicable' && d.status !== 'archived';
+  // an optional document: it has nothing to do with the company, or the company just doesn't have one
+  const NA_OPTIONAL = ['It isn&rsquo;t related to our company or what we do', 'We don&rsquo;t have this document'];
+  const reasonsFor = (d) => (d.req === 'optional' ? NA_OPTIONAL : NA_REASONS[d.cat.condition] || ['This doesn&rsquo;t apply to our activity']);
+  const canNa = (d) => !d.kind && ['if_applicable', 'optional'].includes(d.req) && d.status !== 'archived';
+  // not applicable, undone: back to Missing (Not uploaded, for an optional one)
+  const unset = (d) => (d.req === 'optional' ? 'notuploaded' : 'missing');
   DOCS.forEach((d) => {
     d.orig = { status: d.status, note: d.note, naBy: d.naBy, naOn: d.naOn };
     const m = naMarks[d.code];
     if (!m || !canNa(d)) return;
-    if (m.undone) Object.assign(d, { status: d.orig.status === 'na' ? 'missing' : d.orig.status, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' });
+    if (m.undone) Object.assign(d, { status: d.orig.status === 'na' ? unset(d) : d.orig.status, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' });
     else Object.assign(d, { status: 'na', note: m.reason, naBy: m.by, naOn: m.on });
   });
   const markNa = (d, reason) => {
@@ -415,7 +426,7 @@ window.DOC_MODEL = (() => {
   };
   const undoNa = (d) => {
     // back to what it was before it was marked: Missing, unless a file was there all along
-    const back = d.orig.status === 'na' ? 'missing' : d.orig.status;
+    const back = d.orig.status === 'na' ? unset(d) : d.orig.status;
     naMarks[d.code] = d.orig.status === 'na' ? { undone: true } : undefined; if (!naMarks[d.code]) delete naMarks[d.code]; saveNa();
     Object.assign(d, { status: back, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' }); d.text = textOf(d);
   };
@@ -446,5 +457,5 @@ window.DOC_MODEL = (() => {
   const needing = () => DOCS.filter((d) => counted(d) && RANK[d.status] > 0).sort((a, b) => rank(a) - rank(b));
   const DATA = DOCS.map((d) => Object.assign(d, { text: textOf(d) }));
 
-  return { ORG, profileOf, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

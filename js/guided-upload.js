@@ -47,7 +47,7 @@
   const profile = DM.profileOf(org);
   const AREA = {
     registration: { title: 'Registration', what: 'registration documents', sec: 'Company', who: 'To put WHO on C-MORE, I need the N documents that show it&rsquo;s registered in WHERE.' },
-    company: { title: 'Company', what: 'company documents', who: `Beyond registering, these N help clients trust a ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE.` },
+    company: { title: 'Company', what: 'company documents', who: `None of these is required. Add the ones you have: each helps clients trust a ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE.` },
     workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you in WHERE. One file each for now. Once you add your team, I&rsquo;ll ask for them person by person.' },
     equipment: { title: 'Equipment', what: 'equipment documents', who: 'These N cover the machines you bring to site. One file each for now. Once you add your machines, I&rsquo;ll ask for them machine by machine.' },
   };
@@ -57,13 +57,12 @@
   // Registration: the documents that show the company exists, the first thing asked of it. In
   // Portugal the Certidão Permanente, the Cartão de Pessoa Coletiva, and the tax and social
   // security clearance certificates (no debts to either); elsewhere the catalog's Identification and registration documents
-  const REG = { PT: ['CO-01', 'CO-02', 'CO-06', 'CO-07'] };
+  const REG = window.CM_COMPANY_DOCS.REG; // js/company-docs.js
   const asks = (area) => {
     if (area === 'equipment' && !profile.equipmentCount) return []; // it said it brings no machines
     if (area === 'company' || area === 'registration') {
       const all = listFor(profile).filter((d) => d.category === 'company' && d.level === 'company');
-      // Company: the rest of its papers, mandatory or not (what only a client asks for waits for that request)
-      if (area === 'company') return all.filter((d) => d.requirement !== 'on_request');
+      if (area === 'company') return DM.companyOptional(profile.country);
       return REG[profile.country] ? REG[profile.country].map((c) => all.find((d) => d.code === c)).filter(Boolean) : all.filter((d) => d.requirement === 'mandatory' && d.section.en === 'Identification and registration');
     }
     const p = Object.assign({}, profile, area === 'equipment' ? {} : { employees: Math.max(1, profile.employees) });
@@ -226,6 +225,7 @@
 .gs-two .gs-list li { padding: 0.75rem 0.875rem; gap: 0.75rem; }
 .gs-list li.gs-req { grid-template-columns: minmax(0, 1fr) auto; }
 .gs-req .co-badge { white-space: nowrap; }
+.gs-list li.gs-grp { display: block; padding: 0.625rem 1.125rem 0.375rem; background: var(--color-surface-sunken); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .gs-ic.is-file { border-style: solid; border-color: var(--color-line); color: var(--color-ink); }
 .gs-none { padding: 1rem; border: 1.5px dashed var(--color-sand-400); border-radius: 0.75rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-ink-subtle); }
 
@@ -524,10 +524,12 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     // step 1: what she's asking for, and the files added — two lists, not matched to each other yet
     const step1 = () => {
       const n = docs.length, read = filed(), np = st.pending.length;
-      const asked = docs.map((d) => {
-        const f = saved.files[d.code], pt = local(d);
-        // a requirement, not a to-do: no box to tick, the catalog's requirement instead
-        return `<li class="gs-req"><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${f ? `Read from ${esc(f.file)}` : pt ? `In ${where}: ${esc(pt)}` : esc(d.description.en.split(/(?<=\.)\s/)[0])}</span></span><span class="co-badge ${d.requirement === 'mandatory' ? 'b-info' : 'b-neu'}">${esc(DM.LBL.requirement[d.requirement] || '')}</span></li>`;
+      const asked = docs.map((d, i) => {
+        // a long list (Company documents) is read by section
+        const head = docs.length > 8 && (i === 0 || docs[i - 1].section.en !== d.section.en) ? `<li class="gs-grp">${esc(d.section.en)}</li>` : '';
+        // a requirement, not a to-do: no box to tick, the catalog's requirement instead; and just its
+        // name (what it's called locally, or which file it was read from, isn't needed here)
+        return `${head}<li class="gs-req"><span><span class="gs-n">${esc(d.name.en)}</span></span><span class="co-badge ${d.requirement === 'mandatory' ? 'b-info' : 'b-neu'}">${esc(DM.LBL.requirement[d.requirement] || '')}</span></li>`;
       }).join('');
       const files = st.pending.map((name, i) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Not read yet</span></span><button class="link-btn" type="button" data-unpend="${i}">Remove</button></li>`)
         .concat(read.map((d) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(saved.files[d.code].file)}</span><span class="gs-d">Read as ${esc(d.name.en)}</span></span><span></span></li>`))
@@ -537,7 +539,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span>${tour ? '<small>PDF or photo, as many as you have.</small>' : ''}</span></button>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${total ? `${total} file${total === 1 ? '' : 's'} so far, <span class="soft">add more or carry on.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
-        <p class="lead">${A.who.replace('WHO', called()).replace('WHERE', where).replace('N', n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
+        <p class="lead">${A.who.replace('WHO', called()).replace('WHERE', where).replace(/\bN\b/, n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
         <div class="gs-pane gs-two">
           <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
           <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
@@ -690,12 +692,12 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           ${nav(backFrom1, tour && tour.next ? '<button class="link-btn" type="button" data-close="end">Skip for now</button>' : '',
             `<button class="btn btn-primary" type="button" data-close="next">${tour ? (tour.next ? `Next: ${tour.next}` : 'Go to my company') : opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button>`)}`;
       }
-      const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(d.name.en)}</span><span class="gs-d">${local(d) ? `In ${where}: ${esc(local(d))}` : esc(d.description.en.split(/(?<=\.)\s/)[0])}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
+      const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(d.name.en)}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
       const one = missing.length === 1;
       return `${sec}<div class="gs-meter" style="--p:${p}"><div><b>${p}%</b><span>complete</span></div></div>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${A.title} is ${p}% complete.</h1>
-        <p class="lead">${one ? 'One document is' : `${missing.length} documents are`} still missing here. Drop ${one ? 'it' : 'them all'} on me and I&rsquo;ll read ${one ? 'it' : 'them'}, or add ${one ? 'it' : 'them one by one'} below.</p>
+        <p class="lead">${docs.every((d) => d.requirement === 'optional') ? `None of these is required. ${one ? 'One more' : `${missing.length} more`} you could add, whenever you have ${one ? 'it' : 'them'}.` : `${one ? 'One document is' : `${missing.length} documents are`} still missing here.`} Drop ${one ? 'it' : 'them all'} on me and I&rsquo;ll read ${one ? 'it' : 'them'}, or add ${one ? 'it' : 'them one by one'} below.</p>
         <div class="gs-pane"><button class="drop is-small gs-drop-wide" id="gs-drop" type="button" aria-label="Add the missing files"><span class="alma-media" aria-hidden="true">${alma()}</span>
             <span class="drop-hint"><span class="wide">Drop ${one ? 'it' : 'them'} on me</span><span class="narrow">Tap to add</span><small>${one ? 'PDF or photo. I&rsquo;ll read it and check it.' : 'All the missing ones at once. I&rsquo;ll tell you which is which.'}</small></span></button>
           <ul class="gs-list gs-missing" aria-label="Still missing">${rows}</ul></div>

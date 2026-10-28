@@ -496,7 +496,8 @@ window.CMUpload = (() => {
   };
 
   // a row's button, the same everywhere: Upload where there's no file yet, Replace where there is
-  const button = (spec, has, name, icon) => `<button type="button" class="cd-up${icon ? ' is-icon' : ''}" data-up="${esc(spec)}" title="${has ? 'Replace' : 'Upload'}${name ? ' ' + esc(plain(name)) : ''}">${UP}<span>${has ? 'Replace' : 'Upload'}</span></button>`;
+  // always the icon alone, wherever it is: Upload or Replace is its accessible name and its tooltip
+  const button = (spec, has, name) => `<button type="button" class="cd-up is-icon" data-up="${esc(spec)}" title="${has ? 'Replace' : 'Upload'}${name ? ' ' + esc(plain(name)) : ''}">${UP}<span>${has ? 'Replace' : 'Upload'}</span></button>`;
 
   // any element holding [data-up] buttons and [data-drop] rows: clicks open the dialog, a file
   // dragged onto a row is ALMA's for that row

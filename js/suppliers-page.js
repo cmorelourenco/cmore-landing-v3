@@ -52,6 +52,13 @@
 .sp-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--color-mid-beige); font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .sp-foot svg { width: 1rem; height: 1rem; color: var(--color-ink); }
 .sp-none { padding: 2.5rem 1.5rem; text-align: center; color: var(--color-ink-subtle); }
+.sp-tools-r { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
+/* the page's one action: solid graphite, as tall as the search and the filters (coral stays for ALMA's own calls) */
+.sp-add { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.125rem; border: 0; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color .15s, transform .15s; }
+.sp-add:hover { background: var(--color-ink); transform: translateY(-1px); }
+.sp-add:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+.sp-add svg { width: 1rem; height: 1rem; }
+.sp-card.is-invited { border-style: dashed; background: var(--color-light-beige); }
 .sp-head { display: flex; align-items: center; gap: 1.25rem; }
 .sp-head > div { flex: 1 1 auto; min-width: 0; }
 @media (max-width: 34rem) { .sp-head { flex-direction: column; align-items: flex-start; } }
@@ -107,12 +114,22 @@
 
   // ---- the suppliers, as cards ---------------------------------------------------------------------
   let filt = 'all', q = '';
+  const stTag = (s) => { const [l, c] = S.SUP_STATUS[s.status]; return `<span class="co-badge ${c}">${l}</span>`; };
   const card = (s) => {
     const k = S.stats(s), warn = k.bad > 0;
-    const chips = [k.bad ? `<span class="co-badge b-over">${k.bad} need${k.bad === 1 ? 's' : ''} attention</span>` : '', k.soon ? `<span class="co-badge b-pend">${k.soon} expiring or in review</span>` : '',
-      !k.bad && !k.soon && k.shared ? '<span class="co-badge b-ok">All in order</span>' : '', k.pending ? `<span class="co-badge b-neu">${k.pending} consent${k.pending === 1 ? '' : 's'} pending</span>` : ''].filter(Boolean).join('');
-    return `<li><a class="sp-card" href="suppliers.html?id=${esc(s.id)}">
-      <span class="sp-id"><span class="sp-logo" aria-hidden="true">${esc(ini(s.name))}</span><span><b>${esc(s.name)}</b><small>${esc(s.services.join(', '))} &middot; ${esc(s.city)}</small></span></span>
+    const id = `<span class="sp-id"><span class="sp-logo" aria-hidden="true">${esc(ini(s.name))}</span><span><b>${esc(s.name)}</b><small>${esc([s.services.join(', '), s.city].filter(Boolean).join(' · '))}</small></span></span>`;
+    // invited: nothing shared until they join; what you asked for, and who you asked
+    if (s.status === 'invited') {
+      const n = s.consents[0].docs.length;
+      return `<li><a class="sp-card is-invited" href="suppliers.html?id=${esc(s.id)}">${id}
+      <span class="sp-meter"><span class="sp-meter-t"><span>${s.invite.onCmore ? 'To your supplier list' : 'To join C&#8209;MORE'}</span><b>${n} asked for</b></span><i><span style="width:0"></span></i></span>
+      <span class="sp-chips">${stTag(s)}</span>
+      <span class="sp-foot"><span>Invited on ${esc(s.invite.invited)} &middot; ${esc(s.email || s.invite.countryName)}</span>${CHEV}</span>
+    </a></li>`;
+    }
+    // where they stand first, then what needs chasing
+    const chips = [stTag(s), k.bad ? `<span class="co-badge b-over">${k.bad} need${k.bad === 1 ? 's' : ''} attention</span>` : '', k.soon ? `<span class="co-badge b-pend">${k.soon} expiring or in review</span>` : ''].filter(Boolean).join(''); // all in order needs no chip of its own: Accepted says it
+    return `<li><a class="sp-card" href="suppliers.html?id=${esc(s.id)}">${id}
       ${k.shared ? `<span class="sp-meter${warn ? ' is-warn' : ''}"><span class="sp-meter-t"><span>Documents in order</span><b>${k.ok} of ${k.shared}</b></span><i><span style="width:${k.pct}%"></span></i></span>` : '<span class="sp-meter"><span class="sp-meter-t"><span>No documents shared yet</span></span><i><span style="width:0"></span></i></span>'}
       <span class="sp-chips">${chips}</span>
       <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
@@ -122,9 +139,9 @@
   const AREAS = S.WORDS.AREAS;
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
-  const overall = (k) => (k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Consent pending', 'b-neu'] : ['All in order', 'b-ok']);
+  const overall = (k, s) => (s && s.status === 'invited' ? ['Invited', 'b-neu'] : k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Pending consent', 'b-neu'] : ['All in order', 'b-ok']);
   // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
-  const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); };
+  const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return (b.status === 'invited') - (a.status === 'invited') || y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
   const matrix = (shown, bare) => {
     const cols = AREAS.filter((a) => shown.some((s) => s.consents.some((c) => c.title === a)));
@@ -140,21 +157,23 @@
       if (cs.length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
       return `<td class="c"><span class="cd-dash" title="No consent for this">&mdash;</span></td>`;
     };
-    const rows = shown.map((s) => { const [l, c] = overall(S.stats(s)); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc(s.services[0])} &middot; ${esc(s.city)}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
+    const rows = shown.map((s) => { const [l, c] = overall(S.stats(s), s); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc([s.services[0], s.city].filter(Boolean).join(' · '))}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
       <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c">${esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>No consent for it</span><span>Open a supplier for the documents behind each dot.</span></p></section>`;
   };
   const list = () => {
-    const all = S.list(), n = { all: all.length, attention: all.filter((s) => S.stats(s).bad).length, pending: all.filter((s) => S.stats(s).pending).length };
+    const is = { attention: (s) => S.stats(s).bad > 0, invited: (s) => s.status === 'invited', pending: (s) => s.status === 'pending' };
+    const all = S.list(), n = { all: all.length, attention: all.filter(is.attention).length, invited: all.filter(is.invited).length, pending: all.filter(is.pending).length };
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-    const shown = all.filter((s) => (filt === 'all' || (filt === 'attention' ? S.stats(s).bad : S.stats(s).pending)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
+    const shown = all.filter((s) => (filt === 'all' || is[filt](s)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
       // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
       .sort(urgent);
-    const F = [['all', 'All'], ['attention', 'Need attention'], ['pending', 'Consent pending']];
+    const F = [['all', 'All'], ['attention', 'Need attention'], ['invited', 'Invited'], ['pending', 'Pending consent']];
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
-        <div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div></div>
+        <div class="sp-tools-r"><div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div>
+        <button type="button" class="sp-add" data-sup-add><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Add a supplier</button></div></div>
       ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
   };
 
@@ -165,7 +184,7 @@
   else if (home) {
     // only the ones with an alert: something missing or expired, expiring or in review
     const all = S.list(), alert = all.filter((s) => { const k = S.stats(s); return k.bad || k.soon; }).sort(urgent);
-    const add = '<a class="btn co-btn-light btn-sm co-sup-add" href="ecosystem.html">Add a supplier</a>'; // found and connected in the C-MORE ecosystem
+    const add = '<a class="btn co-btn-light btn-sm co-sup-add" href="suppliers.html?add">Add a supplier</a>'; // the flow, on My suppliers (js/supplier-add.js)
     home.innerHTML = (alert.length ? matrix(alert, true) : `<div class="co-card co-sup-none"><b class="co-row-n">All your suppliers are in order</b><span class="co-subtle">Nothing missing, expired or expiring across your ${all.length} suppliers.</span></div>`)
       // as under the homepage's other tables: View all on the right
       + `<div class="co-pager-row">${add}<a href="suppliers.html" class="co-link co-pager-all">View all ${all.length} suppliers</a></div>`;
@@ -181,8 +200,23 @@
     document.title = `${s.name} · My suppliers · C-MORE`;
     if (crumb) crumb.innerHTML = `<a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="suppliers.html">My suppliers</a><span aria-hidden="true">/</span><span aria-current="page">${esc(s.name)}</span>`;
     const back = document.querySelector('.eco-crumbs-back'); if (back) { back.href = 'suppliers.html'; back.setAttribute('aria-label', 'Back to My suppliers'); }
-    if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier</span><h1>${esc(s.name)}</h1>
-        <p>${esc(s.services.join(', '))} &middot; ${esc(s.city)} &middot; ${S.WORDS.id} ${esc(s.nipc)} &middot; ${s.workers} people &middot; supplier since ${esc(s.since)} &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p></div></div>`;
+    const inv = s.status === 'invited';
+    const facts = [s.services.join(', '), s.city, `${inv ? s.invite.idLabel : S.WORDS.id} ${s.nipc}`, s.workers != null ? `${s.workers} people` : '', inv ? `invited on ${s.invite.invited}` : `supplier since ${s.since}`].filter(Boolean).map(esc).join(' &middot; ');
+    if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier &middot; ${stTag(s)}</span><h1>${esc(s.name)}</h1>
+        <p>${facts}${s.email ? ` &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : ''}</p></div></div>`;
+    // invited: they haven't joined yet, so nothing is shared; what you asked them for, and a reminder
+    if (inv) {
+      const docs = s.consents[0].docs;
+      box.innerHTML = `<section class="sp-sec" aria-labelledby="sp-inv"><h2 id="sp-inv">Waiting for them to join</h2>
+        <p>${s.invite.onCmore ? `${esc(s.name)} is on C&#8209;MORE. Once they accept, they join your supplier list and you can see the documents below as they give their consent.` : `${esc(s.name)} isn&rsquo;t on C&#8209;MORE yet. We&rsquo;ve invited ${esc(s.email)} to join, and your supplier list with it.`}</p>
+        <article class="sp-consent is-pending">
+          <header class="sp-consent-h"><div><h3>Documents you asked for</h3><p>For all your ${S.WORDS.scope} &middot; asked on ${esc(s.invite.invited)} &middot; ${docs.length} document${docs.length === 1 ? '' : 's'}</p></div><span class="co-badge b-neu">Invited</span></header>
+          <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"></colgroup><thead><tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th></tr></thead>
+            <tbody>${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}</span></td><td class="hide-s">${esc(d.requirement)}</td><td><span class="co-badge b-neu">Not shared yet</span></td></tr>`).join('')}</tbody></table>
+          <div class="sp-wait"><span>${CLOCK}You&rsquo;ll see each one as soon as they share it.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(s.id)}">Send a reminder</button></div>
+        </article></section>`;
+      return;
+    }
     const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending');
     // the card's title is the table's first row, so the consent's badge sits in the Expiry date
     // column, level with the title
@@ -259,6 +293,7 @@
 
   if (id && !sup) { box.innerHTML = '<div class="co-card sp-none">That supplier isn&rsquo;t in your list. <a href="suppliers.html">See all your suppliers</a>.</div>'; return; }
   if (sup) page(sup); else list();
+  window.CMSupPage = { refresh: () => { if (!sup) list(); } }; // a supplier just added (js/supplier-add.js)
   box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
   box.addEventListener('click', (e) => {
     const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
