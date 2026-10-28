@@ -2701,6 +2701,8 @@ body { transition: background-color .9s ease; }
   const PER = 10;
   document.querySelectorAll('[data-pager-for]').forEach((nav) => {
     const table = document.getElementById(nav.dataset.pagerFor), body = table.tBodies[0];
+    // only the projects the viewer's groups give them (js/access.js)
+    if (window.CMAccess && CMAccess.sees) [...body.rows].forEach((r) => { const id = r.querySelector('.co-pid'); if (id && !CMAccess.sees('projects', id.textContent.trim())) r.remove(); });
     const rows = [...body.rows], cols = table.tHead.rows[0].cells.length;
     const tools = document.querySelector(`[data-tools-for="${table.id}"]`);
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

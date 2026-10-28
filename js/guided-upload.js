@@ -26,7 +26,7 @@
 (() => {
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
   // not open at launch (js/company-switcher.js styles the badge)
-  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'] });
+  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) });
   const soon = (k) => (SOON.areas.includes(k) ? ' ' + SOON.badge : '');
   if (!O || !CAT || !R || !DM) return;
   const org = O.current();

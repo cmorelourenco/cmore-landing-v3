@@ -364,7 +364,12 @@ window.DOC_MODEL = (() => {
   });
   // only the Documents pages the person looking can open (js/access.js): the rest aren't counted,
   // searched or shown on the company homepage either
-  if (window.CMAccess) for (let i = DOCS.length - 1; i >= 0; i--) if (!CMAccess.can('documents.' + DOCS[i].area)) DOCS.splice(i, 1);
+  // what the viewer's groups give them: whole Documents pages, or some of their sections (js/access.js)
+  if (window.CMAccess) for (let i = DOCS.length - 1; i >= 0; i--) {
+    const page = 'documents.' + DOCS[i].area;
+    const section = DOCS[i].cat && DOCS[i].cat.section ? en(DOCS[i].cat.section) : DOCS[i].section; // an archived one, by the section it was in
+    if (!CMAccess.can(page) || (CMAccess.sees && !CMAccess.sees(page, section))) DOCS.splice(i, 1);
+  }
   // the areas this company has: open by its profile, with at least one document in them
   // (a company added in this session keeps Company, Workers and Equipment even while they're empty)
   // (and only the ones the person looking can open: js/access.js)

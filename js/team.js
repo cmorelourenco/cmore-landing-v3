@@ -15,6 +15,9 @@
   const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const { ROLES, ORDER, GRANTS, grouped, manages, PAGES, teamOf } = A;
   const CNAME = A.PAGE_NAME;
+  const PARTS = A.PARTS || {}, PART_NAME = A.PART_NAME || ((p, k) => k), PART_NOUN = A.PART_NOUN || (() => ['section', 'sections']);
+  // a page as a group gives it: whole, or "(3 of 11 sections)"
+  const gave = (g, k) => { const sc = (g.scope || {})[k], n = PART_NOUN(k); return CNAME[k] + (sc ? ` <small class="tm-part-n">(${sc.length} of ${PARTS[k].length} ${n[1]})</small>` : ''); };
   const save = (id, t) => A.save(id, t);
 
   const cur = O.current();
@@ -70,6 +73,18 @@
 .tm-checks label.is-off { color: var(--color-sand-500); cursor: not-allowed; }
 .tm-checks input { flex: none; width: 1rem; height: 1rem; margin-top: 0.0625rem; accent-color: var(--color-graphite); }
 .tm-checks small { display: block; color: var(--color-ink-subtle); font-size: 0.75rem; }
+/* a page with parts, ticked: it takes the full width, its parts under it */
+.tm-page { display: grid; gap: 0.5rem; align-content: start; }
+.tm-page.is-open { grid-column: 1 / -1; }
+.tm-parts { display: grid; gap: 0.5rem; margin: 0 0 0.375rem 1.5rem; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); }
+.tm-parts[hidden] { display: none; }
+.tm-parts-h { display: flex; flex-wrap: wrap; gap: 0.375rem 1.25rem; }
+.tm-parts-h label { align-items: center; font-size: 0.8125rem; font-weight: 500; }
+.tm-parts-l { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.25rem 1rem; max-height: 14rem; overflow-y: auto; }
+.tm-parts-l[hidden] { display: none; }
+.tm-part { font-size: 0.8125rem; }
+.tm-part b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--color-ink-subtle); }
+.tm-part-n { display: inline; font-size: 0.75rem; color: var(--color-ink-subtle); }
 .tm-scope[hidden] { display: none; }
 .tm-scope { display: grid; gap: 0.5rem; }
 .tm-lbl { font-size: 0.8125rem; font-weight: 600; }
@@ -88,8 +103,14 @@
 .tm-group-f { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.25rem; font-size: 0.8125rem; color: var(--color-ink-muted); }
 .tm-group-new { display: grid; place-items: center; min-height: 7rem; border: 1.5px dashed var(--color-sand-400); border-radius: 0.875rem; background: none; font: inherit; font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); cursor: pointer; }
 .tm-group-new:hover { border-color: var(--color-graphite); }
-.tm-gform { grid-column: 1 / -1; display: grid; gap: 1rem; padding: 1.25rem; border-radius: 0.875rem; background: var(--color-light-beige); }
-.tm-gform .input { max-width: 22rem; }
+.tm-gdw .tm-dw-panel { display: block; }
+.tm-dw-form { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.tm-dw-form .input { width: 100%; max-width: 22rem; height: 2.875rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface);
+  font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; transition: border-color .14s ease; }
+.tm-dw-form .input:hover { border-color: var(--color-sand-400); }
+.tm-dw-form .input:focus { border-color: var(--color-graphite); }
+.tm-dw-form .tm-parts { background: var(--color-surface); }
+.tm-gdw .tm-checks { grid-template-columns: 1fr 1fr; }
 .tm-perm-wrap { overflow-x: auto; border: 1px solid var(--color-line); border-radius: 0.875rem; }
 .tm-perm { width: 100%; min-width: 38rem; border-collapse: collapse; font-size: 0.875rem; }
 .tm-perm th, .tm-perm td { padding: 0.75rem 1rem; text-align: left; vertical-align: top; }
@@ -320,8 +341,11 @@
   dw.innerHTML = '<div class="tm-dw-scrim" data-dw-close></div><aside class="tm-dw-panel" role="dialog" aria-modal="true" aria-labelledby="tm-dw-t" tabindex="-1"></aside>';
   document.body.appendChild(dw);
   const panel = dw.querySelector('.tm-dw-panel');
+  // one person (their Edit) or several (the selection bar): the same drawer. For one, the groups
+  // ticked are theirs; for several, none ticked keeps each person's own
+  let single = false;
   const plan = (c) => [...sel].map((i) => [i, c.t.members[i]]).filter(([, m]) => m).map(([i, m]) => {
-    const to = dRole, ng = grouped(to) ? (dGroups.size ? [...dGroups] : (m.groups || [])) : [];
+    const to = dRole, ng = grouped(to) ? (dGroups.size || single ? [...dGroups] : (m.groups || [])) : [];
     const fg = grouped(m.role) ? (m.groups || []) : [];
     const same = m.role === to && fg.join() === ng.join();
     const problem = !canEdit(c, m) ? 'You can&rsquo;t change them' : grouped(to) && !ng.length ? 'Needs a group' : '';
@@ -331,10 +355,11 @@
   const paintDrawer = () => {
     const c = ctx(), t = c.t, rows = plan(c);
     const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
-    panel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-dw-t">Change role</h3><p>${rows.length} ${rows.length === 1 ? 'person' : 'people'} selected</p></div><button type="button" class="tm-dw-x" data-dw-close aria-label="Close">&times;</button></header>
+    const one = single && rows[0];
+    panel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-dw-t">${one ? `Edit ${esc(one.m.name)}` : 'Change role'}</h3><p>${one ? esc(one.m.email) + (one.m.title ? ' &middot; ' + esc(one.m.title) : '') : `${rows.length} ${rows.length === 1 ? 'person' : 'people'} selected`}</p></div><button type="button" class="tm-dw-x" data-dw-close aria-label="Close">&times;</button></header>
       <div class="tm-dw-b">
         <div class="set-f"><span class="tm-lbl">New role</span><div class="tm-roles" role="radiogroup" aria-label="New role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="dw-role" value="${r}"${r === dRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[dRole][1]}</p></div>
-        ${grouped(dRole) ? `<div class="set-f"><span class="tm-lbl">Groups <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span></span>${groupChecks(c, [...dGroups], 'dg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
+        ${grouped(dRole) ? `<div class="set-f"><span class="tm-lbl">Groups${one ? '' : ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>'}</span>${groupChecks(c, [...dGroups], 'dg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
         <div class="set-f"><span class="tm-lbl">What changes</span>
           <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
             <span class="tm-pic" aria-hidden="true">${esc(initials(r.m.name))}</span>
@@ -342,15 +367,22 @@
               ${r.m.role === r.to ? `<span class="tm-plan-c"><span class="tm-stay">${ROLES[r.to][0]}</span></span>` : `<span class="tm-plan-c"><span class="tm-from">${ROLES[r.m.role][0]}</span><span aria-hidden="true">&rarr;</span><span class="tm-to">${ROLES[r.to][0]}</span></span>`}
               ${gl(t, r.fg, r.m.role) === gl(t, r.ng, r.to) ? `<small>${gl(t, r.ng, r.to)}</small>` : `<small><span class="tm-from">${gl(t, r.fg, r.m.role)}</span> &rarr; <span class="tm-to">${gl(t, r.ng, r.to)}</span></small>`}
               ${r.problem ? `<span class="co-badge b-over">${r.problem}</span>` : r.same ? '<span class="co-badge b-neu">No change</span>' : ''}</span>
-            <button type="button" class="tm-x" data-unsel="${r.i}" aria-label="Take ${esc(r.m.name)} out">Remove</button></li>`).join('')}</ul></div>
+            ${one ? '' : `<button type="button" class="tm-x" data-unsel="${r.i}" aria-label="Take ${esc(r.m.name)} out">Remove</button>`}</li>`).join('')}</ul></div>
       </div>
-      <footer class="tm-dw-f"><span>${moving} change${moving === 1 ? '' : 's'}${stuck ? ` &middot; ${stuck} to sort out` : ''}</span><span class="tm-selbar-a"><button type="button" class="tm-x" data-dw-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-dw-apply${moving && !stuck ? '' : ' disabled'}>Apply ${moving || ''} change${moving === 1 ? '' : 's'}</button></span></footer>`;
+      <footer class="tm-dw-f">${one ? `<button type="button" class="tm-x" data-dw-remove="${one.i}">Remove from ${esc(cur.name)}</button>` : `<span>${moving} change${moving === 1 ? '' : 's'}${stuck ? ` &middot; ${stuck} to sort out` : ''}</span>`}<span class="tm-selbar-a"><button type="button" class="tm-x" data-dw-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-dw-apply${moving && !stuck ? '' : ' disabled'}>Apply ${moving || ''} change${moving === 1 ? '' : 's'}</button></span></footer>`;
   };
   let dwBack = null;
   const openDrawer = () => { dwBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintDrawer(); panel.focus(); };
-  const closeDrawer = () => { dw.hidden = true; document.documentElement.style.overflow = ''; if (dwBack && dwBack.isConnected) dwBack.focus(); else { const b = box.querySelector('[data-dw-open]'); if (b) b.focus(); } };
+  const closeDrawer = () => { if (single) { single = false; sel.clear(); dGroups.clear(); paint(); } dw.hidden = true; document.documentElement.style.overflow = ''; if (dwBack && dwBack.isConnected) dwBack.focus(); else { const b = box.querySelector('[data-dw-open]'); if (b) b.focus(); } };
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-dw-close]')) { closeDrawer(); return; }
+    const rm = e.target.closest('[data-dw-remove]');
+    if (rm) {
+      const t = ctx().t, m = t.members[+rm.dataset.dwRemove];
+      if (!m || !confirm(`Remove ${m.name} from ${cur.name}? They lose access straight away.`)) return;
+      t.members.splice(+rm.dataset.dwRemove, 1); save(cur.id, t); closeDrawer(); paint(); toast(`<b>${esc(m.name)} was removed</b><span>They no longer have access to ${esc(cur.name)}</span>`);
+      return;
+    }
     const u = e.target.closest('[data-unsel]');
     if (u) { sel.delete(+u.dataset.unsel); paint(); if (!sel.size) closeDrawer(); else paintDrawer(); return; }
     if (e.target.closest('[data-dw-apply]')) {
@@ -358,7 +390,7 @@
       rows.forEach((r) => { r.m.role = r.to; r.m.groups = r.ng; });
       save(cur.id, t);
       changed.clear(); rows.forEach((r) => changed.add(r.i));
-      sel.clear(); dGroups.clear(); closeDrawer(); paint();
+      single = false; sel.clear(); dGroups.clear(); closeDrawer(); paint();
       // the toast: how many, and to what (one role and one set of groups, or "new roles")
       const roles = [...new Set(rows.map((r) => r.to))], gs = [...new Set(rows.map((r) => gl(t, r.ng, r.to)))];
       const to = roles.length === 1 ? `${ROLES[roles[0]][0]}${gs.length === 1 && grouped(roles[0]) ? ` &middot; ${gs[0]}` : ''}` : 'their new roles';
@@ -791,7 +823,11 @@
       return;
     }
     const ed = e.target.closest('[data-edit]');
-    if (ed) { editing = +ed.dataset.edit; paint(); const s = box.querySelector('#tm-er'); if (s) s.focus(); return; }
+    if (ed) {
+      const i = +ed.dataset.edit, m = t.members[i];
+      sel.clear(); sel.add(i); single = true; dRole = m.role; dGroups.clear(); (grouped(m.role) ? m.groups || [] : []).forEach((g) => dGroups.add(g));
+      openDrawer(); return;
+    }
     if (e.target.closest('[data-cancel-edit]')) { editing = null; paint(); return; }
     const r = e.target.closest('[data-remove]');
     if (r) { const m = t.members[+r.dataset.remove]; if (!confirm(`Remove ${m.name} from ${cur.name}? They lose access straight away.`)) return; t.members.splice(+r.dataset.remove, 1); editing = null; save(cur.id, t); paint(); return; }
@@ -806,46 +842,86 @@
     if (!gbox) return;
     const c = ctx(), t = c.t, can = manages(c.role);
     const count = (g) => t.members.filter((m) => grouped(m.role) && (m.groups || []).includes(g.id));
-    const form = (g) => `<form class="tm-gform" data-gsave="${g ? esc(g.id) : ''}">
-        <h3 class="set-sub">${g ? `Edit ${esc(g.name)}` : 'New group'}</h3>
+    const form = (g) => {
+      const n = g ? t.members.filter((m) => grouped(m.role) && (m.groups || []).includes(g.id)).length : 0;
+      return `<form class="tm-dw-form" data-gsave="${g ? esc(g.id) : ''}">
+        <header class="tm-dw-h"><div><h3 id="tm-gdw-t">${g ? `Edit ${esc(g.name)}` : 'New group'}</h3><p>${g ? (n ? `${n} ${n === 1 ? 'person is' : 'people are'} in it` : 'Nobody in it yet') : 'What it opens, whole or in part'}</p></div><button type="button" class="tm-dw-x" data-gdw-close aria-label="Close">&times;</button></header>
+        <div class="tm-dw-b">
         <div class="set-f"><label for="tm-gn">Name</label><input class="input" id="tm-gn" name="gname" value="${g ? esc(g.name) : ''}" placeholder="e.g. Procurement" autocomplete="off"></div>
-        <div class="set-f"><span class="tm-lbl">Pages it opens</span><div class="tm-checks">${PAGES.map(([k, n, d]) => `<label><input type="checkbox" name="gc" value="${k}"${g && g.content.includes(k) ? ' checked' : ''}><span>${n}<small>${d}</small></span></label>`).join('')}</div></div>
-        <p class="set-err" role="alert"></p>
-        <div class="set-foot set-foot-l"><button type="submit" class="btn btn-primary btn-sm">${g ? 'Save' : 'Create group'}</button><button type="button" class="tm-x" data-gcancel>Cancel</button>${g ? `<span style="flex:1"></span><button type="button" class="tm-x" data-gdel="${esc(g.id)}">Delete group</button>` : ''}</div>
+        <div class="set-f"><span class="tm-lbl">Pages it opens</span><div class="tm-checks">${PAGES.map(([k, n, d]) => {
+          const on = !!(g && g.content.includes(k)), sc = g && (g.scope || {})[k], pn = PART_NOUN(k);
+          // a page with parts (Documents' sections, the projects): all of it, or only some
+          const parts = PARTS[k] ? `<div class="tm-parts" data-parts-for="${k}"${on ? '' : ' hidden'}>
+              <div class="tm-parts-h" role="radiogroup" aria-label="How much of ${esc(n)}"><label><input type="radio" name="gs-${k}" value="all"${sc ? '' : ' checked'}><span>All ${pn[1]}</span></label><label><input type="radio" name="gs-${k}" value="some"${sc ? ' checked' : ''}><span>Only some ${pn[1]}</span></label></div>
+              <div class="tm-parts-l"${sc ? '' : ' hidden'}>${PARTS[k].map((x) => `<label class="tm-part"><input type="checkbox" name="gp-${k}" value="${esc(x)}"${!sc || sc.includes(x) ? ' checked' : ''}><span>${k === 'projects' ? `<b>${esc(x)}</b> ` : ''}${esc(PART_NAME(k, x))}</span></label>`).join('')}</div>
+            </div>` : '';
+          return `<div class="tm-page${PARTS[k] ? ' has-parts' : ''}${on && PARTS[k] ? ' is-open' : ''}"><label><input type="checkbox" name="gc" value="${k}"${on ? ' checked' : ''}><span>${n}<small>${d}</small></span></label>${parts}</div>`;
+        }).join('')}</div></div>
+        <p class="set-err" role="alert"></p></div>
+        <footer class="tm-dw-f">${g ? `<button type="button" class="tm-x" data-gdel="${esc(g.id)}">Delete group</button>` : '<span></span>'}<span class="tm-selbar-a"><button type="button" class="tm-x" data-gdw-close>Cancel</button><button type="submit" class="btn btn-primary btn-sm">${g ? 'Save' : 'Create group'}</button></span></footer>
       </form>`;
+    };
     // managers and users see the groups they are in
     const shown = can ? t.groups : t.groups.filter((g) => c.mine.includes(g.id));
-    gbox.innerHTML = `<div class="tm-groups">${shown.map((g) => gEditing === g.id ? form(g) : `<div class="tm-group${!can && c.mine.includes(g.id) ? ' is-mine' : ''}">
+    if (gEditing && can) { gpanel.innerHTML = form(gEditing === 'new' ? null : t.groups.find((g) => g.id === gEditing)); }
+    gbox.innerHTML = `<div class="tm-groups">${shown.map((g) => `<div class="tm-group${!can && c.mine.includes(g.id) ? ' is-mine' : ''}">
         <div class="tm-group-h"><b>${esc(g.name)}</b>${can ? `<button type="button" class="tm-x" data-gedit="${esc(g.id)}">Edit</button>` : ''}</div>
-        <p>${g.content.map((k) => CNAME[k]).filter(Boolean).join(' &middot; ') || 'Opens no pages yet.'}</p>
+        <p>${g.content.filter((k) => CNAME[k]).map((k) => gave(g, k)).join(' &middot; ') || 'Opens no pages yet.'}</p>
         <div class="tm-group-f"><span>${count(g).length ? count(g).map((m) => esc(m.name.split(' ')[0])).join(', ') : 'Nobody yet'}</span><span>${count(g).length} ${count(g).length === 1 ? 'person' : 'people'}</span></div>
-      </div>`).join('')}${can ? (gEditing === 'new' ? form(null) : '<button type="button" class="tm-group-new" data-gnew>+ New group</button>') : ''}</div>
+      </div>`).join('')}${can ? '<button type="button" class="tm-group-new" data-gnew>+ New group</button>' : ''}</div>
       ${shown.length || can ? '' : '<p class="tm-note">You aren&rsquo;t in any group yet.</p>'}`;
   };
+  const gdw = document.createElement('div');
+  gdw.className = 'tm-dw tm-gdw'; gdw.hidden = true;
+  gdw.innerHTML = '<div class="tm-dw-scrim" data-gdw-close></div><aside class="tm-dw-panel" role="dialog" aria-modal="true" aria-labelledby="tm-gdw-t" tabindex="-1"></aside>';
+  document.body.appendChild(gdw);
+  const gpanel = gdw.querySelector('.tm-dw-panel');
+  let gdwBack = null;
+  const openGdw = (id) => { gdwBack = document.activeElement; gEditing = id; gdw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintGroups(); const n = gpanel.querySelector('#tm-gn'); if (n) n.focus(); };
+  const closeGdw = () => { gEditing = null; gdw.hidden = true; document.documentElement.style.overflow = ''; if (gdwBack && gdwBack.isConnected) gdwBack.focus({ preventScroll: true }); };
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !gdw.hidden) closeGdw(); });
   if (gbox) {
     gbox.addEventListener('click', (e) => {
       const t = ctx().t;
-      if (e.target.closest('[data-gnew]')) { gEditing = 'new'; paintGroups(); gbox.querySelector('#tm-gn').focus(); return; }
-      const ge = e.target.closest('[data-gedit]'); if (ge) { gEditing = ge.dataset.gedit; paintGroups(); gbox.querySelector('#tm-gn').focus(); return; }
-      if (e.target.closest('[data-gcancel]')) { gEditing = null; paintGroups(); return; }
+      if (e.target.closest('[data-gnew]')) { openGdw('new'); return; }
+      const ge = e.target.closest('[data-gedit]'); if (ge) openGdw(ge.dataset.gedit);
+    });
+    // the group's drawer: the same as the bulk invite's (name, then what it opens), saved from its foot
+    gdw.addEventListener('click', (e) => {
+      const t = ctx().t;
+      if (e.target.closest('[data-gdw-close]')) { closeGdw(); return; }
       const gd = e.target.closest('[data-gdel]');
       if (gd) {
         const g = t.groups.find((x) => x.id === gd.dataset.gdel), n = t.members.filter((m) => (m.groups || []).includes(g.id)).length;
         if (!confirm(`Delete ${g.name}?${n ? ` ${n} ${n === 1 ? 'person loses' : 'people lose'} what it covers.` : ''}`)) return;
         t.groups = t.groups.filter((x) => x !== g); [].concat(t.members, t.invites).forEach((m) => { m.groups = (m.groups || []).filter((x) => x !== g.id); });
-        gEditing = null; save(cur.id, t); paint();
+        closeGdw(); save(cur.id, t); paint(); toast(`${esc(g.name)} deleted.`);
       }
     });
-    gbox.addEventListener('submit', (e) => {
+    // a page ticked shows its parts; "Only some" shows the list to pick from
+    gdw.addEventListener('change', (e) => {
+      const f = e.target;
+      if (f.name === 'gc') { const box = gdw.querySelector(`[data-parts-for="${f.value}"]`); if (box) { box.hidden = !f.checked; box.closest('.tm-page').classList.toggle('is-open', f.checked); } return; }
+      if (f.name && f.name.startsWith('gs-')) { const l = f.closest('.tm-parts').querySelector('.tm-parts-l'); l.hidden = f.value !== 'some'; }
+    });
+    gdw.addEventListener('submit', (e) => {
       e.preventDefault();
       const t = ctx().t, f = e.target, name = f.querySelector('[name="gname"]').value.trim(), content = [...f.querySelectorAll('[name="gc"]:checked')].map((x) => x.value);
       const err = f.querySelector('.set-err');
       if (!name) { err.textContent = 'Give the group a name.'; return; }
       if (t.groups.some((g) => g.name.toLowerCase() === name.toLowerCase() && g.id !== f.dataset.gsave)) { err.textContent = 'There is already a group with that name.'; return; }
       if (!content.length) { err.textContent = 'Pick at least one page it opens.'; return; }
-      if (f.dataset.gsave) Object.assign(t.groups.find((g) => g.id === f.dataset.gsave), { name, content });
-      else t.groups.push({ id: 'g-' + Date.now().toString(36), name, content });
-      gEditing = null; save(cur.id, t); paint();
+      // the parts of a page it gives, where only some: none picked is no use
+      const scope = {};
+      for (const k of content.filter((x) => PARTS[x])) {
+        if ((f.querySelector(`[name="gs-${k}"]:checked`) || {}).value !== 'some') continue;
+        const picked = [...f.querySelectorAll(`[name="gp-${k}"]:checked`)].map((x) => x.value);
+        if (!picked.length) { err.textContent = `Pick at least one of the ${PART_NOUN(k)[1]} of ${CNAME[k].replace(/&[^;]+;/g, ' ')}, or give it all of them.`; return; }
+        if (picked.length < PARTS[k].length) scope[k] = picked;
+      }
+      if (f.dataset.gsave) Object.assign(t.groups.find((g) => g.id === f.dataset.gsave), { name, content, scope });
+      else t.groups.push({ id: 'g-' + Date.now().toString(36), name, content, scope });
+      const was = !!f.dataset.gsave; closeGdw(); save(cur.id, t); paint(); toast(`${esc(name)} ${was ? 'saved' : 'created'}.`);
     });
   }
 
@@ -855,7 +931,7 @@
   const SOME = (x) => `${YES}<small>${x}</small>`;
   const PERMS = [
     ['Companies they work in', [SOME('The parent and all its subsidiaries'), SOME('The ones they&rsquo;re assigned to'), SOME('The ones they&rsquo;re assigned to'), SOME('The one they&rsquo;re assigned to')]],
-    ['Pages they open', [SOME('All of them'), SOME('All of them'), SOME('The ones their groups give them'), SOME('The ones their groups give them')]],
+    ['Pages they open', [SOME('All of them'), SOME('All of them'), SOME('The ones their groups give them, whole or in part'), SOME('The ones their groups give them, whole or in part')]],
     ['Upload and edit, on those pages', [YES, YES, YES, NO]],
     ['Invite people', [SOME('Any role'), SOME('Admins, managers and users'), SOME('Users, into their own groups'), NO]],
     ['Change roles and groups, remove people', [YES, SOME('Except owners'), NO, NO]],
@@ -869,7 +945,7 @@
     const r = ctx().role;
     perm.innerHTML = `<div class="tm-perm-wrap"><table class="tm-perm"><thead><tr><th scope="col"><span class="sr-only">Permission</span></th>${ORDER.map((k) => `<th scope="col">${ROLES[k][0]}${k === r ? `<small>${as === 'you' ? 'Your role' : 'Previewing'}</small>` : ''}</th>`).join('')}</tr></thead>`
       + `<tbody>${PERMS.map(([what, cells]) => `<tr><th scope="row">${what}</th>${cells.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
-      + '<p class="tm-perm-note">A person&rsquo;s permissions come from their role; for managers and users, the pages they open come from their groups. A group gives a whole page, never part of one.</p>';
+      + '<p class="tm-perm-note">A person&rsquo;s permissions come from their role; for managers and users, the pages they open come from their groups. A group gives a whole page, or only part of it: some of Documents&rsquo; sections, or some of the projects.</p>';
   };
 
   document.getElementById('team-company').textContent = cur.name;

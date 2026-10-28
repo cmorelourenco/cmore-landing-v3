@@ -569,7 +569,7 @@
   const crumbTrail = document.getElementById('cd-crumb-trail'), crumbBack = document.getElementById('cd-crumb-back');
   const hero = document.getElementById('cd-hero'), h2 = document.getElementById('cd-h2'), sub = document.getElementById('cd-sub');
   // not open at launch: its badge (js/company-switcher.js)
-  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'] }); // this page draws before js/company-switcher.js loads
+  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) }); // this page draws before js/company-switcher.js loads
   const soon = (k) => (SOON.areas.includes(k) ? SOON.badge : '');
   const updateHeader = () => {
     const a = area ? AREAS.find((x) => x.key === area) : null;

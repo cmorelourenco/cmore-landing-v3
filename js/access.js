@@ -7,8 +7,9 @@
      Manager — the pages their groups give them, where they can edit; Team management, to invite
                users into their own groups.
      User    — the pages their groups give them, to view.
-   A group gives access to pages, not to single documents: someone whose groups include Documents ·
-   Workers sees that whole page, and someone whose groups don't, doesn't see it at all. Pages
+   A group gives access to pages, whole or in part: a Documents page entire, or only some of its
+   sections (Tax and social security, Insurance…); Projects, every project or only some. Someone
+   whose groups don't include a page doesn't see it at all, and within one sees only the parts given. Pages
    nobody's groups can give: Team management (owners, admins, managers) and Settings (owners,
    admins). The company overview, notifications and your Profile are everyone's.
 
@@ -16,6 +17,17 @@
    the side menu drops what they can't open, and a page they can't open says so. It is kept for
    this tab, with a bar at the bottom to leave it.
    Prototype: the team lives in this browser and is forgotten on log out (js/company-switcher.js). */
+// Coming soon, except for Miguel's own company (the demo), where the C-MORE ecosystem and Workers are
+// open already. Read by js/company-switcher.js, js/company-details.js and js/guided-upload.js.
+window.CM_SOON_OPEN = (() => {
+  try {
+    if (document.documentElement.dataset.persona === 'beatriz') return [];
+    const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {};
+    if (/^test@c-more\.test$/i.test(p.email || '')) return [];
+    const org = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null') || 'home';
+    return org === 'home' ? ['ecosystem', 'workers'] : [];
+  } catch (e) { return []; }
+})();
 window.CMAccess = (() => {
   const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
   const KEY = 'cm-team-' + persona; // { orgId: { members: [...], invites: [...], groups: [...] } }
@@ -48,6 +60,19 @@ window.CMAccess = (() => {
     ['suppliers', 'My suppliers', 'The companies that supply you'],
   ].concat(persona === 'beatriz' ? [['documents.products', 'Documents · Products', 'Declarations, technical and safety sheets, EUDR']] : []);
   const PAGE_NAME = Object.fromEntries(PAGES.map(([k, n]) => [k, n]));
+  // a page can be given whole, or only some of it: some of Documents' sections (the catalog's, as
+  // the page groups them), or some of the projects. A group's scope = { page: [parts] }; a page
+  // with no scope is given whole
+  const PROJECTS = persona === 'beatriz' ? [] : [['FC-2026-031', 'São João Hospital, east wing'], ['FC-2026-018', 'EN13 resurfacing, Vila do Conde'], ['FC-2025-047', 'Garcia de Orta secondary school renovation'], ['FC-2026-052', 'Quinta da Boavista apartments'], ['ME-2026-112', 'Data centre shell, Building B'], ['CF-2026-027', 'Clinic fit-out, level 3'], ['SN-2026-064', 'Warehouse expansion'], ['FC-2026-044', 'NorteShopping parking deck'], ['FC-2026-009', 'Riverside office fit-out'], ['ME-2026-131', 'Data centre shell, Building C'], ['FC-2025-061', 'Maia fire station no. 2'], ['FC-2026-023', 'Almeida Garrett library expansion'], ['CS-2026-008', 'Lever water treatment upgrade'], ['FC-2026-058', 'Gondomar medical offices'], ['CF-2026-033', 'Imaging suite, ground floor'], ['FC-2026-036', 'Campanhã station canopy'], ['AB-2026-090', 'School gym, Braga'], ['FC-2025-052', 'Valongo community centre'], ['SN-2026-071', 'Cold storage annex'], ['FC-2026-061', 'Póvoa seafront boardwalk repairs'], ['TD-2026-014', 'Leixões cruise terminal works'], ['FC-2026-064', 'Valongo logistics platform slab'], ['FC-2026-067', 'Braga clinic renovation']];
+  const PARTS = {
+    'documents.company': ['Identification and registration', 'Licences', 'Tax and social security', 'Insurance', 'Health and safety', 'Declarations', 'Certifications', 'Information security', 'Financial', 'Public contracts', 'ESG and sustainability'],
+    'documents.workers': ['Insurance', 'Social security', 'Emergency', 'Training', 'Health', 'PPE', 'Legal status', 'Posted workers'],
+    'documents.equipment': ['Conformity', 'Inspections', 'Maintenance', 'Documentation', 'Calibration', 'Insurance'],
+    'documents.products': ['Products and environment', 'Performance and CE marking', 'Technical and safety', 'Environmental', 'Certifications'],
+  };
+  if (PROJECTS.length) PARTS.projects = PROJECTS.map((p) => p[0]);
+  const PART_NAME = (page, k) => (page === 'projects' ? ((PROJECTS.find((p) => p[0] === k) || [k, k])[1]) : k);
+  const PART_NOUN = (page) => (page === 'projects' ? ['project', 'projects'] : ['section', 'sections']);
   // Beatriz's company exports commodities: its groups follow sourcing, not sites
   const DEFAULT_GROUPS = () => (persona === 'beatriz' ? [
     { id: 'g-src', name: 'Sourcing', content: ['documents.products', 'suppliers'] },
@@ -56,7 +81,8 @@ window.CMAccess = (() => {
     { id: 'g-legal', name: 'Legal & compliance', content: ['documents.company', 'consents', 'questionnaires'] },
   ] : [
     { id: 'g-hr', name: 'HR', content: ['documents.workers'] },
-    { id: 'g-fin', name: 'Financial', content: ['documents.company', 'consents'] },
+    // an accountant needs the company's tax, insurance and accounts, not its licences or H&S
+    { id: 'g-fin', name: 'Financial', content: ['documents.company', 'consents'], scope: { 'documents.company': ['Tax and social security', 'Insurance', 'Financial'] } },
     { id: 'g-hs', name: 'Health & safety', content: ['documents.workers', 'documents.equipment', 'projects'] },
     { id: 'g-legal', name: 'Legal & compliance', content: ['documents.company', 'consents', 'questionnaires'] },
   ]);
@@ -85,7 +111,12 @@ window.CMAccess = (() => {
   const fix = (t) => {
     [].concat(t.members, t.invites).forEach((x) => { if (x.role === 'super_admin') x.role = 'owner'; if (!ROLES[x.role]) x.role = 'user'; if (!x.groups) x.groups = []; delete x.projects; });
     if (!t.groups) t.groups = DEFAULT_GROUPS();
-    t.groups.forEach((g) => { g.content = [...new Set((g.content || []).map((k) => (PAGE_NAME[k] ? k : OLD[k])).filter(Boolean))]; });
+    t.groups.forEach((g) => {
+      g.content = [...new Set((g.content || []).map((k) => (PAGE_NAME[k] ? k : OLD[k])).filter(Boolean))];
+      // a scope only for pages it still opens, and only with parts that exist
+      const sc = g.scope || {}; g.scope = {};
+      Object.keys(sc).forEach((k) => { const ok = g.content.includes(k) && PARTS[k] && (sc[k] || []).filter((x) => PARTS[k].includes(x)); if (ok && ok.length && ok.length < PARTS[k].length) g.scope[k] = ok; });
+    });
     return t;
   };
   const all = () => get(localStorage, KEY, {});
@@ -104,6 +135,21 @@ window.CMAccess = (() => {
   const preview = (email) => { if (email) set(sessionStorage, AS_KEY, { org: orgId(), email }); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } };
   // the pages someone's groups give them
   const pagesOf = (t, m) => (grouped(m.role) ? [...new Set((m.groups || []).flatMap((id) => ((t.groups.find((g) => g.id === id) || {}).content || [])))] : PAGES.map((p) => p[0]));
+  // what of a page someone's groups give them: null for all of it, else the parts
+  const scopeOf = (page, t, m) => {
+    if (!grouped(m.role)) return null;
+    const gs = (m.groups || []).map((id) => t.groups.find((g) => g.id === id)).filter((g) => g && g.content.includes(page));
+    if (!gs.length) return [];
+    if (gs.some((g) => !(g.scope || {})[page])) return null;
+    return [...new Set(gs.flatMap((g) => g.scope[page]))];
+  };
+  // can the viewer see this part of a page (a Documents section, a project)?
+  const sees = (page, part) => {
+    const t = teamOf(orgId()), v = viewer(t);
+    if (!v || manages(v.role) || !PARTS[page] || !PARTS[page].includes(part)) return !v || manages(v.role) || can(page);
+    const sc = scopeOf(page, t, v);
+    return sc === null || sc.includes(part);
+  };
   // can the viewer open this page? 'documents' is any of the three Documents pages
   const can = (page) => {
     const t = teamOf(orgId()), v = viewer(t);
@@ -155,5 +201,5 @@ window.CMAccess = (() => {
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
 
-  return { ROLES, ORDER, GRANTS, grouped, manages, PAGES, PAGE_NAME, DEFAULT_GROUPS, teamOf, save, orgId, viewer, preview, previewing, pagesOf, can };
+  return { ROLES, ORDER, GRANTS, grouped, manages, PAGES, PAGE_NAME, PARTS, PART_NAME, PART_NOUN, DEFAULT_GROUPS, teamOf, save, orgId, viewer, preview, previewing, pagesOf, scopeOf, sees, can };
 })();

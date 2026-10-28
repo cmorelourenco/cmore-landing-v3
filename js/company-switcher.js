@@ -250,7 +250,7 @@ html[data-sn="rail"] .sn-sub { display: none; }`;
 // with nothing in it yet: a test user's lands there, its setup already skipped)
 const cmSoonHome = () => { const a = document.querySelector('.sn-item[title="Company overview"]'); const h = a && a.getAttribute('href'); return h && h !== '#' ? h : 'my-company.html?filled'; };
 window.CM_SOON = {
-  badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'],
+  badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)),
   // instead of the feature itself: an empty state, ALMA big, saying it's on its way
   screen: (what, verb = 'is') => `<section class="cm-soon-page" aria-labelledby="cm-soon-t"><span class="alma-media cm-soon-alma" aria-hidden="true">${(window.ESG && window.ESG.SPHERES) || ''}</span>
     <p class="cm-soon-says">ALMA</p><h1 id="cm-soon-t">${what} ${verb} coming soon. <span>Stay tuned.</span></h1>
@@ -286,6 +286,7 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
   const path = location.pathname.split('/').pop() || 'index.html', q = new URLSearchParams(location.search);
   const PAGES = { 'ecosystem.html': ['The C&#8209;MORE ecosystem', 'C-MORE ecosystem'], 'questionnaires.html': ['Questionnaires', 'Questionnaires', 'are'],
     'esg-questionnaire.html': ['Questionnaires', 'Questionnaires', 'are'], 'esg-results.html': ['Questionnaires', 'Questionnaires', 'are'] };
+  if ((window.CM_SOON_OPEN || []).includes('ecosystem')) delete PAGES['ecosystem.html'];
   const page = q.get('soon') === 'clients' ? ['My clients', 'My clients'] : PAGES[path];
   const main = document.querySelector('main.page');
   if (page && main) {
@@ -298,7 +299,7 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
     clients.setAttribute('href', 'ecosystem.html?soon=clients'); clients.removeAttribute('data-sn');
     clients.addEventListener('click', (e) => { e.stopImmediatePropagation(); }, true);
   }
-  ['C-MORE ecosystem', 'Questionnaires', 'My clients'].forEach((t) => {
+  ['C-MORE ecosystem', 'Questionnaires', 'My clients'].filter((t) => !(t === 'C-MORE ecosystem' && (window.CM_SOON_OPEN || []).includes('ecosystem'))).forEach((t) => {
     const it = document.querySelector(`.sn-item[title="${t}"]`), l = it && it.querySelector('.sn-l');
     if (l) { it.classList.add('has-soon'); put(l); }
   });
