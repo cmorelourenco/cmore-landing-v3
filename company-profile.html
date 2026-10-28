@@ -1127,23 +1127,27 @@ body { transition: background-color .9s ease; }
     <div class="eco-head-t">
       <span class="eyebrow">Settings</span>
       <h1 class="co-h-xl" style="font-weight:300">Your company,<br><span style="font-weight:600">as clients see it.</span></h1>
-      <p class="co-muted eco-lead">Its name, logo and address, how to reach it, and which clients may see its documents. What you change here shows on your company page.</p>
+      <p class="co-muted eco-lead">Who it is, where, what it does, how big it is and whether it is part of a group, how to reach it, and which clients may see its documents. ALMA fills most of it in from the company&rsquo;s registration documents. What you change here shows on your company page.</p>
     </div>
   </div></section>
 
   <div class="co-wrap set-body">
     <nav class="set-nav" aria-label="Company settings sections">
-      <a href="#company" class="is-on">Company</a>
-      <a href="#address">Address</a>
+      <a href="#identification" class="is-on">Identification</a>
+      <a href="#location">Location</a>
+      <a href="#activity">Activity</a>
+      <a href="#size">Size</a>
+      <a href="#structure">Corporate structure</a>
       <a href="#contacts">Contacts</a>
       <a href="#consents">Consents</a>
     </nav>
 
     <div class="set-main">
 
-      <!-- Company -->
-      <section class="co-card set-card" id="company" aria-labelledby="h-company">
-        <div class="set-card-h"><h2 id="h-company">Company</h2><p class="co-subtle">How your company appears to clients and suppliers on C&#8209;MORE.</p></div>
+      <!-- Identification, Location, Activity, Size, Corporate structure: their fields come from
+           js/co-profile.js, the same form ALMA's check uses when the company is set up -->
+      <section class="co-card set-card" id="identification" aria-labelledby="h-identification">
+        <div class="set-card-h"><h2 id="h-identification">Identification</h2><p class="co-subtle" data-sub></p></div>
         <div class="set-photo">
           <span class="set-pic cp-logo" id="cp-logo" aria-hidden="true"></span>
           <div class="set-photo-t">
@@ -1152,31 +1156,44 @@ body { transition: background-color .9s ease; }
           </div>
           <input type="file" id="cp-logo-file" accept="image/png,image/jpeg,image/webp" hidden>
         </div>
-        <form class="set-form" data-cp novalidate>
-          <div class="set-grid">
-            <div class="set-f"><label for="cp-name">Legal name</label><input class="input" id="cp-name" data-k="name" autocomplete="organization" required></div>
-            <div class="set-f"><label for="cp-trading">Trading name <span class="set-opt">(optional)</span></label><input class="input" id="cp-trading" data-k="trading" placeholder="If clients know you by another name"></div>
-            <div class="set-f"><label for="cp-activity">What you do</label><input class="input" id="cp-activity" data-k="activity" placeholder="General contractor, exporter…"></div>
-            <div class="set-f"><label for="cp-people">People</label><input class="input" id="cp-people" data-k="people" inputmode="numeric" placeholder="24"></div>
-            <div class="set-f"><label for="cp-form">Legal form</label><input class="input" id="cp-form" data-k="form" placeholder="Sociedade por quotas"></div>
-            <div class="set-f"><label for="cp-tax">Tax number (NIPC)</label><input class="input" id="cp-tax" data-k="tax" placeholder="514 228 930"></div>
-          </div>
+        <form class="set-form" data-cp="identification" novalidate>
+          <div data-fields></div>
           <p class="set-err" role="alert"></p>
           <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
         </form>
       </section>
 
-      <!-- Address -->
-      <section class="co-card set-card" id="address" aria-labelledby="h-address">
-        <div class="set-card-h"><h2 id="h-address">Address</h2><p class="co-subtle">Where the company is registered. The city shows on your company page.</p></div>
-        <form class="set-form" data-cp novalidate>
-          <div class="set-grid">
-            <div class="set-f set-f-wide"><label for="cp-street">Street</label><input class="input" id="cp-street" data-k="street" autocomplete="street-address"></div>
-            <div class="set-f"><label for="cp-city">City</label><input class="input" id="cp-city" data-k="city" autocomplete="address-level2"></div>
-            <div class="set-f"><label for="cp-region">District or region <span class="set-opt">(optional)</span></label><input class="input" id="cp-region" data-k="region" autocomplete="address-level1"></div>
-            <div class="set-f"><label for="cp-postcode">Postcode</label><input class="input" id="cp-postcode" data-k="postcode" autocomplete="postal-code"></div>
-            <div class="set-f"><label for="cp-country">Country</label><select class="input" id="cp-country" data-k="country" autocomplete="country-name"></select></div>
-          </div>
+      <section class="co-card set-card" id="location" aria-labelledby="h-location">
+        <div class="set-card-h"><h2 id="h-location">Location</h2><p class="co-subtle" data-sub></p></div>
+        <form class="set-form" data-cp="location" novalidate>
+          <div data-fields></div>
+          <p class="set-err" role="alert"></p>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <section class="co-card set-card" id="activity" aria-labelledby="h-activity">
+        <div class="set-card-h"><h2 id="h-activity">Activity</h2><p class="co-subtle" data-sub></p></div>
+        <form class="set-form" data-cp="activity" novalidate>
+          <div data-fields></div>
+          <p class="set-err" role="alert"></p>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <section class="co-card set-card" id="size" aria-labelledby="h-size">
+        <div class="set-card-h"><h2 id="h-size">Size</h2><p class="co-subtle" data-sub></p></div>
+        <form class="set-form" data-cp="size" novalidate>
+          <div data-fields></div>
+          <p class="set-err" role="alert"></p>
+          <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
+        </form>
+      </section>
+
+      <section class="co-card set-card" id="structure" aria-labelledby="h-structure">
+        <div class="set-card-h"><h2 id="h-structure">Corporate structure</h2><p class="co-subtle" data-sub></p></div>
+        <form class="set-form" data-cp="structure" novalidate>
+          <div data-fields></div>
           <p class="set-err" role="alert"></p>
           <div class="set-foot"><span class="set-saved" role="status"></span><button type="submit" class="btn btn-primary btn-sm" disabled>Save changes</button></div>
         </form>
@@ -1343,6 +1360,7 @@ body { transition: background-color .9s ease; }
   count();
 })();
 </script>
+<script src="js/company-id.js"></script>
 <script src="js/co-profile.js"></script>
 <script src="js/company-profile.js"></script>
 <script>

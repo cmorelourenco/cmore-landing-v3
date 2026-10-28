@@ -108,14 +108,18 @@ window.CMAccess = (() => {
   ]);
   // an older demo's team: super admin is owner, Member is user, projects gave way to groups
   const fix = (t) => {
-    [].concat(t.members, t.invites).forEach((x) => { if (x.role === 'super_admin') x.role = 'owner'; if (!ROLES[x.role]) x.role = 'user'; if (!x.groups) x.groups = []; delete x.projects; });
-    if (!t.groups) t.groups = DEFAULT_GROUPS();
-    t.groups.forEach((g) => {
+    // a scope only for pages it still opens, and only with parts that exist
+    const tidy = (g) => {
       g.content = [...new Set((g.content || []).map((k) => (PAGE_NAME[k] ? k : OLD[k])).filter(Boolean))];
-      // a scope only for pages it still opens, and only with parts that exist
       const sc = g.scope || {}; g.scope = {};
       Object.keys(sc).forEach((k) => { const ok = g.content.includes(k) && PARTS[k] && (sc[k] || []).filter((x) => PARTS[k].includes(x)); if (ok && ok.length && ok.length < PARTS[k].length) g.scope[k] = ok; });
+    };
+    [].concat(t.members, t.invites).forEach((x) => {
+      if (x.role === 'super_admin') x.role = 'owner'; if (!ROLES[x.role]) x.role = 'user'; if (!x.groups) x.groups = []; delete x.projects;
+      if (x.access) { tidy(x.access); if (!x.access.content.length) delete x.access; }
     });
+    if (!t.groups) t.groups = DEFAULT_GROUPS();
+    t.groups.forEach(tidy);
     return t;
   };
   const all = () => get(localStorage, KEY, {});
@@ -132,12 +136,15 @@ window.CMAccess = (() => {
   const previewing = () => { const a = get(sessionStorage, AS_KEY, null); return a && a.org === orgId() ? a.email : null; };
   const viewer = (t = teamOf(orgId())) => { const e = previewing(); return (e && t.members.find((m) => m.email === e)) || t.members.find((m) => m.you) || t.members[0]; };
   const preview = (email) => { if (email) set(sessionStorage, AS_KEY, { org: orgId(), email }); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } };
-  // the pages someone's groups give them
-  const pagesOf = (t, m) => (grouped(m.role) ? [...new Set((m.groups || []).flatMap((id) => ((t.groups.find((g) => g.id === id) || {}).content || [])))] : PAGES.map((p) => p[0]));
-  // what of a page someone's groups give them: null for all of it, else the parts
+  // what gives someone access: their groups, and what was given to them alone (m.access, the same
+  // shape as a group: { content, scope }), on top
+  const sourcesOf = (t, m) => (m.groups || []).map((id) => t.groups.find((g) => g.id === id)).filter(Boolean).concat(m.access && (m.access.content || []).length ? [m.access] : []);
+  // the pages someone's groups (and their own access) give them
+  const pagesOf = (t, m) => (grouped(m.role) ? [...new Set(sourcesOf(t, m).flatMap((g) => g.content || []))] : PAGES.map((p) => p[0]));
+  // what of a page they give them: null for all of it, else the parts
   const scopeOf = (page, t, m) => {
     if (!grouped(m.role)) return null;
-    const gs = (m.groups || []).map((id) => t.groups.find((g) => g.id === id)).filter((g) => g && g.content.includes(page));
+    const gs = sourcesOf(t, m).filter((g) => (g.content || []).includes(page));
     if (!gs.length) return [];
     if (gs.some((g) => !(g.scope || {})[page])) return null;
     return [...new Set(gs.flatMap((g) => g.scope[page]))];
@@ -175,7 +182,7 @@ window.CMAccess = (() => {
       if (!can('projects')) home.querySelectorAll('.co-proj-sec').forEach((s) => { s.hidden = true; });
       if (!can('documents')) home.querySelectorAll('.co-docs-sec, .co-k[data-go="docs"]').forEach((s) => { s.hidden = true; });
       if (!can('consents')) home.querySelectorAll('.co-last-sec, .co-k[data-go=".co-last-sec"], .co-k[data-go="consents"]').forEach((s) => { s.hidden = true; });
-      if (!can('suppliers')) home.querySelectorAll('.co-k[href^="ecosystem.html"]').forEach((s) => { s.hidden = true; });
+      if (!can('suppliers')) home.querySelectorAll('.co-k[href^="ecosystem.html"], .co-sup-sec').forEach((s) => { s.hidden = true; });
     }
     // a page they can't open
     const page = PAGE_OF[location.pathname.split('/').pop()];
@@ -184,7 +191,7 @@ window.CMAccess = (() => {
       main.innerHTML = `<section class="co-sec"><div class="co-wrap"><div class="co-card" style="max-width:36rem;margin:3rem auto;padding:2rem;display:grid;gap:0.75rem;text-align:center">
         <span class="eyebrow" style="justify-self:center">No access</span>
         <h1 class="co-h-l" style="font-size:1.75rem">${as ? esc(v.name.split(' ')[0]) + ' can&rsquo;t' : 'You can&rsquo;t'} open ${NAME_OF[page]}.</h1>
-        <p class="co-muted">${page === 'team' ? 'Only owners, admins and managers can. Managers use it to invite users into their groups.' : page === 'settings' ? 'Only owners and admins can.' : grouped(v.role) ? `It isn&rsquo;t part of ${as ? 'their' : 'your'} groups${(v.groups || []).length ? ` (${v.groups.map((id) => (t.groups.find((g) => g.id === id) || {}).name).filter(Boolean).map(esc).join(', ')})` : ''}. An admin can add ${as ? 'them' : 'you'} to a group that includes it.` : 'Ask an owner or an admin of this company.'}</p>
+        <p class="co-muted">${page === 'team' ? 'Only owners, admins and managers can. Managers use it to invite users into their groups.' : page === 'settings' ? 'Only owners and admins can.' : grouped(v.role) ? `It isn&rsquo;t part of ${as ? 'their' : 'your'} access${(v.groups || []).length ? ` (${v.groups.map((id) => (t.groups.find((g) => g.id === id) || {}).name).filter(Boolean).map(esc).join(', ')})` : ''}. An admin can add ${as ? 'them' : 'you'} to a group that includes it, or give it to ${as ? 'them' : 'you'} alone.` : 'Ask an owner or an admin of this company.'}</p>
         <a class="btn btn-primary" style="justify-self:center" href="my-company.html?filled">Go to the company overview</a></div></div></section>`;
     }
     // the preview bar
@@ -200,5 +207,5 @@ window.CMAccess = (() => {
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
 
-  return { ROLES, ORDER, GRANTS, grouped, manages, PAGES, PAGE_NAME, PARTS, PART_NAME, PART_NOUN, DEFAULT_GROUPS, teamOf, save, orgId, viewer, preview, previewing, pagesOf, scopeOf, sees, can };
+  return { ROLES, ORDER, GRANTS, grouped, manages, PAGES, PAGE_NAME, PARTS, PART_NAME, PART_NOUN, DEFAULT_GROUPS, teamOf, save, orgId, viewer, preview, previewing, sourcesOf, pagesOf, scopeOf, sees, can };
 })();

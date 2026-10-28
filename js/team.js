@@ -17,6 +17,10 @@
   const CNAME = A.PAGE_NAME;
   const PARTS = A.PARTS || {}, PART_NAME = A.PART_NAME || ((p, k) => k), PART_NOUN = A.PART_NOUN || (() => ['section', 'sections']);
   // a page as a group gives it: whole, or "(3 of 11 sections)"
+  // the same in a line of small print: "Documents · Company (3 of 11 sections)"
+  const gaveText = (g, k) => { const sc = (g.scope || {})[k]; return CNAME[k] + (sc ? ` (${sc.length} of ${PARTS[k].length} ${PART_NOUN(k)[1]})` : ''); };
+  // what someone was given alone, on top of their groups
+  const own = (a) => (a ? a.content.filter((k) => CNAME[k]).map((k) => gaveText(a, k)).join(', ') : '');
   const gave = (g, k) => { const sc = (g.scope || {})[k], n = PART_NOUN(k); return CNAME[k] + (sc ? ` <small class="tm-part-n">(${sc.length} of ${PARTS[k].length} ${n[1]})</small>` : ''); };
   const save = (id, t) => A.save(id, t);
 
@@ -55,6 +59,8 @@
 .tm-tags { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.375rem; }
 .tm-tag { display: inline-flex; align-items: center; height: 1.5rem; padding: 0 0.5rem; border-radius: 0.375rem; background: var(--color-mid-beige); font-size: 0.75rem; font-weight: 500; color: var(--color-ink); }
 .tm-tag.is-all { background: var(--color-positive-subtle); color: var(--color-positive); }
+.tm-tag.is-own { background: none; border: 1px dashed var(--color-sand-400); height: auto; min-height: 1.5rem; padding-block: 0.125rem; } /* given to them alone, on top of their groups */
+.tm-own { padding-top: 1.25rem; border-top: 1px solid var(--color-line); }
 .tm-x { border: 0; background: none; padding: 0; font: inherit; font-size: 0.8125rem; color: var(--color-ink-subtle); text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; cursor: pointer; }
 .tm-x:hover { color: var(--color-ink); text-decoration-color: var(--color-coral); }
 .tm-edit { grid-column: 1 / -1; display: grid; gap: 0.875rem; margin-top: 0.375rem; padding: 1rem; border-radius: 0.75rem; background: var(--color-light-beige); }
@@ -269,11 +275,11 @@
   // what someone sees, as tags: everything for an owner or admin, their groups otherwise
   const reach = (t, x) => (x.role === 'owner' ? `<span class="tm-tag is-all">${family().length > 1 ? 'Every page · parent and subsidiaries' : 'Every page'}</span>`
     : x.role === 'admin' ? '<span class="tm-tag is-all">Every page of this company</span>'
-      : (x.groups || []).map((id) => gName(t, id)).filter(Boolean).map((n) => `<span class="tm-tag">${esc(n)}</span>`).join('') || '<span class="tm-tag">No groups yet</span>');
+      : (x.groups || []).map((id) => gName(t, id)).filter(Boolean).map((n) => `<span class="tm-tag">${esc(n)}</span>`).join('') + (x.access ? `<span class="tm-tag is-own" title="Given to them alone, on top of their groups">+ ${own(x.access)}</span>` : '') || '<span class="tm-tag">No groups yet</span>');
   // group checkboxes: a manager can only hand out groups they are in
   const groupChecks = (c, picked, name) => `<div class="tm-checks">${c.t.groups.map((g) => {
     const ok = c.mine.includes(g.id);
-    return `<label class="${ok ? '' : 'is-off'}"${ok ? '' : ' title="You can only add people to groups you are in"'}><input type="checkbox" name="${name}" value="${esc(g.id)}"${picked.includes(g.id) ? ' checked' : ''}${ok ? '' : ' disabled'}><span>${esc(g.name)}<small>${g.content.map((k) => CNAME[k]).filter(Boolean).join(', ') || 'No pages yet'}</small></span></label>`;
+    return `<label class="${ok ? '' : 'is-off'}"${ok ? '' : ' title="You can only add people to groups you are in"'}><input type="checkbox" name="${name}" value="${esc(g.id)}"${picked.includes(g.id) ? ' checked' : ''}${ok ? '' : ' disabled'}><span>${esc(g.name)}<small>${g.content.filter((k) => CNAME[k]).map((k) => gaveText(g, k)).join(', ') || 'No pages yet'}</small></span></label>`;
   }).join('')}</div>`;
 
   let flash = '', editing = null, gEditing = null;
@@ -326,7 +332,9 @@
           : `<input type="hidden" name="tm-role" value="${pick}"><p class="tm-note">As a manager, you invite users, into the groups you are in.</p>`}
         <div class="tm-scope" data-scope="owner" hidden><p class="tm-note">An owner sees and does everything on ${family().map((o) => esc(o.name)).join(', ')}${family().length > 1 ? '' : ''}, and on any subsidiary added later.</p></div>
         ${others.length && c.role === 'owner' ? `<div class="tm-scope" data-scope="admin" hidden><span class="tm-lbl">Also make them admin of</span><div class="tm-checks">${others.map((o) => `<label><input type="checkbox" name="also" value="${esc(o.id)}"><span>${esc(o.name)}</span></label>`).join('')}</div></div>` : ''}
-        <div class="tm-scope" data-scope="groups" hidden><span class="tm-lbl">Groups: the pages they&rsquo;ll open</span>${groupChecks(c, [], 'ig')}<p class="set-err" id="tm-gerr" role="alert"></p></div>
+        <div class="tm-scope" data-scope="groups" hidden><span class="tm-lbl">Groups: the pages they&rsquo;ll open</span>${groupChecks(c, [], 'ig')}
+          ${manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, just for them. For when someone needs a little more than a group gives.</p>${picker(null, 'i')}</div>` : ''}
+          <p class="set-err" id="tm-gerr" role="alert"></p></div>
         <div class="set-foot"><span class="tm-sent" role="status">${flash}</span><button type="submit" class="btn btn-primary btn-sm" id="tm-go">Send invite</button></div>
         </div>
       </form>` : '<p class="tm-note">Users can&rsquo;t invite people. Ask a manager or an admin of this company.</p>'}
@@ -352,14 +360,19 @@
   // one person (their Edit) or several (the selection bar): the same drawer. For one, the groups
   // ticked are theirs; for several, none ticked keeps each person's own
   let single = false;
+  // one person's own access, being edited: pages (or parts of them) on top of their groups
+  let dAccess = { content: [], scope: {} }, dAccessErr = '';
   const plan = (c) => [...sel].map((i) => [i, c.t.members[i]]).filter(([, m]) => m).map(([i, m]) => {
     const to = dRole, ng = grouped(to) ? (dGroups.size || single ? [...dGroups] : (m.groups || [])) : [];
     const fg = grouped(m.role) ? (m.groups || []) : [];
-    const same = m.role === to && fg.join() === ng.join();
-    const problem = !canEdit(c, m) ? 'You can&rsquo;t change them' : grouped(to) && !ng.length ? 'Needs a group' : '';
-    return { i, m, to, fg, ng, same, problem };
+    // their own access: changed only from their Edit; with several selected, each keeps theirs
+    const fa = grouped(m.role) && m.access ? m.access : null;
+    const na = !grouped(to) ? null : single ? (dAccess.content.length ? dAccess : null) : fa;
+    const same = m.role === to && fg.join() === ng.join() && JSON.stringify(fa) === JSON.stringify(na);
+    const problem = !canEdit(c, m) ? 'You can&rsquo;t change them' : single && dAccessErr ? 'Pick what they open' : grouped(to) && !ng.length && !na ? 'Needs a group or access of their own' : '';
+    return { i, m, to, fg, ng, fa, na, same, problem };
   });
-  const gl = (t, ids, r) => (grouped(r) ? ids.map((id) => gName(t, id)).filter(Boolean).map(esc).join(', ') || 'No groups' : r === 'owner' ? 'Every page · parent and subsidiaries' : 'Every page of this company');
+  const gl = (t, ids, r, a) => (grouped(r) ? [ids.map((id) => gName(t, id)).filter(Boolean).map(esc).join(', ') || (a ? '' : 'No groups'), a ? `Own: ${own(a)}` : ''].filter(Boolean).join(' + ') : r === 'owner' ? 'Every page · parent and subsidiaries' : 'Every page of this company');
   const paintDrawer = () => {
     const c = ctx(), t = c.t, rows = plan(c);
     const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
@@ -368,12 +381,13 @@
       <div class="tm-dw-b">
         <div class="set-f"><span class="tm-lbl">New role</span><div class="tm-roles" role="radiogroup" aria-label="New role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="dw-role" value="${r}"${r === dRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[dRole][1]}</p></div>
         ${grouped(dRole) ? `<div class="set-f"><span class="tm-lbl">Groups${one ? '' : ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>'}</span>${groupChecks(c, [...dGroups], 'dg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
+        ${one && grouped(dRole) && manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, just for ${esc(one.m.name.split(' ')[0])}. For when one person needs a little more than a group gives.</p>${picker(dAccess, 'u')}${dAccessErr ? `<p class="set-err" role="alert">${esc(dAccessErr)}</p>` : ''}</div>` : ''}
         <div class="set-f"><span class="tm-lbl">What changes</span>
           <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
             <span class="tm-pic" aria-hidden="true">${esc(initials(r.m.name))}</span>
             <span class="tm-plan-t"><b>${esc(r.m.name)}</b>
               ${r.m.role === r.to ? `<span class="tm-plan-c"><span class="tm-stay">${ROLES[r.to][0]}</span></span>` : `<span class="tm-plan-c"><span class="tm-from">${ROLES[r.m.role][0]}</span><span aria-hidden="true">&rarr;</span><span class="tm-to">${ROLES[r.to][0]}</span></span>`}
-              ${gl(t, r.fg, r.m.role) === gl(t, r.ng, r.to) ? `<small>${gl(t, r.ng, r.to)}</small>` : `<small><span class="tm-from">${gl(t, r.fg, r.m.role)}</span> &rarr; <span class="tm-to">${gl(t, r.ng, r.to)}</span></small>`}
+              ${gl(t, r.fg, r.m.role, r.fa) === gl(t, r.ng, r.to, r.na) ? `<small>${gl(t, r.ng, r.to, r.na)}</small>` : `<small><span class="tm-from">${gl(t, r.fg, r.m.role, r.fa)}</span> &rarr; <span class="tm-to">${gl(t, r.ng, r.to, r.na)}</span></small>`}
               ${r.problem ? `<span class="co-badge b-over">${r.problem}</span>` : r.same ? '<span class="co-badge b-neu">No change</span>' : ''}</span>
             ${one ? '' : `<button type="button" class="tm-x" data-unsel="${r.i}" aria-label="Take ${esc(r.m.name)} out">Remove</button>`}</li>`).join('')}</ul></div>
       </div>
@@ -384,6 +398,7 @@
   const closeDrawer = () => { if (single) { single = false; sel.clear(); dGroups.clear(); paint(); } dw.hidden = true; document.documentElement.style.overflow = ''; if (dwBack && dwBack.isConnected) dwBack.focus(); else { const b = box.querySelector('[data-dw-open]'); if (b) b.focus(); } };
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-dw-close]')) { closeDrawer(); return; }
+    if (pickerAll(e)) { const b = e.target.closest('[data-parts-all], [data-parts-none]'); readOwn(); repaintKeep(`[data-parts-${b.hasAttribute('data-parts-all') ? 'all' : 'none'}="${b.dataset.partsAll || b.dataset.partsNone}"]`); return; }
     const rm = e.target.closest('[data-dw-remove]');
     if (rm) {
       const t = ctx().t, m = t.members[+rm.dataset.dwRemove];
@@ -395,18 +410,22 @@
     if (u) { sel.delete(+u.dataset.unsel); paint(); if (!sel.size) closeDrawer(); else paintDrawer(); return; }
     if (e.target.closest('[data-dw-apply]')) {
       const c = ctx(), t = c.t, rows = plan(c).filter((r) => !r.same && !r.problem);
-      rows.forEach((r) => { r.m.role = r.to; r.m.groups = r.ng; });
+      rows.forEach((r) => { r.m.role = r.to; r.m.groups = r.ng; if (r.na) r.m.access = JSON.parse(JSON.stringify(r.na)); else delete r.m.access; });
       save(cur.id, t);
       changed.clear(); rows.forEach((r) => changed.add(r.i));
       single = false; sel.clear(); dGroups.clear(); closeDrawer(); paint();
       // the toast: how many, and to what (one role and one set of groups, or "new roles")
-      const roles = [...new Set(rows.map((r) => r.to))], gs = [...new Set(rows.map((r) => gl(t, r.ng, r.to)))];
+      const roles = [...new Set(rows.map((r) => r.to))], gs = [...new Set(rows.map((r) => gl(t, r.ng, r.to, r.na)))];
       const to = roles.length === 1 ? `${ROLES[roles[0]][0]}${gs.length === 1 && grouped(roles[0]) ? ` &middot; ${gs[0]}` : ''}` : 'their new roles';
       toast(`<b>${rows.length} ${rows.length === 1 ? 'user was' : 'users were'} successfully changed</b><span>${roles.length === 1 ? 'Now ' : 'Moved to '}${to}</span>`);
       setTimeout(() => { changed.clear(); box.querySelectorAll('.is-changed').forEach((li) => li.classList.remove('is-changed')); }, 2400);
     }
   });
+  // their own access: read on every change, so the rest of the drawer (what changes, Apply) follows
+  const readOwn = () => { const r = readPicker(panel, 'u'); dAccess = { content: r.content, scope: r.scope }; dAccessErr = r.err || ''; };
+  const repaintKeep = (sel0) => { const y = panel.scrollTop; paintDrawer(); panel.scrollTop = y; const el = sel0 && panel.querySelector(sel0); if (el) el.focus({ preventScroll: true }); };
   dw.addEventListener('change', (e) => {
+    if (pickerChange(e.target, 'u')) { const f = e.target; readOwn(); repaintKeep(`[name="${f.name}"][value="${f.value}"]`); return; }
     if (e.target.name === 'dw-role') { dRole = e.target.value; paintDrawer(); const r = panel.querySelector(`[name="dw-role"][value="${dRole}"]`); if (r) r.focus(); return; }
     if (e.target.name === 'dg') { e.target.checked ? dGroups.add(e.target.value) : dGroups.delete(e.target.value); const v = e.target.value; paintDrawer(); const g = panel.querySelector(`[name="dg"][value="${v}"]`); if (g) g.focus(); }
   });
@@ -461,7 +480,7 @@
       const rawRole = (r.role || '').trim().toLowerCase();
       const role = rawRole ? ROLE_OF[rawRole] : 'user';
       const names = (r.groups || '').split(/[;,]/).map((x) => x.trim()).filter(Boolean);
-      const out = { email, name, role, roleText: role ? ROLES[role][0] : (r.role || '').trim(), groups: [], groupText: names.join(', ') };
+      const out = { email, name, role, roleText: role ? ROLES[role][0] : (r.role || '').trim(), groups: [], groupText: names.join(', '), access: r.access || null };
       const fail = (why) => Object.assign(out, { ok: false, why });
       if (!valid(email)) return fail(email ? 'Not an email address' : 'No email');
       if (seen.has(email)) return fail('Twice in this file'); seen.add(email);
@@ -475,7 +494,8 @@
           if (!c.mine.includes(g.id)) return fail(`You&rsquo;re not in ${esc(g.name)}`);
           out.groups.push(g.id);
         }
-        if (!out.groups.length) return fail('Needs at least one group');
+        if (!out.groups.length && !out.access) return fail('Needs at least one group');
+        if (out.access) out.groupText = [out.groupText, `Own: ${own(out.access)}`].filter(Boolean).join(' + ');
       } else out.groupText = role === 'owner' ? 'Every page' : 'Every page of this company';
       return Object.assign(out, { ok: true });
     });
@@ -533,7 +553,7 @@
 
   // ---- the drawer: the role (and groups) the people picked on the list are invited with ---------------
   const bulkChanged = new Set();
-  let bRole = 'user';
+  let bRole = 'user', bAccess = { content: [], scope: {} }, bAccessErr = '';
   const bGroups = new Set();
   const bdw = document.createElement('div');
   bdw.className = 'tm-dw'; bdw.hidden = true;
@@ -543,11 +563,13 @@
   // each person picked: the role and groups they'd be invited with, and anything in the way
   const bPlan = (c) => { const rows = checkRows(c, bulk.rows); return [...bulk.picked].filter((i) => rows[i]).map((i) => {
     const r = rows[i], from = r.role || '', ng = grouped(bRole) ? (bGroups.size ? [...bGroups] : r.groups) : [];
-    const same = from === bRole && r.groups.join() === ng.join();
-    const problem = grouped(bRole) && !ng.length ? 'Needs a group' : '';
-    return { i, r, from, ng, same, problem };
+    // their own access: set here for one person; several keep each their own
+    const one = bulk.picked.size === 1, fa = grouped(from) ? r.access : null, na = !grouped(bRole) ? null : one ? (bAccess.content.length ? bAccess : null) : fa;
+    const same = from === bRole && r.groups.join() === ng.join() && JSON.stringify(fa || null) === JSON.stringify(na || null);
+    const problem = one && bAccessErr ? 'Pick what they open' : grouped(bRole) && !ng.length && !na ? 'Needs a group or access of their own' : '';
+    return { i, r, from, ng, fa, na, same, problem };
   }); };
-  const bGl = (c, ids, role) => (grouped(role) ? ids.map((id) => gName(c.t, id)).filter(Boolean).map(esc).join(', ') || 'No groups' : role === 'owner' ? 'Every page' : 'Every page of this company');
+  const bGl = (c, ids, role, a) => (grouped(role) ? [ids.map((id) => gName(c.t, id)).filter(Boolean).map(esc).join(', ') || (a ? '' : 'No groups'), a ? `Own: ${own(a)}` : ''].filter(Boolean).join(' + ') : role === 'owner' ? 'Every page' : 'Every page of this company');
   const paintBdw = () => {
     const c = ctx(), rows = bPlan(c);
     const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
@@ -556,12 +578,13 @@
       <div class="tm-dw-b">
         <div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="bdw-role" value="${r}"${r === bRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[bRole][1]}</p></div>
         ${grouped(bRole) ? `<div class="set-f"><span class="tm-lbl">Groups${rows.length > 1 ? ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>' : ''}</span>${groupChecks(c, [...bGroups], 'bdg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
+        ${rows.length === 1 && grouped(bRole) && manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, just for ${who(rows[0])}.</p>${picker(bAccess, 'b')}${bAccessErr ? `<p class="set-err" role="alert">${esc(bAccessErr)}</p>` : ''}</div>` : ''}
         <div class="set-f"><span class="tm-lbl">Who</span>
           <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
             <span class="tm-pic" aria-hidden="true">${esc(initialsOf(r.r))}</span>
             <span class="tm-plan-t"><b>${who(r)}</b>
               ${r.from === bRole ? `<span class="tm-plan-c"><span class="tm-stay">${ROLES[bRole][0]}</span></span>` : `<span class="tm-plan-c"><span class="tm-from">${r.from ? ROLES[r.from][0] : esc(r.r.roleText || 'No role')}</span><span aria-hidden="true">&rarr;</span><span class="tm-to">${ROLES[bRole][0]}</span></span>`}
-              ${bGl(c, r.r.groups, r.from) === bGl(c, r.ng, bRole) ? `<small>${bGl(c, r.ng, bRole)}</small>` : `<small><span class="tm-from">${bGl(c, r.r.groups, r.from)}</span> &rarr; <span class="tm-to">${bGl(c, r.ng, bRole)}</span></small>`}
+              ${bGl(c, r.r.groups, r.from, r.fa) === bGl(c, r.ng, bRole, r.na) ? `<small>${bGl(c, r.ng, bRole, r.na)}</small>` : `<small><span class="tm-from">${bGl(c, r.r.groups, r.from, r.fa)}</span> &rarr; <span class="tm-to">${bGl(c, r.ng, bRole, r.na)}</span></small>`}
               ${r.problem ? `<span class="co-badge b-over">${r.problem}</span>` : r.same ? '<span class="co-badge b-neu">No change</span>' : ''}</span>
             ${rows.length > 1 ? `<button type="button" class="tm-x" data-bdw-unsel="${r.i}" aria-label="Take ${who(r)} out of this change">Remove</button>` : ''}</li>`).join('')}</ul></div>
       </div>
@@ -575,11 +598,13 @@
     const grants = ctx().grants, top = Object.keys(count).filter((r) => grants.includes(r)).sort((a, b) => count[b] - count[a])[0];
     bRole = top || (grants.includes('user') ? 'user' : grants[0]);
     bGroups.clear(); if (picked.length === 1) picked[0].groups.forEach((g) => bGroups.add(g));
+    bAccess = JSON.parse(JSON.stringify(picked.length === 1 && picked[0].access ? picked[0].access : { content: [], scope: {} })); bAccessErr = '';
     bdwBack = document.activeElement; bdw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintBdw(); bpanel.focus();
   };
   const closeBdw = () => { bdw.hidden = true; document.documentElement.style.overflow = ''; if (bdwBack && bdwBack.isConnected) bdwBack.focus({ preventScroll: true }); };
   bdw.addEventListener('click', (e) => {
     if (e.target.closest('[data-bdw-close]')) { closeBdw(); return; }
+    if (pickerAll(e)) { const b = e.target.closest('[data-parts-all], [data-parts-none]'); bReadOwn(); bRepaintKeep(`[data-parts-${b.hasAttribute('data-parts-all') ? 'all' : 'none'}="${b.dataset.partsAll || b.dataset.partsNone}"]`); return; }
     const u = e.target.closest('[data-bdw-unsel]');
     if (u) { bulk.picked.delete(+u.dataset.bdwUnsel); keepRev(() => paint()); if (!bulk.picked.size) closeBdw(); else paintBdw(); return; }
     if (e.target.closest('[data-bdw-drop]')) {
@@ -589,15 +614,18 @@
     }
     if (e.target.closest('[data-bdw-apply]')) {
       const c = ctx(), plan = bPlan(c).filter((r) => !r.same && !r.problem);
-      plan.forEach((r) => { const raw = bulk.rows[r.i]; raw.role = ROLES[bRole][0]; raw.groups = r.ng.map((id) => gName(c.t, id)).filter(Boolean).join('; '); });
+      plan.forEach((r) => { const raw = bulk.rows[r.i]; raw.role = ROLES[bRole][0]; raw.groups = r.ng.map((id) => gName(c.t, id)).filter(Boolean).join('; '); raw.access = r.na ? JSON.parse(JSON.stringify(r.na)) : null; });
       bulkChanged.clear(); plan.forEach((r) => bulkChanged.add(r.i));
       bulk.picked = new Set(); closeBdw(); keepRev(() => paint());
-      const gs = [...new Set(plan.map((r) => bGl(c, r.ng, bRole)))];
+      const gs = [...new Set(plan.map((r) => bGl(c, r.ng, bRole, r.na)))];
       toast(`<b>${plan.length} ${plan.length === 1 ? 'person' : 'people'} will be invited as ${ROLES[bRole][0].toLowerCase()}${plan.length === 1 ? '' : 's'}</b><span>${grouped(bRole) && gs.length === 1 ? gs[0] : grouped(bRole) ? 'Each with their groups' : bGl(c, [], bRole)}</span>`);
       setTimeout(() => { bulkChanged.clear(); box.querySelectorAll('tr.is-changed').forEach((x) => x.classList.remove('is-changed')); }, 2400);
     }
   });
+  const bReadOwn = () => { const r = readPicker(bpanel, 'b'); bAccess = { content: r.content, scope: r.scope }; bAccessErr = r.err || ''; };
+  const bRepaintKeep = (q) => { const y = bpanel.scrollTop; paintBdw(); bpanel.scrollTop = y; const el = q && bpanel.querySelector(q); if (el) el.focus({ preventScroll: true }); };
   bdw.addEventListener('change', (e) => {
+    if (pickerChange(e.target, 'b')) { const f = e.target; bReadOwn(); bRepaintKeep(`[name="${f.name}"][value="${f.value}"]`); return; }
     if (e.target.name === 'bdw-role') { bRole = e.target.value; paintBdw(); const r = bpanel.querySelector(`[name="bdw-role"][value="${bRole}"]`); if (r) r.focus(); return; }
     if (e.target.name === 'bdg') { e.target.checked ? bGroups.add(e.target.value) : bGroups.delete(e.target.value); paintBdw(); const g = bpanel.querySelector(`[name="bdg"][value="${e.target.value}"]`); if (g) g.focus(); }
   });
@@ -768,13 +796,17 @@
     const role = pickedRole();
     // a manager or user sees what their groups cover: at least one; a manager hands out only their own
     const groups = grouped(role) ? [...box.querySelectorAll('[name="ig"]:checked')].map((x) => x.value).filter((g) => c.mine.includes(g)) : [];
-    if (grouped(role) && !groups.length) { document.getElementById('tm-gerr').textContent = 'Pick at least one group: it decides which pages they open.'; return; }
+    // and what they're given alone, if anything (owners and admins only)
+    const mine = grouped(role) && manages(c.role) ? readPicker(box.querySelector('#tm-form'), 'i') : { content: [] };
+    if (mine.err) { document.getElementById('tm-gerr').textContent = mine.err; return; }
+    const access = mine.content.length ? { content: mine.content, scope: mine.scope } : null;
+    if (grouped(role) && !groups.length && !access) { document.getElementById('tm-gerr').textContent = 'Pick at least one group, or give them access of their own: it decides which pages they open.'; return; }
     // an owner is on the whole family; an admin, on the companies ticked
     const also = role === 'owner' ? family().map((o) => o.id).filter((id) => id !== cur.id) : role === 'admin' ? [...box.querySelectorAll('[name="also"]:checked')].map((x) => x.value) : [];
     const known = new Set(t.members.map((m) => m.email.toLowerCase()).concat(t.invites.map((v) => v.email)));
     const fresh = [...new Set(raw)].filter((x) => !known.has(x));
     if (!fresh.length) { err.textContent = raw.length === 1 ? 'They are already in the team, or invited.' : 'They are all already in the team, or invited.'; return; }
-    fresh.forEach((email) => t.invites.push({ email, role, groups, also, sent: today(), by: c.v.email }));
+    fresh.forEach((email) => t.invites.push(Object.assign({ email, role, groups, also, sent: today(), by: c.v.email }, access ? { access: JSON.parse(JSON.stringify(access)) } : {})));
     save(cur.id, t);
     // the same invite shows on each company it also covers
     also.forEach((id) => { const o = teamOf(id); fresh.forEach((email) => { if (!o.invites.some((v) => v.email === email)) o.invites.push({ email, role, groups: [], also: [cur.id], sent: today(), by: c.v.email }); }); save(id, o); });
@@ -798,7 +830,7 @@
       return;
     }
     if (e.target.matches('[data-sel-all]')) { const c = ctx(); c.t.members.forEach((m, i) => { if (e.target.checked && canEdit(c, m)) sel.add(i); else sel.delete(i); }); paint(); return; }
-    if (e.target.name === 'ig') { const ge = document.getElementById('tm-gerr'); if (ge) ge.textContent = ''; return; }
+    if (e.target.name === 'ig' || pickerChange(e.target, 'i')) { const ge = document.getElementById('tm-gerr'); if (ge) ge.textContent = ''; return; }
     const ef = e.target.closest('[data-save]');
     if (ef && e.target.name === 'role') {
       const g = grouped(e.target.value);
@@ -808,6 +840,7 @@
   });
   box.addEventListener('click', (e) => {
     const c = ctx(), t = c.t;
+    if (e.target.closest('#tm-form .tm-own') && pickerAll(e)) return;
     if (e.target.closest('[data-bulk-template]')) { template(); return; }
     if (e.target.closest('[data-sel-clear]')) { sel.clear(); paint(); return; }
     if (e.target.closest('[data-dw-open]')) { openDrawer(); return; }
@@ -824,7 +857,7 @@
     if (e.target.closest('[data-bulk-remove]')) { dropPicked(); return; }
     if (e.target.closest('[data-bulk-send]')) {
       const ready = checkRows(c, bulk.rows).filter((r) => r.ok);
-      ready.forEach((r) => t.invites.push({ email: r.email, name: r.name, role: r.role, groups: r.groups, also: r.role === 'owner' ? family().map((o) => o.id).filter((id) => id !== cur.id) : [], sent: today(), by: c.v.email }));
+      ready.forEach((r) => t.invites.push(Object.assign({ email: r.email, name: r.name, role: r.role, groups: r.groups, also: r.role === 'owner' ? family().map((o) => o.id).filter((id) => id !== cur.id) : [], sent: today(), by: c.v.email }, grouped(r.role) && r.access ? { access: r.access } : {})));
       save(cur.id, t);
       flash = `${ready.length} invite${ready.length === 1 ? '' : 's'} sent from ${bulk.file}.`; bulk = null; paint();
       const st = box.querySelector('.tm-sent'); if (st) st.scrollIntoView({ block: 'center' });
@@ -834,6 +867,7 @@
     if (ed) {
       const i = +ed.dataset.edit, m = t.members[i];
       sel.clear(); sel.add(i); single = true; dRole = m.role; dGroups.clear(); (grouped(m.role) ? m.groups || [] : []).forEach((g) => dGroups.add(g));
+      dAccess = JSON.parse(JSON.stringify(grouped(m.role) && m.access ? m.access : { content: [], scope: {} })); dAccessErr = '';
       openDrawer(); return;
     }
     if (e.target.closest('[data-cancel-edit]')) { editing = null; paint(); return; }
@@ -844,6 +878,45 @@
     const s = e.target.closest('[data-resend]');
     if (s) { t.invites[+s.dataset.resend].resent = true; t.invites[+s.dataset.resend].sent = today(); save(cur.id, t); paint(); }
   });
+
+  // the pages something opens (a group, or one person's own access), each whole or in part: some of
+  // Documents' sections, some of the projects. pre keeps two pickers' fields apart: gc, gs-…, gp-…
+  const picker = (g, pre) => `<div class="tm-checks">${PAGES.map(([k, n, d]) => {
+          const on = !!(g && g.content.includes(k)), sc = g && (g.scope || {})[k], pn = PART_NOUN(k);
+          // a page with parts (Documents' sections, the projects): all of it, or only some
+          const parts = PARTS[k] ? `<div class="tm-parts" data-parts-for="${k}"${on ? '' : ' hidden'}>
+              <div class="tm-parts-h" role="radiogroup" aria-label="How much of ${esc(n)}"><label><input type="radio" name="${pre}s-${k}" value="all"${sc ? '' : ' checked'}><span>All ${pn[1]}</span></label><label><input type="radio" name="${pre}s-${k}" value="some"${sc ? ' checked' : ''}><span>Selected ${pn[1]}</span></label></div>
+              <div class="tm-parts-b"${sc ? '' : ' hidden'}>
+                <div class="tm-parts-bar"><span data-parts-n>${sc ? sc.length : 0} of ${PARTS[k].length} selected</span><span><button type="button" class="tm-x" data-parts-all="${k}">Select all</button><button type="button" class="tm-x" data-parts-none="${k}">Clear</button></span></div>
+                <div class="tm-parts-l">${PARTS[k].map((x) => `<label class="tm-part"><input type="checkbox" name="${pre}p-${k}" value="${esc(x)}"${sc && sc.includes(x) ? ' checked' : ''}><span>${k === 'projects' ? `<b>${esc(x)}</b>` : ''}<span>${esc(PART_NAME(k, x))}</span></span></label>`).join('')}</div>
+              </div>
+            </div>` : '';
+          const soon = k === 'projects' && window.CM_SOON && !(window.CM_SOON_OPEN || []).includes('projects') ? ' ' + window.CM_SOON.badge : ''; // not open at launch (js/company-switcher.js)
+          return `<div class="tm-page${PARTS[k] ? ' has-parts' : ''}${on && PARTS[k] ? ' is-open' : ''}"><label><input type="checkbox" name="${pre}c" value="${k}"${on ? ' checked' : ''}><span>${n}${soon}<small>${d}</small></span></label>${parts}</div>`;
+        }).join('')}</div>`;
+  // what a picker says: { content, scope }, or { err } where a page is "Selected" with nothing picked
+  const readPicker = (f, pre) => {
+    const content = [...f.querySelectorAll(`[name="${pre}c"]:checked`)].map((x) => x.value), scope = {};
+    for (const k of content.filter((x) => PARTS[x])) {
+      if ((f.querySelector(`[name="${pre}s-${k}"]:checked`) || {}).value !== 'some') continue;
+      const picked = [...f.querySelectorAll(`[name="${pre}p-${k}"]:checked`)].map((x) => x.value);
+      if (!picked.length) { const pn = PART_NOUN(k); scope[k] = []; return { content, scope, err: `Pick at least one ${pn[0]}${k === 'projects' ? '' : ` of ${CNAME[k].replace(/&[^;]+;/g, ' ')}`}, or choose All ${pn[1]}.` }; }
+      if (picked.length < PARTS[k].length) scope[k] = picked;
+    }
+    return { content, scope };
+  };
+  // a page ticked shows its parts; "Selected" shows the list to pick from; the count follows
+  const pickerChange = (f, pre) => {
+    const root = f.closest('.tm-checks');
+    if (f.name === pre + 'c') { const box = root.querySelector(`[data-parts-for="${f.value}"]`); if (box) { box.hidden = !f.checked; box.closest('.tm-page').classList.toggle('is-open', f.checked); } return true; }
+    if (f.name && f.name.startsWith(pre + 's-')) { f.closest('.tm-parts').querySelector('.tm-parts-b').hidden = f.value !== 'some'; return true; }
+    if (f.name && f.name.startsWith(pre + 'p-')) { partsCount(f.closest('.tm-parts')); return true; }
+    return false;
+  };
+  const pickerAll = (e) => {
+    const pa = e.target.closest('[data-parts-all], [data-parts-none]'); if (!pa) return false;
+    const box = pa.closest('.tm-parts'), on = pa.hasAttribute('data-parts-all'); box.querySelectorAll('.tm-part input').forEach((x) => { x.checked = on; }); partsCount(box); return true;
+  };
 
   // ---- groups: what each covers, and who is in it ------------------------------------------------------
   const paintGroups = () => {
@@ -856,19 +929,7 @@
         <header class="tm-dw-h"><div><h3 id="tm-gdw-t">${g ? `Edit ${esc(g.name)}` : 'New group'}</h3><p>${g ? (n ? `${n} ${n === 1 ? 'person is' : 'people are'} in it` : 'Nobody in it yet') : 'What it opens, whole or in part'}</p></div><button type="button" class="tm-dw-x" data-gdw-close aria-label="Close">&times;</button></header>
         <div class="tm-dw-b">
         <div class="set-f"><label for="tm-gn">Name</label><input class="input" id="tm-gn" name="gname" value="${g ? esc(g.name) : ''}" placeholder="e.g. Procurement" autocomplete="off"></div>
-        <div class="set-f"><span class="tm-lbl">Pages it opens</span><div class="tm-checks">${PAGES.map(([k, n, d]) => {
-          const on = !!(g && g.content.includes(k)), sc = g && (g.scope || {})[k], pn = PART_NOUN(k);
-          // a page with parts (Documents' sections, the projects): all of it, or only some
-          const parts = PARTS[k] ? `<div class="tm-parts" data-parts-for="${k}"${on ? '' : ' hidden'}>
-              <div class="tm-parts-h" role="radiogroup" aria-label="How much of ${esc(n)}"><label><input type="radio" name="gs-${k}" value="all"${sc ? '' : ' checked'}><span>All ${pn[1]}</span></label><label><input type="radio" name="gs-${k}" value="some"${sc ? ' checked' : ''}><span>Selected ${pn[1]}</span></label></div>
-              <div class="tm-parts-b"${sc ? '' : ' hidden'}>
-                <div class="tm-parts-bar"><span data-parts-n>${sc ? sc.length : 0} of ${PARTS[k].length} selected</span><span><button type="button" class="tm-x" data-parts-all="${k}">Select all</button><button type="button" class="tm-x" data-parts-none="${k}">Clear</button></span></div>
-                <div class="tm-parts-l">${PARTS[k].map((x) => `<label class="tm-part"><input type="checkbox" name="gp-${k}" value="${esc(x)}"${sc && sc.includes(x) ? ' checked' : ''}><span>${k === 'projects' ? `<b>${esc(x)}</b>` : ''}<span>${esc(PART_NAME(k, x))}</span></span></label>`).join('')}</div>
-              </div>
-            </div>` : '';
-          const soon = k === 'projects' && window.CM_SOON && !(window.CM_SOON_OPEN || []).includes('projects') ? ' ' + window.CM_SOON.badge : ''; // not open at launch (js/company-switcher.js)
-          return `<div class="tm-page${PARTS[k] ? ' has-parts' : ''}${on && PARTS[k] ? ' is-open' : ''}"><label><input type="checkbox" name="gc" value="${k}"${on ? ' checked' : ''}><span>${n}${soon}<small>${d}</small></span></label>${parts}</div>`;
-        }).join('')}</div></div>
+        <div class="set-f"><span class="tm-lbl">Pages it opens</span>${picker(g, 'g')}</div>
         <p class="set-err" role="alert"></p></div>
         <footer class="tm-dw-f">${g ? `<button type="button" class="tm-x" data-gdel="${esc(g.id)}">Delete group</button>` : '<span></span>'}<span class="tm-selbar-a"><button type="button" class="tm-x" data-gdw-close>Cancel</button><button type="submit" class="btn btn-primary btn-sm">${g ? 'Save' : 'Create group'}</button></span></footer>
       </form>`;
@@ -903,8 +964,7 @@
     gdw.addEventListener('click', (e) => {
       const t = ctx().t;
       if (e.target.closest('[data-gdw-close]')) { closeGdw(); return; }
-      const pa = e.target.closest('[data-parts-all], [data-parts-none]');
-      if (pa) { const box = pa.closest('.tm-parts'), on = pa.hasAttribute('data-parts-all'); box.querySelectorAll('.tm-part input').forEach((x) => { x.checked = on; }); partsCount(box); return; }
+      if (pickerAll(e)) return;
       const gd = e.target.closest('[data-gdel]');
       if (gd) {
         const g = t.groups.find((x) => x.id === gd.dataset.gdel), n = t.members.filter((m) => (m.groups || []).includes(g.id)).length;
@@ -914,27 +974,16 @@
       }
     });
     // a page ticked shows its parts; "Only some" shows the list to pick from
-    gdw.addEventListener('change', (e) => {
-      const f = e.target;
-      if (f.name === 'gc') { const box = gdw.querySelector(`[data-parts-for="${f.value}"]`); if (box) { box.hidden = !f.checked; box.closest('.tm-page').classList.toggle('is-open', f.checked); } return; }
-      if (f.name && f.name.startsWith('gs-')) { const l = f.closest('.tm-parts').querySelector('.tm-parts-b'); l.hidden = f.value !== 'some'; return; }
-      if (f.name && f.name.startsWith('gp-')) partsCount(f.closest('.tm-parts'));
-    });
+    gdw.addEventListener('change', (e) => { pickerChange(e.target, 'g'); });
     gdw.addEventListener('submit', (e) => {
       e.preventDefault();
-      const t = ctx().t, f = e.target, name = f.querySelector('[name="gname"]').value.trim(), content = [...f.querySelectorAll('[name="gc"]:checked')].map((x) => x.value);
+      const t = ctx().t, f = e.target, name = f.querySelector('[name="gname"]').value.trim(), { content, scope, err: bad } = readPicker(f, 'g');
       const err = f.querySelector('.set-err');
       if (!name) { err.textContent = 'Give the group a name.'; return; }
       if (t.groups.some((g) => g.name.toLowerCase() === name.toLowerCase() && g.id !== f.dataset.gsave)) { err.textContent = 'There is already a group with that name.'; return; }
       if (!content.length) { err.textContent = 'Pick at least one page it opens.'; return; }
       // the parts of a page it gives, where only some: none picked is no use
-      const scope = {};
-      for (const k of content.filter((x) => PARTS[x])) {
-        if ((f.querySelector(`[name="gs-${k}"]:checked`) || {}).value !== 'some') continue;
-        const picked = [...f.querySelectorAll(`[name="gp-${k}"]:checked`)].map((x) => x.value);
-        if (!picked.length) { const pn = PART_NOUN(k); err.textContent = `Pick at least one ${pn[0]}${k === 'projects' ? '' : ` of ${CNAME[k].replace(/&[^;]+;/g, ' ')}`}, or choose All ${pn[1]}.`; return; }
-        if (picked.length < PARTS[k].length) scope[k] = picked;
-      }
+      if (bad) { err.textContent = bad; return; }
       if (f.dataset.gsave) Object.assign(t.groups.find((g) => g.id === f.dataset.gsave), { name, content, scope });
       else t.groups.push({ id: 'g-' + Date.now().toString(36), name, content, scope });
       const was = !!f.dataset.gsave; closeGdw(); save(cur.id, t); paint(); toast(`${esc(name)} ${was ? 'saved' : 'created'}.`);
@@ -947,7 +996,7 @@
   const SOME = (x) => `${YES}<small>${x}</small>`;
   const PERMS = [
     ['Companies they work in', [SOME('The parent and all its subsidiaries'), SOME('The ones they&rsquo;re assigned to'), SOME('The ones they&rsquo;re assigned to'), SOME('The one they&rsquo;re assigned to')]],
-    ['Pages they open', [SOME('All of them'), SOME('All of them'), SOME('The ones their groups give them, whole or in part'), SOME('The ones their groups give them, whole or in part')]],
+    ['Pages they open', [SOME('All of them'), SOME('All of them'), SOME('The ones their groups, or their own access, give them, whole or in part'), SOME('The ones their groups, or their own access, give them, whole or in part')]],
     ['Upload and edit, on those pages', [YES, YES, YES, NO]],
     ['Invite people', [SOME('Any role'), SOME('Admins, managers and users'), SOME('Users, into their own groups'), NO]],
     ['Change roles and groups, remove people', [YES, SOME('Except owners'), NO, NO]],

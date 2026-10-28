@@ -4,8 +4,8 @@
    the documents it lets you see. A document opens in the drawer, as everywhere else: the supplier's
    file, its status, and what the catalog says about it. The data is js/suppliers.js. */
 (() => {
-  const S = window.CM_SUPPLIERS, box = document.getElementById('sup-body');
-  if (!S || !box) return;
+  const S = window.CM_SUPPLIERS, box = document.getElementById('sup-body'), home = document.getElementById('co-sup-mx');
+  if (!S || (!box && !home)) return;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('');
   const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
@@ -30,6 +30,9 @@
 .sp-mx th.c { font-size: 0.6875rem; line-height: 1.3; }
 .sp-mx th:first-child { width: 24%; }
 .sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
+.co-sup-sec .sp-glance { margin-bottom: 0; }
+.co-sup-sec .co-sup-add { grid-column: 1; justify-self: start; }
+.co-sup-none { display: grid; gap: 0.25rem; padding: 1.25rem 1.5rem; }
 .cd-dot.is-wait { background: transparent; border: 2px dashed var(--color-sand-400); box-sizing: border-box; }
 .sp-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
 .sp-card { display: grid; gap: 0.875rem; height: 100%; padding: 1.25rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface); color: inherit; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; }
@@ -120,7 +123,10 @@
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
   const overall = (k) => (k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Consent pending', 'b-neu'] : ['All in order', 'b-ok']);
-  const matrix = (shown) => {
+  // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
+  const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); };
+  // the matrix; on the company homepage (bare) without its own heading, the page's section has one
+  const matrix = (shown, bare) => {
     const cols = AREAS.filter((a) => shown.some((s) => s.consents.some((c) => c.title === a)));
     const cell = (s, a) => {
       const cs = s.consents.filter((c) => c.title === a);
@@ -136,7 +142,7 @@
     };
     const rows = shown.map((s) => { const [l, c] = overall(S.stats(s)); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc(s.services[0])} &middot; ${esc(s.city)}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
-    return `<section class="sp-glance" aria-labelledby="sp-glance-h"><div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>
+    return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
       <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c">${esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>No consent for it</span><span>Open a supplier for the documents behind each dot.</span></p></section>`;
   };
@@ -145,12 +151,29 @@
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     const shown = all.filter((s) => (filt === 'all' || (filt === 'attention' ? S.stats(s).bad : S.stats(s).pending)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
       // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
-      .sort((a, b) => { const x = S.stats(a), y = S.stats(b); return y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); });
+      .sort(urgent);
     const F = [['all', 'All'], ['attention', 'Need attention'], ['pending', 'Consent pending']];
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
         <div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div></div>
       ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
   };
+
+  // ---- the company homepage: the same matrix, the ones to chase first, each row to its supplier --------
+  // only the demo company has suppliers yet; a company added in this session has none to show
+  const orgOf = () => { try { const p = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel'; return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + p) || 'null') || 'home'; } catch (e) { return 'home'; } };
+  if (home && orgOf() !== 'home') home.closest('section').hidden = true;
+  else if (home) {
+    // only the ones with an alert: something missing or expired, expiring or in review
+    const all = S.list(), alert = all.filter((s) => { const k = S.stats(s); return k.bad || k.soon; }).sort(urgent);
+    const add = '<a class="btn co-btn-light btn-sm co-sup-add" href="ecosystem.html">Add a supplier</a>'; // found and connected in the C-MORE ecosystem
+    home.innerHTML = (alert.length ? matrix(alert, true) : `<div class="co-card co-sup-none"><b class="co-row-n">All your suppliers are in order</b><span class="co-subtle">Nothing missing, expired or expiring across your ${all.length} suppliers.</span></div>`)
+      // as under the homepage's other tables: View all on the right
+      + `<div class="co-pager-row">${add}<a href="suppliers.html" class="co-link co-pager-all">View all ${all.length} suppliers</a></div>`;
+    const go = (r) => { location.href = `suppliers.html?id=${encodeURIComponent(r.dataset.sup)}`; };
+    home.addEventListener('click', (e) => { const g = e.target.closest('[data-sup]'); if (g) go(g); });
+    home.addEventListener('keydown', (e) => { const g = e.target.closest('[data-sup]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(g); } });
+  }
+  if (!box) return;
 
   // ---- one supplier: who they are, and a table for each consent -----------------------------------
   const page = (s) => {

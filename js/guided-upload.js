@@ -20,7 +20,7 @@
    A new company's first look at its homepage (?guided after creating it, or the test user's) is an
    onboarding instead (tour(), at the end): ALMA big over the page, then docked at its side, asking
    step by step: Registration (the documents that show it exists; in Portugal the Certidão
-   Permanente, the Cartão de Pessoa Coletiva and a Certificate of Good Standing), the rest of the
+   Permanente, the Cartão de Pessoa Coletiva and the tax and social security clearance certificates), the rest of the
    Company documents, then Workers and Equipment. Any step, or all of it, can be skipped.
    Prototype: nothing is uploaded; what was read and accepted is kept for this tab, per company. */
 (() => {
@@ -47,23 +47,24 @@
   const profile = DM.profileOf(org);
   const AREA = {
     registration: { title: 'Registration', what: 'registration documents', sec: 'Company', who: 'To put WHO on C-MORE, I need the N documents that show it&rsquo;s registered in WHERE.' },
-    company: { title: 'Company', what: 'company documents', who: `A ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE needs these N.` },
+    company: { title: 'Company', what: 'company documents', who: `Beyond registering, these N help clients trust a ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE.` },
     workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you in WHERE. One file each for now. Once you add your team, I&rsquo;ll ask for them person by person.' },
     equipment: { title: 'Equipment', what: 'equipment documents', who: 'These N cover the machines you bring to site. One file each for now. Once you add your machines, I&rsquo;ll ask for them machine by machine.' },
   };
   const TYPICAL = { workers: [{ nationality: profile.country, specialRisk: false, certifiedOperator: false, employmentType: 'permanent' }], equipment: [{ yearBuilt: 2020, measuring: false, certified: false }] };
-  // a new company is also asked for what registering it takes (phase 'Registration', js/doc-model.js)
+  // a new company is also asked for what registering it takes (any phase 'Registration' document)
   const listFor = (p) => R.documentsFor(CAT, p, { phases: ['MVP', 'Registration'] }).map((x) => x.doc).filter((d) => !d.countries || d.countries.includes(p.country));
   // Registration: the documents that show the company exists, the first thing asked of it. In
-  // Portugal the Certidão Permanente, the Cartão de Pessoa Coletiva and a Certificate of Good
-  // Standing; elsewhere the catalog's Identification and registration documents
-  const REG = { PT: ['CO-01', 'CO-02', 'CO-GS'] };
+  // Portugal the Certidão Permanente, the Cartão de Pessoa Coletiva, and the tax and social
+  // security clearance certificates (no debts to either); elsewhere the catalog's Identification and registration documents
+  const REG = { PT: ['CO-01', 'CO-02', 'CO-06', 'CO-07'] };
   const asks = (area) => {
     if (area === 'equipment' && !profile.equipmentCount) return []; // it said it brings no machines
     if (area === 'company' || area === 'registration') {
-      const all = listFor(profile).filter((d) => d.category === 'company' && d.requirement === 'mandatory' && d.level === 'company');
-      if (area === 'company') return all;
-      return REG[profile.country] ? REG[profile.country].map((c) => all.find((d) => d.code === c)).filter(Boolean) : all.filter((d) => d.section.en === 'Identification and registration');
+      const all = listFor(profile).filter((d) => d.category === 'company' && d.level === 'company');
+      // Company: the rest of its papers, mandatory or not (what only a client asks for waits for that request)
+      if (area === 'company') return all.filter((d) => d.requirement !== 'on_request');
+      return REG[profile.country] ? REG[profile.country].map((c) => all.find((d) => d.code === c)).filter(Boolean) : all.filter((d) => d.requirement === 'mandatory' && d.section.en === 'Identification and registration');
     }
     const p = Object.assign({}, profile, area === 'equipment' ? {} : { employees: Math.max(1, profile.employees) });
     return listFor(p).filter((d) => d.category === area && ['mandatory', 'if_applicable'].includes(d.requirement)
@@ -76,7 +77,7 @@
   // completion: the company's documents, its workers' when it has employees and its equipment's
   // when it brings machines to site, accepted out of all of them. The strip's link opens ALMA on the
   // first section with something missing.
-  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).filter((a) => !SOON.areas.includes(a)).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d })));
+  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).filter((a) => !SOON.areas.includes(a)).flatMap((a) => asks(a).filter((d) => a !== 'company' || d.requirement === 'mandatory').map((d) => Object.assign({ area: a }, { d }))); // what's optional doesn't count against it
   // the homepage follows along while ALMA asks, docked beside it: each part she changes (the strip,
   // who the company is, its Documents card and table) shows its new state and catches the eye. With
   // nothing accepted (again), each part goes back to how the page drew it
@@ -101,14 +102,15 @@
     if (!box) return;
     const facts = asks('registration').filter((d) => (saved.files[d.code] || {}).ok).map((d) => {
       const f = saved.files[d.code];
-      const v = d.code === 'CO-02' ? `<b>NIPC</b> ${esc(String(f.ref).replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'))}` : d.code === 'CO-01' ? `<b>Registered</b> in ${esc(where)}` : d.code === 'CO-GS' || d.code === 'UN-01' ? '<b>In good standing</b>' : `<b>${esc(d.name.en)}</b> ${esc(f.ref)}`;
+      const v = d.code === 'CO-02' ? `<b>NIPC</b> ${esc(String(f.ref).replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'))}` : d.code === 'CO-01' ? `<b>Registered</b> in ${esc(where)}` : d.code === 'CO-06' ? '<b>No tax debts</b>' : d.code === 'CO-07' ? '<b>No social security debts</b>' : d.code === 'UN-01' ? '<b>In good standing</b>' : `<b>${esc(d.name.en)}</b> ${esc(f.ref)}`;
       return `<span class="gs-fact">${OK}${v}</span>`;
     });
     if (!facts.length) return;
     const left = asks('registration').length - facts.length;
-    box.innerHTML = `<h1 class="co-name${org.id === 'home' && O.test ? ' co-name-empty' : ''}">${esc(nameOf)}</h1>
+    const done = (saved.areas.registration || {}).factsDone && window.CO_PROFILE;
+    box.innerHTML = `<h1 class="co-name${org.id === 'home' && O.test && !done ? ' co-name-empty' : ''}">${esc(nameOf)}</h1>
       <span class="gs-facts">${facts.join('')}</span>
-      <span class="co-subtle" style="font-size:0.9375rem">${left ? `${left} more registration document${left === 1 ? '' : 's'} and this is complete.` : 'Sector, size and address next, from the rest of your documents.'}</span>`;
+      <span class="co-subtle" style="font-size:0.9375rem">${left ? `${left} more registration document${left === 1 ? '' : 's'} and this is complete.` : done ? esc(CO_PROFILE.line(CO_PROFILE.load())) : 'Next, check who the company is, as these documents say.'}</span>`;
   };
   const paintStrip = (box, all, ok) => {
     const p = Math.round((ok.length / all.length) * 100), left = all.filter((x) => !ok.includes(x));
@@ -148,7 +150,9 @@
   const COUNTRY = { PT: 'Portugal', ES: 'Spain', FR: 'France', DE: 'Germany', IT: 'Italy', NL: 'Netherlands', BE: 'Belgium', IE: 'Ireland', US: 'the United States' };
   const where = COUNTRY[profile.country] || org.countryName || 'your country';
   const countryName = where.replace(/^the /, 'The ');
-  const nameOf = org.trading || org.name;
+  // the company's name, from its profile (js/co-profile.js): what ALMA read and the person confirmed
+  const confirmedName = () => { const p = window.CO_PROFILE ? CO_PROFILE.load() : null; return (p && (p.trading || p.name)) || ''; };
+  let nameOf = confirmedName() || org.trading || org.name;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const M = DM.MONTHS;
   const dt = (d) => `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
@@ -163,11 +167,10 @@
     'CO-02': taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') || digits(h, 9),
     'CO-06': `${digits(h, 4)} ${digits(h + 2, 4)} ${digits(h + 5, 4)}`,
     'CO-07': `${digits(h + 1, 11)}`,
-    'CO-GS': `GS-${issued.getFullYear()}-${digits(h + 4, 6)}`,
   }[d.code] || `${issued.getFullYear()}/${String(h % 99991).padStart(5, '0')}`);
-  const CODE_LABEL = { 'CO-GS': 'certificate number', 'CO-01': 'access code', 'CO-02': 'NIPC', 'CO-06': 'validation code', 'CO-07': 'certificate code' };
+  const CODE_LABEL = { 'CO-01': 'access code', 'CO-02': 'NIPC', 'CO-06': 'validation code', 'CO-07': 'certificate code' };
   // how long a document lasts, from its catalog renewal: a month, three, four, or a year
-  const monthsOf = (d) => ({ 'CO-06': 3, 'CO-07': 4, 'CO-GS': 6 }[d.code] || (/month/i.test(d.renewal || '') && !/6/.test(d.renewal || '') ? 1 : 12));
+  const monthsOf = (d) => ({ 'CO-06': 3, 'CO-07': 4 }[d.code] || (/month/i.test(d.renewal || '') && !/6/.test(d.renewal || '') ? 1 : 12));
   // which document a file is: by the words in its name, else the next one still open
   const fold = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const WORDS = (d) => fold([d.name.en, local(d), d.code].join(' ')).split(/[^a-z0-9]+/)
@@ -404,6 +407,10 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-tour-bar .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5rem; }
 .gs-sec .cm-soon { margin-left: 0.375rem; }
 .gs-in-steps span.cm-soon { width: auto; height: 1.25rem; background: var(--color-mid-beige); font-size: 0.625rem; color: var(--color-ink-muted); }
+.gs-facts-f { display: grid; gap: 1.75rem; }
+.gs-fsec .gs-lh { margin-bottom: 0.875rem; }
+.gs-err { font-size: 0.8125rem; color: var(--color-critical); }
+.gs-dock .gs-facts-f .cpf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .gs-note { margin-bottom: 0.75rem; padding: 0.625rem 0.875rem; border-radius: 0.5rem; background: var(--color-coral-tint, #f9e7e3); font-size: 0.875rem; line-height: 1.5; color: var(--color-ink); }
 .gs-conf { margin-bottom: 0.75rem; font-size: 0.8125rem; line-height: 1.5; color: var(--color-ink-subtle); }
 button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-coral-deep); }
@@ -545,6 +552,75 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         ${left ? `<p class="gs-d gs-hint">Accept ${left === 1 ? 'the last document' : `the ${left} documents left`} to continue.</p>` : ''}`;
     };
 
+    // Registration, between the review and the end: who the company is, as its registration
+    // documents say (the Certidão Permanente: name, legal form, address, activity codes; the Cartão
+    // de Pessoa Coletiva: name and tax number), with what sign-up said (country, tax number) and
+    // what no document says (size, group), for the person to check. It is the company's profile in
+    // Settings (js/co-profile.js). Prototype: what she "reads" is made up, the same for a company each time.
+    const FACTS = area === 'registration' && !!window.CO_PROFILE;
+    let draft = null, factsErr = null;
+    const facts = () => {
+      const CP = window.CO_PROFILE, base = CP.load(), p = JSON.parse(JSON.stringify(base)), src = {}, h = hash(org.id + (base.tax || taxNo));
+      const okF = (c) => ((saved.files[c] || {}).ok ? docs.find((d) => d.code === c) : null);
+      const accepted = docs.filter((d) => (saved.files[d.code] || {}).ok);
+      // the registry certificate (elsewhere, the first registration document that isn't the tax card)
+      const cert = okF('CO-01') || (profile.country !== 'PT' ? accepted.find((d) => d.code !== 'CO-02') : null), card = okF('CO-02');
+      const nm = (d) => local(d) || d.name.en;
+      if (base.country) src.country = 'sign-up';
+      if (base.tax) src.tax = 'sign-up';
+      else if (card) { p.tax = String(saved.files['CO-02'].ref).replace(/\s/g, ''); src.tax = nm(card); }
+      const named = base.name && base.name !== 'Your company';
+      if (cert || card) {
+        p.name = named ? base.name : ['Atlântico Obras, Lda.', 'Douro Engenharia e Construção, Lda.', 'Serra & Filhos Construções, Lda.', 'Ribeira Técnica, S.A.', 'Minho Montagens, Lda.'][h % 5];
+        src.name = nm(cert || card);
+      }
+      if (cert) {
+        if (!p.form) p.form = /\bS\.?A\.?$/.test(p.name) ? 'public' : /\bLda\.?$/.test(p.name) ? 'private' : '';
+        if (p.form) src.form = nm(cert);
+        if (profile.country === 'PT' && !base.street) {
+          [p.street, p.postcode, p.city, p.region] = [['Rua de Santa Catarina 214', '4000-447', 'Porto', 'Porto'], ['Avenida da Boavista 1180', '4100-113', 'Porto', 'Porto'], ['Rua Augusta 85', '1100-048', 'Lisboa', 'Lisboa'], ['Avenida da Liberdade 245', '1250-143', 'Lisboa', 'Lisboa'], ['Rua do Brasil 60', '3030-175', 'Coimbra', 'Coimbra']][h % 5];
+          ['street', 'postcode', 'city', 'region'].forEach((k) => { src[k] = nm(cert); });
+        }
+        if (CP.isEU(p.country) && !(base.cae || []).length) {
+          p.cae = profile.sector === 'construction' ? ['41200 · Construction of residential and non-residential buildings', h % 2 ? '43210 · Electrical installation' : '42110 · Construction of roads and motorways']
+            : ['46900 · Non-specialised wholesale trade', '49410 · Freight transport by road'];
+          src.cae = nm(cert);
+          const secs = [...new Set(p.cae.map((c) => CP.sectorOfCode(c)))];
+          if (!base.sector) { p.sector = secs[0]; src.sector = nm(cert); }
+          if (!base.sectors2) p.sectors2 = secs.filter((k) => k !== p.sector).join(',');
+        }
+      }
+      if (base.structure) src.structure = 'sign-up';
+      return { p, src };
+    };
+    const SECS = ['identification', 'location', 'activity', 'size', 'structure'];
+    const stepFacts = () => {
+      const { p, src } = facts(), v = Object.assign(p, draft || {});
+      const read = Object.keys(src).filter((k) => src[k] !== 'sign-up').length;
+      return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
+        <p class="says">ALMA</p>
+        <h1 id="gs-title" tabindex="-1">This is your company, <span class="soft">as your documents say. Is it right?</span></h1>
+        <p class="lead">${read ? 'I&rsquo;ve filled in what your documents say, marked with where I read it.' : 'Your documents didn&rsquo;t say much about the company itself.'} Check it, and add what they don&rsquo;t say${v.structure ? ': how big the company is' : ': how big the company is and whether it&rsquo;s part of a group'}. It becomes the company&rsquo;s profile, which you can change any time in Settings.</p>
+        <form class="gs-pane gs-facts-f" id="gs-facts" novalidate>${SECS.map((k) => `<section class="gs-fsec"><p class="gs-lh" role="heading" aria-level="2">${CO_PROFILE.SECTIONS[k].title}</p>${CO_PROFILE.section(k, v, src)}</section>`).join('')}</form>
+        ${nav('Back to review', '', '<button class="btn btn-primary" type="button" data-facts>Confirm details</button>')}`;
+    };
+    const confirmFacts = () => {
+      const root = $('gs-facts'), v = CO_PROFILE.collect(root), bad = CO_PROFILE.check(v, true);
+      if (bad) {
+        factsErr = bad; draft = v; paint();
+        // what's wrong, under the field itself
+        const i = $('gs-facts').querySelector(`[data-k="${bad[1]}"]`);
+        if (i) { i.classList.add('is-bad'); (i.closest('.cpf-f') || i.parentNode).insertAdjacentHTML('beforeend', `<p class="gs-err" role="alert">${esc(bad[0])}</p>`); i.focus(); i.scrollIntoView({ block: 'center' }); }
+        return;
+      }
+      const { p, src } = facts(), out = Object.assign(p, v);
+      if (src.tax && src.tax !== 'sign-up') out.tax = p.tax; // read off the tax card: the field shows it, locked
+      CO_PROFILE.save(out);
+      st.factsDone = true; st.sub = null; draft = null; factsErr = null; st.reviewed = true;
+      nameOf = confirmedName() || nameOf;
+      goStep(3); identity(); if (tour && tour.refresh) tour.refresh();
+    };
+
     // step 3: how complete the section is
     const step3 = () => {
       const p = pct(), missing = docs.filter((d) => !(saved.files[d.code] || {}).ok);
@@ -666,15 +742,18 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     let shownStep = 0;
     const paint = () => {
       paintSteps();
-      $('gs-body').innerHTML = checking ? validating() : st.step === 1 ? step1() : st.step === 2 ? step2() : step3();
+      const onFacts = !checking && st.step === 2 && st.sub === 'facts' && FACTS;
+      $('gs-body').innerHTML = checking ? validating() : st.step === 1 ? step1() : onFacts ? stepFacts() : st.step === 2 ? step2() : step3();
+      if (onFacts) CO_PROFILE.wire($('gs-facts'), () => { draft = CO_PROFILE.collect($('gs-facts')); if (factsErr) { factsErr = null; $('gs-facts').querySelectorAll('.gs-err').forEach((x) => x.remove()); } });
       // a step all done stands centred, in the panel too; one with documents missing reads top-down,
       // its ring smaller, so the missing ones and her drop zone fit above the buttons
       $('gs-body').classList.toggle('is-end', !checking && st.step === 3 && pct() === 100);
       $('gs-body').classList.toggle('is-part', !checking && st.step === 3 && pct() < 100); // centred too, top-down
       if (checking && checking.at === 0) { wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
-      if (shownStep !== st.step) { shownStep = st.step; wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
+      const at = st.step + (onFacts ? 0.5 : 0);
+      if (shownStep !== at) { shownStep = at; wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
     };
-    const goStep = (n) => { st.step = n; editing = null; keep(); paint(); };
+    const goStep = (n) => { st.step = n; if (n !== 2) st.sub = null; editing = null; keep(); paint(); };
 
     // files in: they wait in "Your files" until she reads them. One given for a named document
     // (Replace in review, Add on the last step) goes straight to it and is read at once.
@@ -716,7 +795,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-close]')) { e.preventDefault(); close(t('[data-close]').dataset.close || ''); return; }
       // back: from the review to the upload; from the upload or the end (what she read is accepted
       // by then, not to be reviewed again) to the step before in the onboarding
-      if (t('[data-back]')) { if (st.step === 2) goStep(1); else close('back'); return; }
+      if (t('[data-back]')) { if (st.step === 2 && st.sub === 'facts') { st.sub = null; keep(); paint(); } else if (st.step === 2) goStep(1); else close('back'); return; }
+      if (t('[data-facts]')) { confirmFacts(); return; }
       if (t('[data-peek]')) { openPeek(code('peek')); return; }
       if (t('#gs-drop') || t('[data-browse]')) { browse(); return; }
       if (t('[data-unpend]')) { st.pending.splice(+code('unpend'), 1); keep(); paint(); return; }
@@ -749,6 +829,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         if (!filed().length) goStep(1); else paint(); return;
       }
       if (t('[data-remove]')) { delete saved.files[code('remove')]; keep(); if (!filed().length) goStep(1); else paint(); return; }
+      // Registration: who the company is, checked, before it's done
+      if (t('[data-confirm]') && FACTS && !st.factsDone) { st.sub = 'facts'; keep(); paint(); return; }
       if (t('[data-confirm]')) { st.reviewed = true; goStep(3); if (tour && tour.refresh) tour.refresh(); return; } // the Documents page behind her redraws with them
       // anywhere else on a card opens it in the drawer; its own buttons (above) keep their jobs, and
       // a card being edited stays put so its fields can be clicked into

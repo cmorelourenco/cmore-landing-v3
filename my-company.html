@@ -1989,6 +1989,12 @@ body { transition: background-color .9s ease; }
   </div></section>
 
   <!-- Consents -->
+  <!-- My suppliers: the same matrix as on suppliers.html, the ones to chase first (js/suppliers-page.js) -->
+  <section class="co-sec co-pad-top-0 co-sup-sec"><div class="co-wrap">
+    <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My suppliers</h3></div>
+    <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Suppliers needing attention</h2><p class="co-muted">The ones with something missing, expired or about to expire. Open one for the documents behind each dot.</p></div>
+    <div id="co-sup-mx"></div>
+  </div></section>
   <section class="co-sec co-pad-top-0 co-last-sec"><div class="co-wrap">
     <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Consents</h3></div>
     <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Who asked for your consents</h2><p class="co-muted">Clients asking to see your documents. Give or deny your consent to each one: nothing is shared until you say yes.</p></div>
@@ -2016,6 +2022,7 @@ body { transition: background-color .9s ease; }
 </div>
 
 </main>
+<script src="js/company-id.js"></script>
 <script src="js/co-profile.js"></script>
 <script>CO_PROFILE.applyToCompanyPage();</script>
 <script>
@@ -2105,6 +2112,8 @@ body { transition: background-color .9s ease; }
 <script src="js/doc-files.js"></script>
 <script src="js/doc-upload.js"></script>
 <script src="js/home-docs.js"></script>
+<script src="js/suppliers.js"></script>
+<script src="js/suppliers-page.js"></script>
 
 <script src="js/app-3.js"></script>
 <script>

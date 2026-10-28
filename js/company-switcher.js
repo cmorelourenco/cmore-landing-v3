@@ -24,7 +24,8 @@
   // Its company is a new one, with no name yet: its documents are only what it uploads to ALMA,
   // section by section (js/guided-upload.js, js/doc-model.js)
   const TEST = /^test@c-more\.test$/i.test(person.email || '');
-  if (TEST) Object.assign(HOME, { name: 'Your company', logo: '', state: 'empty', country: person.country || 'PT', tax: person.nipc || '' });
+  if (TEST) Object.assign(HOME, { name: ((get(sessionStorage, 'cm-co-profile-v2', {}) || {}).test || {}).name || 'Your company', // once ALMA's check has named it (js/co-profile.js)
+    logo: '', state: 'empty', country: person.country || 'PT', tax: person.nipc || '' });
   const KEY = 'cm-orgs-' + persona, LINKS = 'cm-org-links-' + persona, LAST = 'cm-last-org-' + persona;
 
   // the companies, and how they hang together: links maps a subsidiary's id to its parent's

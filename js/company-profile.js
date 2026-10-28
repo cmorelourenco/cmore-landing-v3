@@ -1,5 +1,5 @@
-/* The company profile page: the company's name and logo, its address, how to reach it, and
-   which clients may see its documents. Each card saves on its own, and only once something in
+/* The company profile page: who the company is (and its logo), where, what it does, its size, its
+   corporate structure, how to reach it, and which clients may see its documents. Each card saves on its own, and only once something in
    it has changed; the company page follows what is saved (js/co-profile.js). */
 (() => {
   if (!window.CO_PROFILE) return;
@@ -9,37 +9,38 @@
   const flash = (el, text) => { el.textContent = text; clearTimeout(el._t); el._t = setTimeout(() => (el.textContent = ''), 2600); };
 
   // ---- fields -----------------------------------------------------------------------------------
-  const COUNTRIES = ['Portugal', 'Spain', 'United States', 'Canada', 'Brazil', 'United Kingdom', 'France', 'Germany', 'Italy', 'Netherlands', 'Belgium'];
+  // Identification, Location, Activity, Size and Corporate structure: the same form ALMA's check
+  // uses (js/co-profile.js); Contacts: its own fields here
   const CODES = [['+351', 'PT'], ['+1', 'US'], ['+44', 'UK'], ['+49', 'DE'], ['+34', 'ES'], ['+33', 'FR'], ['+39', 'IT'], ['+31', 'NL'], ['+32', 'BE'], ['+55', 'BR']];
-  $('#cp-country').innerHTML = COUNTRIES.map((c) => `<option>${c}</option>`).join('');
   $('#cp-cc').innerHTML = CODES.map(([c, k]) => `<option value="${c}">${k} ${c}</option>`).join('');
   const forms = [...document.querySelectorAll('[data-cp]')];
-  const fields = (f) => [...f.querySelectorAll('[data-k]')];
-  const fill = () => forms.forEach((f) => fields(f).forEach((i) => { i.value = p[i.dataset.k] || ''; i.classList.remove('is-bad'); }));
-  const dirty = (f) => fields(f).some((i) => i.value.trim() !== (p[i.dataset.k] || ''));
+  const draw = (f) => {
+    const k = f.dataset.cp; if (!k) return;
+    f.querySelector('[data-fields]').innerHTML = CO_PROFILE.section(k, p);
+    f.closest('.set-card').querySelector('[data-sub]').textContent = CO_PROFILE.SECTIONS[k].sub;
+  };
+  const fields = (f) => [...f.querySelectorAll('[data-k]')].filter((i) => !i.disabled);
+  const fill = () => forms.forEach((f) => { if (f.dataset.cp) draw(f); else fields(f).forEach((i) => { i.value = p[i.dataset.k] || ''; i.classList.remove('is-bad'); }); });
+  const now = (f) => CO_PROFILE.collect(f);
+  const dirty = (f) => Object.entries(now(f)).some(([k, v]) => v !== String(p[k] == null ? '' : p[k]));
   const CHECK = {
-    name: (v) => (!v ? 'The company needs its legal name.' : ''),
-    people: (v) => (v && !/^\d{1,6}$/.test(v) ? 'People is a whole number: 24, for example.' : ''),
-    // the tax number's shape follows the country: a Portuguese NIPC (nine digits), a US EIN, or anything elsewhere
-    tax: (v) => { const c = (document.querySelector('#cp-country') || {}).value || p.country; if (!v) return ''; if (c === 'Portugal') return /^\d{9}$/.test(v.replace(/\s/g, '')) ? '' : 'A NIPC is nine digits, like 514 228 930.'; if (c === 'United States') return /^\d{2}-?\d{7}$/.test(v) ? '' : 'An EIN is nine digits, written 12-3456789.'; return ''; },
     email: (v) => (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'That does not look like an email address.' : ''),
     phone: (v) => { const d = v.replace(/\D/g, ''); return v && (d.length < 6 || d.length > 15 || /[^\d\s()+.-]/.test(v)) ? 'That does not look like a phone number.' : ''; },
     website: (v) => (v && !/^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i.test(v) ? 'That does not look like a web address.' : ''),
   };
   forms.forEach((f) => {
     const btn = f.querySelector('[type="submit"]'), err = f.querySelector('.set-err');
-    const sync = () => { btn.disabled = !dirty(f); };
-    f.addEventListener('input', (e) => { e.target.classList.remove('is-bad'); err.textContent = ''; sync(); });
-    f.addEventListener('change', sync);
+    const sync = () => { btn.disabled = !dirty(f); err.textContent = ''; };
+    if (f.dataset.cp) CO_PROFILE.wire(f, sync);
+    else { f.addEventListener('input', (e) => { e.target.classList.remove('is-bad'); sync(); }); f.addEventListener('change', sync); }
     f.addEventListener('submit', (e) => {
       e.preventDefault();
-      for (const i of fields(f)) {
-        const msg = CHECK[i.dataset.k] && CHECK[i.dataset.k](i.value.trim());
-        if (msg) { i.classList.add('is-bad'); err.textContent = msg; i.focus(); return; }
-      }
-      fields(f).forEach((i) => { p[i.dataset.k] = i.value.trim(); });
-      if (p.tax && /^\d{9}$/.test(p.tax)) p.tax = p.tax.slice(0, 2) + '-' + p.tax.slice(2);
-      CO_PROFILE.save(p); fill(); sync(); paintLogo();
+      const v = now(f);
+      const bad = f.dataset.cp ? CO_PROFILE.check(v) : (Object.keys(v).map((k) => [CHECK[k] && CHECK[k](v[k]), k]).find(([m]) => m) || null);
+      if (bad) { const i = f.querySelector(`[data-k="${bad[1]}"]`); if (i) { i.classList.add('is-bad'); i.focus(); } err.textContent = bad[0]; return; }
+      Object.assign(p, v);
+      CO_PROFILE.save(p); p = CO_PROFILE.load();
+      if (f.dataset.cp) draw(f); sync(); paintLogo();
       flash(f.querySelector('.set-saved'), 'Saved');
     });
   });
@@ -64,11 +65,11 @@
       x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256);
       x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256);
       p.logo = c.toDataURL('image/jpeg', 0.88); CO_PROFILE.save(p); paintLogo(); URL.revokeObjectURL(img.src);
-      flash($('#company .set-saved'), 'Logo updated');
+      flash($('#identification .set-saved'), 'Logo updated');
     };
     img.src = URL.createObjectURL(f);
   });
-  $('#cp-logo-rm').addEventListener('click', () => { p.logo = ''; CO_PROFILE.save(p); paintLogo(); flash($('#company .set-saved'), 'Logo removed'); });
+  $('#cp-logo-rm').addEventListener('click', () => { p.logo = ''; CO_PROFILE.save(p); paintLogo(); flash($('#identification .set-saved'), 'Logo removed'); });
 
   // ---- consents: who may see the company's documents --------------------------------------------------
   const list = $('#cp-consents');
