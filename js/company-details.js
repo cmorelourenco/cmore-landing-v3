@@ -637,6 +637,13 @@
 
   const toTop = () => scrollTo({ top: 0, behavior: 'smooth' });
   // the side menu's Documents sections (js/company-switcher.js): here, they open in place
+  // and Documents itself, from a section or a document: back to every section, at the top
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.sn-item[title="Documents"]')) return;
+    e.preventDefault();
+    if (area === null && detail === null && worker === null && machine === null) { toTop(); return; }
+    area = null; detail = null; worker = null; machine = null; resetDetailFilter(); render(); toTop();
+  });
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[data-sn-area]');
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || !AREAS.some((x) => x.key === a.dataset.snArea)) return;
