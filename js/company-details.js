@@ -69,13 +69,13 @@
     const h = hash(d.code + (d.archivedCode || '') + salt + PERSONA);
     return d.status === 'attention' ? 58 + (h % 15) : 86 + (h % 14);
   };
-  // shown as a tag, the same badge as the Status column so the two read alike: "ALMA confidence 96%"
+  // shown as a level (High, Medium, Low), never a number: the same badge as the Status column, so the two read alike
   const band = (p) => (p >= 90 ? ['High', 'b-ok', 'Read cleanly, and it matches the profile.'] : p >= 75 ? ['Medium', 'b-pend', 'Read well, but worth a glance.'] : ['Low', 'b-over', 'ALMA isn&rsquo;t sure of something here. Check it against the file.']);
   const confCell = (p) => {
     if (p === 'reading') return '<span class="co-badge b-neu">Reading&hellip;</span>';
     if (p == null) return dash;
     const [b, cls, why] = band(p);
-    return `<span class="co-badge ${cls}" title="${b}. ${why}">ALMA confidence ${p}%</span>`;
+    return `<span class="co-badge ${cls}" title="${why}">${b} confidence</span>`;
   };
   // a roster row reads as sure as its least sure record
   const rosterConf = (d) => { const l = d.roster.filter((r) => !NO_FILE.includes(r.status)).map((r) => (r.status === 'attention' ? 61 : 86 + (hash(d.code + r.i) % 14))); return l.length ? Math.min(...l) : null; };
@@ -441,7 +441,7 @@
       const docs = DATA.filter((d) => d.area === a.key && counted(d));
       const alerts = docs.filter(needsAttention).length;
       return `<button type="button" class="cd-area${docs.length ? '' : ' is-empty'}" data-area="${a.key}" role="listitem">` +
-        `<span class="cd-area-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${a.icon}</svg><span>${a.title}</span>${alerts ? `<span class="cd-area-alert">${alerts}</span>` : ''}<span class="cd-area-arrow" aria-hidden="true">→</span></span>` +
+        `<span class="cd-area-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${a.icon}</svg><span>${a.title}</span>${soon(a.key)}${alerts ? `<span class="cd-area-alert">${alerts}</span>` : ''}<span class="cd-area-arrow" aria-hidden="true">→</span></span>` +
         `<span class="cd-area-n">${docs.length}<small>document${docs.length === 1 ? '' : 's'} ${window.DOC_MODEL.ORG ? 'on file' : 'asked of you'}</small></span>` +
         `<span class="cd-area-d">${a.sub}</span>` +
       `</button>`;
@@ -570,6 +570,9 @@
   // the breadcrumb, the back button, and the title/subtitle/stats above the list
   const crumbTrail = document.getElementById('cd-crumb-trail'), crumbBack = document.getElementById('cd-crumb-back');
   const hero = document.getElementById('cd-hero'), h2 = document.getElementById('cd-h2'), sub = document.getElementById('cd-sub');
+  // not open at launch: its badge (js/company-switcher.js)
+  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'] }); // this page draws before js/company-switcher.js loads
+  const soon = (k) => (SOON.areas.includes(k) ? SOON.badge : '');
   const updateHeader = () => {
     const a = area ? AREAS.find((x) => x.key === area) : null;
     const doc = detail !== null ? docById(detail) : null;
@@ -592,7 +595,7 @@
     };
     hero.hidden = !!doc || worker !== null || machine !== null;
     if (doc || worker !== null || machine !== null) return;
-    h2.textContent = a ? a.title : 'All company documents';
+    h2.innerHTML = a ? a.title + (soon(a.key) ? ' ' + soon(a.key) : '') : 'All company documents';
     const fresh = window.DOC_MODEL.ORG; // a company added in this session: only what it uploaded
     sub.innerHTML = a ? a.long : fresh ? `The documents you&rsquo;ve uploaded, kept in one profile so any client finds the same set. Your profile: <b class="cd-profile">${D.line}</b>.` : `Every document the C&#8209;MORE catalog asks of a company like yours, kept in one profile so any client finds the same set. Chosen from your profile: <b class="cd-profile">${D.line}</b>.`;
     counts(a ? DOCS.filter((d) => d.area === a.key) : DOCS);

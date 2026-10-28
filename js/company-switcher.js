@@ -242,3 +242,28 @@ html[data-sn="rail"] .sn-sub { display: none; }`;
   if (/company-details/.test(location.pathname)) mark(new URLSearchParams(location.search).get('area'));
   document.addEventListener('cm-docs-area', (e) => mark(e.detail));
 })();
+
+// Coming soon: what's shown but not open at launch. The badge is styled here, once for every page
+// (js/company-details.js and js/guided-upload.js use it too): the side menu's C-MORE ecosystem,
+// Questionnaires and My clients, and Documents' Workers and Equipment.
+window.CM_SOON = { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'] };
+(() => {
+  const st = document.createElement('style');
+  st.textContent = `
+.cm-soon { display: inline-flex; align-items: center; flex: none; height: 1.25rem; padding: 0 0.4375rem; border-radius: 0.3125rem; background: var(--color-mid-beige); color: var(--color-ink-muted);
+  font-size: 0.625rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; line-height: 1; white-space: nowrap; vertical-align: middle; }
+/* in the menu, the badge always sits in the same spot: under the label */
+.sn-sub a.has-soon { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.1875rem; height: auto; min-height: 2rem; padding-block: 0.3125rem; }
+.sn-sub .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5625rem; font-weight: 600; }
+.sn-item.has-soon { height: auto; min-height: 2.625rem; padding-block: 0.375rem; }
+.sn-item.has-soon .sn-l { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1875rem; }
+.sn-item.has-soon .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5625rem; }
+html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }`;
+  document.head.appendChild(st);
+  const put = (el) => { if (el && !el.querySelector('.cm-soon')) el.insertAdjacentHTML('beforeend', window.CM_SOON.badge); };
+  ['C-MORE ecosystem', 'Questionnaires', 'My clients'].forEach((t) => {
+    const it = document.querySelector(`.sn-item[title="${t}"]`), l = it && it.querySelector('.sn-l');
+    if (l) { it.classList.add('has-soon'); put(l); }
+  });
+  window.CM_SOON.areas.forEach((k) => { const a = document.querySelector(`.sn-sub a[data-sn-area="${k}"]`); if (a) { a.classList.add('has-soon'); put(a); } });
+})();

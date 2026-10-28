@@ -7,7 +7,8 @@
                   by side: nothing says which file is which yet, because nothing has been read.
                   Moving on, she reads every file: each one she recognises is checked with the body
                   that issued it; one that isn't among the documents asked for is kept, and said so.
-     2 Review   — what she read from each: a short summary, the fields and her confidence.
+     2 Review   — what she read from each: the fields and her confidence (a level, never a number).
+                  She accepts what she's sure of; only low confidence waits for the user, listed first.
                   Accept each (or all at once), change what she got wrong, replace or remove.
                   A card opens the document in a drawer, as in Documents: a preview of it as read,
                   each value with its citation.
@@ -24,6 +25,9 @@
    Prototype: nothing is uploaded; what was read and accepted is kept for this tab, per company. */
 (() => {
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
+  // not open at launch (js/company-switcher.js styles the badge)
+  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'] });
+  const soon = (k) => (SOON.areas.includes(k) ? ' ' + SOON.badge : '');
   if (!O || !CAT || !R || !DM) return;
   const org = O.current();
   if (!org || (org.id === 'home' && !O.test)) return; // the test user's own company is a new one too
@@ -72,7 +76,7 @@
   // completion: the company's documents, its workers' when it has employees and its equipment's
   // when it brings machines to site, accepted out of all of them. The strip's link opens ALMA on the
   // first section with something missing.
-  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d })));
+  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).filter((a) => !SOON.areas.includes(a)).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d })));
   // the homepage follows along while ALMA asks, docked beside it: each part she changes (the strip,
   // who the company is, its Documents card and table) shows its new state and catches the eye. With
   // nothing accepted (again), each part goes back to how the page drew it
@@ -286,6 +290,7 @@ html.tour-fading main.page { transition: opacity .45s ease; }
 .gs-acc svg { width: 0.875rem; height: 0.875rem; }
 button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-acc.is-ok { border-color: var(--color-ok, #a6d8a0); background: var(--color-ok, #a6d8a0); color: var(--color-graphite); cursor: default; }
+.gs-bar-end { margin: 0.75rem 0 0; }
 .gs-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 2.25rem; margin-bottom: 0.75rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
 .gs-hint { margin-top: 0.75rem; text-align: center; }
 .gs-meter { position: relative; width: 11rem; aspect-ratio: 1; margin: 0 auto; border-radius: 50%;
@@ -393,6 +398,12 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-tour-bar li.is-done span { background: var(--color-graphite); }
 .gs-tour-bar li.is-on span { background: var(--color-coral); }
 .gs-tour-bar li.is-on { font-weight: 600; color: var(--color-ink); }
+.gs-tour-bar li.is-soon span { background: repeating-linear-gradient(90deg, var(--color-line) 0 6px, transparent 6px 10px); }
+.gs-tour-bar li.is-soon { opacity: .75; }
+.gs-tour-l { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.375rem; font-style: normal; }
+.gs-tour-bar .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5rem; }
+.gs-sec .cm-soon { margin-left: 0.375rem; }
+.gs-in-steps span.cm-soon { width: auto; height: 1.25rem; background: var(--color-mid-beige); font-size: 0.625rem; color: var(--color-ink-muted); }
 .gs-note { margin-bottom: 0.75rem; padding: 0.625rem 0.875rem; border-radius: 0.5rem; background: var(--color-coral-tint, #f9e7e3); font-size: 0.875rem; line-height: 1.5; color: var(--color-ink); }
 .gs-conf { margin-bottom: 0.75rem; font-size: 0.8125rem; line-height: 1.5; color: var(--color-ink-subtle); }
 button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-coral-deep); }
@@ -426,7 +437,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const flagged = docs.length > 1 && d.code === FLAGGED && valid !== 'No expiry';
       return {
         area, file: file.name, country: countryName, issued: dt(issued), valid, by: issuer(d), ref: codeOf(d, h, issued),
-        conf: flagged ? 76 + (h % 8) : 90 + (h % 9), flag: flagged ? 'valid' : null, ok: false, edited: false,
+        // low confidence (what she couldn't read cleanly) waits for the user; the rest she accepts herself
+        conf: flagged ? 55 + (h % 15) : h % 4 ? 90 + (h % 9) : 78 + (h % 10), flag: flagged ? 'valid' : null, ok: !flagged, edited: false,
       };
     };
     const tour = opts.tour; // the onboarding (tour() below): where it is, the step after this one
@@ -443,8 +455,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (tour) wrap.classList.add('gs-dock');
     if (tour && tour.quiet) wrap.classList.add('is-quiet'); // one step after another: the panel stays put
     wrap.innerHTML = `<div class="intake-inner">${tour ? `<header class="gs-tour">
-          <div class="gs-tour-t"><span class="eyebrow">Set up ${esc(nameOf)} &middot; Step ${tour.at + 1} of ${tour.steps.length}</span><button class="link-btn" type="button" data-close="end">Skip setup</button></div>
-          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.steps.map((l, i) => `<li class="${i === tour.at ? 'is-on' : tour.done[i] ? 'is-done' : ''}"${i === tour.at ? ' aria-current="step"' : ''}><span></span>${esc(l)}</li>`).join('')}</ol>
+          <div class="gs-tour-t"><span class="eyebrow">Set up ${esc(nameOf)} &middot; Step ${tour.at + 1} of ${tour.count}</span><button class="link-btn" type="button" data-close="end">Skip setup</button></div>
+          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.bar.map((b) => `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"${b.on ? ' aria-current="step"' : ''}${b.soon ? ' aria-disabled="true"' : ''}><span></span><em class="gs-tour-l">${esc(b.l)}${b.soon ? SOON.badge : ''}</em></li>`).join('')}</ol>
         </header>` : ''}<div class="intake-screen alma-ask">
         <ol class="gs-steps" id="gs-steps" aria-label="${A.title} documents"></ol>
         <div id="gs-body"></div>
@@ -460,8 +472,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const filed = () => docs.filter((d) => saved.files[d.code]);
     const confirmed = () => docs.filter((d) => (saved.files[d.code] || {}).ok);
     const pct = () => Math.round((confirmed().length / docs.length) * 100);
-    // her confidence: how sure she is she read the document right, as a word and as a number
-    const confTag = (f) => { const [b, c] = f.conf >= 90 ? ['High', 'b-ok'] : f.conf >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="${b}: how sure ALMA is that she read it right">ALMA confidence ${f.conf}%</span>`; };
+    // her confidence: how sure she is she read the document right, as a level, never a number
+    const confTag = (f) => { const [b, c] = f.conf >= 90 ? ['High', 'b-ok'] : f.conf >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="How sure ALMA is that she read it right">${b} confidence</span>`; };
     const reached = (i) => i === 0 || (i === 1 && filed().length > 0) || (i === 2 && !!st.reviewed);
     const paintSteps = () => {
       const at = st.step - 1;
@@ -471,7 +483,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         return `<li class="${i === at && !done ? 'is-on' : done ? 'is-done' : ''}"${i === at ? ' aria-current="step"' : ''}><button type="button" data-step="${i + 1}"${reached(i) && i !== at ? '' : ' disabled'}><span class="gs-node">${done ? OK : i + 1}</span><span class="gs-lbl">${l}</span><span class="gs-sub">${s}</span></button></li>`;
       }).join('');
     };
-    const sec = `<span class="gs-sec">Documents &rsaquo; ${A.sec || A.title}</span>`;
+    const sec = `<span class="gs-sec">Documents &rsaquo; ${A.sec || A.title}${soon(area)}</span>`;
 
     // step 1: what she's asking for, and the files added — two lists, not matched to each other yet
     const step1 = () => {
@@ -506,11 +518,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (!f.country) f.country = countryName;
       const label = (k, l) => (k === 'ref' && CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : l);
       const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${flagged && f.flag === k ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">` : esc(f[k])}</dd></div>`).join('');
-      const noExp = f.valid === 'No expiry';
-      const summary = `${esc(d.description.en.split(/(?<=\.)\s/)[0])} Issued by ${esc(f.by)} on ${esc(f.issued)}${noExp ? ', with no expiry' : `, valid until ${esc(f.valid)}`}.`;
       return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}" data-card="${d.code}">
         <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
-        <p class="gs-sum">${summary}</p>
         <dl class="gs-fields">${fields}</dl>
         ${flagged ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly: the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
         <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button>`}</span>
@@ -519,15 +528,18 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       </article>`;
     };
     const step2 = () => {
-      const list = filed(), left = list.filter((d) => !saved.files[d.code].ok).length;
+      // the low-confidence ones, the only ones waiting on the user, first
+      const list = filed().slice().sort((a, b) => saved.files[a.code].conf - saved.files[b.code].conf), left = list.filter((d) => !saved.files[d.code].ok).length;
+      const all = editing != null ? '' : left ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept all</button>` : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`;
       return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">Here&rsquo;s what I read. <span class="soft">Does it look right?</span></h1>
-        <p class="lead">Accept each one, change anything I got wrong, or reject one that isn&rsquo;t right. Once you continue, they go into ${A.sec || A.title}.</p>
+        <p class="lead">${left ? `I&rsquo;m sure of ${list.length - left === 1 ? 'one' : list.length - left ? 'most' : 'none'}, and accepted ${list.length - left === 1 ? 'it' : 'them'}. ${left === 1 ? 'One I&rsquo;m not sure of: check it' : `${left} I&rsquo;m not sure of: check them`} and accept, change or reject.` : 'I&rsquo;m sure of all of them, and accepted them. Change or reject anything I got wrong.'} Once you continue, they go into ${A.sec || A.title}.</p>
         <div class="gs-pane">${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
-          <p class="gs-conf">The confidence on each is how sure I am that I read it right. Open one to see it field by field, with where I read it.</p>
-          <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${editing != null ? '' : left ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept all</button>` : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`}</div>
-          <div class="gs-cards">${list.map(card).join('')}</div></div>
+          <p class="gs-conf">Only low confidence needs you. Open any one to see what I read, field by field, with where I read it.</p>
+          <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>
+          <div class="gs-cards">${list.map(card).join('')}</div>
+          ${list.length > 1 && left ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}</div>
         ${nav('Back to upload', tour ? `<button class="link-btn" type="button" data-close="next">${tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>` : '',
           `<button class="btn btn-primary" type="button" data-confirm${list.length && !left && editing == null ? '' : ' disabled'}>Continue</button>`)}
         ${left ? `<p class="gs-d gs-hint">Accept ${left === 1 ? 'the last document' : `the ${left} documents left`} to continue.</p>` : ''}`;
@@ -593,7 +605,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         if (!wrap) return;
         checking.at += 1; paint();
         if (checking.at < checking.rows.length) setTimeout(tick, reduced ? 150 : 650);
-        else setTimeout(() => { if (!wrap) return; checking.rows.forEach((r) => { if (r[2]) saved.files[r[2]].checked = true; }); checking = null; keep(); goStep(filed().length ? 2 : 1); }, reduced ? 300 : 1300);
+        else setTimeout(() => { if (!wrap) return; checking.rows.forEach((r) => { if (r[2]) saved.files[r[2]].checked = true; }); checking = null; keep(); goStep(filed().length ? 2 : 1); strip(); }, reduced ? 300 : 1300); // strip(): what she accepted herself shows on the page
       };
       setTimeout(tick, reduced ? 150 : 800);
     };
@@ -620,7 +632,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // what she read: the holder first, then the document's own fields
       const rows = [['Holder', company, false], ['Tax number', esc(taxShown || '—'), false]].concat(FIELDS.map(([k, l]) => [label(k, l), esc(f[k]), flagged && f.flag === k]));
       const conf = (flag, i) => (f.edited ? 98 : flag ? 52 : Math.min(99, f.conf + (hash(d.code + i) % 7) - 3));
-      const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}" title="${b}">ALMA confidence ${p}%</span>`; };
+      const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
       const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here. I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
         + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="false" aria-controls="gs-cite-${i}">View citation</button></td>`
         + `<td>${tag(conf(fl, i))}</td></tr>`
@@ -780,15 +792,15 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   const first = (() => { try { return ((JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || '').split(/\s+/)[0]; } catch (e) { return ''; } })();
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const intro = (areas, go, skip) => {
+  const intro = (areas, go, skip, n = areas.length) => {
     const el = document.createElement('div');
     el.className = 'intake over-page gs gs-intro'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'gs-in-t');
     el.innerHTML = `<div class="intake-inner"><div class="intake-screen alma-ask">
         <span class="drop gs-in-alma" aria-hidden="true"><span class="alma-media">${almaHtml()}</span></span>
         <p class="says rise d1">ALMA</p>
         <h1 id="gs-in-t" class="rise d2" tabindex="-1">${first ? `Welcome, ${esc(first)}. ` : 'Welcome. '}<span class="soft">Let&rsquo;s put ${esc(nameOf)} on C&#8209;MORE.</span></h1>
-        <p class="lead rise d3">I&rsquo;ll set it up with you in ${areas.length} steps, starting with the documents that show your company is registered. You upload them, I read them, and you check what I read.</p>
-        <ol class="gs-in-steps rise d3">${areas.map((a, i) => `<li><span>${i + 1}</span>${STEP[a]}</li>`).join('')}</ol>
+        <p class="lead rise d3">I&rsquo;ll set it up with you in ${n} steps, starting with the documents that show your company is registered. You upload them, I read them, and you check what I read.</p>
+        <ol class="gs-in-steps rise d3">${areas.map((a, i) => `<li><span>${i + 1}</span>${STEP[a]}${soon(a)}</li>`).join('')}</ol>
         <div class="actions rise d4"><button class="btn btn-primary" type="button" data-in-go>Start with ${STEP[areas[0]].toLowerCase()}</button>
           <button class="link-btn" type="button" data-in-skip>Skip, show me my company</button></div>
       </div></div>`;
@@ -843,7 +855,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   const tour = (o = {}) => {
     const t = saved.tour = Object.assign({ passed: [], ended: false }, saved.tour || {});
     if (o.again) { t.ended = false; t.passed = t.passed.filter(complete); }
-    const areas = TOUR.filter((a) => docsOf(a).length);
+    // Workers and Equipment show, marked coming soon, but aren't steps until they open:
+    // Company documents is the last step meanwhile
+    const shown = TOUR.filter((a) => docsOf(a).length), areas = shown.filter((a) => !SOON.areas.includes(a));
     const at = areas.findIndex((a) => !t.passed.includes(a));
     if (at < 0) { t.ended = true; keep(); return false; }
     keep();
@@ -857,7 +871,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const n = areas.findIndex((x, j) => j > i && !t.passed.includes(x)); // the next step not done yet
       open(a, {
         files, skip: a === 'company' ? regCodes() : [],
-        tour: { at: i, steps: areas.map((x) => STEP[x]), done: areas.map((x) => t.passed.includes(x)), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
+        tour: { at: i, count: areas.length, bar: shown.map((x) => ({ l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: t.passed.includes(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
         onClose: (c, how) => {
           changed = changed || c;
           // back: to the step before, as it was left (its page, if it lives elsewhere)
@@ -869,7 +883,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         },
       });
     };
-    if (o.intro) intro(areas.slice(at), () => step(at, false, o.files), () => { t.ended = true; keep(); });
+    if (o.intro) intro(shown, () => step(at, false, o.files), () => { t.ended = true; keep(); }, areas.length);
     else step(at, !!o.quiet, o.files);
     return true;
   };
