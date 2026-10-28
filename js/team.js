@@ -866,7 +866,7 @@
                 <div class="tm-parts-l">${PARTS[k].map((x) => `<label class="tm-part"><input type="checkbox" name="gp-${k}" value="${esc(x)}"${sc && sc.includes(x) ? ' checked' : ''}><span>${k === 'projects' ? `<b>${esc(x)}</b>` : ''}<span>${esc(PART_NAME(k, x))}</span></span></label>`).join('')}</div>
               </div>
             </div>` : '';
-          const soon = k === 'projects' && window.CM_SOON ? ' ' + window.CM_SOON.badge : ''; // not open at launch (js/company-switcher.js)
+          const soon = k === 'projects' && window.CM_SOON && !(window.CM_SOON_OPEN || []).includes('projects') ? ' ' + window.CM_SOON.badge : ''; // not open at launch (js/company-switcher.js)
           return `<div class="tm-page${PARTS[k] ? ' has-parts' : ''}${on && PARTS[k] ? ' is-open' : ''}"><label><input type="checkbox" name="gc" value="${k}"${on ? ' checked' : ''}><span>${n}${soon}<small>${d}</small></span></label>${parts}</div>`;
         }).join('')}</div></div>
         <p class="set-err" role="alert"></p></div>
