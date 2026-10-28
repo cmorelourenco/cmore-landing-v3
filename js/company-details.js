@@ -142,17 +142,14 @@
     const who = d.status === 'na' ? '<b>Not applicable</b>' : '<b class="is-alma">ALMA</b>';
     const citeAt = !d.kind && ['expired', 'expiring', 'attention'].includes(d.status) ? citeFor(d) : -1;
     const citeQ = citeAt >= 0 ? `<button type="button" class="cd-na-q" data-row-cite="${d.id}:${citeAt}">View citation</button>` : '';
-    const noteRow = d.note || naQ ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="9"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}${naQ}</span></td></tr>` : '';
+    const noteRow = d.note || naQ ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="5"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}${naQ}</span></td></tr>` : '';
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}${noteRow ? ' has-note' : ''}"${attrs}>` +
       `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span></td>` +
-      `<td>${belongsTo(d)}</td>` +
+      `<td>${d.valid === '—' ? dash : d.valid}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
-      `<td class="cd-ref">${d.ref || dash}</td>` +
-      `<td class="cd-by">${d.by && !['missing', 'na', 'notrequested', 'notuploaded'].includes(d.status) ? esc(d.by).replace(/&amp;(\w+;)/g, '&$1') : dash}</td>` +
-      `<td class="c">${d.issued === '—' ? dash : d.issued}</td><td class="c">${d.valid === '—' ? dash : d.valid}</td>` +
-      `<td class="cd-ed"><span class="cd-ed-in">${up}${opener}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
+      `<td class="cd-ed"><span class="cd-ed-in">${up}${hasRoster ? opener : ''}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
   };
 
   // a row opened by its chevron: the current version, then each one it replaced, newest first;
@@ -163,7 +160,7 @@
     const rows = vs.map((v, k) => `<tr data-version="${d.id}:${k + 1}" tabindex="0" role="button"><td><b>${esc(v.label)}</b><span class="d">Archived &middot; ${esc(v.ref || '—')} &middot; uploaded by ${escE(v.by)}</span></td><td>${v.issued}</td><td>${v.valid}</td><td>${v.replaced}</td><td>${confCell(v.conf)}</td><td class="cd-h-go">Open</td></tr>`).join('');
     const empty = !cur && !rows ? `<p class="cd-h-none">No versions yet. Once a file is uploaded, every version it replaces is kept here.</p>`
       : !rows ? `<p class="cd-h-none">No earlier versions: this is the first one on C&#8209;MORE.</p>` : '';
-    return `<tr class="cd-exp"><td colspan="9"><div class="cd-hist">
+    return `<tr class="cd-exp"><td colspan="5"><div class="cd-hist">
       <div class="cd-h-head"><b>Versions</b><span class="co-subtle">${vs.length ? `${vs.length} earlier version${vs.length === 1 ? '' : 's'}, kept read-only` : ''}</span></div>
       ${cur || rows ? `<table class="cd-h-tbl"><thead><tr><th>Version</th><th>Issue date</th><th>Expiry date</th><th>Replaced on</th><th>ALMA confidence</th><th><span class="sr-only">Open</span></th></tr></thead><tbody>${cur}${rows}</tbody></table>` : ''}${empty}
     </div></td></tr>`;
@@ -430,7 +427,8 @@
   const clearAll = () => { f.q = ''; GROUPS.forEach(([, k]) => f[k].clear()); q.value = ''; render(); if (!panel.hidden) paintFilters(); };
   tools.querySelector('.co-tools-clear').addEventListener('click', clearAll);
 
-  const DOC_THEAD = '<thead><tr><th>Document</th><th>Belongs to</th><th>Status</th><th>ALMA confidence</th><th>Reference no.</th><th>Issued by</th><th class="c">Issue date</th><th class="c">Expiry date</th><th>Versions</th></tr></thead>';
+  // four columns, and the row's upload at its end (the rest is in the document's drawer)
+  const DOC_THEAD = '<thead><tr><th>Document name</th><th>Expiration date</th><th>Status</th><th>ALMA confidence</th><th><span class="sr-only">Upload</span></th></tr></thead>';
   const docTable = (docs) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl">${DOC_THEAD}<tbody>${docs.map(row).join('')}</tbody></table></div>`;
   const GROUP_NOTE = { 'On client request': 'Only needed once a client asks for it. Upload it ahead if you like.', Optional: 'Never required. Worth adding if it helps you win work.', Archived: 'Earlier versions, read-only, kept for audit.' };
   const group = (cat, docs, raw) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${GROUP_NOTE[raw] ? GROUP_NOTE[raw] + ' &middot; ' : ''}${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docTable(docs)}</div>`;
@@ -608,6 +606,15 @@
     document.dispatchEvent(new CustomEvent('cm-docs-area', { detail: area }));
     const q = new URLSearchParams(location.search);
     if ((q.get('area') || null) !== area && !q.get('open')) { if (area) q.set('area', area); else q.delete('area'); window.history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+    // a section not open yet (js/company-switcher.js): its coming-soon screen, and nothing of it
+    const isSoon = !!area && SOON.areas.includes(area);
+    document.getElementById('cdetails').classList.toggle('is-soon', isSoon);
+    if (isSoon) {
+      updateHeader(); tools.hidden = true; pills.hidden = true;
+      if (window.CM_SOON && window.CM_SOON.screen) groupsEl.innerHTML = window.CM_SOON.screen(area === 'workers' ? 'Workers&rsquo; documents' : `${AREA_TITLE[area] || area} documents`, 'are');
+      else { groupsEl.innerHTML = ''; addEventListener('DOMContentLoaded', render, { once: true }); } // that file loads after this one
+      return;
+    }
     if (typeof syncCards === 'function') syncCards();
     askIfEmpty();
     updateHeader();

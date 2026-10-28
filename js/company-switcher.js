@@ -246,7 +246,17 @@ html[data-sn="rail"] .sn-sub { display: none; }`;
 // Coming soon: what's shown but not open at launch. The badge is styled here, once for every page
 // (js/company-details.js and js/guided-upload.js use it too): the side menu's C-MORE ecosystem,
 // Questionnaires and My clients, and Documents' Workers and Equipment.
-window.CM_SOON = { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'] };
+// the company homepage, as the side menu's Company overview opens it (the empty one for a company
+// with nothing in it yet: a test user's lands there, its setup already skipped)
+const cmSoonHome = () => { const a = document.querySelector('.sn-item[title="Company overview"]'); const h = a && a.getAttribute('href'); return h && h !== '#' ? h : 'my-company.html?filled'; };
+window.CM_SOON = {
+  badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'],
+  // instead of the feature itself: an empty state, ALMA big, saying it's on its way
+  screen: (what, verb = 'is') => `<section class="cm-soon-page" aria-labelledby="cm-soon-t"><span class="alma-media cm-soon-alma" aria-hidden="true">${(window.ESG && window.ESG.SPHERES) || ''}</span>
+    <p class="cm-soon-says">ALMA</p><h1 id="cm-soon-t">${what} ${verb} coming soon. <span>Stay tuned.</span></h1>
+    <p class="cm-soon-p">I&rsquo;m getting it ready for you. I&rsquo;ll let you know the moment it opens.</p>
+    <a class="btn btn-quiet" href="${cmSoonHome()}">Back to my company</a></section>`,
+};
 (() => {
   const st = document.createElement('style');
   st.textContent = `
@@ -258,9 +268,36 @@ window.CM_SOON = { badge: '<span class="cm-soon">Coming soon</span>', areas: ['w
 .sn-item.has-soon { height: auto; min-height: 2.625rem; padding-block: 0.375rem; }
 .sn-item.has-soon .sn-l { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1875rem; }
 .sn-item.has-soon .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5625rem; }
-html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }`;
+html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
+.cm-soon-page { display: grid; justify-items: center; align-content: center; min-height: calc(100svh - 12rem); padding: 3rem 1.25rem 4rem; text-align: center; }
+.cm-soon-alma { width: min(18rem, 60vw, 34svh); margin-bottom: 0.5rem; }
+.cm-soon-says { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.cm-soon-says::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
+.cm-soon-page h1 { margin-top: 0.875rem; max-width: 36rem; font-size: clamp(1.875rem, 4.5vw, 2.75rem); line-height: 1.08; font-weight: 600; letter-spacing: -0.02em; }
+.cm-soon-page h1 span { font-weight: 300; }
+.cm-soon-p { margin-top: 0.875rem; max-width: 30rem; font-size: 1.0625rem; line-height: 1.5; color: var(--color-ink-muted); }
+.cm-soon-page .btn { margin-top: 2rem; }
+#cdetails.is-soon :is(.cd-hero, #cd-drop, .cd-cards, .cd-sec > .co-wrap > .co-sub-head) { display: none; }
+#cdetails.is-soon .cm-soon-page { min-height: calc(100svh - 16rem); }`;
   document.head.appendChild(st);
   const put = (el) => { if (el && !el.querySelector('.cm-soon')) el.insertAdjacentHTML('beforeend', window.CM_SOON.badge); };
+  // a page that is coming soon shows only that; My clients has no page yet, so it opens the
+  // ecosystem's address with ?soon=clients and shows the same there
+  const path = location.pathname.split('/').pop() || 'index.html', q = new URLSearchParams(location.search);
+  const PAGES = { 'ecosystem.html': ['The C&#8209;MORE ecosystem', 'C-MORE ecosystem'], 'questionnaires.html': ['Questionnaires', 'Questionnaires', 'are'],
+    'esg-questionnaire.html': ['Questionnaires', 'Questionnaires', 'are'], 'esg-results.html': ['Questionnaires', 'Questionnaires', 'are'] };
+  const page = q.get('soon') === 'clients' ? ['My clients', 'My clients'] : PAGES[path];
+  const main = document.querySelector('main.page');
+  if (page && main) {
+    main.innerHTML = window.CM_SOON.screen(page[0], page[2]);
+    document.title = page[1].replace('C-MORE ', 'C\u2011MORE ') + ' · C-MORE';
+    document.querySelectorAll('.sn-item').forEach((a) => { const on = a.getAttribute('title') === page[1]; a.classList.toggle('is-on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  }
+  const clients = document.querySelector('.sn-item[title="My clients"]');
+  if (clients) {
+    clients.setAttribute('href', 'ecosystem.html?soon=clients'); clients.removeAttribute('data-sn');
+    clients.addEventListener('click', (e) => { e.stopImmediatePropagation(); }, true);
+  }
   ['C-MORE ecosystem', 'Questionnaires', 'My clients'].forEach((t) => {
     const it = document.querySelector(`.sn-item[title="${t}"]`), l = it && it.querySelector('.sn-l');
     if (l) { it.classList.add('has-soon'); put(l); }
