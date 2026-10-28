@@ -107,7 +107,10 @@
   // ---- the selector, on pages with the side menu ---------------------------------------------
   const sn = document.querySelector('.sn-in');
   if (!sn) return;
-  const mono = (o) => (o.logo ? o.logo : `<span class="cs-mono">${esc(o.name.trim().charAt(0).toUpperCase() || '?')}</span>`);
+  // a logo chosen for the company (its profile, js/co-profile.js) comes first; then the demo's own,
+  // then its initial. The test user's is wiped on log out with the rest of its session.
+  const chosen = (o) => { const all = get(sessionStorage, 'cm-co-profile-v2', {}) || {}, l = (all[o.id === 'home' ? (TEST ? 'test' : persona) : o.id] || {}).logo; return l && /^data:image\//.test(l) ? l : ''; };
+  const mono = (o) => (chosen(o) ? `<img src="${esc(chosen(o))}" alt="">` : o.logo ? o.logo : `<span class="cs-mono">${esc(o.name.trim().charAt(0).toUpperCase() || '?')}</span>`);
 
   const css = `
 .cs { position: relative; margin: 0 0 0.75rem; }
@@ -161,6 +164,11 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
   const collapse = sn.querySelector('.sn-collapse');
   (collapse ? collapse.after(box) : sn.prepend(box));
   const chip = box.querySelector('.cs-chip');
+  // a logo (or, for the test user, a name) saved on this page shows here straight away
+  document.addEventListener('cm-profile', () => {
+    if (TEST && cur.id === 'home') { const n = ((get(sessionStorage, 'cm-co-profile-v2', {}) || {}).test || {}).name; if (n) { cur.name = n; chip.querySelector('.cs-id b').textContent = n; chip.title = n; } }
+    chip.querySelector('.cs-logo').innerHTML = mono(cur);
+  });
 
   // the list, laid over the page so the side menu's scroll doesn't clip it
   const menu = document.createElement('div'); menu.className = 'cs-menu'; menu.id = 'cs-menu'; menu.setAttribute('role', 'menu'); menu.setAttribute('aria-label', 'Switch company'); menu.hidden = true;

@@ -53,22 +53,11 @@
     $('#cp-logo-rm').hidden = !p.logo;
     $('#cp-logo-up').textContent = p.logo ? 'Change logo' : 'Upload a logo';
   };
-  const file = $('#cp-logo-file');
-  $('#cp-logo-up').addEventListener('click', () => file.click());
-  file.addEventListener('change', () => {
-    const f = file.files[0]; file.value = ''; if (!f || !/^image\//.test(f.type)) return;
-    const img = new Image();
-    img.onload = () => {
-      // a 256px square from the middle, so the session keeps a small picture
-      const c = document.createElement('canvas'); c.width = c.height = 256;
-      const s = Math.min(img.width, img.height), x = c.getContext('2d');
-      x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256);
-      x.drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256);
-      p.logo = c.toDataURL('image/jpeg', 0.88); CO_PROFILE.save(p); paintLogo(); URL.revokeObjectURL(img.src);
-      flash($('#identification .set-saved'), 'Logo updated');
-    };
-    img.src = URL.createObjectURL(f);
-  });
+  // choosing one: the modal to drop, place and zoom it (js/image-crop.js)
+  $('#cp-logo-up').addEventListener('click', () => window.CMCrop.open({
+    title: p.logo ? 'Change your logo' : 'Upload a logo', sub: 'It shows on your company page, and to the clients and suppliers who see you on C&#8209;MORE.', shape: 'square', current: p.logo,
+    onSave: (url) => { p.logo = url; CO_PROFILE.save(p); paintLogo(); flash($('#identification .set-saved'), 'Logo updated'); },
+  }));
   $('#cp-logo-rm').addEventListener('click', () => { p.logo = ''; CO_PROFILE.save(p); paintLogo(); flash($('#identification .set-saved'), 'Logo removed'); });
 
   // ---- consents: who may see the company's documents --------------------------------------------------

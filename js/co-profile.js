@@ -99,7 +99,8 @@ window.CO_PROFILE = (() => {
     const d = JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)), saved = all()[who()] || {};
     return derive(Object.assign(d, saved, { consents: saved.consents || d.consents }));
   };
-  const save = (p) => { const a = all(); a[who()] = p; try { sessionStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} };
+  // saved: the side menu's company chip follows (js/company-switcher.js)
+  const save = (p) => { const a = all(); a[who()] = p; try { sessionStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-profile')); };
   // "Construction · 10–49 people · NIPC 514 228 930 · Private limited company · Porto" — the tax
   // number goes by its country's name (NIPC in Portugal, EIN in the US)
   const taxLabel = (p) => (p.country === 'United States' ? `EIN ${p.tax.replace(/-/g, '‑')}` : p.country === 'Portugal' ? `NIPC ${p.tax.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}` : `Tax number ${p.tax}`);
@@ -114,6 +115,8 @@ window.CO_PROFILE = (() => {
   // section(key, p, src): one section's fields, filled from p. src says where a value came from
   // ({ name: 'Certidão Permanente', country: 'sign-up' }), shown beside its label.
   const css = `
+.co-logo-empty.has-logo { overflow: hidden; border: 1px solid var(--color-line); background: var(--color-surface); }
+.co-logo-empty.has-logo img { width: 100%; height: 100%; object-fit: cover; }
 .cpf { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
 .cpf-f { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
 .cpf-f.is-wide { grid-column: 1 / -1; }
@@ -298,8 +301,28 @@ window.CO_PROFILE = (() => {
     });
   };
 
+  // the empty company page's logo box: choosing one opens the modal to drop, place and zoom it
+  // (js/image-crop.js); once there is one, it shows there, and clicking changes it. The demo
+  // company's own logo isn't shown on its empty page.
+  const emptyLogo = () => {
+    const btn = document.querySelector('#empty .co-logo-empty'); if (!btn || btn.dataset.wired) return;
+    btn.dataset.wired = '1';
+    const mine = () => { const p = load(); return p.logo && p.logo !== (DEFAULTS[who()] || {}).logo ? p.logo : ''; };
+    const plain = btn.innerHTML;
+    const show = () => {
+      const l = mine(); btn.classList.toggle('has-logo', !!l);
+      btn.innerHTML = l ? `<img src="${esc(l)}" alt="">` : plain;
+      btn.setAttribute('aria-label', l ? 'Change your company logo' : 'Add your company logo'); btn.title = btn.getAttribute('aria-label');
+    };
+    show();
+    btn.addEventListener('click', () => { if (window.CMCrop) window.CMCrop.open({
+      title: mine() ? 'Change your logo' : 'Add your company logo', sub: 'It shows on your company page, and to the clients and suppliers who see you on C&#8209;MORE.', shape: 'square', current: mine(),
+      onSave: (url) => { const p = load(); p.logo = url; save(p); show(); },
+    }); });
+  };
   // the company page: name, line, logo, and the consent rows answered elsewhere
   const applyToCompanyPage = () => {
+    emptyLogo();
     const box = document.querySelector(`#filled .co-id-main.persona-${who()}-only`); if (!box) return;
     const p = load();
     box.querySelector('.co-name').textContent = p.trading || p.name;

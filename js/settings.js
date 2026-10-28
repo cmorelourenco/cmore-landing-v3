@@ -25,20 +25,11 @@
   const flash = (el, text) => { el.textContent = text; clearTimeout(el._t); el._t = setTimeout(() => (el.textContent = ''), 2600); };
 
   // ---- photo -------------------------------------------------------------------
-  const file = $('#set-photo-file');
-  $('#set-photo-up').addEventListener('click', () => file.click());
-  file.addEventListener('change', () => {
-    const f = file.files[0]; file.value = ''; if (!f || !/^image\//.test(f.type)) return;
-    const img = new Image();
-    img.onload = () => {
-      // a 256px square from the middle, so the session keeps a small picture
-      const c = document.createElement('canvas'); c.width = c.height = 256;
-      const s = Math.min(img.width, img.height);
-      c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256);
-      photo = c.toDataURL('image/jpeg', 0.86); person.noPhoto = false; save(); paint(); URL.revokeObjectURL(img.src);
-    };
-    img.src = URL.createObjectURL(f);
-  });
+  // choosing one: the modal to drop, place and zoom it (js/image-crop.js)
+  $('#set-photo-up').addEventListener('click', () => window.CMCrop.open({
+    title: photo ? 'Change your picture' : 'Upload a picture', sub: 'How you appear to your team, and to clients and suppliers.', shape: 'round', type: 'image/jpeg', current: photo,
+    onSave: (url) => { photo = url; person.noPhoto = false; save(); paint(); },
+  }));
   $('#set-photo-rm').addEventListener('click', () => { photo = ''; person.noPhoto = true; save(); paint(); });
 
   // ---- profile -----------------------------------------------------------------
