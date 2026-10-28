@@ -350,7 +350,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
     <!-- Prototype: this form is never submitted. Nothing typed here leaves the page. -->
     <form class="stage" id="checkout" novalidate autocomplete="off">
       <div class="intro">
-        <span class="eyebrow">New company · Step 1 of 3</span>
+        <span class="eyebrow">New company</span>
         <h1 class="title">Add a <span class="w-mark">new company</span>.</h1>
         <p class="lead" style="margin-top:0">Each company requires its own subscription.</p>
         <div class="cur" role="radiogroup" aria-label="Currency" id="cur">
@@ -651,7 +651,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
     return { id: 'k' + Date.now().toString(36), brand: brandOf(n), last4: n.slice(-4), exp: e.slice(0, 2) + '/' + e.slice(2), added: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) };
   };
 
-  // ---- pay: prototype, so nothing is sent; then the company's details and structure ----
+  // ---- pay: prototype, so nothing is sent; then the company is created, and ALMA asks for the rest on its homepage ----
   const proceed = (how) => {
     let paidWith = how || (method === 'sepa' ? 'SEPA direct debit' : method === 'invoice' ? 'invoice' : '');
     if (!how && method === 'card') {

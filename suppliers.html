@@ -8,7 +8,7 @@
 <script>
   // the side menu starts open (a drawer on phones) unless the visitor closed it last time
   var snClosed = false; try { snClosed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
-  document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed ? 'rail' : 'full';
+  document.documentElement.dataset.sn = innerWidth <= 640 ? 'drawer' : snClosed || innerWidth < 104.5 * 16 ? 'rail' : 'full'; // narrower, it starts as the rail (and opens over the page)
   // who is signed in: the demo is Miguel's company (Ferreira Construction)
   try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null');
     // a new tab, or a link pasted into one, starts without this tab's session: pick up the last demo
@@ -800,6 +800,9 @@ html[data-sn="rail"] .sn-collapse svg { transform: rotate(180deg); }
 .sn-toggle svg { width: 1.375rem; height: 1.375rem; }
 html[data-sn="drawer"] .sn-toggle { display: grid; }
 html[data-sn="drawer"] .top .hdr-in > .brand { margin-right: auto; margin-left: 0.25rem; }
+/* opened over the page (narrower screens): the content keeps clearing just the rail */
+html.sn-over { --sn-now: var(--sn-rail); }
+html.sn-over .sn { box-shadow: 0 0 40px rgba(52,52,52,.18); z-index: 30; }
 html[data-sn="drawer"] .sn { width: 16rem; transform: translateX(-100%); box-shadow: 0 0 40px rgba(52,52,52,.18); z-index: 30; }
 html[data-sn="drawer"] .sn.is-open { transform: none; }
 html[data-sn="drawer"] .sn-collapse { display: none; }
@@ -1197,16 +1200,19 @@ body { transition: background-color .9s ease; }
   const root = document.documentElement, collapseBtn = document.getElementById('sn-collapse');
   let closed = false;
   try { closed = localStorage.getItem('cm-sn-closed') === '1'; } catch (e) {}
+  const narrow = () => innerWidth < 104.5 * 16; // the open menu fits beside the page's column from here up
+  let over = false;
   const mode = () => {
-    const m = innerWidth <= 640 ? 'drawer' : closed ? 'rail' : 'full';
-    root.dataset.sn = m;
+    // too narrow for the open menu beside the content: the rail, and opened, over the page, not pushing it
+    const m = innerWidth <= 640 ? 'drawer' : narrow() ? (over ? 'full' : 'rail') : closed ? 'rail' : 'full';
+    root.dataset.sn = m; root.classList.toggle('sn-over', m === 'full' && narrow());
     const open = m === 'full';
     collapseBtn.setAttribute('aria-expanded', String(open));
     collapseBtn.setAttribute('aria-label', open ? 'Collapse menu' : 'Expand menu');
     collapseBtn.title = open ? 'Collapse menu' : 'Expand menu';
     scrim.hidden = !(m === 'drawer' && sn.classList.contains('is-open'));
   };
-  collapseBtn.addEventListener('click', () => { closed = !closed; try { localStorage.setItem('cm-sn-closed', closed ? '1' : '0'); } catch (e) {} mode(); });
+  collapseBtn.addEventListener('click', () => { if (narrow()) { over = !over; mode(); return; } closed = !closed; try { localStorage.setItem('cm-sn-closed', closed ? '1' : '0'); } catch (e) {} mode(); });
   const drawer = (open) => {
     sn.classList.toggle('is-open', open); toggle.setAttribute('aria-expanded', String(open)); mode();
   };
@@ -1214,6 +1220,9 @@ body { transition: background-color .9s ease; }
   scrim.addEventListener('click', () => drawer(false));
   addEventListener('keydown', (e) => { if (e.key === 'Escape') drawer(false); });
   addEventListener('resize', mode);
+  // opened over the page: a click outside it, or Escape, closes it again
+  document.addEventListener('click', (e) => { if (over && !sn.contains(e.target)) { over = false; mode(); } });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && over) { over = false; mode(); } });
   mode();
   items.forEach((a) => a.addEventListener('click', (e) => {
     e.preventDefault();

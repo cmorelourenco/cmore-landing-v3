@@ -153,6 +153,8 @@
   // the company's name, from its profile (js/co-profile.js): what ALMA read and the person confirmed
   const confirmedName = () => { const p = window.CO_PROFILE ? CO_PROFILE.load() : null; return (p && (p.trading || p.name)) || ''; };
   let nameOf = confirmedName() || org.trading || org.name;
+  // before ALMA has read its name, words in place of the placeholder ("New company", "Your company")
+  const called = (fresh) => (['New company', 'Your company'].includes(nameOf) ? (fresh ? 'your new company' : 'your company') : esc(nameOf));
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const M = DM.MONTHS;
   const dt = (d) => `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
@@ -285,6 +287,13 @@ html.tour-fading main.page { transition: opacity .45s ease; }
 .gs-fields input { width: 100%; padding: 0.4375rem 0.625rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
 .gs-fields .is-flag input { border-color: var(--color-coral); }
 .gs-why { margin-top: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: var(--color-coral-tint, #f9e7e3); font-size: 0.875rem; color: var(--color-ink); }
+.gs-card.is-vat:not(.is-ok) { border-color: var(--color-coral); }
+.gs-vat-f { display: grid; gap: 0.375rem; margin-top: 0.875rem; }
+.gs-vat-f label { display: flex; align-items: baseline; gap: 0.5rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink); }
+.gs-vat-f label span { font-weight: 400; color: var(--color-ink-subtle); }
+.gs-vat-f input { width: 100%; height: 2.5rem; padding: 0 0.75rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
+.gs-vat-f input:focus { outline: none; border-color: var(--color-graphite); }
+.gs-vat-ok { margin-top: 0.75rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
 .gs-card footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-top: 1rem; }
 .gs-card footer > span { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.25rem; }
 /* Accept: a small square-cornered button, like the tags; accepted, it takes the brand green */
@@ -436,7 +445,25 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (!st.pending) st.pending = []; if (!st.kept) st.kept = [];
     let changedAny = false;
     const FLAGGED = (docs.filter((d) => !/no expiry/i.test(d.expiryRule || '')).pop() || {}).code;
+    // the company's own tax number: sign-up's, else the one on its tax card
+    const ownTax = () => (taxNo || String((saved.files['CO-02'] || {}).ref || '')).replace(/\D/g, '');
+    const fmtTax = (v) => (profile.country === 'PT' ? String(v).replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') : String(v));
+    // a document for another company: its VAT number isn't this one's. Prototype: a nine-digit number
+    // in the file's name that isn't the company's, or "other" in it (a made-up one, then)
+    const otherVat = (d, name) => {
+      const own = ownTax(), m = String(name).replace(/[\s.-]/g, '').match(/\d{9}/), seen = m && m[0];
+      if (d.code === 'CO-02' && !taxNo) return null; // the tax card is where the number comes from
+      if (seen && own && seen !== own) return seen;
+      if (/\b(other|outra|outro)\b/i.test(String(name).replace(/[_-]/g, ' '))) return madeUp();
+      return null;
+    };
+    const madeUp = () => { const own = ownTax() || '516482300'; return own.slice(0, 6) + String((+own.slice(6) + 417) % 1000).padStart(3, '0'); };
     const read = (d, file) => {
+      const vat = otherVat(d, file.name);
+      if (vat) return Object.assign(readAs(d, file), { vat, mismatch: true, conf: 50, flag: null, ok: false });
+      return readAs(d, file);
+    };
+    const readAs = (d, file) => {
       const h = hash(d.code + file.name + org.id), now = new Date(), months = monthsOf(d);
       const issued = new Date(now); issued.setDate(now.getDate() - (months <= 4 ? 4 + (h % 24) : 30 + (h % 170)));
       let valid = 'No expiry';
@@ -444,8 +471,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const flagged = docs.length > 1 && d.code === FLAGGED && valid !== 'No expiry';
       return {
         area, file: file.name, country: countryName, issued: dt(issued), valid, by: issuer(d), ref: codeOf(d, h, issued),
-        // low confidence (what she couldn't read cleanly) waits for the user; the rest she accepts herself
-        conf: flagged ? 55 + (h % 15) : h % 4 ? 90 + (h % 9) : 78 + (h % 10), flag: flagged ? 'valid' : null, ok: !flagged, edited: false,
+        // nothing is accepted for the user: low confidence (what she couldn't read cleanly) must be,
+        // before going on; medium and high may be, or go in as she read them (step2, data-confirm)
+        conf: flagged ? 55 + (h % 15) : h % 4 ? 90 + (h % 9) : 78 + (h % 10), flag: flagged ? 'valid' : null, ok: false, edited: false,
       };
     };
     const tour = opts.tour; // the onboarding (tour() below): where it is, the step after this one
@@ -462,7 +490,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (tour) wrap.classList.add('gs-dock');
     if (tour && tour.quiet) wrap.classList.add('is-quiet'); // one step after another: the panel stays put
     wrap.innerHTML = `<div class="intake-inner">${tour ? `<header class="gs-tour">
-          <div class="gs-tour-t"><span class="eyebrow">Set up ${esc(nameOf)} &middot; Step ${tour.at + 1} of ${tour.count}</span><button class="link-btn" type="button" data-close="end">Skip setup</button></div>
+          <div class="gs-tour-t"><span class="eyebrow">Set up ${called()} &middot; Step ${tour.at + 1} of ${tour.count}</span><button class="link-btn" type="button" data-close="end">Skip setup</button></div>
           <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.bar.map((b) => `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"${b.on ? ' aria-current="step"' : ''}${b.soon ? ' aria-disabled="true"' : ''}><span></span><em class="gs-tour-l">${esc(b.l)}${b.soon ? SOON.badge : ''}</em></li>`).join('')}</ol>
         </header>` : ''}<div class="intake-screen alma-ask">
         <ol class="gs-steps" id="gs-steps" aria-label="${A.title} documents"></ol>
@@ -474,6 +502,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const $ = (id) => wrap.querySelector('#' + id);
     const alma = almaHtml;
     let target = null, editing = null, rejected = [];
+    const whyDraft = {}; // the reason typed for approving a different VAT number, kept across repaints
     const held = {}; // the files themselves, by name, until each is filed (then js/doc-files.js keeps it)
 
     const filed = () => docs.filter((d) => saved.files[d.code]);
@@ -508,7 +537,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span>${tour ? '<small>PDF or photo, as many as you have.</small>' : ''}</span></button>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${total ? `${total} file${total === 1 ? '' : 's'} so far, <span class="soft">add more or carry on.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
-        <p class="lead">${A.who.replace('WHO', esc(nameOf)).replace('WHERE', where).replace('N', n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
+        <p class="lead">${A.who.replace('WHO', called()).replace('WHERE', where).replace('N', n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
         <div class="gs-pane gs-two">
           <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
           <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
@@ -525,6 +554,19 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (!f.country) f.country = countryName;
       const label = (k, l) => (k === 'ref' && CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : l);
       const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${flagged && f.flag === k ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">` : esc(f[k])}</dd></div>`).join('');
+      // another company's VAT number: upload the right one, reject it, or approve it, saying why
+      if (f.mismatch && !ed) {
+        const who = called(), own = ownTax(), why = whyDraft[d.code] != null ? whyDraft[d.code] : f.vatReason || '';
+        return `<article class="gs-card is-vat${f.ok ? ' is-ok' : ''}" data-card="${d.code}">
+        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.ok ? '<span class="co-badge b-neu">Approved by you</span>' : '<span class="co-badge b-over">Different VAT number</span>'}</header>
+        <dl class="gs-fields"><div class="is-flag"><dt>VAT number</dt><dd>${esc(fmtTax(f.vat))}</dd></div>${own ? `<div><dt>${esc(who.replace(/^./, (c) => c.toUpperCase()))}&rsquo;s</dt><dd>${esc(fmtTax(own))}</dd></div>` : ''}${fields}</dl>
+        ${f.ok ? `<p class="gs-vat-ok">Approved with a different VAT number. Your reason: &ldquo;${esc(f.vatReason)}&rdquo;</p>`
+          : `<p class="gs-why">This document is for VAT number <b>${esc(fmtTax(f.vat))}</b>${own ? `, not ${who}&rsquo;s (${esc(fmtTax(own))})` : ', not the one on your other documents'}. Upload the right one, or reject it. If it does belong here, approve it and say why.</p>
+          <div class="gs-vat-f"><label for="gs-why-${d.code}">Why it belongs here <span>Needed to approve</span></label><input id="gs-why-${d.code}" data-why="${d.code}" value="${esc(why)}" maxlength="240" placeholder="e.g. It&rsquo;s our NIPC before the 2024 merger" autocomplete="off"></div>`}
+        <footer><span><button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-one="${d.code}">Upload a new document</button></span>
+          <span>${f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-approve="${d.code}"${why.trim() ? '' : ' disabled'}>${OK}Approve</button>`}</span></footer>
+      </article>`;
+      }
       return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}" data-card="${d.code}">
         <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
         <dl class="gs-fields">${fields}</dl>
@@ -534,22 +576,28 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
             : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-accept="${d.code}">${OK}Accept</button>`}</span></footer>
       </article>`;
     };
+    // what must be accepted (or rejected, or replaced) before going on: low confidence, or another
+    // company's VAT number
+    const mustCheck = (f) => f.conf < 75 || f.mismatch;
     const step2 = () => {
       // the low-confidence ones, the only ones waiting on the user, first
       const list = filed().slice().sort((a, b) => saved.files[a.code].conf - saved.files[b.code].conf), left = list.filter((d) => !saved.files[d.code].ok).length;
-      const all = editing != null ? '' : left ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept all</button>` : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`;
+      // one with another company's VAT number isn't in Accept all: it needs its own reason
+      const vat = list.filter((d) => saved.files[d.code].mismatch && !saved.files[d.code].ok).length, plain = left - vat;
+      const needs = list.filter((d) => !saved.files[d.code].ok && mustCheck(saved.files[d.code])).length;
+      const all = editing != null ? '' : plain ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept ${vat ? 'the rest' : 'all'}</button>` : left ? '' : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`;
       return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">Here&rsquo;s what I read. <span class="soft">Does it look right?</span></h1>
-        <p class="lead">${left ? `I&rsquo;m sure of ${list.length - left === 1 ? 'one' : list.length - left ? 'most' : 'none'}, and accepted ${list.length - left === 1 ? 'it' : 'them'}. ${left === 1 ? 'One I&rsquo;m not sure of: check it' : `${left} I&rsquo;m not sure of: check them`} and accept, change or reject.` : 'I&rsquo;m sure of all of them, and accepted them. Change or reject anything I got wrong.'} Once you continue, they go into ${A.sec || A.title}.</p>
-        <div class="gs-pane">${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
-          <p class="gs-conf">Only low confidence needs you. Open any one to see what I read, field by field, with where I read it.</p>
+        <p class="lead">${needs ? `${needs === 1 ? 'One needs' : `${needs} need`} you before you continue: check ${needs === 1 ? 'it' : 'them'} and accept, change or reject.` : left ? 'Nothing needs you before you continue.' : 'You&rsquo;ve accepted them all.'}${left - needs > 0 ? ` Accept the others if they look right, or leave them: they go into ${A.sec || A.title} as I read them.` : ` Once you continue, they go into ${A.sec || A.title}.`}</p>
+        <div class="gs-pane">${vat ? `<p class="gs-note" role="status">${vat === 1 ? 'One document has' : `${vat} documents have`} a VAT number that isn&rsquo;t ${called()}&rsquo;s. Upload the right ${vat === 1 ? 'one' : 'ones'}, reject ${vat === 1 ? 'it' : 'them'}, or approve ${vat === 1 ? 'it' : 'each'} with a reason.</p>` : ''}${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
+          <p class="gs-conf">Low confidence needs you; medium and high are up to you. Open any one to see what I read, field by field, with where I read it.</p>
           <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>
           <div class="gs-cards">${list.map(card).join('')}</div>
-          ${list.length > 1 && left ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}</div>
+          ${list.length > 1 && plain ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}</div>
         ${nav('Back to upload', tour ? `<button class="link-btn" type="button" data-close="next">${tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>` : '',
-          `<button class="btn btn-primary" type="button" data-confirm${list.length && !left && editing == null ? '' : ' disabled'}>Continue</button>`)}
-        ${left ? `<p class="gs-d gs-hint">Accept ${left === 1 ? 'the last document' : `the ${left} documents left`} to continue.</p>` : ''}`;
+          `<button class="btn btn-primary" type="button" data-confirm${list.length && !needs && editing == null ? '' : ' disabled'}>Continue</button>`)}
+        ${needs ? `<p class="gs-d gs-hint">Check ${needs === 1 ? 'the document' : `the ${needs} documents`} marked low confidence${vat ? ' or with a different VAT number' : ''} to continue.</p>` : ''}`;
     };
 
     // Registration, between the review and the end: who the company is, as its registration
@@ -569,7 +617,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (base.country) src.country = 'sign-up';
       if (base.tax) src.tax = 'sign-up';
       else if (card) { p.tax = String(saved.files['CO-02'].ref).replace(/\s/g, ''); src.tax = nm(card); }
-      const named = base.name && base.name !== 'Your company';
+      const named = base.name && !['Your company', 'New company'].includes(base.name); // not named yet: the test user's, or one just added
       if (cert || card) {
         p.name = named ? base.name : ['Atlântico Obras, Lda.', 'Douro Engenharia e Construção, Lda.', 'Serra & Filhos Construções, Lda.', 'Ribeira Técnica, S.A.', 'Minho Montagens, Lda.'][h % 5];
         src.name = nm(cert || card);
@@ -582,7 +630,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           ['street', 'postcode', 'city', 'region'].forEach((k) => { src[k] = nm(cert); });
         }
         if (CP.isEU(p.country) && !(base.cae || []).length) {
-          p.cae = profile.sector === 'construction' ? ['41200 · Construction of residential and non-residential buildings', h % 2 ? '43210 · Electrical installation' : '42110 · Construction of roads and motorways']
+          p.cae = profile.sector === 'construction' || !org.sector ? ['41200 · Construction of residential and non-residential buildings', h % 2 ? '43210 · Electrical installation' : '42110 · Construction of roads and motorways']
             : ['46900 · Non-specialised wholesale trade', '49410 · Freight transport by road'];
           src.cae = nm(cert);
           const secs = [...new Set(p.cae.map((c) => CP.sectorOfCode(c)))];
@@ -616,6 +664,16 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const { p, src } = facts(), out = Object.assign(p, v);
       if (src.tax && src.tax !== 'sign-up') out.tax = p.tax; // read off the tax card: the field shows it, locked
       CO_PROFILE.save(out);
+      // a company added in this session takes the name and sector it has now, in the side menu's
+      // list too, and what it's asked for next follows its sector
+      if (org.id !== 'home') {
+        const SEC = { F: 'Construction', C: 'Industry', G: 'Retail', J: 'Technology', H: 'Transport and logistics', N: 'Services' };
+        const KEY = 'cm-orgs-' + O.persona;
+        try {
+          const list = JSON.parse(localStorage.getItem(KEY) || '[]'), o = list.find((x) => x.id === org.id);
+          if (o) { Object.assign(o, { name: out.name, trading: out.trading, sector: SEC[out.sector] || 'Other' }); localStorage.setItem(KEY, JSON.stringify(list)); Object.assign(org, o); Object.assign(profile, DM.profileOf(org)); }
+        } catch (er) {}
+      }
       st.factsDone = true; st.sub = null; draft = null; factsErr = null; st.reviewed = true;
       nameOf = confirmedName() || nameOf;
       goStep(3); identity(); if (tour && tour.refresh) tour.refresh();
@@ -655,11 +713,20 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const give = (name, d) => { openDocs.splice(openDocs.indexOf(d), 1); saved.files[d.code] = read(d, { name }); if (window.CMFiles && held[name]) window.CMFiles.put(d.code, held[name]); };
       st.pending.forEach((name) => { const d = openDocs.length && match({ name }, openDocs); if (d && WORDS(d).some((w) => fold(name).includes(w))) give(name, d); else later.push(name); });
       later.forEach((name) => { if (openDocs.length) give(name, openDocs[0]); else extra.push(name); });
+      // the test user (register.html): every batch of files has one with another company's VAT
+      // number, so the check always shows. Not the tax card, where the number comes from, and not a
+      // single file sent to replace one, so uploading a new document can put it right
+      if (O.test) {
+        const fresh = docs.filter((d) => saved.files[d.code] && !saved.files[d.code].checked && st.pending.includes(saved.files[d.code].file));
+        const pick = fresh.filter((d) => d.code !== 'CO-02').pop();
+        if (pick && !fresh.some((d) => saved.files[d.code].mismatch)) Object.assign(saved.files[pick.code], { vat: madeUp(), mismatch: true, conf: 50, flag: null, ok: false });
+      }
       st.pending = []; st.kept = st.kept.concat(extra); saved.extra += extra.length;
       return extra;
     };
     const checks = (extra) => unchecked().map((d) => {
       const f = saved.files[d.code];
+      if (f.mismatch) return [`${f.file} → ${d.name.en}`, `Read &middot; its VAT number, ${esc(fmtTax(f.vat))}, isn&rsquo;t ${called()}&rsquo;s. Check it next.`, d.code];
       return [`${f.file} → ${d.name.en}`, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
     }).concat(extra.map((name) => [name, `Not one of the ${A.title.toLowerCase()} documents I asked for. I&rsquo;ve kept it in your documents.`, null]));
     const validating = () => {
@@ -706,7 +773,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const flagged = f.flag && !f.edited;
       const label = (k, l) => (k === 'ref' && CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : l);
       // what she read: the holder first, then the document's own fields
-      const rows = [['Holder', company, false], ['Tax number', esc(taxShown || '—'), false]].concat(FIELDS.map(([k, l]) => [label(k, l), esc(f[k]), flagged && f.flag === k]));
+      const rows = [['Holder', company, false], ['Tax number', f.mismatch ? `${esc(fmtTax(f.vat))} <span class="co-badge b-over">Not ${called()}&rsquo;s</span>` : esc(taxShown || '—'), false]].concat(FIELDS.map(([k, l]) => [label(k, l), esc(f[k]), flagged && f.flag === k]));
       const conf = (flag, i) => (f.edited ? 98 : flag ? 52 : Math.min(99, f.conf + (hash(d.code + i) % 7) - 3));
       const tag = (p) => { const [b, c] = p >= 90 ? ['High', 'b-ok'] : p >= 75 ? ['Medium', 'b-pend'] : ['Low', 'b-over']; return `<span class="co-badge ${c}">${b} confidence</span>`; };
       const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map(([n, v, fl], i) => `<tr class="${fl ? 'is-flag' : ''}"><td><span class="n">${n}</span></td><td>${fl ? '<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">The scan is cut off here. I&rsquo;ve put ' + v + '. Check it against the file.</span>' : v}`
@@ -724,7 +791,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (!window.CMFiles) fill('');
       else window.CMFiles.get(d.code).then((r) => fill(r ? window.CMFiles.view(r) : window.CMFiles.missing(f.file)));
       dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
-      dq('gs-dw-acts').innerHTML = `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
+      dq('gs-dw-acts').innerHTML = f.mismatch ? (f.ok ? `<span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Approve with a reason</button>`)
+        : `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
     };
     if (tour) dwEl.classList.add('is-under');
     const openPeek = (code) => { peekBack = document.activeElement; peek = code; dwEl.hidden = false; wrap.classList.add('has-peek'); paintPeek(); setTimeout(() => dwEl.classList.add('is-open'), 20); dwEl.querySelector('.docd-panel').focus(); };
@@ -735,6 +803,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // in place: repainting would reload the file above and move the scroll
       if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
       if (t('[data-show]')) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (t('[data-dwaccept]') && saved.files[peek].mismatch) { const c = peek; closePeek(); const i = wrap.querySelector(`[data-why="${c}"]`); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } return; }
       if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); strip(); closePeek(); return; } // accepted: back to the review, where its card now shows it
       if (t('[data-dwedit]')) { const c = peek; closePeek(); editing = c; paint(); const i = wrap.querySelector(`[data-card="${c}"] .is-flag input`) || wrap.querySelector(`[data-card="${c}"] input`); if (i) i.focus(); }
     });
@@ -805,9 +874,14 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-go]')) { const n = +code('go'); if (n === 2) validate(); else goStep(n); return; }
       if (t('[data-more]')) { goStep(1); return; }
       if (t('[data-unaccept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = false; }); keep(); paint(); strip(); return; }
-      if (t('[data-accept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = true; }); keep(); paint(); strip(); return; }
-      if (t('[data-accept]')) { saved.files[code('accept')].ok = true; keep(); paint(); strip(); return; }
-      if (t('[data-unaccept]')) { saved.files[code('unaccept')].ok = false; keep(); paint(); strip(); return; }
+      if (t('[data-accept-all]')) { filed().forEach((d) => { if (!saved.files[d.code].mismatch) saved.files[d.code].ok = true; }); keep(); paint(); strip(); return; }
+      if (t('[data-approve]')) {
+        const c = code('approve'), why = (whyDraft[c] || '').trim();
+        if (!why) { const i = wrap.querySelector(`[data-why="${c}"]`); if (i) i.focus(); return; }
+        Object.assign(saved.files[c], { ok: true, vatReason: why }); delete whyDraft[c]; keep(); paint(); strip(); return;
+      }
+      if (t('[data-accept]')) { saved.files[code('accept')].ok = true; delete saved.files[code('accept')].unchecked; keep(); paint(); strip(); return; }
+      if (t('[data-unaccept]')) { const f = saved.files[code('unaccept')]; f.ok = false; if (f.mismatch) whyDraft[code('unaccept')] = f.vatReason || ''; keep(); paint(); strip(); return; }
       if (t('[data-edit]')) {
         editing = code('edit'); paint();
         const i = wrap.querySelector(`[data-card="${editing}"] .is-flag input`) || wrap.querySelector(`[data-card="${editing}"] input`); if (i) i.focus();
@@ -820,7 +894,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         FIELDS.forEach(([k]) => { const v = el.querySelector(`input[name="${k}"]`).value.trim(); if (v && v !== f[k]) { f[k] = v; changed = true; } });
         // checked by a person: what's there now is what they say, so it reads as sure
         if (changed || f.flag) Object.assign(f, { edited: true, flag: null, conf: 98 });
-        f.ok = true; editing = null; keep(); paint(); strip(); return;
+        f.ok = !f.mismatch || !!f.vatReason; editing = null; keep(); paint(); strip(); return;
       }
       if (t('[data-reject]')) {
         // not this document, or not read right: the reading goes, and the document is asked for again
@@ -829,6 +903,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         if (!filed().length) goStep(1); else paint(); return;
       }
       if (t('[data-remove]')) { delete saved.files[code('remove')]; keep(); if (!filed().length) goStep(1); else paint(); return; }
+      // on: what wasn't accepted (medium and high confidence only, by then) goes in as she read it
+      if (t('[data-confirm]')) { filed().forEach((d) => { const f = saved.files[d.code]; if (!f.ok && !mustCheck(f)) Object.assign(f, { ok: true, unchecked: true }); }); keep(); strip(); }
       // Registration: who the company is, checked, before it's done
       if (t('[data-confirm]') && FACTS && !st.factsDone) { st.sub = 'facts'; keep(); paint(); return; }
       if (t('[data-confirm]')) { st.reviewed = true; goStep(3); if (tour && tour.refresh) tour.refresh(); return; } // the Documents page behind her redraws with them
@@ -836,6 +912,16 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // a card being edited stays put so its fields can be clicked into
       const cardEl = t('.gs-card');
       if (cardEl && !t('button, a, input, select, textarea, label') && editing !== cardEl.dataset.card) openPeek(cardEl.dataset.card);
+    });
+    // typing the reason: Approve opens up once there is one; Enter approves
+    wrap.addEventListener('input', (e) => {
+      const i = e.target.closest('[data-why]'); if (!i) return;
+      whyDraft[i.dataset.why] = i.value;
+      const b = wrap.querySelector(`[data-approve="${i.dataset.why}"]`); if (b) b.disabled = !i.value.trim();
+    });
+    wrap.addEventListener('keydown', (e) => {
+      const i = e.target.closest('[data-why]'); if (!i || e.key !== 'Enter') return;
+      e.preventDefault(); const b = wrap.querySelector(`[data-approve="${i.dataset.why}"]`); if (b && !b.disabled) b.click();
     });
     // a step left half-done comes back where it was; one that can't be reached starts at the upload
     if (!reached(st.step - 1)) st.step = 1;
@@ -880,7 +966,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     el.innerHTML = `<div class="intake-inner"><div class="intake-screen alma-ask">
         <span class="drop gs-in-alma" aria-hidden="true"><span class="alma-media">${almaHtml()}</span></span>
         <p class="says rise d1">ALMA</p>
-        <h1 id="gs-in-t" class="rise d2" tabindex="-1">${first ? `Welcome, ${esc(first)}. ` : 'Welcome. '}<span class="soft">Let&rsquo;s put ${esc(nameOf)} on C&#8209;MORE.</span></h1>
+        <h1 id="gs-in-t" class="rise d2" tabindex="-1">${first ? `Welcome, ${esc(first)}. ` : 'Welcome. '}<span class="soft">Let&rsquo;s put ${called(org.id !== 'home')} on C&#8209;MORE.</span></h1>
         <p class="lead rise d3">I&rsquo;ll set it up with you in ${n} steps, starting with the documents that show your company is registered. You upload them, I read them, and you check what I read.</p>
         <ol class="gs-in-steps rise d3">${areas.map((a, i) => `<li><span>${i + 1}</span>${STEP[a]}${soon(a)}</li>`).join('')}</ol>
         <div class="actions rise d4"><button class="btn btn-primary" type="button" data-in-go>Start with ${STEP[areas[0]].toLowerCase()}</button>

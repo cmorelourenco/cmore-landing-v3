@@ -84,7 +84,7 @@ window.CO_PROFILE = (() => {
   if (added) {
     const parent = added.parent && (added.parent === 'home' ? DEFAULTS[persona] : (() => { const o = orgs.find((x) => x.id === added.parent); return o && { country: o.countryName || NAMES[o.country] || '', tax: o.tax || '' }; })());
     DEFAULTS[added.id] = Object.assign({}, BLANK, {
-      country: added.countryName || NAMES[added.country] || '', tax: added.tax || '', name: added.name || '', trading: added.trading || '',
+      country: added.countryName || NAMES[added.country] || '', tax: added.tax || '', name: added.name === 'New company' ? '' : added.name || '', trading: added.trading || '',
       form: added.form ? FORM_OF[added.form] || 'other' : '', formOther: added.form && !FORM_OF[added.form] ? (added.form === 'other' ? added.formOther || '' : added.form) : '',
       sector: SECTOR_OF[added.sector] || '', employees: added.size === 'medium' ? '50-249' : '',
       structure: added.structure || '', parentCountry: parent ? parent.country : '', parentVat: parent ? parent.tax : '', cc: added.country === 'US' ? '+1' : '+351',

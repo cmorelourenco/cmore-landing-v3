@@ -172,6 +172,10 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .stepper[data-at="2"]::before, .stepper[data-at="3"]::before, .stepper[data-at="3"]::after { background-size: 100% 100%; }
 /* the stretch that brought you here draws in as the step arrives */
 .stepper[data-at="2"]::before, .stepper[data-at="3"]::after { animation: track-draw .7s var(--ease-brand) .15s both; }
+.stepper.is-two { grid-template-columns: repeat(2, minmax(0, 1fr)); } /* payment, then structure: one stretch of track */
+.stepper.is-two::before { right: 2.5rem; }
+.stepper.is-two::after { display: none; }
+.stepper.is-two li:nth-child(2) { align-items: flex-end; text-align: right; }
 @keyframes track-draw { from { background-size: 0% 100%; } to { background-size: 100% 100%; } }
 
 .stepper .node { position: relative; z-index: 1; width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 4px;
@@ -537,11 +541,10 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
       <section class="step" data-step="structure" aria-labelledby="t-structure">
         <p class="eyebrow">New company</p>
         <h1 class="title" id="t-structure">Is it part of a group?</h1>
-        <p class="subtitle">So clients see how <b id="s-name" style="font-weight:500;color:var(--color-ink)">it</b> relates to your other companies.</p>
-        <ol class="stepper" data-at="3" aria-label="New company steps">
+        <p class="subtitle"><span id="s-paid">Paid</span>. Last, how it fits with your other companies. ALMA reads the rest from its documents.</p>
+        <ol class="stepper is-two" data-at="2" aria-label="New company steps">
           <li class="is-done"><span class="node" aria-hidden="true"><b>1</b></span><span class="lbl">Payment</span></li>
-          <li class="is-done"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Company details</span></li>
-          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>3</b></span><span class="lbl">Structure</span></li>
+          <li class="is-on" aria-current="step"><span class="node" aria-hidden="true"><b>2</b></span><span class="lbl">Structure</span></li>
         </ol>
         <form class="form big" id="f-structure" novalidate>
           <div class="opts" role="radiogroup" aria-label="Company structure" aria-required="true">
@@ -562,7 +565,6 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
           </div>
           <p class="err" id="structure-err" role="alert"></p>
           <button class="btn btn-primary btn-block" type="submit" id="structure-go" disabled>Create company</button>
-          <div class="back-row"><button type="button" class="link-btn" data-to="details">Back</button></div>
         </form>
       </section>
 
@@ -614,7 +616,7 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
 
   // ---- 0. which company: its country and number, checked by ALMA (as at sign-up) ------------
   // Already on C-MORE: ask to be let in, and that's where this ends (or, if it's one of yours, go
-  // to it). New: on to payment (new-company-pay.html), then the details, with the number in them.
+  // to it). New: on to payment (new-company-pay.html), then the company is created.
   const CI = window.CMCompanyId;
   const get = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   let paidInfo = get('cm-newco-paid'), idInfo = get('cm-newco-id');
@@ -781,17 +783,19 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
     setTimeout(() => { $('#t-check').textContent = 'All confirmed.'; $('#check-lead').textContent = 'Everything checks out. Next, how it fits with your other companies.'; }, end);
     setTimeout(() => show('structure'), end + (reduced ? 200 : 1300));
   };
-  // the details, once paid: the country and number come from the first step and aren't typed again
+  // once paid: the company is created, and opens on its empty homepage with ALMA's onboarding. Its
+  // country and number come from the first step; its name, sector, structure and the rest ALMA
+  // reads from its registration documents and the person confirms there (js/guided-upload.js), so
+  // the details and structure steps (kept, unused) aren't asked any more
   function toDetails() {
-    document.getElementById('paid-with').innerHTML = `Paid <b style="font-weight:500;color:var(--color-ink)">${esc(paidInfo.total)}</b>${paidInfo.paidWith ? ' with ' + esc(paidInfo.paidWith) : ''}`;
+    const paid = `Paid <b style="font-weight:500;color:var(--color-ink)">${esc(paidInfo.total)}</b>${paidInfo.paidWith ? ' with ' + esc(paidInfo.paidWith) : ''}`;
+    document.getElementById('paid-with').innerHTML = paid; $('#s-paid').innerHTML = paid;
     $('#c-country').value = idInfo.country; $('#c-country').disabled = true;
     $('#c-tax').value = CI.plain(idInfo.country, idInfo.value);
     $('label[for="c-tax"]').textContent = CI.field(idInfo.country);
-    checkDetails(false);
-    show('details');
+    create(null);
   }
   document.addEventListener('click', (e) => { if (e.target.closest('#c-tax-change')) toId(); });
-  if (paidInfo && idInfo) toDetails(); else toId();
 
   // ---- 3. structure ------------------------------------------------------------------------
   const paintStructure = () => {
@@ -806,27 +810,34 @@ select.input { appearance: none; cursor: pointer; padding-right: 2.5rem;
     $('#structure-err').textContent = '';
     $('#structure-go').disabled = !structure();
   }));
-  $('#f-structure').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const s = structure();
-    if (!s) { $('#structure-err').textContent = 'Choose one: parent, subsidiary or none.'; return; }
+  // creating it: straight after payment now (s is null: its structure, like the rest, is asked in
+  // ALMA's check on its homepage, js/guided-upload.js); the Structure step below is kept, unused
+  const create = (s) => {
     const tax = taxFor();
     const org = O.add({
-      name: val('#c-name'), trading: val('#c-trading'), sector: val('#c-sector'), sectorOther: val('#c-sector') === 'Other' ? val('#c-sector-o') : '',
+      name: val('#c-name') || 'New company', trading: val('#c-trading'), sector: val('#c-sector'), sectorOther: val('#c-sector') === 'Other' ? val('#c-sector-o') : '',
       size: val('#c-size'), form: val('#c-form') === 'other' ? val('#c-form-o') : val('#c-form'), tax: tax.value, country: val('#c-country'), countryName: COUNTRIES[val('#c-country')],
-      structure: s, parent: s === 'subsidiary' ? $('#c-parent').value : null, plan: paidInfo.plan, paidWith: paidInfo.paidWith,
+      structure: s || '', parent: s === 'subsidiary' ? $('#c-parent').value : null, plan: paidInfo.plan, paidWith: paidInfo.paidWith,
     }, s === 'parent' ? [...document.querySelectorAll('#kids input:checked')].map((x) => x.value) : []);
     try { sessionStorage.removeItem('cm-newco-paid'); sessionStorage.removeItem('cm-newco-id'); } catch (er) {}
     // the welcome: a couple of seconds while it is set up, then its empty homepage, where ALMA
     // asks for its mandatory documents
-    $('#w-name').textContent = org.trading || org.name;
-    $('#setup-docs').textContent = `Choosing its documents: ${COUNTRIES[val('#c-country')]} · ${org.sector === 'Other' && org.sectorOther ? org.sectorOther : org.sector}`;
+    $('#w-name').textContent = org.name === 'New company' ? 'your new company' : org.trading || org.name;
+    $('#setup-docs').textContent = `Choosing the documents it will be asked for in ${COUNTRIES[val('#c-country')]}`;
     show('welcome');
     $('#cancel').hidden = true; // the company exists now: nothing left to cancel
     const items = [...document.querySelectorAll('#setup li')];
     items.forEach((li, i) => setTimeout(() => li.classList.add('is-done'), reduced ? 0 : 500 + i * 650));
     setTimeout(() => O.go(org, { guided: true }), reduced ? 300 : 2700); // its homepage, with ALMA asking for the company's documents first (js/guided-upload.js)
+  };
+  $('#f-structure').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const s = structure();
+    if (!s) { $('#structure-err').textContent = 'Choose one: parent, subsidiary or none.'; return; }
+    create(s);
   });
+  // where it starts: paid already (back from new-company-pay.html), it's created; otherwise which company
+  if (paidInfo && idInfo) toDetails(); else toId();
 })();
 </script>
 </body>
