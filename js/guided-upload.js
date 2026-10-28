@@ -337,6 +337,12 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-dock.alma-ask .actions .btn, .gs-dock .alma-ask .actions .btn { min-width: 0; }
 .gs-dock .gs-meter { width: 8rem; margin: 0; }
 .gs-dock .gs-meter b { font-size: 1.75rem; }
+.gs-dock #gs-body.is-part { align-items: center; text-align: center; }
+.gs-dock #gs-body.is-part .gs-pane { text-align: left; }
+.gs-dock #gs-body:not(.is-end) .gs-meter { width: 5.5rem; }
+.gs-dock #gs-body:not(.is-end) .gs-meter::before { inset: 0.5rem; }
+.gs-dock #gs-body:not(.is-end) .gs-meter b { font-size: 1.25rem; }
+.gs-dock #gs-body:not(.is-end) .gs-meter span { display: none; }
 .gs-dock .gs-hint { text-align: left; }
 .gs-dock #gs-body.is-end { justify-items: center; text-align: center; }
 .gs-dock #gs-body.is-end .gs-meter { margin: 0 auto; }
@@ -357,6 +363,12 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-dock .intake-screen { flex: 1; display: flex; flex-direction: column; }
 .gs-dock #gs-body { flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
 .gs-dock #gs-body > .gs-pane, .gs-dock #gs-body > .drop { align-self: stretch; }
+.gs-drop-wide { margin-bottom: 0.75rem; }
+.gs:not(.gs-dock) .gs-drop-wide { width: 100%; display: flex; align-items: center; gap: 1.25rem; padding: 0.875rem 1.25rem; border: 1.5px dashed var(--color-sand-400); border-radius: 0.75rem; background: var(--color-surface); text-align: left; }
+.gs:not(.gs-dock) .gs-drop-wide::before { display: none; }
+.gs:not(.gs-dock) .gs-drop-wide .alma-media { width: 4.5rem; flex: none; }
+.gs:not(.gs-dock) .gs-drop-wide .drop-hint { position: static; translate: none; display: grid; gap: 0.125rem; white-space: normal; font-size: 0.9375rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--color-ink); }
+.gs-drop-wide .drop-hint small { font-size: 0.8125rem; font-weight: 400; color: var(--color-ink-subtle); }
 .gs-dock #gs-body::after { content: ""; order: 1; flex: 1 0 1.5rem; }
 .gs-dock #gs-body > .actions.gs-nav3 { order: 2; position: sticky; bottom: 0; z-index: 2; margin: 0 -1.75rem; width: calc(100% + 3.5rem); --gs-gap: 1rem;
   padding: 1rem 1.75rem 1.25rem; background: var(--color-off-white); border-top: 1px solid var(--color-line); }
@@ -537,8 +549,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       return `${sec}<div class="gs-meter" style="--p:${p}"><div><b>${p}%</b><span>complete</span></div></div>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${A.title} is ${p}% complete.</h1>
-        <p class="lead">${one ? 'One document is' : `${missing.length} documents are`} still missing here. Add ${one ? 'it' : 'them'} now, or later from ${A.title}.</p>
-        <div class="gs-pane"><ul class="gs-list" aria-label="Still missing">${rows}</ul></div>
+        <p class="lead">${one ? 'One document is' : `${missing.length} documents are`} still missing here. Drop ${one ? 'it' : 'them all'} on me and I&rsquo;ll read ${one ? 'it' : 'them'}, or add ${one ? 'it' : 'them one by one'} below.</p>
+        <div class="gs-pane"><button class="drop is-small gs-drop-wide" id="gs-drop" type="button" aria-label="Add the missing files"><span class="alma-media" aria-hidden="true">${alma()}</span>
+            <span class="drop-hint"><span class="wide">Drop ${one ? 'it' : 'them'} on me</span><span class="narrow">Tap to add</span><small>${one ? 'PDF or photo. I&rsquo;ll read it and check it.' : 'All the missing ones at once. I&rsquo;ll tell you which is which.'}</small></span></button>
+          <ul class="gs-list gs-missing" aria-label="Still missing">${rows}</ul></div>
         ${nav(backFrom1, `<button class="link-btn" type="button" data-close="next">${tour && tour.next ? `Skip to ${tour.next.toLowerCase()}` : 'Skip for now'}</button>`,
           `<button class="btn btn-primary" type="button" data-more>Add ${one ? 'it' : 'them'} now</button>`)}`;
     };
@@ -641,7 +655,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const paint = () => {
       paintSteps();
       $('gs-body').innerHTML = checking ? validating() : st.step === 1 ? step1() : st.step === 2 ? step2() : step3();
-      $('gs-body').classList.toggle('is-end', !checking && st.step === 3); // the complete step stands centred, in the panel too
+      // a step all done stands centred, in the panel too; one with documents missing reads top-down,
+      // its ring smaller, so the missing ones and her drop zone fit above the buttons
+      $('gs-body').classList.toggle('is-end', !checking && st.step === 3 && pct() === 100);
+      $('gs-body').classList.toggle('is-part', !checking && st.step === 3 && pct() < 100); // centred too, top-down
       if (checking && checking.at === 0) { wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
       if (shownStep !== st.step) { shownStep = st.step; wrap.scrollTop = 0; $('gs-title').focus({ preventScroll: true }); }
     };
@@ -655,6 +672,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (one) { saved.files[one] = read(docs.find((x) => x.code === one), list[0]); if (window.CMFiles) window.CMFiles.put(one, list[0]); keep(); validate(); return; }
       list.forEach((file) => { held[file.name] = file; if (!st.pending.includes(file.name)) st.pending.push(file.name); });
       keep();
+      if (st.step === 3) { validate(); return; } // the missing ones, dropped at the end: read at once
       if (st.step !== 1) { goStep(1); return; }
       paint();
     };
@@ -663,7 +681,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const dropZone = () => $('gs-drop');
     ['dragover', 'dragenter'].forEach((ev) => wrap.addEventListener(ev, (e) => { e.preventDefault(); if (dropZone()) dropZone().classList.add('is-over'); }));
     wrap.addEventListener('dragleave', (e) => { if (!wrap.contains(e.relatedTarget) && dropZone()) dropZone().classList.remove('is-over'); });
-    wrap.addEventListener('drop', (e) => { e.preventDefault(); if (checking) return; if (st.step === 2) goStep(1); take(e.dataTransfer.files); });
+    wrap.addEventListener('drop', (e) => { e.preventDefault(); if (checking) return; if (st.step === 2) goStep(1); take(e.dataTransfer.files); }); // at the end (3), straight to reading
 
     const before = JSON.stringify(accepted(docs).map((d) => d.code));
     // how: 'next' moves the onboarding on, 'end' leaves it; '' (Escape, Later) is just closing
