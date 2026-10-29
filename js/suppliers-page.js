@@ -147,8 +147,10 @@
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
   const overall = (k, s) => (s && s.status === 'invited' ? ['Invited', 'b-neu'] : k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Pending consent', 'b-neu'] : ['All in order', 'b-ok']);
-  // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
-  const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return (b.status === 'invited') - (a.status === 'invited') || y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); };
+  // what needs chasing first (missing or expired, then expiring or in review), then the ones in
+  // order, then those waiting on a consent, and the ones invited last
+  const GROUP = { 'Needs attention': 0, 'Expiring or in review': 1, 'All in order': 2, 'Pending consent': 3, Invited: 4 };
+  const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return GROUP[overall(x, a)[0]] - GROUP[overall(y, b)[0]] || y.bad - x.bad || y.soon - x.soon || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
   const matrix = (shown, bare) => {
     const cols = [...new Set(shown.flatMap((s) => s.consents.flatMap((c) => c.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
@@ -175,7 +177,7 @@
     const all = S.list(), n = { all: all.length, attention: all.filter(is.attention).length, invited: all.filter(is.invited).length, pending: all.filter(is.pending).length };
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     const shown = all.filter((s) => (filt === 'all' || is[filt](s)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
-      // what needs chasing first: missing or expired, then expiring or in review, then waiting on a consent
+      // alerts first, then in order, then waiting on a consent, then invited
       .sort(urgent);
     const F = [['all', 'All'], ['attention', 'Need attention'], ['invited', 'Invited'], ['pending', 'Pending consent']];
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
