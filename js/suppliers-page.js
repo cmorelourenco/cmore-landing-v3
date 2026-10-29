@@ -28,7 +28,11 @@
 .sp-mx th, .sp-mx td { padding-inline: 0.875rem; }
 .sp-mx th.c, .sp-mx td.c { text-align: center; white-space: normal; width: auto; }
 .sp-mx th.c { font-size: 0.6875rem; line-height: 1.3; }
-.sp-mx th:first-child { width: 24%; }
+.sp-mx th.c, .sp-mx td.c { padding-inline: 0.375rem; min-width: 4.25rem; }
+/* a column per kind of document can run wide: the supplier stays in view while it scrolls */
+.sp-mx th:first-child, .sp-mx td:first-child { min-width: 13rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
+.sp-mx th:first-child { background: var(--color-light-beige); }
+.sp-mx .sp-row:hover td:first-child, .sp-mx .sp-row:focus-visible td:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
 .co-sup-sec .sp-glance { margin-bottom: 0; }
 .co-sup-sec .co-sup-add { grid-column: 1; justify-self: start; }
@@ -135,8 +139,11 @@
       <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
     </a></li>`;
   };
-  // at a glance: a row per supplier, a column per kind of consent, the worst status in each
-  const AREAS = S.WORDS.AREAS;
+  // at a glance: a row per supplier, a column per kind of document (as the invite groups them), the worst status in each
+  // the long ones, shorter over their column (the full name on hover)
+  const SHORT = { 'Identification and registration': 'Registration', 'Tax and social security': 'Tax &amp; social security', 'Health and safety': 'Health &amp; safety',
+    'ESG and sustainability': 'ESG', 'Information security': 'Info security' };
+  const catAt = (c) => (S.CATS.includes(c) ? S.CATS.indexOf(c) : S.CATS.length);
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
   const overall = (k, s) => (s && s.status === 'invited' ? ['Invited', 'b-neu'] : k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Pending consent', 'b-neu'] : ['All in order', 'b-ok']);
@@ -144,24 +151,24 @@
   const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return (b.status === 'invited') - (a.status === 'invited') || y.bad - x.bad || y.soon - x.soon || y.pending - x.pending || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
   const matrix = (shown, bare) => {
-    const cols = AREAS.filter((a) => shown.some((s) => s.consents.some((c) => c.title === a)));
+    const cols = [...new Set(shown.flatMap((s) => s.consents.flatMap((c) => c.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
     const cell = (s, a) => {
-      const cs = s.consents.filter((c) => c.title === a);
-      const given = cs.filter((c) => c.state === 'given');
-      if (given.length) {
-        const docs = given.flatMap((c) => c.docs), worst = docs.reduce((w, d) => (RANKS[d.status] > RANKS[w] ? d.status : w), 'valid');
+      const of = (state) => s.consents.filter((c) => c.state === state).flatMap((c) => c.docs).filter((d) => d.cat === a);
+      const docs = [...new Map(of('given').map((d) => [d.code, d])).values()];
+      if (docs.length) {
+        const worst = docs.reduce((w, d) => (RANKS[d.status] > RANKS[w] ? d.status : w), 'valid');
         const n = docs.filter((d) => RANKS[d.status] > 0).length;
         const say = n ? `${n} of ${docs.length} need${n === 1 ? 's' : ''} a look` : `${docs.length} document${docs.length === 1 ? '' : 's'}, all valid`;
         return `<td class="c"><span class="cd-dot is-${TONE[worst]}" title="${esc(a)}: ${say}"></span><span class="sr-only">${esc(a)}: ${say}</span></td>`;
       }
-      if (cs.length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
-      return `<td class="c"><span class="cd-dash" title="No consent for this">&mdash;</span></td>`;
+      if (of('pending').length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
+      return `<td class="c"><span class="cd-dash" title="Not asked of them">&mdash;</span></td>`;
     };
     const rows = shown.map((s) => { const [l, c] = overall(S.stats(s), s); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc([s.services[0], s.city].filter(Boolean).join(' · '))}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
-      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c">${esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>No consent for it</span><span>Open a supplier for the documents behind each dot.</span></p></section>`;
+      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span><span>Open a supplier for the documents behind each dot.</span></p></section>`;
   };
   const list = () => {
     const is = { attention: (s) => S.stats(s).bad > 0, invited: (s) => s.status === 'invited', pending: (s) => s.status === 'pending' };

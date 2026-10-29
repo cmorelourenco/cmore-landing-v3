@@ -91,6 +91,14 @@ window.CM_SUPPLIERS = (() => {
     return `${t.getDate()} ${M[t.getMonth()]} ${t.getFullYear()}`;
   };
 
+  // the kind of document, as the invite to a supplier groups them (js/supplier-add.js): a company
+  // document by its section in the company list, a worker's or a machine's by who it covers
+  const CD = window.CM_COMPANY_DOCS;
+  const LISTED = CD ? Object.fromEntries(['PT', 'US'].flatMap((k) => CD.mandatory(k).concat(CD.optional(k))).map((d) => [d.code, d.section.en])) : {};
+  const CATS = ['Identification and registration', 'Tax and social security', 'Licences', 'Financial', 'Declarations', 'Certifications', 'Insurance', 'Health and safety',
+    'ESG and sustainability', 'Information security', 'Public contracts', 'Workers on site', 'Equipment on site'];
+  const category = (code) => { const c = byCode[code]; return c.category === 'workers' ? 'Workers on site' : c.category === 'equipment' ? 'Equipment on site' : LISTED[code] || c.section.en; };
+
   const LIST = RAW.map(([name, city, services, workers, since, nipc, email, consents, problems]) => {
     const id = slug(name);
     return {
@@ -99,7 +107,7 @@ window.CM_SUPPLIERS = (() => {
         id: `${id}-${i}`, title: SETS[set][0], codes: SETS[set][1], project: project ? PROJECTS[project] : null, granted, state,
         docs: SETS[set][1].filter((c) => byCode[c]).map((c) => {
           const p = problems[c];
-          return { code: c, name: byCode[c].name.en, section: byCode[c].section.en, requirement: C.labels.requirement[byCode[c].requirement] || '',
+          return { code: c, name: byCode[c].name.en, section: byCode[c].section.en, cat: category(c), requirement: C.labels.requirement[byCode[c].requirement] || '',
             status: p ? p[0] : 'valid', valid: p ? p[1] || '—' : validTo(c, id), note: p ? p[2] : '' };
         }),
       })),
@@ -113,7 +121,7 @@ window.CM_SUPPLIERS = (() => {
     id: a.id, name: a.name, city: a.city || a.countryName, services: a.services || [], workers: null, since: a.invited.split(' ').pop(), nipc: a.code, email: a.email,
     status: 'invited', invite: a,
     consents: [{ id: `${a.id}-0`, title: 'Documents you asked for', codes: a.docs, project: null, granted: a.invited, state: 'pending',
-      docs: a.docs.filter((c) => byCode[c]).map((c) => ({ code: c, name: (a.names && a.names[c]) || byCode[c].name.en, section: (a.sections && a.sections[c]) || byCode[c].section.en,
+      docs: a.docs.filter((c) => byCode[c]).map((c) => ({ code: c, name: (a.names && a.names[c]) || byCode[c].name.en, section: (a.sections && a.sections[c]) || byCode[c].section.en, cat: category(c),
         requirement: a.required.includes(c) ? 'Mandatory' : 'Optional', status: 'missing', valid: '—', note: '' })) }],
   });
   // where each one stands: invited (hasn't joined your list yet), pending consent (joined, but hasn't
@@ -150,7 +158,7 @@ window.CM_SUPPLIERS = (() => {
     return { shared: uniq.length, bad, soon, ok, pct: uniq.length ? Math.round((ok / uniq.length) * 100) : 0, given: s.consents.filter((c) => c.state === 'given').length, pending: s.consents.filter((c) => c.state === 'pending').length };
   };
   // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
-  const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products', AREAS: Object.values(SETS).map((x) => x[0]) }
-    : { id: 'NIPC', scope: 'projects', AREAS: ['Company & legal', 'Insurance', 'Workers on site', 'Health & safety', 'Equipment on site', 'Certifications'] };
-  return { WORDS, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
+  const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products' }
+    : { id: 'NIPC', scope: 'projects' };
+  return { WORDS, CATS, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
 })();
