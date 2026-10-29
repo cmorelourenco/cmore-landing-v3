@@ -141,6 +141,9 @@
 .tm-bulk b { color: var(--color-ink); font-weight: 600; }
 .tm-bulk.is-over { border-color: var(--color-coral); background: color-mix(in oklab, var(--color-coral) 6%, var(--color-surface)); }
 .tm-bulk-acts { display: flex; align-items: center; gap: 1rem; }
+.tm-bulk .btn-secondary { border: 0; background: var(--color-graphite); color: var(--color-off-white); font-weight: 600; transition: background-color .15s, transform .15s; } /* the upload: a live button, not the beige of a disabled one */
+.tm-bulk .btn-secondary:hover { background: var(--color-ink); color: var(--color-off-white); transform: translateY(-1px); }
+.tm-bulk .btn-secondary:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .tm-or { display: flex; align-items: center; gap: 0.75rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .tm-or::before, .tm-or::after { content: ""; flex: 1; height: 1px; background: var(--color-line); }
 .tm-rev { display: grid; gap: 0.875rem; }

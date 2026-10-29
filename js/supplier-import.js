@@ -106,6 +106,9 @@
 .si-bulk b { color: var(--color-ink); font-weight: 600; }
 .si-bulk.is-over { border-color: var(--color-coral); background: color-mix(in oklab, var(--color-coral) 6%, var(--color-surface)); }
 .si-bulk-acts { display: flex; align-items: center; gap: 1rem; }
+.si-bulk .btn-secondary { border: 0; background: var(--color-graphite); color: var(--color-off-white); font-weight: 600; transition: background-color .15s, transform .15s; } /* the upload: a live button, not the beige of a disabled one */
+.si-bulk .btn-secondary:hover { background: var(--color-ink); color: var(--color-off-white); transform: translateY(-1px); }
+.si-bulk .btn-secondary:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .si-bulk.is-file { border-style: solid; border-color: var(--color-line); }
 .si-bulk-f { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 .si-bulk-f small { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
