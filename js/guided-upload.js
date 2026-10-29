@@ -1013,7 +1013,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         <p class="lead">Invite the companies that work for you. I&rsquo;ll ask each one for the documents its country requires, read them as they come in, and tell you when one is missing or about to expire.</p>
         <div class="gs-pane gs-inv">
           <button type="button" class="gs-inv-opt" data-inv="one"><span class="gs-inv-i">${PLUS_I}</span><span><b>Add a supplier</b><small>By its country and company code. Not on C&#8209;MORE yet? I&rsquo;ll invite it to join.</small></span>${CHEV_I}</button>
-          <button type="button" class="gs-inv-opt" data-inv="many"><span class="gs-inv-i">${XLS_I}</span><span><b>Invite many from Excel</b><small>Upload a list, check it, and send every invitation at once.</small></span>${CHEV_I}</button>
+          <button type="button" class="gs-inv-opt" data-inv="many"><span class="gs-inv-i">${XLS_I}</span><span><b>Invite suppliers from Excel file</b><small>Upload a list, check it, and send every invitation at once.</small></span>${CHEV_I}</button>
         </div>
         ${l.length ? `<div class="gs-pane gs-inv-done"><p class="gs-lh">Invited <span class="gs-inv-n">${l.length}</span></p>
           <ul>${l.slice(0, 5).map((x) => `<li><span class="gs-inv-ok">${OK}</span><span><b>${esc(x.name)}</b><small>${esc([x.city, x.email].filter(Boolean).join(' · '))}</small></span></li>`).join('')}</ul>
@@ -1047,9 +1047,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-tuck]')) { tuck(true); return; }
       if (t('[data-untuck]')) { tuck(false); return; }
       const b = t('[data-inv]'); if (!b) return;
+      // many: straight to choosing the Excel file (asked already here, so not again in Add a supplier)
+      if (b.dataset.inv === 'many' && window.CMSupplierImport) { window.CMSupplierImport.pick(); return; }
       add.open();
-      // many: the drawer opens on its first step, where an Excel list goes in
-      if (b.dataset.inv === 'many') setTimeout(() => { const p = document.querySelector('#si-bulk [data-si-pick]'); if (p) p.focus(); }, 360);
     });
     const h = me.querySelector('#gs-title'); if (h) h.focus({ preventScroll: true });
   };

@@ -193,7 +193,9 @@
     <div class="si-or">or one by one</div>`;
   const file = Object.assign(document.createElement('input'), { type: 'file', hidden: true, accept: '.xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel' });
   document.body.appendChild(file);
-  const say = (m) => { err = m; const p = document.getElementById('si-err'); if (p) p.textContent = m; };
+  // a problem with the file shows in Add a supplier's banner; opened for it when the picker came from elsewhere
+  const say = (m) => { err = m; const p = document.getElementById('si-err'); if (p) p.textContent = m; else if (m) A.open(); };
+  const pick = () => { say(''); file.value = ''; file.click(); };
 
   // ---- the list read from the file, in the page's place ----------------------------------------------
   const host = document.createElement('section');
@@ -403,7 +405,7 @@
   document.addEventListener('click', (e) => {
     const t = e.target;
     if (t.closest('[data-si-tpl]')) { template(t.closest('[data-si-tpl]')); return; }
-    if (t.closest('[data-si-pick]')) { say(''); file.value = ''; file.click(); return; }
+    if (t.closest('[data-si-pick]')) { pick(); return; }
     if (!bulk || !host.contains(t)) return;
     if (t.closest('[data-si-cancel]')) { bulk = null; paint(); return; }
     if (t.closest('[data-si-send]')) { send(); return; }
@@ -438,5 +440,5 @@
   document.addEventListener('dragleave', (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('is-over'); });
   document.addEventListener('drop', (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z) { e.preventDefault(); z.classList.remove('is-over'); load(e.dataTransfer.files[0]); } });
 
-  window.CMSupplierImport = { banner, load, template, active: () => !!bulk };
+  window.CMSupplierImport = { banner, load, template, pick, active: () => !!bulk };
 })();
