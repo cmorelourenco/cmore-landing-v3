@@ -343,9 +343,10 @@ window.DOC_MODEL = (() => {
       if (extra.conf != null) doc.conf = extra.conf;
     }
     // the group a document sits in: its catalog section for the company's own documents, who it
-    // covers everywhere else — unless nobody has asked for it yet, or it is optional
-    doc.group = doc.status === 'notrequested' ? 'On client request' : c.requirement === 'optional' ? 'Optional'
-      : area === 'company' ? doc.section : BY_LEVEL[c.level] || doc.section;
+    // covers everywhere else — unless nobody has asked for it yet, or it is optional (the company's
+    // optional ones keep their section from the list, next to the required ones of that section)
+    doc.group = doc.status === 'notrequested' ? 'On client request' : area === 'company' ? doc.section
+      : c.requirement === 'optional' ? 'Optional' : BY_LEVEL[c.level] || doc.section;
     DOCS.push(doc);
   });
   // replaced versions, kept read-only for audit
