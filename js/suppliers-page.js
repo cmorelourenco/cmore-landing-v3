@@ -24,13 +24,13 @@
 .sp-glance-h h2, .sp-cards-h { font-size: 1.125rem; font-weight: 600; }
 .sp-glance-h span { font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .sp-mx-wrap { margin-top: 0; overflow-x: auto; }
-.sp-tbl.sp-mx { min-width: 44rem; table-layout: auto; }
+.sp-tbl.sp-mx { table-layout: auto; } /* each kind of document as wide as its longest word, at least; past the window's width, the table scrolls */
 .sp-mx th, .sp-mx td { padding-inline: 0.875rem; }
-.sp-mx th.c, .sp-mx td.c { text-align: center; white-space: normal; width: auto; }
-.sp-mx th.c { font-size: 0.6875rem; line-height: 1.3; }
-.sp-mx th.c, .sp-mx td.c { padding-inline: 0.375rem; min-width: 4.25rem; }
-/* a column per kind of document can run wide: the supplier stays in view while it scrolls */
-.sp-mx th:first-child, .sp-mx td:first-child { min-width: 13rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
+.sp-mx th.c, .sp-mx td.c { padding-inline: 0.375rem; text-align: center; white-space: normal; }
+/* a long name wraps between words, never inside one (in any language); sentence case, as it takes less room */
+.sp-mx th.c { min-width: 4.5rem; font-size: 0.75rem; line-height: 1.3; letter-spacing: 0; text-transform: none; vertical-align: bottom; hyphens: manual; }
+/* the supplier stays in view while a narrow window scrolls the table */
+.sp-mx th:first-child, .sp-mx td:first-child { min-width: 12rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
 .sp-mx th:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-row:hover td:first-child, .sp-mx .sp-row:focus-visible td:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
