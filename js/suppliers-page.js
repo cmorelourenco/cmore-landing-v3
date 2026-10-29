@@ -62,6 +62,8 @@
 .sp-add:hover { background: var(--color-ink); transform: translateY(-1px); }
 .sp-add:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .sp-add svg { width: 1rem; height: 1rem; }
+.sp-add.is-quiet { border: 1px solid var(--color-line); background: var(--color-surface); color: var(--color-ink); }
+.sp-add.is-quiet:hover { border-color: var(--color-graphite); background: var(--color-surface); }
 .sp-card.is-invited { border-style: dashed; background: var(--color-light-beige); }
 .sp-head { display: flex; align-items: center; gap: 1.25rem; }
 .sp-head > div { flex: 1 1 auto; min-width: 0; }
@@ -180,6 +182,7 @@
     const F = [['all', 'All'], ['attention', 'Need attention'], ['invited', 'Invited'], ['pending', 'Pending consent']];
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
         <div class="sp-tools-r"><div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div>
+        <button type="button" class="sp-add is-quiet" data-sup-import><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M3.5 12.5v3a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-3"/></svg>Import from Excel</button>
         <button type="button" class="sp-add" data-sup-add><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Add a supplier</button></div></div>
       ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
   };

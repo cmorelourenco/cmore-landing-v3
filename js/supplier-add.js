@@ -104,11 +104,12 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   // the flow's state
   let f = null, back = null;
   const fresh = () => ({ step: 1, country: BEATRIZ ? 'US' : 'PT', code: '', err: '', found: null, name: '', email: '', contact: '', errs: {}, picked: null, note: '' });
-  const docsFor = () => {
-    const req = D.mandatory(f.country).map((d) => ({ code: d.code, name: d.name.en, section: 'Mandatory', home: d.section.en, req: true }));
-    const opt = D.optional(f.country).filter((d) => !req.some((r) => r.code === d.code)).map((d) => ({ code: d.code, name: d.name.en, section: d.section.en, req: false }));
+  const docsOf = (cc) => {
+    const req = D.mandatory(cc).map((d) => ({ code: d.code, name: d.name.en, section: 'Mandatory', home: d.section.en, req: true }));
+    const opt = D.optional(cc).filter((d) => !req.some((r) => r.code === d.code)).map((d) => ({ code: d.code, name: d.name.en, section: d.section.en, req: false }));
     return req.concat(opt);
   };
+  const docsFor = () => docsOf(f.country);
   const groups = (docs) => docs.reduce((g, d) => { (g[d.section] = g[d.section] || []).push(d); return g; }, {});
   const who = () => (f.found && f.found.on ? f.found.on.name : f.name.trim());
 
@@ -125,7 +126,7 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
         <div class="sa-two"><label class="sa-f"><span>Contact name <i>(optional)</i></span><input class="sa-in" name="contact" value="${esc(f.contact)}" autocomplete="name"></label>
         <label class="sa-f"><span>Contact email</span><input class="sa-in${f.errs.email ? ' is-err' : ''}" name="email" type="email" value="${esc(f.email)}" autocomplete="email">${f.errs.email ? `<small class="is-err">${f.errs.email}</small>` : ''}</label></div></div>`;
     const demo = S.ON_CMORE.filter((x) => x.country === f.country)[0];
-    return `<section class="sa-card"><h4>Who they are</h4><p>Their country and their company code. If they&rsquo;re on C&#8209;MORE, we&rsquo;ll find them.</p>
+    return `<section class="sa-card"><h4>Who they are</h4><p>Their country and their company code. If they&rsquo;re on C&#8209;MORE, we&rsquo;ll find them.${window.CMSupplierImport ? ' Adding many? <button type="button" class="link-btn" data-sup-import>Import them from Excel</button>' : ''}</p>
         <div class="sa-two"><label class="sa-f"><span>Country</span><select class="sa-in" name="country">${COUNTRIES.map((x) => `<option value="${x.code}"${x.code === f.country ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
         <label class="sa-f"><span>${esc(c.label)}</span><input class="sa-in${f.err ? ' is-err' : ''}" name="code" value="${esc(f.code)}" placeholder="e.g. ${esc(c.eg)}" autocomplete="off" spellcheck="false" inputmode="${/^\d/.test(c.eg) ? 'numeric' : 'text'}">
           ${f.err ? `<small class="is-err">${f.err}</small>` : demo ? `<small>Prototype: ${esc(f.country === 'PT' ? demo.code.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') : demo.code)} is on C&#8209;MORE.</small>` : ''}</label></div>
@@ -255,6 +256,7 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
     if (e.key === 'Enter' && e.target.name === 'code') { e.preventDefault(); const b = dw.querySelector('[data-sa-find], [data-sa-next]'); if (b) b.click(); }
   });
   document.addEventListener('click', (e) => { if (e.target.closest('[data-sup-add]')) { e.preventDefault(); open(); } });
-  window.CMSupplierAdd = { open };
+  // what the bulk import (js/supplier-import.js) shares with this flow
+  window.CMSupplierAdd = { open, COUNTRIES, country, norm, emailOk, today, docsOf, toast };
   if (new URLSearchParams(location.search).has('add')) { history.replaceState(null, '', location.pathname); setTimeout(open, 150); }
 })();
