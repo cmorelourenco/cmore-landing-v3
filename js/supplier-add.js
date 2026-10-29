@@ -6,7 +6,8 @@
       for their country, each with a checkbox; mandatory ones ticked to start, select all overall
       or by section.
    3. Review and send. The supplier then shows on My suppliers as Invited (js/suppliers.js keeps it
-      for the tab). Opens from [data-sup-add], or on arrival with ?add. */
+      for the tab). Opens from [data-sup-add], or on arrival with ?add.
+   Step 1 opens with adding many at once, from an Excel file (js/supplier-import.js). */
 (() => {
   const S = window.CM_SUPPLIERS, D = window.CM_COMPANY_DOCS;
   if (!S || !D || !document.getElementById('sup-body')) return;
@@ -126,7 +127,8 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
         <div class="sa-two"><label class="sa-f"><span>Contact name <i>(optional)</i></span><input class="sa-in" name="contact" value="${esc(f.contact)}" autocomplete="name"></label>
         <label class="sa-f"><span>Contact email</span><input class="sa-in${f.errs.email ? ' is-err' : ''}" name="email" type="email" value="${esc(f.email)}" autocomplete="email">${f.errs.email ? `<small class="is-err">${f.errs.email}</small>` : ''}</label></div></div>`;
     const demo = S.ON_CMORE.filter((x) => x.country === f.country)[0];
-    return `<section class="sa-card"><h4>Who they are</h4><p>Their country and their company code. If they&rsquo;re on C&#8209;MORE, we&rsquo;ll find them.${window.CMSupplierImport ? ' Adding many? <button type="button" class="link-btn" data-sup-import>Import them from Excel</button>' : ''}</p>
+    // many at once, from an Excel file, as on Team (js/supplier-import.js)
+    return `${window.CMSupplierImport ? window.CMSupplierImport.banner() : ''}<section class="sa-card"><h4>Who they are</h4><p>Their country and their company code. If they&rsquo;re on C&#8209;MORE, we&rsquo;ll find them.</p>
         <div class="sa-two"><label class="sa-f"><span>Country</span><select class="sa-in" name="country">${COUNTRIES.map((x) => `<option value="${x.code}"${x.code === f.country ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select></label>
         <label class="sa-f"><span>${esc(c.label)}</span><input class="sa-in${f.err ? ' is-err' : ''}" name="code" value="${esc(f.code)}" placeholder="e.g. ${esc(c.eg)}" autocomplete="off" spellcheck="false" inputmode="${/^\d/.test(c.eg) ? 'numeric' : 'text'}">
           ${f.err ? `<small class="is-err">${f.err}</small>` : demo ? `<small>Prototype: ${esc(f.country === 'PT' ? demo.code.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3') : demo.code)} is on C&#8209;MORE.</small>` : ''}</label></div>
@@ -257,6 +259,6 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   });
   document.addEventListener('click', (e) => { if (e.target.closest('[data-sup-add]')) { e.preventDefault(); open(); } });
   // what the bulk import (js/supplier-import.js) shares with this flow
-  window.CMSupplierAdd = { open, COUNTRIES, country, norm, emailOk, today, docsOf, toast };
+  window.CMSupplierAdd = { open, close, isOpen: () => !!f, COUNTRIES, country, norm, emailOk, today, docsOf, toast };
   if (new URLSearchParams(location.search).has('add')) { history.replaceState(null, '', location.pathname); setTimeout(open, 150); }
 })();
