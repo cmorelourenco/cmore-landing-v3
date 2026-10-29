@@ -10,6 +10,7 @@
   const O = window.CMOrgs;
   if (!box || !O) return;
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const XI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const A = window.CMAccess;
   if (!A) return;
   const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
@@ -248,8 +249,9 @@
 .tm-dw-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--color-line); }
 .tm-dw-h h3 { font-size: 1.25rem; font-weight: 600; }
 .tm-dw-h p { font-size: 0.875rem; color: var(--color-ink-subtle); }
-.tm-dw-x { border: 0; background: none; padding: 0; font-size: 1.75rem; line-height: 1; color: var(--color-ink-subtle); cursor: pointer; }
-.tm-dw-x:hover { color: var(--color-ink); }
+.tm-dw-x { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; margin: -0.375rem -0.5rem 0 0; border: 0; border-radius: 50%; background: none; color: var(--color-ink-subtle); cursor: pointer; } /* as every drawer's close (css/esg.css .dlg-x) */
+.tm-dw-x svg { width: 1.25rem; height: 1.25rem; }
+.tm-dw-x:hover { background: var(--color-light-beige); color: var(--color-ink); }
 .tm-dw-b { overflow-y: auto; display: grid; align-content: start; gap: 1.25rem; padding: 1.25rem 1.5rem; }
 .tm-dw-b .tm-checks { grid-template-columns: 1fr 1fr; }
 .tm-dw-f { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.875rem 1.5rem; border-top: 1px solid var(--color-line); background: var(--color-surface); font-size: 0.875rem; color: var(--color-ink-muted); }
@@ -380,7 +382,7 @@
     const c = ctx(), t = c.t, rows = plan(c);
     const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
     const one = single && rows[0];
-    panel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-dw-t">${one ? `Edit ${esc(one.m.name)}` : 'Change role'}</h3><p>${one ? esc(one.m.email) + (one.m.title ? ' &middot; ' + esc(one.m.title) : '') : `${rows.length} ${rows.length === 1 ? 'person' : 'people'} selected`}</p></div><button type="button" class="tm-dw-x" data-dw-close aria-label="Close">&times;</button></header>
+    panel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-dw-t">${one ? `Edit ${esc(one.m.name)}` : 'Change role'}</h3><p>${one ? esc(one.m.email) + (one.m.title ? ' &middot; ' + esc(one.m.title) : '') : `${rows.length} ${rows.length === 1 ? 'person' : 'people'} selected`}</p></div><button type="button" class="tm-dw-x" data-dw-close aria-label="Close">${XI}</button></header>
       <div class="tm-dw-b">
         <div class="set-f"><span class="tm-lbl">New role</span><div class="tm-roles" role="radiogroup" aria-label="New role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="dw-role" value="${r}"${r === dRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[dRole][1]}</p></div>
         ${grouped(dRole) ? `<div class="set-f"><span class="tm-lbl">Groups${one ? '' : ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>'}</span>${groupChecks(c, [...dGroups], 'dg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
@@ -577,7 +579,7 @@
     const c = ctx(), rows = bPlan(c);
     const moving = rows.filter((r) => !r.same && !r.problem).length, stuck = rows.filter((r) => r.problem).length;
     const who = (r) => esc(r.r.name || r.r.email);
-    bpanel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-bdw-t">Invite as</h3><p>${rows.length} ${rows.length === 1 ? 'person' : 'people'} from ${esc(bulk.file)}</p></div><button type="button" class="tm-dw-x" data-bdw-close aria-label="Close">&times;</button></header>
+    bpanel.innerHTML = `<header class="tm-dw-h"><div><h3 id="tm-bdw-t">Invite as</h3><p>${rows.length} ${rows.length === 1 ? 'person' : 'people'} from ${esc(bulk.file)}</p></div><button type="button" class="tm-dw-x" data-bdw-close aria-label="Close">${XI}</button></header>
       <div class="tm-dw-b">
         <div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="bdw-role" value="${r}"${r === bRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[bRole][1]}</p></div>
         ${grouped(bRole) ? `<div class="set-f"><span class="tm-lbl">Groups${rows.length > 1 ? ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>' : ''}</span>${groupChecks(c, [...bGroups], 'bdg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
@@ -929,7 +931,7 @@
     const form = (g) => {
       const n = g ? t.members.filter((m) => grouped(m.role) && (m.groups || []).includes(g.id)).length : 0;
       return `<form class="tm-dw-form" data-gsave="${g ? esc(g.id) : ''}">
-        <header class="tm-dw-h"><div><h3 id="tm-gdw-t">${g ? `Edit ${esc(g.name)}` : 'New group'}</h3><p>${g ? (n ? `${n} ${n === 1 ? 'person is' : 'people are'} in it` : 'Nobody in it yet') : 'What it opens, whole or in part'}</p></div><button type="button" class="tm-dw-x" data-gdw-close aria-label="Close">&times;</button></header>
+        <header class="tm-dw-h"><div><h3 id="tm-gdw-t">${g ? `Edit ${esc(g.name)}` : 'New group'}</h3><p>${g ? (n ? `${n} ${n === 1 ? 'person is' : 'people are'} in it` : 'Nobody in it yet') : 'What it opens, whole or in part'}</p></div><button type="button" class="tm-dw-x" data-gdw-close aria-label="Close">${XI}</button></header>
         <div class="tm-dw-b">
         <div class="set-f"><label for="tm-gn">Name</label><input class="input" id="tm-gn" name="gname" value="${g ? esc(g.name) : ''}" placeholder="e.g. Procurement" autocomplete="off"></div>
         <div class="set-f"><span class="tm-lbl">Pages it opens</span>${picker(g, 'g')}</div>

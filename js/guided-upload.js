@@ -403,6 +403,46 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-tour { position: sticky; top: 0; z-index: 2; margin: 0 -1.75rem; padding: 1rem 1.75rem 0.875rem; background: var(--color-off-white); border-bottom: 1px solid var(--color-line); text-align: left; }
 .gs-tour-t { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .gs-tour-t .link-btn { flex: none; white-space: nowrap; }
+.gs-tour-acts { flex: none; display: flex; align-items: center; gap: 0.5rem; margin-right: -0.5rem; }
+.gs-tour-acts .dlg-x { position: static; }
+.gs-fold { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 1px solid var(--color-sand-400); border-radius: 0.5rem; background: var(--color-surface); color: var(--color-ink); cursor: pointer; box-shadow: 0 1px 2px rgba(52, 52, 52, .08); transition: background-color .15s ease, border-color .15s ease; }
+.gs-fold:hover { background: var(--color-light-beige); border-color: var(--color-graphite); }
+.gs-fold:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2px; }
+.gs-fold svg { width: 1.125rem; height: 1.125rem; }
+/* folded: a rail on the right, like the side menu's */
+.gs-dock.intake { transition: width .35s var(--ease-brand), box-shadow .3s ease; }
+.gs-dock.intake.is-tucked { width: 4.5rem; overflow: hidden; box-shadow: -24px 0 60px -30px rgba(52, 52, 52, .35); }
+.gs-dock.is-tucked .intake-inner { display: none; }
+.gs-rail { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; min-height: 100%; padding: 1rem 0 1.5rem; }
+.gs-rail[hidden] { display: none; }
+.gs-rail ol { list-style: none; margin: 0; padding: 1.25rem 0 0; border-top: 1px solid var(--color-line); display: grid; gap: 0.75rem; width: 2.75rem; justify-items: center; }
+.gs-rail ol button { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; border: 1.5px solid var(--color-sand-400); border-radius: 50%; background: var(--color-surface); color: var(--color-ink-subtle); font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
+.gs-rail ol button svg { width: 0.875rem; height: 0.875rem; }
+.gs-rail .is-done button { border-color: var(--color-graphite); background: var(--color-graphite); color: #fff; }
+.gs-rail .is-on button { border-color: var(--color-coral); background: var(--color-coral); color: #fff; box-shadow: 0 0 0 4px var(--color-coral-tint, #f9e7e3); }
+.gs-rail .is-soon button { border-style: dashed; opacity: .7; }
+.gs-rail-t { margin-top: 0.25rem; padding: 0.5rem 0; border: 0; background: none; writing-mode: vertical-rl; font: inherit; font-size: 0.75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-subtle); cursor: pointer; white-space: nowrap; }
+.gs-rail-t:hover { color: var(--color-ink); }
+/* inviting suppliers: the two ways in, then who's been invited */
+.gs-inv { display: grid; gap: 0.625rem; }
+.gs-inv-opt { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1rem; width: 100%; padding: 1rem 1rem 1rem 1.125rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); font: inherit; text-align: left; color: var(--color-ink); cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease; }
+.gs-inv-opt:hover { border-color: var(--color-coral); box-shadow: 0 6px 18px -12px rgba(52, 52, 52, .35); }
+.gs-inv-opt:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2px; }
+.gs-inv-opt b { display: block; font-size: 0.9375rem; font-weight: 600; }
+.gs-inv-opt small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-subtle); }
+.gs-inv-opt > svg { width: 1.125rem; height: 1.125rem; color: var(--color-ink-subtle); }
+.gs-inv-i { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 0.625rem; background: var(--color-light-beige); }
+.gs-inv-i svg { width: 1.25rem; height: 1.25rem; }
+.gs-inv-done ul { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); }
+.gs-inv-done li { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.875rem; }
+.gs-inv-done li + li { border-top: 1px solid var(--color-line); }
+.gs-inv-done b { display: block; font-size: 0.875rem; font-weight: 600; }
+.gs-inv-done small { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.gs-inv-ok { flex: none; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--color-graphite); color: #fff; }
+.gs-inv-ok svg { width: 0.75rem; height: 0.75rem; }
+.gs-inv-n { display: inline-grid; place-items: center; min-width: 1.375rem; height: 1.375rem; margin-left: 0.25rem; padding: 0 0.375rem; border-radius: 9999px; background: var(--color-mid-beige); font-size: 0.75rem; }
+.gs-inv-done .gs-hint { margin-top: 0.5rem; }
+@media (prefers-reduced-motion: reduce) { .gs-dock.intake { transition: none; } }
 .gs-tour .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .gs-tour-bar { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.375rem; }
 .gs-tour-bar li { display: grid; gap: 0.375rem; font-size: 0.75rem; line-height: 1.25; color: var(--color-ink-subtle); }
@@ -436,6 +476,25 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
 
   // ---- the overlay, for one section ----------------------------------------------------------------
   let wrap = null;
+  // the onboarding's panel folded to a rail on the right, as the side menu folds: the steps still
+  // there, the page in full view; the rail (or its button) opens it again
+  const tuck = (on) => {
+    if (!wrap) return;
+    const rail = wrap.querySelector('.gs-rail'), inner = wrap.querySelector('.intake-inner'); if (!rail) return;
+    wrap.classList.toggle('is-tucked', on); inner.inert = on; rail.hidden = !on;
+    const f = on ? rail.querySelector('.gs-fold') : wrap.querySelector('[data-tuck]'); if (f) f.focus();
+  };
+  // the onboarding's panel: its steps across the top, and the same steps down the rail when folded
+  const CHECK_I = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  const tourRail = (tour) => `<nav class="gs-rail" aria-label="Setting up your company" hidden>
+        <button type="button" class="gs-fold" data-untuck aria-label="Show the setup panel" title="Show the panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 17l-5-5 5-5M11 17l-5-5 5-5"/></svg></button>
+        <ol>${tour.bar.map((b, i) => `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"><button type="button" data-untuck title="${esc(b.l)}${b.soon ? ' (coming soon)' : ''}" aria-label="${esc(b.l)}${b.done && !b.on ? ', done' : ''}. Show the setup panel"${b.on ? ' aria-current="step"' : ''}>${b.done && !b.on ? CHECK_I : i + 1}</button></li>`).join('')}</ol>
+        <button type="button" class="gs-rail-t" data-untuck>Set up ${called()} &middot; Step ${tour.at + 1} of ${tour.count}</button>
+      </nav>`;
+  const tourHead = (tour) => `<header class="gs-tour">
+          <div class="gs-tour-t"><span class="eyebrow">Set up ${called()} &middot; Step ${tour.at + 1} of ${tour.count}</span><span class="gs-tour-acts"><button class="link-btn" type="button" data-close="end">Skip setup</button><button type="button" class="gs-fold" data-tuck aria-label="Hide the setup panel" title="Hide the panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg></button></span></div>
+          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.bar.map((b) => `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"${b.on ? ' aria-current="step"' : ''}${b.soon ? ' aria-disabled="true"' : ''}><span></span><em class="gs-tour-l">${esc(b.l)}${b.soon ? SOON.badge : ''}</em></li>`).join('')}</ol>
+        </header>`;
   const open = (area, opts = {}) => {
     if (wrap || !AREA[area]) return;
     const docs = asks(area).filter((d) => !(opts.skip || []).includes(d.code));
@@ -489,10 +548,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     wrap.className = 'intake over-page gs'; wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'gs-title');
     if (tour) wrap.classList.add('gs-dock');
     if (tour && tour.quiet) wrap.classList.add('is-quiet'); // one step after another: the panel stays put
-    wrap.innerHTML = `<div class="intake-inner">${tour ? `<header class="gs-tour">
-          <div class="gs-tour-t"><span class="eyebrow">Set up ${called()} &middot; Step ${tour.at + 1} of ${tour.count}</span><button class="link-btn" type="button" data-close="end">Skip setup</button></div>
-          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.bar.map((b) => `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"${b.on ? ' aria-current="step"' : ''}${b.soon ? ' aria-disabled="true"' : ''}><span></span><em class="gs-tour-l">${esc(b.l)}${b.soon ? SOON.badge : ''}</em></li>`).join('')}</ol>
-        </header>` : ''}<div class="intake-screen alma-ask">
+    wrap.innerHTML = `${tour ? tourRail(tour) : ''}<div class="intake-inner">${tour ? tourHead(tour) : ''}<div class="intake-screen alma-ask">
         <ol class="gs-steps" id="gs-steps" aria-label="${A.title} documents"></ol>
         <div id="gs-body"></div>
         <input id="gs-file" type="file" multiple hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.heic">
@@ -636,8 +692,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
             : ['46900 · Non-specialised wholesale trade', '49410 · Freight transport by road'];
           src.cae = nm(cert);
           const secs = [...new Set(p.cae.map((c) => CP.sectorOfCode(c)))];
-          if (!base.sector) { p.sector = secs[0]; src.sector = nm(cert); }
-          if (!base.sectors2) p.sectors2 = secs.filter((k) => k !== p.sector).join(',');
+          // every sector its codes are in, and in each, the subsectors they name
+          if (!base.sectors) { p.sectors = secs.join(','); p.subsectors = CP.subsOfCae(p.cae, secs).join(','); src.sectors = nm(cert); }
+          else if (!base.subsectors) p.subsectors = CP.subsOfCae(p.cae, base.sectors.split(',')).join(',');
         }
       }
       if (base.structure) src.structure = 'sign-up';
@@ -857,13 +914,15 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       strip();
       if (opts.onClose) opts.onClose(changedAny, how);
     };
-    const onKey = (e) => { if (e.key !== 'Escape' || !wrap) return; if (peek) { closePeek(); return; } if (editing == null && !checking) close(tour ? 'end' : ''); };
+    const onKey = (e) => { if (e.key !== 'Escape' || !wrap || wrap.classList.contains('is-tucked')) return; if (peek) { closePeek(); return; } if (editing == null && !checking) close(tour ? 'end' : ''); };
     document.addEventListener('keydown', onKey);
     wrap.addEventListener('click', (e) => {
       const t = (s) => e.target.closest(s);
       if (checking) return;
       const code = (a) => t(`[data-${a}]`).getAttribute(`data-${a}`);
       if (t('[data-close]')) { e.preventDefault(); close(t('[data-close]').dataset.close || ''); return; }
+      if (t('[data-tuck]')) { tuck(true); return; }
+      if (t('[data-untuck]')) { tuck(false); return; }
       // back: from the review to the upload; from the upload or the end (what she read is accepted
       // by then, not to be reviewed again) to the step before in the onboarding
       if (t('[data-back]')) { if (st.step === 2 && st.sub === 'facts') { st.sub = null; keep(); paint(); } else if (st.step === 2) goStep(1); else close('back'); return; }
@@ -931,6 +990,70 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (opts.files && opts.files.length) take(opts.files);
   };
 
+  // ---- the onboarding's last step: inviting suppliers, on My suppliers (suppliers.html) ------------
+  // ALMA says what happens next, and the page's own ways in open from her panel: Add a supplier, one
+  // at a time, or many from an Excel list (js/supplier-add.js, js/supplier-import.js). While the
+  // list from a file is being checked, the panel folds to its rail to leave the page the room; who's
+  // been invited shows in it as they're sent.
+  const PLUS_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 19.5c.8-3.4 3.4-5.5 6.5-5.5 1.3 0 2.5.4 3.5 1M18 14v6M15 17h6"/></svg>';
+  const XLS_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8.5 12.5l4 5M12.5 12.5l-4 5"/></svg>';
+  const CHEV_I = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.17 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd"/></svg>';
+  const BACK_I = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 0 1-.02 1.06L8.83 10l3.94 3.71a.75.75 0 1 1-1.04 1.08l-4.5-4.25a.75.75 0 0 1 0-1.08l4.5-4.25a.75.75 0 0 1 1.06.02Z" clip-rule="evenodd"/></svg>';
+  const invite = (area, opts = {}) => {
+    const tour = opts.tour, add = window.CMSupplierAdd;
+    if (wrap || !tour || !add) return;
+    const invited = () => (window.CM_SUPPLIERS ? window.CM_SUPPLIERS.list().filter((x) => x.status === 'invited') : []);
+    const before = invited().length;
+    const body = () => {
+      const l = invited(), back = tour.back || false;
+      const fig = almaHtml(); // her figure, where the page has one to copy
+      return `${fig ? `<span class="gs-mini" aria-hidden="true"><span class="alma-media">${fig}</span></span>` : ''}
+        <p class="says">ALMA</p>
+        <h1 id="gs-title" tabindex="-1">Now your suppliers. <span class="soft">I&rsquo;ll collect their documents for you.</span></h1>
+        <p class="lead">Invite the companies that work for you. I&rsquo;ll ask each one for the documents its country requires, read them as they come in, and tell you when one is missing or about to expire.</p>
+        <div class="gs-pane gs-inv">
+          <button type="button" class="gs-inv-opt" data-inv="one"><span class="gs-inv-i">${PLUS_I}</span><span><b>Add a supplier</b><small>By its country and company code. Not on C&#8209;MORE yet? I&rsquo;ll invite it to join.</small></span>${CHEV_I}</button>
+          <button type="button" class="gs-inv-opt" data-inv="many"><span class="gs-inv-i">${XLS_I}</span><span><b>Invite many from Excel</b><small>Upload a list, check it, and send every invitation at once.</small></span>${CHEV_I}</button>
+        </div>
+        ${l.length ? `<div class="gs-pane gs-inv-done"><p class="gs-lh">Invited <span class="gs-inv-n">${l.length}</span></p>
+          <ul>${l.slice(0, 5).map((x) => `<li><span class="gs-inv-ok">${OK}</span><span><b>${esc(x.name)}</b><small>${esc([x.city, x.email].filter(Boolean).join(' · '))}</small></span></li>`).join('')}</ul>
+          ${l.length > 5 ? `<p class="gs-hint">And ${l.length - 5} more, on My suppliers.</p>` : ''}</div>` : ''}
+        <div class="actions gs-nav3${l.length ? ' no-skip' : ''}"><span>${back ? `<button class="link-btn gs-back" type="button" data-back>${BACK_I}${back}</button>` : `<button class="link-btn gs-back" type="button" disabled>${BACK_I}Back</button>`}</span>
+          <span>${l.length ? '' : '<button class="link-btn" type="button" data-close="next">I&rsquo;ll do it later</button>'}</span>
+          <span><button class="btn btn-primary" type="button" data-close="next">${tour.next ? `Next: ${esc(tour.next)}` : 'Finish setup'}</button></span></div>`;
+    };
+    wrap = document.createElement('div');
+    wrap.className = 'intake over-page gs gs-dock' + (tour.quiet ? ' is-quiet' : '');
+    wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'gs-title');
+    wrap.innerHTML = `${tourRail(tour)}<div class="intake-inner">${tourHead(tour)}<div class="intake-screen alma-ask"><div id="gs-body">${body()}</div></div></div>`;
+    document.body.appendChild(wrap);
+    const me = wrap, paintBody = () => { if (wrap === me) me.querySelector('#gs-body').innerHTML = body(); };
+    const onList = () => paintBody();
+    const onReview = (e) => { if (wrap !== me) return; tuck(!!e.detail); };
+    const close = (how = '') => {
+      if (wrap !== me) return;
+      document.removeEventListener('keydown', onKey); document.removeEventListener('cm-suppliers', onList); document.removeEventListener('cm-sup-review', onReview);
+      wrap = null;
+      if (how === 'next' || how === 'back') { me.classList.add('is-leaving'); setTimeout(() => me.remove(), 1200); } else me.remove();
+      if (opts.onClose) opts.onClose(invited().length !== before, how);
+    };
+    // Escape leaves the setup, unless the Add a supplier drawer is what's open, or the panel is folded
+    const onKey = (e) => { if (e.key !== 'Escape' || wrap !== me || me.classList.contains('is-tucked') || add.isOpen()) return; close('end'); };
+    document.addEventListener('keydown', onKey); document.addEventListener('cm-suppliers', onList); document.addEventListener('cm-sup-review', onReview);
+    me.addEventListener('click', (e) => {
+      const t = (q) => e.target.closest(q);
+      if (t('[data-close]')) { e.preventDefault(); close(t('[data-close]').dataset.close || ''); return; }
+      if (t('[data-back]')) { close('back'); return; }
+      if (t('[data-tuck]')) { tuck(true); return; }
+      if (t('[data-untuck]')) { tuck(false); return; }
+      const b = t('[data-inv]'); if (!b) return;
+      add.open();
+      // many: the drawer opens on its first step, where an Excel list goes in
+      if (b.dataset.inv === 'many') setTimeout(() => { const p = document.querySelector('#si-bulk [data-si-pick]'); if (p) p.focus(); }, 360);
+    });
+    const h = me.querySelector('#gs-title'); if (h) h.focus({ preventScroll: true });
+  };
+
   // ---- the company homepage's own way in: its drop zone and "Start company profile" ---------------
   // for a company added in this session they open ALMA on the Company section, not the general intake
   if (document.querySelector('#empty')) {
@@ -952,13 +1075,15 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   // ALMA comes up big over the page, says hello and what she'll do; then she settles into a panel
   // docked at the side, with the homepage still in view, and asks section by section: first the
   // documents that show the company is registered, then the rest of the company's, then its
-  // workers' and its equipment's. Each step can be skipped; "Skip setup" (or Escape) leaves it all
+  // suppliers, invited to share theirs. Each step can be skipped; "Skip setup" (or Escape) leaves it all
   // for later, on the empty homepage. Where it got to is kept, so coming back carries on from there.
-  const TOUR = ['registration', 'company', 'workers', 'equipment'];
-  const STEP = { registration: 'Registration', company: 'Company documents', workers: 'Workers', equipment: 'Equipment' };
+  // (Workers and Equipment come back as steps once they open)
+  const TOUR = ['registration', 'company', 'suppliers'];
+  const STEP = { registration: 'Registration', company: 'Company documents', suppliers: 'Invite suppliers' };
   const regCodes = () => asks('registration').map((d) => d.code);
-  const docsOf = (a) => (a === 'company' ? asks('company').filter((d) => !regCodes().includes(d.code)) : asks(a));
-  const complete = (a) => docsOf(a).every((d) => (saved.files[d.code] || {}).ok);
+  const docsOf = (a) => (a === 'suppliers' ? [] : a === 'company' ? asks('company').filter((d) => !regCodes().includes(d.code)) : asks(a));
+  const invitedN = () => (window.CM_SUPPLIERS ? window.CM_SUPPLIERS.list().filter((x) => x.status === 'invited').length : saved.invited || 0);
+  const complete = (a) => (a === 'suppliers' ? invitedN() > 0 : docsOf(a).every((d) => (saved.files[d.code] || {}).ok));
   const first = (() => { try { return ((JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || '').split(/\s+/)[0]; } catch (e) { return ''; } })();
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1003,8 +1128,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   // where each step happens: the homepage for the company's own documents (its top for Registration,
   // its documents for the rest), the Documents page's section for Workers and Equipment
   const onHome = !!document.querySelector('#empty');
-  const PLACE = { workers: 'company-details.html?area=workers', equipment: 'company-details.html?area=equipment' };
-  const here = (a) => (PLACE[a] ? /company-details/.test(location.pathname) && new URLSearchParams(location.search).get('area') === a : onHome);
+  // its documents, Workers and Equipment; My suppliers for inviting suppliers
+  const PLACE = { workers: 'company-details.html?area=workers', equipment: 'company-details.html?area=equipment', suppliers: 'suppliers.html' };
+  const here = (a) => (a === 'suppliers' ? /suppliers\.html$/.test(location.pathname) : PLACE[a] ? /company-details/.test(location.pathname) && new URLSearchParams(location.search).get('area') === a : onHome);
   // to another page: this one fades out, the next fades in (its head reads cm-tour-fade)
   const leave = (url) => {
     try { sessionStorage.setItem('cm-tour-fade', '1'); } catch (e) {}
@@ -1027,7 +1153,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (o.again) { t.ended = false; t.passed = t.passed.filter(complete); }
     // Workers and Equipment show, marked coming soon, but aren't steps until they open:
     // Company documents is the last step meanwhile
-    const shown = TOUR.filter((a) => docsOf(a).length), areas = shown.filter((a) => !SOON.areas.includes(a));
+    const shown = TOUR.filter((a) => a === 'suppliers' ? !!PLACE.suppliers : docsOf(a).length), areas = shown.filter((a) => !SOON.areas.includes(a));
     const at = areas.findIndex((a) => !t.passed.includes(a));
     if (at < 0) { t.ended = true; keep(); return false; }
     keep();
@@ -1039,7 +1165,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (!here(a)) { leave(PLACE[a] || 'my-company.html?page'); return; }
       show(a);
       const n = areas.findIndex((x, j) => j > i && !t.passed.includes(x)); // the next step not done yet
-      open(a, {
+      (a === 'suppliers' ? invite : open)(a, {
         files, skip: a === 'company' ? regCodes() : [],
         tour: { at: i, count: areas.length, bar: shown.map((x) => ({ l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: t.passed.includes(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
         onClose: (c, how) => {

@@ -819,6 +819,8 @@ html[data-sn="rail"] .sn-collapse svg { transform: rotate(180deg); }
 .sn-toggle { display: none; place-items: center; width: 2.5rem; height: 2.5rem; margin-left: -0.5rem; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink); cursor: pointer; }
 .sn-toggle:hover { background: var(--color-mid-beige); }
 .sn-toggle svg { width: 1.375rem; height: 1.375rem; }
+.sn-toggle .sn-toggle-x, .sn-toggle[aria-expanded="true"] svg:first-child { display: none; } /* open, the menu button closes it */
+.sn-toggle[aria-expanded="true"] .sn-toggle-x { display: block; }
 html[data-sn="drawer"] .sn-toggle { display: grid; }
 html[data-sn="drawer"] .top .hdr-in > .brand { margin-right: auto; margin-left: 0.25rem; }
 /* opened over the page (narrower screens): the content keeps clearing just the rail */
@@ -1150,7 +1152,7 @@ body { transition: background-color .9s ease; }
 <div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
 
 <header class="top"><div class="hdr-in">
-  <button type="button" class="sn-toggle" id="sn-toggle" aria-label="Menu" aria-controls="sn" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <button type="button" class="sn-toggle" id="sn-toggle" aria-label="Menu" aria-controls="sn" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><svg class="sn-toggle-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   <a class="brand" href="my-company.html?filled" aria-label="C-MORE, back to your company"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
   <div class="top-right">
     <span data-lang-switch></span>

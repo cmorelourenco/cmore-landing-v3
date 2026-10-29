@@ -47,6 +47,8 @@
     set(localStorage, LINKS, l);
     return org;
   };
+  // a company you already have, put under another of yours (or, with no parent, on its own)
+  const link = (id, parent) => { const l = links(); if (parent && parent !== id) l[id] = parent; else delete l[id]; set(localStorage, LINKS, l); };
   // going into a company: an empty one opens on its empty homepage, where ALMA's step comes up
   // over it (skip it and the empty page stays); one with a profile opens on that profile
   const go = (o, opts = {}) => {
@@ -70,7 +72,7 @@
       if (window.indexedDB) indexedDB.deleteDatabase('cm-files');
     } catch (e) {}
   };
-  window.CMOrgs = { persona, test: TEST, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, go, forget };
+  window.CMOrgs = { persona, test: TEST, role, roleLabel: ROLE[role] || role, home: HOME, list, byId, current, parentOf, childrenOf, add, link, go, forget };
 
   // ALMA's intake marks the company filled when it's done: that's the company you're in
   const cur = current();

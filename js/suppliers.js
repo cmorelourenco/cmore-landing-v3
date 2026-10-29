@@ -129,7 +129,7 @@ window.CM_SUPPLIERS = (() => {
   LIST.forEach((s) => { s.status = s.consents.some((c) => c.state === 'pending') ? 'pending' : 'accepted'; });
   const all = () => added().map(fromInvite).concat(LIST);
   const SUP_STATUS = { invited: ['Invited', 'b-neu'], pending: ['Pending consent', 'b-pend'], accepted: ['Accepted', 'b-ok'] };
-  const addInvite = (a) => { const l = added(); l.unshift(a); try { sessionStorage.setItem(ADD_KEY, JSON.stringify(l)); } catch (e) {} };
+  const addInvite = (a) => { const l = added(); l.unshift(a); try { sessionStorage.setItem(ADD_KEY, JSON.stringify(l)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-suppliers')); };
   // companies already on C-MORE that aren't your suppliers yet, by country and code (digits only).
   // Prototype: made up, so the flow can find one.
   const ON_CMORE = [

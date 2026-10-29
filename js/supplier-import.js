@@ -247,6 +247,7 @@
   };
   // a repaint keeps the list scrolled where it was
   const paint = (focus) => {
+    document.dispatchEvent(new CustomEvent('cm-sup-review', { detail: !!bulk })); // ALMA's setup panel makes room (js/guided-upload.js)
     if (!bulk) { host.hidden = true; host.innerHTML = ''; box.hidden = false; return; }
     const w = host.querySelector('.si-wrap'), top = w ? w.scrollTop : 0;
     host.innerHTML = review(); host.hidden = false; box.hidden = true;

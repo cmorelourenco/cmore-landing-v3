@@ -22,6 +22,30 @@ window.CO_PROFILE = (() => {
     ['Q', 'Human health and social work'], ['R', 'Arts, entertainment and recreation'], ['S', 'Other service activities'], ['T', 'Households as employers'], ['U', 'Extraterritorial organisations']];
   // an activity code's first two digits (its NACE division) give its ISIC section
   const DIV = [[3, 'A'], [9, 'B'], [33, 'C'], [35, 'D'], [39, 'E'], [43, 'F'], [47, 'G'], [53, 'H'], [56, 'I'], [63, 'J'], [66, 'K'], [68, 'L'], [75, 'M'], [82, 'N'], [84, 'O'], [85, 'P'], [88, 'Q'], [93, 'R'], [96, 'S'], [98, 'T'], [99, 'U']];
+  // each sector's subsectors: its divisions (the first two digits of a CAE or NACE code)
+  const SUBSECTORS = [['01', 'Crop and animal production, hunting'], ['02', 'Forestry and logging'], ['03', 'Fishing and aquaculture'],
+    ['05', 'Mining of coal and lignite'], ['06', 'Extraction of crude petroleum and natural gas'], ['07', 'Mining of metal ores'], ['08', 'Other mining and quarrying'], ['09', 'Mining support services'],
+    ['10', 'Food products'], ['11', 'Beverages'], ['12', 'Tobacco products'], ['13', 'Textiles'], ['14', 'Wearing apparel'], ['15', 'Leather and related products'],
+    ['16', 'Wood and cork products, except furniture'], ['17', 'Paper and paper products'], ['18', 'Printing and recorded media'], ['19', 'Coke and refined petroleum products'],
+    ['20', 'Chemicals and chemical products'], ['21', 'Pharmaceutical products'], ['22', 'Rubber and plastic products'], ['23', 'Other non-metallic mineral products'],
+    ['24', 'Basic metals'], ['25', 'Fabricated metal products'], ['26', 'Computer, electronic and optical products'], ['27', 'Electrical equipment'], ['28', 'Machinery and equipment'],
+    ['29', 'Motor vehicles and trailers'], ['30', 'Other transport equipment'], ['31', 'Furniture'], ['32', 'Other manufacturing'], ['33', 'Repair and installation of machinery and equipment'],
+    ['35', 'Electricity, gas, steam and air conditioning supply'],
+    ['36', 'Water collection, treatment and supply'], ['37', 'Sewerage'], ['38', 'Waste collection, treatment and recovery'], ['39', 'Remediation and other waste management'],
+    ['41', 'Construction of buildings'], ['42', 'Civil engineering'], ['43', 'Specialised construction activities'],
+    ['45', 'Motor vehicle trade and repair'], ['46', 'Wholesale trade'], ['47', 'Retail trade'],
+    ['49', 'Land transport and pipelines'], ['50', 'Water transport'], ['51', 'Air transport'], ['52', 'Warehousing and transport support'], ['53', 'Postal and courier activities'],
+    ['55', 'Accommodation'], ['56', 'Food and beverage services'],
+    ['58', 'Publishing'], ['59', 'Film, video, TV and music'], ['60', 'Programming and broadcasting'], ['61', 'Telecommunications'], ['62', 'Computer programming and consultancy'], ['63', 'Information services'],
+    ['64', 'Financial services'], ['65', 'Insurance and pension funding'], ['66', 'Auxiliary financial and insurance services'],
+    ['68', 'Real estate activities'],
+    ['69', 'Legal and accounting'], ['70', 'Head offices and management consultancy'], ['71', 'Architecture, engineering and technical testing'], ['72', 'Scientific research and development'],
+    ['73', 'Advertising and market research'], ['74', 'Other professional and technical activities'], ['75', 'Veterinary activities'],
+    ['77', 'Rental and leasing'], ['78', 'Employment activities'], ['79', 'Travel agencies and tour operators'], ['80', 'Security and investigation'], ['81', 'Services to buildings and landscape'], ['82', 'Office and business support'],
+    ['84', 'Public administration and defence'], ['85', 'Education'], ['86', 'Human health activities'], ['87', 'Residential care'], ['88', 'Social work without accommodation'],
+    ['90', 'Creative, arts and entertainment'], ['91', 'Libraries, museums and culture'], ['92', 'Gambling and betting'], ['93', 'Sports, amusement and recreation'],
+    ['94', 'Membership organisations'], ['95', 'Repair of computers and household goods'], ['96', 'Other personal services'],
+    ['97', 'Households as employers'], ['98', 'Households producing for own use'], ['99', 'Extraterritorial organisations']];
   const sectorOfCode = (code) => { const d = parseInt(String(code).slice(0, 2), 10); const r = DIV.find(([to]) => d <= to); return r ? r[1] : ''; };
   const EMPLOYEES = [['1-9', '9 or fewer'], ['10-49', '10–49'], ['50-249', '50–249'], ['250-499', '250–499'], ['500-999', '500–999'], ['1000-4999', '1,000–4,999'], ['5000+', '5,000 or more']];
   // revenue bands are set in euros; shown in another currency at a rounded rate
@@ -43,7 +67,7 @@ window.CO_PROFILE = (() => {
       country: 'Portugal', tax: '514228930', name: 'Ferreira Construções, Lda.', trading: 'Ferreira Construções', form: 'private', formOther: '',
       hqElsewhere: '', hqCountry: '', street: 'Rua do Freixo 1071', postcode: '4300-219', city: 'Porto', region: 'Porto',
       sector: 'F', sectors2: '', cae: ['41200 · Construction of residential and non-residential buildings', '43210 · Electrical installation'], exports: 'no',
-      employees: '10-49', employeesYear: YEARS[1], revenue: '2-10', revenueYear: YEARS[1], currency: 'EUR', structure: 'independent', parentCountry: '', parentVat: '',
+      employees: '10-49', employeesYear: YEARS[1], revenue: '2-10', revenueYear: YEARS[1], currency: 'EUR', structure: 'independent', parentOrg: '', parentCountry: '', parentVat: '',
       email: 'geral@ferreiraconstrucoes.pt', cc: '+351', phone: '22 600 4180', website: 'ferreiraconstrucoes.pt',
       logo: 'images/ferreira-logo.webp',
       consents: [
@@ -56,7 +80,7 @@ window.CO_PROFILE = (() => {
       country: 'United States', tax: '71-4482019', name: 'Veridian Harvest Co.', trading: '', form: 'other', formOther: 'Limited liability company (LLC)',
       hqElsewhere: '', hqCountry: '', street: '400 Poydras St, Suite 1850', postcode: '70130', city: 'New Orleans', region: 'LA',
       sector: 'G', sectors2: 'A', cae: [], exports: 'yes',
-      employees: '50-249', employeesYear: YEARS[1], revenue: '10-50', revenueYear: YEARS[1], currency: 'USD', structure: 'independent', parentCountry: '', parentVat: '',
+      employees: '50-249', employeesYear: YEARS[1], revenue: '10-50', revenueYear: YEARS[1], currency: 'USD', structure: 'independent', parentOrg: '', parentCountry: '', parentVat: '',
       email: 'info@veridianharvest.com', cc: '+1', phone: '(504) 555-0192', website: 'veridianharvest.com',
       logo: 'images/veridian-logo.svg',
       consents: [
@@ -67,7 +91,7 @@ window.CO_PROFILE = (() => {
     },
   };
   const BLANK = { country: '', tax: '', name: '', trading: '', form: '', formOther: '', hqElsewhere: '', hqCountry: '', street: '', postcode: '', city: '', region: '',
-    sector: '', sectors2: '', cae: [], exports: '', employees: '', employeesYear: YEARS[1], revenue: '', revenueYear: YEARS[1], currency: 'EUR', structure: '', parentCountry: '', parentVat: '',
+    sector: '', sectors2: '', cae: [], exports: '', employees: '', employeesYear: YEARS[1], revenue: '', revenueYear: YEARS[1], currency: 'EUR', structure: '', parentOrg: '', parentCountry: '', parentVat: '',
     email: '', cc: '+351', phone: '', website: '', logo: '', consents: [] };
   // which demo person is signed in (the page's head decides): Miguel's company, or Beatriz's
   const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
@@ -81,26 +105,52 @@ window.CO_PROFILE = (() => {
   // what was picked when it was added, in this profile's terms
   const FORM_OF = { 'Sociedade por quotas (Lda.)': 'private', 'Sociedade unipessoal por quotas': 'private', 'Sociedade anónima (S.A.)': 'public', 'Empresário em nome individual': 'sole', Cooperativa: 'coop' };
   const SECTOR_OF = { Construction: 'F', Industry: 'C', Retail: 'G', Technology: 'J', 'Transport and logistics': 'H', Services: 'N' };
+  // another of your companies, by its country and tax number (the demo company's are in its profile)
+  const factsOf = (id) => (id === 'home' ? DEFAULTS[persona] : (() => { const o = orgs.find((x) => x.id === id); return o && { country: o.countryName || NAMES[o.country] || '', tax: o.tax || '' }; })());
+  // the companies that can be this one's parent: your others, but not the ones under it
+  const links = get(localStorage, 'cm-org-links-' + persona, {}) || {};
+  const under = (id) => { for (let k = links[id], n = 0; k && n < 20; k = links[k], n++) if (k === orgId) return true; return false; };
+  const parents = () => {
+    const home = (get(sessionStorage, KEY, {}) || {})[TEST ? 'test' : persona] || {};
+    return [{ id: 'home', name: home.name || (DEFAULTS[persona] || {}).name || 'Your company' }].concat(orgs).filter((o) => o.id !== orgId && !under(o.id));
+  };
   if (added) {
-    const parent = added.parent && (added.parent === 'home' ? DEFAULTS[persona] : (() => { const o = orgs.find((x) => x.id === added.parent); return o && { country: o.countryName || NAMES[o.country] || '', tax: o.tax || '' }; })());
+    const parent = added.parent && factsOf(added.parent);
     DEFAULTS[added.id] = Object.assign({}, BLANK, {
       country: added.countryName || NAMES[added.country] || '', tax: added.tax || '', name: added.name === 'New company' ? '' : added.name || '', trading: added.trading || '',
       form: added.form ? FORM_OF[added.form] || 'other' : '', formOther: added.form && !FORM_OF[added.form] ? (added.form === 'other' ? added.formOther || '' : added.form) : '',
       sector: SECTOR_OF[added.sector] || '', employees: added.size === 'medium' ? '50-249' : '',
-      structure: added.structure || '', parentCountry: parent ? parent.country : '', parentVat: parent ? parent.tax : '', cc: added.country === 'US' ? '+1' : '+351',
+      structure: added.structure || '', parentOrg: added.parent || '', parentCountry: parent ? parent.country : '', parentVat: parent ? parent.tax : '', cc: added.country === 'US' ? '+1' : '+351',
     });
   }
   if (TEST && !added) DEFAULTS.test = Object.assign({}, BLANK, { country: NAMES[person.country || 'PT'] || 'Portugal', tax: person.nipc || '' });
   const who = () => (added ? added.id : TEST ? 'test' : persona);
   const all = () => get(sessionStorage, KEY, {}) || {};
   // what older pages still read: its activity, in words, and its people
-  const derive = (p) => Object.assign(p, { activity: label(SECTORS, p.sector), people: label(EMPLOYEES, p.employees) });
+  // its sectors (one or more, each with its subsectors), as the form keeps them: "F,C" and "41,43,25".
+  // Older profiles had one primary sector and secondary ones: they're all its sectors now, and the
+  // subsectors start from its activity codes. sector and sectors2 stay, for what still reads them.
+  const split = (v) => [...new Set(String(v || '').split(',').filter(Boolean))];
+  const subsOfCae = (cae, secs) => [...new Set((cae || []).map((c) => String(c).slice(0, 2)))].filter((d) => SUBSECTORS.some(([k]) => k === d) && secs.includes(sectorOfCode(d)));
+  const acts = (p) => {
+    if (p.sectors == null) p.sectors = split([p.sector].concat(split(p.sectors2)).join(',')).join(',');
+    const secs = split(p.sectors);
+    if (p.subsectors == null) p.subsectors = subsOfCae(p.cae, secs).join(',');
+    p.subsectors = split(p.subsectors).filter((d) => secs.includes(sectorOfCode(d))).join(',');
+    return Object.assign(p, { sector: secs[0] || '', sectors2: secs.slice(1).join(',') });
+  };
+  const derive = (p) => Object.assign(acts(p), { activity: label(SECTORS, p.sector), people: label(EMPLOYEES, p.employees) });
   const load = () => {
     const d = JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)), saved = all()[who()] || {};
     return derive(Object.assign(d, saved, { consents: saved.consents || d.consents }));
   };
   // saved: the side menu's company chip follows (js/company-switcher.js)
-  const save = (p) => { const a = all(); a[who()] = p; try { sessionStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-profile')); };
+  const save = (p) => {
+    if (p.structure === 'subsidiary' && p.parentOrg && p.parentOrg !== 'other') { const f = factsOf(p.parentOrg); if (f) Object.assign(p, { parentCountry: f.country || '', parentVat: f.tax || '' }); }
+    acts(p);
+    const was = load(); // the structure changed: the company selector follows (js/company-switcher.js)
+    if (window.CMOrgs && window.CMOrgs.link && (was.structure !== p.structure || was.parentOrg !== p.parentOrg)) window.CMOrgs.link(orgId, p.structure === 'subsidiary' && p.parentOrg && p.parentOrg !== 'other' ? p.parentOrg : null);
+    const a = all(); a[who()] = p; try { sessionStorage.setItem(KEY, JSON.stringify(a)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-profile')); };
   // "Construction · 10–49 people · NIPC 514 228 930 · Private limited company · Porto" — the tax
   // number goes by its country's name (NIPC in Portugal, EIN in the US)
   const taxLabel = (p) => (p.country === 'United States' ? `EIN ${p.tax.replace(/-/g, '‑')}` : p.country === 'Portugal' ? `NIPC ${p.tax.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3')}` : `Tax number ${p.tax}`);
@@ -150,6 +200,14 @@ window.CO_PROFILE = (() => {
 .cpf-chip { display: inline-flex; align-items: center; gap: 0.25rem; height: 1.875rem; padding: 0 0.375rem 0 0.75rem; border-radius: 9999px; background: var(--color-mid-beige); font-size: 0.875rem; color: var(--color-ink); }
 .cpf-chip button { all: unset; display: grid; place-items: center; width: 1.375rem; height: 1.375rem; border-radius: 50%; cursor: pointer; color: var(--color-ink-subtle); }
 .cpf-chip button:hover, .cpf-chip button:focus-visible { background: var(--color-surface); color: var(--color-ink); }
+.cpf-secs { list-style: none; margin: 0 0 0.5rem; padding: 0; display: grid; gap: 0.5rem; }
+.cpf-sec { display: grid; gap: 0.625rem; padding: 0.75rem 0.75rem 0.875rem 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); }
+.cpf-sec-h { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; font-size: 0.9375rem; }
+.cpf-sec-h b { font-weight: 600; }
+.cpf-sec-x { all: unset; flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; cursor: pointer; color: var(--color-ink-subtle); }
+.cpf-sec-x:hover, .cpf-sec-x:focus-visible { background: var(--color-light-beige); color: var(--color-ink); }
+.cpf-sec-x svg { width: 0.75rem; height: 0.75rem; }
+.cpf-sec .cpf-sub-add { font-size: 0.875rem; }
 .cpf-chip svg { width: 0.75rem; height: 0.75rem; }
 .cpf-codes { list-style: none; margin: 0; padding: 0; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); }
 .cpf-codes li { padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--color-ink); }
@@ -169,8 +227,19 @@ window.CO_PROFILE = (() => {
   const opts = (list, v, none) => (none ? `<option value="">${none}</option>` : '') + list.map(([k, l]) => `<option value="${esc(k)}"${k === v ? ' selected' : ''}>${esc(l)}</option>`).join('');
   const countryOpts = (v) => '<option value="">Choose one</option>' + COUNTRIES.map((c) => `<option${c === v ? ' selected' : ''}>${esc(c)}</option>`).join('');
   const yearOpts = (v) => YEARS.map((y) => `<option${y === v ? ' selected' : ''}>${y}</option>`).join('');
-  const chips = (two) => two.map((k) => `<span class="cpf-chip">${esc(label(SECTORS, k))}<button type="button" data-unchip="${k}" aria-label="Remove ${esc(label(SECTORS, k))}">${X_I}</button></span>`).join('');
-  const chipAdd = (main, two) => `<option value="">Add a sector</option>${SECTORS.filter(([k]) => k !== main && !two.includes(k)).map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}`;
+  // the sectors, each a card with its subsectors as chips and a list to add more; then one to add a sector
+  const secsHtml = (sectors, subsectors) => {
+    const secs = split(sectors), subs = split(subsectors);
+    const card = (k) => {
+      const name = label(SECTORS, k), mine = subs.filter((d) => sectorOfCode(d) === k), left = SUBSECTORS.filter(([d]) => sectorOfCode(d) === k && !mine.includes(d));
+      return `<li class="cpf-sec"><div class="cpf-sec-h"><b>${esc(name)}</b><button type="button" class="cpf-sec-x" data-unsec="${k}" aria-label="Remove ${esc(name)}">${X_I}</button></div>
+        <div class="cpf-chips">${mine.map((d) => `<span class="cpf-chip">${esc(label(SUBSECTORS, d))}<button type="button" data-unsub="${d}" aria-label="Remove ${esc(label(SUBSECTORS, d))}">${X_I}</button></span>`).join('')}</div>
+        ${left.length ? `<select class="input cpf-sub-add" data-sub-add aria-label="Add a subsector of ${esc(name)}"><option value="">${mine.length ? 'Add another subsector' : 'Add a subsector'} (optional)</option>${left.map(([d, l]) => `<option value="${d}">${esc(l)}</option>`).join('')}</select>` : ''}</li>`;
+    };
+    const rest = SECTORS.filter(([k]) => !secs.includes(k));
+    return `${secs.length ? `<ul class="cpf-secs">${secs.map(card).join('')}</ul>` : ''}
+      ${rest.length ? `<select class="input" id="cpf-sectors" data-sec-add><option value="">${secs.length ? 'Add another sector' : 'Choose a sector'}</option>${rest.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('')}</select>` : ''}`;
+  };
   const revHint = (cur) => `Bands are set in euros${cur && cur !== 'EUR' ? `, shown in ${cur} at a rounded rate` : ''}. The last box is the year it is for.`;
   const SECTIONS = {
     identification: { title: 'Identification', sub: 'Who the company is, as it is registered.' },
@@ -206,17 +275,17 @@ window.CO_PROFILE = (() => {
         <div class="cpf-f is-wide">${lab('region', 'Region', true)}${input('region', 'autocomplete="address-level1"')}</div>
       </div>`;
     if (key === 'activity') {
-      const two = String(p.sectors2 || '').split(',').filter(Boolean);
+      acts(p);
       // the economic activity (its CAE in Portugal, NACE elsewhere in the EU): read by ALMA from the
       // registry certificate, and only shown
       const codes = isEU(p.country) ? `<div class="cpf-f is-wide"><span class="cpf-l">Economic activity</span>${(p.cae || []).length
         ? `<ul class="cpf-codes">${p.cae.map((c) => { const [n, t] = String(c).split(' · '); return `<li><b>${esc(n)}</b>${esc(t || '')}</li>`; }).join('')}</ul>${from('cae')}<span class="cpf-hint">${p.country === 'Portugal' ? 'CAE' : 'NACE'} codes, read by ALMA from the company&rsquo;s registry certificate. Upload a newer one to update them.</span>`
         : '<span class="cpf-hint">ALMA reads it from the Commercial Registry Certificate once it&rsquo;s uploaded.</span>'}</div>` : '';
       return `<div class="cpf">
-        <div class="cpf-f is-wide">${lab('sector', 'Primary sector')}<select class="input" id="cpf-sector" data-k="sector">${opts(SECTORS, p.sector, 'Choose one')}</select>${from('sector')}</div>
-        <div class="cpf-f is-wide">${lab('sectors2', 'Secondary sectors', true)}<input type="hidden" data-k="sectors2" value="${esc(two.join(','))}">
-          <div class="cpf-chips" data-chips>${chips(two)}</div>
-          <select class="input" id="cpf-sectors2" data-chip-add>${chipAdd(p.sector, two)}</select></div>
+        <div class="cpf-f is-wide"><label class="cpf-l" for="cpf-sectors">Sectors</label>
+          <input type="hidden" data-k="sectors" value="${esc(p.sectors)}"><input type="hidden" data-k="subsectors" value="${esc(p.subsectors)}">
+          <div data-secs>${secsHtml(p.sectors, p.subsectors)}</div>${from('sectors')}
+          <span class="cpf-hint">Every sector the company works in, and in each, what it does there. Clients find their suppliers by sector.</span></div>
         <div class="cpf-f is-wide"><span class="cpf-l" id="cpf-exports-l">Does the company export goods or services? <span class="cpf-opt">(optional)</span></span><span class="cpf-seg" role="radiogroup" aria-labelledby="cpf-exports-l">
           <label><input type="radio" name="cpf-exports" data-k="exports" value="yes"${p.exports === 'yes' ? ' checked' : ''}>Yes</label><label><input type="radio" name="cpf-exports" data-k="exports" value="no"${p.exports === 'no' ? ' checked' : ''}>No</label></span></div>
         ${codes}
@@ -228,13 +297,19 @@ window.CO_PROFILE = (() => {
           <span class="cpf-hint" data-rev-hint>${revHint(p.currency)}</span></div>
       </div>`;
     if (key === 'structure') {
+      // already have other companies on C-MORE: the parent is one of them, picked from a list;
+      // only one that isn't on C-MORE is typed in, by its country and VAT number
+      const mine = parents();
+      const pick = !mine.length ? '' : p.parentOrg && (p.parentOrg === 'other' || mine.some((o) => o.id === p.parentOrg)) ? p.parentOrg : p.parentVat ? 'other' : '';
+      const ext = mine.length ? ` data-when="parentOrg=other"${pick === 'other' ? '' : ' hidden'}` : '';
       const r = (v, t, s) => `<label class="cpf-radio"><input type="radio" name="cpf-structure" data-k="structure" value="${v}"${p.structure === v ? ' checked' : ''}><span><b>${t}</b><span>${s}</span></span></label>`;
       return `<div class="cpf"><div class="cpf-f is-wide">${tag('structure') ? `<span class="cpf-l">Is it part of a group?</span>${from('structure')}` : ''}<div class="cpf-radios" role="radiogroup" aria-label="Corporate structure">
           ${r('parent', 'Parent company', 'Other companies sit under it, like a holding.')}
           ${r('subsidiary', 'Subsidiary company', 'It belongs to a group, under a parent company.')}
           <div class="cpf-more" data-when="structure=subsidiary"${p.structure === 'subsidiary' ? '' : ' hidden'}>
-            <div class="cpf-f">${lab('parentCountry', 'Parent&rsquo;s country')}<select class="input" id="cpf-parentCountry" data-k="parentCountry">${countryOpts(p.parentCountry)}</select>${from('parentCountry')}</div>
-            <div class="cpf-f">${lab('parentVat', 'Parent&rsquo;s VAT number')}${input('parentVat', 'placeholder="e.g. PT514228930" autocomplete="off"')}</div>
+            ${mine.length ? `<div class="cpf-f is-wide">${lab('parentOrg', 'Parent company')}<select class="input" id="cpf-parentOrg" data-k="parentOrg"><option value="">Choose one</option>${mine.map((o) => `<option value="${esc(o.id)}"${o.id === pick ? ' selected' : ''}>${esc(o.name)}</option>`).join('')}<option value="other"${pick === 'other' ? ' selected' : ''}>Another company, not on C&#8209;MORE</option></select></div>` : ''}
+            <div class="cpf-f"${ext}>${lab('parentCountry', 'Parent&rsquo;s country')}<select class="input" id="cpf-parentCountry" data-k="parentCountry">${countryOpts(p.parentCountry)}</select>${from('parentCountry')}</div>
+            <div class="cpf-f"${ext}>${lab('parentVat', 'Parent&rsquo;s VAT number')}${input('parentVat', 'placeholder="e.g. PT514228930" autocomplete="off"')}</div>
           </div>
           ${r('independent', 'None', 'It stands on its own, not part of a group.')}
         </div></div></div>`;
@@ -253,25 +328,28 @@ window.CO_PROFILE = (() => {
   const collect = (root) => Object.fromEntries(keysIn(root).map((k) => [k, value(root, k)]));
   // what must be there, and in what shape: [message, field], or null. strict: what ALMA's check
   // asks for before going on (Settings saves a section at a time, as far as it goes)
+  const typed = (v) => 'structure' in v && v.structure === 'subsidiary' && (!('parentOrg' in v) || v.parentOrg === 'other'); // a parent not on C-MORE
   const check = (v, strict) => {
     const has = (k) => k in v, need = (k, m) => (has(k) && !v[k] ? [m, k] : null);
     return need('name', 'The company needs its legal name.')
       || (has('form') && v.form === 'other' && !v.formOther ? ['Say which legal form it is.', 'formOther'] : null)
       || (has('hqElsewhere') && v.hqElsewhere && !v.hqCountry ? ['Choose the country its headquarters are in.', 'hqCountry'] : null)
-      || need('sector', 'Choose the sector the company works in.')
+      || need('sectors', 'Choose the sector the company works in.')
       || need('employees', 'Choose how many people work for the company.')
       || need('revenue', 'Choose the company’s annual revenue.')
       || (strict ? need('structure', 'Say whether the company is part of a group.') : null)
-      || (has('structure') && v.structure === 'subsidiary' && !v.parentCountry ? ['Choose the parent company’s country.', 'parentCountry'] : null)
-      || (has('structure') && v.structure === 'subsidiary' && !/^[A-Z0-9-]{6,16}$/i.test((v.parentVat || '').replace(/[\s.]/g, '')) ? ['Add the parent company’s VAT number, like PT514228930.', 'parentVat'] : null);
+      || (has('structure') && v.structure === 'subsidiary' && has('parentOrg') && !v.parentOrg ? ['Choose its parent company.', 'parentOrg'] : null)
+      || (typed(v) && !v.parentCountry ? ['Choose the parent company’s country.', 'parentCountry'] : null)
+      || (typed(v) && !/^[A-Z0-9-]{6,16}$/i.test((v.parentVat || '').replace(/[\s.]/g, '')) ? ['Add the parent company’s VAT number, like PT514228930.', 'parentVat'] : null);
   };
   // what opens what (Other → which form; another HQ → its country; Subsidiary → its parent), the
-  // secondary sectors as chips, and the revenue bands in the currency chosen
-  const repaintChips = (root) => {
-    const h = root.querySelector('[data-k="sectors2"]'); if (!h) return;
-    const main = value(root, 'sector') || '', two = h.value.split(',').filter((k) => k && k !== main); h.value = two.join(',');
-    root.querySelector('[data-chips]').innerHTML = chips(two);
-    root.querySelector('[data-chip-add]').innerHTML = chipAdd(main, two);
+  // sectors and their subsectors, and the revenue bands in the currency chosen
+  const setSecs = (root, secs, subs, focus) => {
+    const hs = root.querySelector('[data-k="sectors"]'), hb = root.querySelector('[data-k="subsectors"]');
+    hs.value = split(secs.join(',')).join(','); hb.value = split(subs.join(',')).filter((d) => split(hs.value).includes(sectorOfCode(d))).join(',');
+    hs.classList.remove('is-bad');
+    const box = root.querySelector('[data-secs]'); box.innerHTML = secsHtml(hs.value, hb.value);
+    const f = focus && box.querySelector(focus); if (f) f.focus(); else { const a = box.querySelector('[data-sec-add]'); if (a) a.focus(); }
   };
   const wire = (root, onChange) => {
     const sync = () => {
@@ -280,24 +358,24 @@ window.CO_PROFILE = (() => {
     };
     root.addEventListener('change', (e) => {
       const t = e.target;
-      if (t.matches('[data-chip-add]') && t.value) {
-        const h = root.querySelector('[data-k="sectors2"]'); h.value = h.value.split(',').filter(Boolean).concat(t.value).join(',');
-        repaintChips(root); t.focus();
-      }
+      const secs = () => split(value(root, 'sectors')), subs = () => split(value(root, 'subsectors'));
+      if (t.matches('[data-sec-add]') && t.value) setSecs(root, secs().concat(t.value), subs(), `[data-unsec="${t.value}"]`);
+      if (t.matches('[data-sub-add]') && t.value) { const k = sectorOfCode(t.value); setSecs(root, secs(), subs().concat(t.value), `.cpf-sec:has([data-unsec="${k}"]) [data-sub-add], [data-unsub="${t.value}"]`); }
       if (t.matches('[data-k="currency"]')) {
         const r = root.querySelector('[data-k="revenue"]'), v = r.value;
         r.innerHTML = opts(REVENUE.map((b) => [b[0], revenueLabel(b[0], t.value)]), v, 'Choose one');
         const hint = root.querySelector('[data-rev-hint]'); if (hint) hint.textContent = revHint(t.value);
       }
-      if (t.matches('[data-k="sector"]')) repaintChips(root);
       if (t.matches('.is-bad')) t.classList.remove('is-bad');
       sync();
     });
     root.addEventListener('input', (e) => { e.target.classList.remove('is-bad'); if (onChange) onChange(); });
     root.addEventListener('click', (e) => {
-      const b = e.target.closest('[data-unchip]'); if (!b) return;
-      const h = root.querySelector('[data-k="sectors2"]'); h.value = h.value.split(',').filter((k) => k && k !== b.dataset.unchip).join(',');
-      repaintChips(root); root.querySelector('[data-chip-add]').focus(); sync();
+      const a = e.target.closest('[data-unsec]'), b = e.target.closest('[data-unsub]'); if (!a && !b) return;
+      const secs = split(value(root, 'sectors')), subs = split(value(root, 'subsectors'));
+      if (a) setSecs(root, secs.filter((k) => k !== a.dataset.unsec), subs);
+      else setSecs(root, secs, subs.filter((d) => d !== b.dataset.unsub), `.cpf-sec:has([data-unsec="${sectorOfCode(b.dataset.unsub)}"]) [data-sub-add]`);
+      sync();
     });
   };
 
@@ -353,5 +431,5 @@ window.CO_PROFILE = (() => {
   };
 
   return { load, save, line, today, BADGE, SAY, applyToCompanyPage, defaults: () => JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)),
-    SECTIONS, section, wire, collect, value, check, isEU, sectorOfCode, label, formLabel, revenueLabel, FORMS, SECTORS, EMPLOYEES, initials };
+    SECTIONS, section, wire, collect, value, check, isEU, sectorOfCode, subsOfCae, label, formLabel, revenueLabel, FORMS, SECTORS, SUBSECTORS, EMPLOYEES, initials };
 })();
