@@ -591,7 +591,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const alma = almaHtml;
     let target = null, editing = null, rejected = [];
     const whyDraft = {}; // the reason typed for approving a different VAT number, kept across repaints
-    const held = {}; // the files themselves, by name, until each is filed (then js/doc-files.js keeps it)
+    const held = {}; // the files themselves, by name, until each is filed (then js/doc-files.js keeps it); kept there
+    // as '~name' too from the moment they're dropped, so a reload before she reads them doesn't lose them
 
     const filed = () => docs.filter((d) => saved.files[d.code]);
     const confirmed = () => docs.filter((d) => (saved.files[d.code] || {}).ok);
@@ -823,7 +824,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const assign = () => {
       // first the files she recognises by name, then the rest in order; what's left over is kept
       const openDocs = docs.filter((d) => !saved.files[d.code]), extra = [], later = [];
-      const give = (name, d) => { openDocs.splice(openDocs.indexOf(d), 1); saved.files[d.code] = read(d, { name }); if (window.CMFiles && held[name]) window.CMFiles.put(d.code, held[name]); };
+      const give = (name, d) => { openDocs.splice(openDocs.indexOf(d), 1); saved.files[d.code] = read(d, { name }); if (window.CMFiles) (held[name] ? Promise.resolve(held[name]) : window.CMFiles.get('~' + name).then((r) => r && r.blob)).then((file) => file && window.CMFiles.put(d.code, file)); };
       st.pending.forEach((name) => { const d = openDocs.length && match({ name }, openDocs); if (d && WORDS(d).some((w) => fold(name).includes(w))) give(name, d); else later.push(name); });
       later.forEach((name) => { if (openDocs.length) give(name, openDocs[0]); else extra.push(name); });
       // the test user (register.html): every batch of files has one with another company's VAT
@@ -911,7 +912,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const slot = dq('gs-dw-file'), at = peek;
       const fill = (html) => { if (peek === at && slot.isConnected) slot.innerHTML = html; };
       if (!window.CMFiles) fill('');
-      else window.CMFiles.get(d.code).then((r) => fill(r ? window.CMFiles.view(r) : window.CMFiles.missing(f.file)));
+      else window.CMFiles.get(d.code).then((r) => r || window.CMFiles.get('~' + f.file)).then((r) => fill(r ? window.CMFiles.view(r) : window.CMFiles.missing(f.file)));
       dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
       dq('gs-dw-acts').innerHTML = f.mismatch ? `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Approve with a reason</button>`}`
         : `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
@@ -953,7 +954,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const list = [...files]; if (!list.length) return;
       const one = target; target = null;
       if (one) { saved.files[one] = read(docs.find((x) => x.code === one), list[0]); if (window.CMFiles) window.CMFiles.put(one, list[0]); keep(); validate(); return; }
-      list.forEach((file) => { held[file.name] = file; if (!st.pending.includes(file.name)) st.pending.push(file.name); });
+      list.forEach((file) => { held[file.name] = file; if (window.CMFiles) window.CMFiles.put('~' + file.name, file); if (!st.pending.includes(file.name)) st.pending.push(file.name); });
       keep();
       if (st.step === 3) { validate(); return; } // the missing ones, dropped at the end: read at once
       if (st.step !== 1) { goStep(1); return; }
