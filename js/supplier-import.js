@@ -188,13 +188,13 @@
 
   // ---- in Add a supplier: many at once, or one by one -----------------------------------------------
   let err = '';
-  const banner = () => `<div class="si-bulk" id="si-bulk"><span><b>Adding many suppliers?</b> Upload an Excel file with their countries and company codes.</span><span class="si-bulk-acts"><button type="button" class="si-x" data-si-tpl>Download the template</button><button type="button" class="btn btn-secondary btn-sm" data-si-pick>Upload Excel file</button></span></div>
-    <p class="si-err" id="si-err" role="alert">${esc(err)}</p>
+  const banner = () => `<div class="si-bulk" id="si-bulk"><span><b>Adding many suppliers?</b> Choose the documents you need from them, then upload an Excel file with their countries and company codes.</span><span class="si-bulk-acts"><button type="button" class="btn btn-secondary btn-sm" data-si-invite>Invite from Excel</button></span></div>
     <div class="si-or">or one by one</div>`;
   const file = Object.assign(document.createElement('input'), { type: 'file', hidden: true, accept: '.xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel' });
   document.body.appendChild(file);
-  // a problem with the file shows in Add a supplier's banner; opened for it when the picker came from elsewhere
-  const say = (m) => { err = m; const p = document.getElementById('si-err'); if (p) p.textContent = m; else if (m) A.open(); };
+  // a problem with the file shows under where it went in (the drawer's file step, or the list read
+  // from the last one); the file step is opened for it when neither is showing
+  const say = (m) => { err = m; const p = document.getElementById('si-err'); if (p) p.textContent = m; else if (m) { invite(); ed.pre = 2; err = m; edPaint(); } };
   const pick = () => { say(''); file.value = ''; file.click(); };
 
   // ---- the list read from the file, in the page's place ----------------------------------------------
@@ -258,10 +258,18 @@
   };
   const start = (name, rows) => {
     const checked = check(rows);
-    checked.forEach((r) => { r.docs = new Set(r.ok ? mandatory(r.cc) : []); });
+    // each one asked for the documents chosen first, those that apply in their country; with every
+    // mandatory one left ticked, the mandatory ones are their own country's (a supplier in Spain isn't
+    // asked for a Portuguese registry certificate, but for Spain's); none chosen applies, theirs too
+    const allReq = asked && mandatory(own()).every((c) => asked.has(c));
+    checked.forEach((r) => {
+      const mine = r.ok && asked ? A.docsOf(r.cc).filter((d) => asked.has(d.code)).map((d) => d.code) : [];
+      r.docs = new Set(r.ok ? (!asked ? mandatory(r.cc) : mine.concat(allReq || !mine.length ? mandatory(r.cc) : [])) : []);
+    });
     bulk = { file: name, rows: checked, picked: new Set(), f: { k: '', st: '' }, sort: { k: '', dir: 1 }, q: '' };
     err = ''; changed.clear();
     if (A.isOpen()) A.close();
+    if (ed && ed.pre) edClose();
     paint();
     host.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -288,7 +296,7 @@
         ['NIPC or tax ID: their company code in their country (NIPC in Portugal, NIF in Spain, EIN in the US…). Keep the cells as text so no leading zero is lost.'],
         ['Company name and Contact email: needed when they’re not on C-MORE yet, so we can invite them to join.'],
         ['Contact name: optional.'], [],
-        ['Each supplier is asked for its country’s mandatory documents. You can change that on C-MORE before the invitations go.']]);
+        ['Each supplier is asked for the documents you chose on C-MORE, the ones that apply in their country. You can change that per supplier before the invitations go.']]);
       how['!cols'] = [{ wch: 110 }];
       XL.utils.book_append_sheet(wb, how, 'How to fill it in');
       XL.writeFile(wb, 'C-MORE suppliers template.xlsx');
@@ -303,14 +311,18 @@
       <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOC}</span><div class="docd-t"><h3 id="sid-t">Documents to ask for</h3><p id="sid-sub"></p></div>
         <button type="button" class="dlg-x" data-sid-x aria-label="Close">${X}</button></header>
       <form class="docd-body" id="sid-body" novalidate></form>
-      <footer class="docd-foot"><span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-sid-apply>Apply</button></span></footer>
+      <footer class="docd-foot" id="sid-foot"></footer>
     </aside>`;
   document.body.appendChild(dw);
-  let ed = null; // { rows: [index], picked: Set }
+  let ed = null; // { rows: [index], picked: Set }; or, inviting many, { pre: 1 (the documents) or 2 (the file), picked }
+  // inviting many: the documents chosen for all of them, before the file (kept for another file)
+  let asked = null;
+  const own = () => { const o = window.CMOrgs && window.CMOrgs.current(); return (o && o.country) || (BEATRIZ ? 'US' : 'PT'); };
   const edRows = () => ed.rows.map((i) => bulk.rows[i]);
   // what any of them can be asked for: mandatory where it's mandatory in a supplier's own country,
   // and each one asked only of the suppliers in a country it applies to
   const edDocs = () => {
+    if (ed.pre) return A.docsOf(own());
     const ccs = [...new Set(edRows().map((r) => r.cc))], byCode = new Map();
     ccs.forEach((cc) => A.docsOf(cc).forEach((d) => {
       const x = byCode.get(d.code) || Object.assign({}, d, { req: false, ccs: [] });
@@ -322,15 +334,38 @@
   };
   const groups = (list) => list.reduce((g, d) => { (g[d.section] = g[d.section] || []).push(d); return g; }, {});
   const onlyIn = (d) => (d.only ? ` &middot; <span class="si-only">only for suppliers in ${d.only.map((cc) => esc(A.country(cc).name)).join(', ')}</span>` : '');
+  const docList = (list, g, n) => `<div class="sa-all"><label class="sa-ck"><input type="checkbox" data-all${n === list.length ? ' checked' : ''}>Select all</label><span><b id="sid-n">${n}</b> of ${list.length} selected</span></div>
+      ${Object.entries(g).map(([sec, l]) => { const c = l.filter((d) => ed.picked.has(d.code)).length; return `<section class="sa-grp"><div class="sa-grp-h"><label class="sa-ck"><input type="checkbox" data-sec="${esc(sec)}"${c === l.length ? ' checked' : ''}>${esc(sec)}</label><span>${c} of ${l.length}</span></div>
+        <ul class="sa-docs">${l.map((d) => `<li><label><input type="checkbox" data-doc="${esc(d.code)}"${ed.picked.has(d.code) ? ' checked' : ''}><span><b>${esc(d.name)}</b><small>${esc(d.code)}${d.req ? ' &middot; Mandatory' : ' &middot; Optional'}${onlyIn(d)}</small></span></label></li>`).join('')}</ul></section>`; }).join('')}`;
+  // inviting many: 1, every document they can be asked for, to choose from; 2, their Excel file
+  const prePaint = () => {
+    const list = edDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length;
+    dw.querySelector('#sid-t').textContent = 'Invite suppliers from Excel';
+    dw.querySelector('#sid-sub').textContent = ed.pre === 1 ? 'Step 1 of 2 · The documents you need' : 'Step 2 of 2 · Your suppliers';
+    dw.querySelector('#sid-body').innerHTML = ed.pre === 1
+      ? `<section class="sa-card"><h4>What you need from your suppliers</h4>
+        <p>Choose the documents every supplier on your list will be asked to share with you. The mandatory ones are ticked. Each supplier is asked only for those that apply in their country, and you can still change it for any of them before the invitations go.</p></section>
+      ${docList(list, g, n)}`
+      : `<section class="sa-card"><h4>Who to invite</h4>
+        <p>Upload an Excel file with their countries and company codes. Each one is asked for the <b>${n} document${n === 1 ? '' : 's'}</b> you chose, those that apply in their country. <button type="button" class="link-btn" data-pre-back>Change the documents</button></p></section>
+      <div class="si-bulk" id="si-bulk"><span><b>Your suppliers&rsquo; Excel file</b> One supplier a row: their country and company code, and for those not on C&#8209;MORE yet, a name and an email.</span><span class="si-bulk-acts"><button type="button" class="si-x" data-si-tpl>Download the template</button><button type="button" class="btn btn-secondary btn-sm" data-si-pick>Upload Excel file</button></span></div>
+      <p class="si-err" id="si-err" role="alert">${esc(err)}</p>`;
+    dw.querySelector('#sid-foot').innerHTML = ed.pre === 1
+      ? `<span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-pre-next>Next: upload the Excel file</button></span>`
+      : `<span><button type="button" class="link-btn" data-pre-back>Back</button></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button></span>`;
+    if (ed.pre === 1) marks();
+    dw.querySelector('#sid-body').scrollTop = 0;
+  };
   const edPaint = () => {
+    if (ed.pre) { prePaint(); return; }
+    dw.querySelector('#sid-t').textContent = 'Documents to ask for';
+    dw.querySelector('#sid-foot').innerHTML = `<span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-sid-apply>Apply</button></span>`;
     const list = edDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length, rs = edRows();
     dw.querySelector('#sid-sub').textContent = rs.length === 1 ? nameOf(rs[0]) : `${rs.length} suppliers from ${bulk.file}`;
     dw.querySelector('#sid-body').innerHTML = `<section class="sa-card"><h4>${rs.length === 1 ? 'What you need from them' : `For these ${rs.length} suppliers`}</h4>
         ${rs.length > 1 ? `<div class="si-who">${rs.map((r) => `<span>${esc(nameOf(r))}</span>`).join('')}</div>` : ''}
         <p>The documents they&rsquo;ll be asked to share with you. ${rs.length > 1 ? 'Each supplier is asked only for the ones that apply in their country.' : ''}</p></section>
-      <div class="sa-all"><label class="sa-ck"><input type="checkbox" data-all${n === list.length ? ' checked' : ''}>Select all</label><span><b id="sid-n">${n}</b> of ${list.length} selected</span></div>
-      ${Object.entries(g).map(([sec, l]) => { const c = l.filter((d) => ed.picked.has(d.code)).length; return `<section class="sa-grp"><div class="sa-grp-h"><label class="sa-ck"><input type="checkbox" data-sec="${esc(sec)}"${c === l.length ? ' checked' : ''}>${esc(sec)}</label><span>${c} of ${l.length}</span></div>
-        <ul class="sa-docs">${l.map((d) => `<li><label><input type="checkbox" data-doc="${esc(d.code)}"${ed.picked.has(d.code) ? ' checked' : ''}><span><b>${esc(d.name)}</b><small>${esc(d.code)}${d.req ? ' &middot; Mandatory' : ' &middot; Optional'}${onlyIn(d)}</small></span></label></li>`).join('')}</ul></section>`; }).join('')}`;
+      ${docList(list, g, n)}`;
     marks();
   };
   const marks = () => {
@@ -339,7 +374,8 @@
     const all = dw.querySelector('[data-all]'), n = list.filter((d) => ed.picked.has(d.code)).length;
     if (all) { all.checked = n === list.length; all.indeterminate = n > 0 && n < list.length; }
     dw.querySelector('#sid-n').textContent = n;
-    const go = dw.querySelector('#sid-go'); go.disabled = !n; go.textContent = ed.rows.length === 1 ? 'Apply' : `Apply to ${ed.rows.length}`;
+    const go = dw.querySelector('#sid-go'); if (!go) return;
+    go.disabled = !n; if (!ed.pre) go.textContent = ed.rows.length === 1 ? 'Apply' : `Apply to ${ed.rows.length}`;
   };
   let edBack = null;
   const edOpen = (rows) => {
@@ -353,6 +389,14 @@
     setTimeout(() => dw.classList.add('is-open'), 20);
     setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
   };
+  const invite = () => {
+    if (A.isOpen()) A.close();
+    const list = A.docsOf(own());
+    ed = { rows: [], pre: 1, picked: new Set(asked || list.filter((d) => d.req).map((d) => d.code)) };
+    err = ''; edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
+    setTimeout(() => dw.classList.add('is-open'), 20);
+    setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
+  };
   const edClose = () => {
     dw.classList.remove('is-open'); document.documentElement.style.overflow = '';
     setTimeout(() => { dw.hidden = true; }, 280); ed = null; if (edBack && edBack.isConnected) edBack.focus();
@@ -360,6 +404,8 @@
   dw.addEventListener('click', (e) => {
     if (!ed) return;
     if (e.target.closest('[data-sid-x]')) { edClose(); return; }
+    if (e.target.closest('[data-pre-next]')) { asked = new Set(ed.picked); ed.pre = 2; edPaint(); return; }
+    if (e.target.closest('[data-pre-back]')) { ed.pre = 1; edPaint(); return; }
     if (e.target.closest('[data-sid-apply]')) {
       const list = edDocs();
       ed.rows.forEach((i) => { const r = bulk.rows[i], here = new Set(A.docsOf(r.cc).map((d) => d.code)); r.docs = new Set(list.filter((d) => ed.picked.has(d.code) && here.has(d.code)).map((d) => d.code)); });
@@ -375,7 +421,8 @@
     if (t.matches('[data-sec]')) { groups(edDocs())[t.dataset.sec].forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = ed.picked.has(b.dataset.doc); }); marks(); return; }
     if (t.matches('[data-all]')) { edDocs().forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) edClose(); });
+  // Escape closes this drawer only (not ALMA's setup panel under it, js/guided-upload.js)
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { e.stopImmediatePropagation(); edClose(); } });
 
   // ---- sending, and leaving --------------------------------------------------------------------------
   const send = () => {
@@ -406,6 +453,7 @@
     const t = e.target;
     if (t.closest('[data-si-tpl]')) { template(t.closest('[data-si-tpl]')); return; }
     if (t.closest('[data-si-pick]')) { pick(); return; }
+    if (t.closest('[data-si-invite]')) { invite(); return; }
     if (!bulk || !host.contains(t)) return;
     if (t.closest('[data-si-cancel]')) { bulk = null; paint(); return; }
     if (t.closest('[data-si-send]')) { send(); return; }
@@ -440,5 +488,5 @@
   document.addEventListener('dragleave', (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('is-over'); });
   document.addEventListener('drop', (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z) { e.preventDefault(); z.classList.remove('is-over'); load(e.dataTransfer.files[0]); } });
 
-  window.CMSupplierImport = { banner, load, template, pick, active: () => !!bulk };
+  window.CMSupplierImport = { banner, load, template, pick, invite, isOpen: () => !!ed, active: () => !!bulk };
 })();

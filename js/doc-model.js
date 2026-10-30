@@ -207,8 +207,9 @@ window.DOC_MODEL = (() => {
   };
   // ---- a company added in this session (new-company.html) ---------------------------------------
   // Its documents are the ones it uploaded and accepted in ALMA's guided upload
-  // (js/guided-upload.js), and only those: what it still owes shows in the profile-completion
-  // strip on its homepage, not as a list of missing documents here.
+  // (js/guided-upload.js). In Company it also sees what that setup asks of it and it hasn't
+  // uploaded yet (what registering takes, then the optional list), to upload or mark not
+  // applicable from here, as the demo companies do.
   // the size it gave (optional: small, medium, large), as the rules read it; no size reads as small.
   // An older company, created with a head count, keeps it.
   const EMP = { small: 10, medium: 100, large: 300, 0: 0, '1-9': 5, '10-49': 25, '50-249': 100, '250+': 300 };
@@ -297,6 +298,7 @@ window.DOC_MODEL = (() => {
   const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const keepUpdates = () => { try { sessionStorage.setItem(UP_KEY, JSON.stringify(updates)); } catch (e) {} };
   const companyOptional = (country) => window.CM_COMPANY_DOCS.optional(country);
+  const companyMandatory = (country) => window.CM_COMPANY_DOCS.mandatory(country);
   // a new company (ORG) is also asked for what registering it on C-MORE takes (any document in
   // phase 'Registration'); the demo companies never see those
   // Company: what the catalog makes mandatory, the optional list above (whatever its own conditions),
@@ -306,6 +308,7 @@ window.DOC_MODEL = (() => {
   const shown = R.documentsFor(CAT, PROFILE, ORG ? { phases: ['MVP', 'Registration'] } : undefined).filter((x) => !x.doc.countries || x.doc.countries.includes(PROFILE.country))
     .filter(({ doc: c }) => c.category !== 'company' || (!optOf[c.code] && (c.requirement === 'mandatory' || filedHere(c.code))))
     .concat(OPT.map((d) => ({ doc: d, ask: false }))); // in the list's order
+  const REGS = new Set(ORG ? companyMandatory(PROFILE.country).map((d) => d.code) : []);
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
     const area = c.category;
@@ -316,8 +319,9 @@ window.DOC_MODEL = (() => {
     const base = { id: DOCS.length, code: c.code, name: en(c.name), section: en(c.section), area, cat: c, ask,
       requirement: LBL.requirement[c.requirement], req: c.requirement, sharing: LBL.sharing[c.sharing], level: c.level };
     let doc;
-    // a company added in this session lists only what it has uploaded and accepted
-    if (ORG && !D.state[c.code]) return;
+    // a company added in this session: in Company, everything its setup asks for, uploaded or not;
+    // anywhere else, only what it has uploaded and accepted
+    if (ORG && !D.state[c.code] && !(area === 'company' && (REGS.has(c.code) || optOf[c.code]))) return;
     if (kind) {
       // one per worker, machine or product: the rules say which records it covers
       const all = D.records[kind].map((r, i) => Object.assign({ i }, r));

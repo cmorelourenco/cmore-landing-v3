@@ -297,6 +297,9 @@ html.tour-fading main.page { transition: opacity .45s ease; }
 .gs-fields .is-flag dd { color: var(--color-coral-deep); font-weight: 600; }
 .gs-fields input { width: 100%; padding: 0.4375rem 0.625rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
 .gs-fields .is-flag input { border-color: var(--color-coral); }
+.gs-fields input:disabled { background: var(--color-surface-sunken, #f3f1ec); color: var(--color-ink-subtle); }
+.gs-fields .gs-fna { display: flex; align-items: center; gap: 0.375rem; margin-top: 0.375rem; font-size: 0.8125rem; color: var(--color-ink-muted); cursor: pointer; }
+.gs-fields .gs-fna input { width: 0.9375rem; height: 0.9375rem; padding: 0; accent-color: var(--color-graphite); }
 .gs-why { margin-top: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: var(--color-coral-tint, #f9e7e3); font-size: 0.875rem; color: var(--color-ink); }
 .gs-card.is-vat:not(.is-ok) { border-color: var(--color-coral); }
 .gs-vat-f { display: grid; gap: 0.375rem; margin-top: 0.875rem; }
@@ -644,12 +647,21 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       return `${lapsed(f) ? `<p class="gs-why">This document expired on <b>${esc(f.valid)}</b>. If it&rsquo;s still in force, give it its new expiry date. If it has none, mark the date not applicable. Or replace it with a current version.</p>` : ''}
         <div class="gs-exp-f">${lapsed(f) ? `<label>New expiry date<input type="date" data-newexp="${d.code}" value="${isoOf(f.valid)}"></label>` : ''}<label class="gs-exp-na"><input type="checkbox" data-expna="${d.code}"${f.validNa ? ' checked' : ''}>Expiry date not applicable</label></div>`;
     };
+    // editing what she read: a date can also be not applicable (the box empties and locks it; untick
+    // it and the date it had comes back)
+    const DATES = ['issued', 'valid'];
+    const editField = (d, f, k, l) => {
+      const na = f[k] === 'Not applicable';
+      if (!DATES.includes(k)) return `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">`;
+      return `<input type="date" name="${k}" value="${na ? '' : isoOf(f[k])}" aria-label="${l}"${na ? ' disabled' : ''}>
+        <label class="gs-fna"><input type="checkbox" data-fna="${k}"${na ? ' checked' : ''}>Not applicable</label>`;
+    };
     const card = (d) => {
       const f = saved.files[d.code], ed = editing === d.code, ex = lapsed(f);
       const flagged = f.flag && !f.edited;
       if (!f.country) f.country = countryName;
       const label = (k, l) => (k === 'ref' && CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : l);
-      const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${(flagged && f.flag === k) || (ex && k === 'valid') ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">` : esc(f[k])}</dd></div>`).join('');
+      const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${(flagged && f.flag === k) || (ex && k === 'valid') ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? editField(d, f, k, l) : esc(f[k])}</dd></div>`).join('');
       // another company's VAT number: upload the right one, reject it, or approve it, saying why
       if (f.mismatch && !ed) {
         const who = called(), own = ownTax(), why = whyDraft[d.code] != null ? whyDraft[d.code] : f.vatReason || '';
@@ -660,7 +672,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           : `<p class="gs-why">This document is for VAT number <b>${esc(fmtTax(f.vat))}</b>${own ? `, not ${who}&rsquo;s (${esc(fmtTax(own))})` : ', not the one on your other documents'}. Upload the right one, or reject it. If it does belong here, approve it and say why.</p>
           <div class="gs-vat-f"><label for="gs-why-${d.code}">Why it belongs here <span>Needed to approve</span></label><input id="gs-why-${d.code}" data-why="${d.code}" value="${esc(why)}" maxlength="240" placeholder="e.g. It&rsquo;s our NIPC before the 2024 merger" autocomplete="off"></div>`}
         ${f.ok ? '' : expBlock(d, f)}
-        <footer><span><button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-one="${d.code}">Upload a new document</button></span>
+        <footer><span><button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Upload a new document</button></span>
           <span>${f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-approve="${d.code}"${why.trim() && !ex ? '' : ' disabled'}>${OK}Approve</button>`}</span></footer>
       </article>`;
       }
@@ -901,7 +913,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (!window.CMFiles) fill('');
       else window.CMFiles.get(d.code).then((r) => fill(r ? window.CMFiles.view(r) : window.CMFiles.missing(f.file)));
       dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
-      dq('gs-dw-acts').innerHTML = f.mismatch ? (f.ok ? `<span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Approve with a reason</button>`)
+      dq('gs-dw-acts').innerHTML = f.mismatch ? `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Approve with a reason</button>`}`
         : `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
     };
     if (tour) dwEl.classList.add('is-under');
@@ -1006,7 +1018,16 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-save]')) {
         const c = code('save'), f = saved.files[c], el = wrap.querySelector(`[data-card="${c}"]`);
         let changed = false;
-        FIELDS.forEach(([k]) => { const v = el.querySelector(`input[name="${k}"]`).value.trim(); if (v && v !== f[k]) { f[k] = v; changed = true; } });
+        FIELDS.forEach(([k]) => {
+          const box = el.querySelector(`[data-fna="${k}"]`), na = box && box.checked;
+          const raw = na ? 'Not applicable' : el.querySelector(`input[name="${k}"]`).value.trim();
+          // the date pickers give a date as 2027-01-17; it's kept as everywhere else, 17 Jan 2027
+          const v = !na && DATES.includes(k) && raw ? dt(new Date(raw + 'T00:00')) : raw;
+          if (!v || v === f[k]) return;
+          if (na) f[`${k}Was`] = f[k];
+          f[k] = v; changed = true;
+        });
+        f.validNa = f.valid === 'Not applicable';
         // checked by a person: what's there now is what they say, so it reads as sure
         if (changed || f.flag) Object.assign(f, { edited: true, flag: null, conf: 98 });
         f.ok = (!f.mismatch || !!f.vatReason) && !lapsed(f); editing = null; keep(); paint(); strip(); return;
@@ -1038,6 +1059,13 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     wrap.addEventListener('focusout', (e) => { const i = e.target.closest('[data-newexp]'); if (i) newDate(i); });
     wrap.addEventListener('keydown', (e) => { const i = e.target.closest('[data-newexp]'); if (i && e.key === 'Enter') { e.preventDefault(); newDate(i); } });
     wrap.addEventListener('change', (e) => {
+      const fna = e.target.closest('[data-fna]');
+      if (fna) {
+        const k = fna.dataset.fna, card = fna.closest('[data-card]'), f = saved.files[card.dataset.card], i = card.querySelector(`input[name="${k}"]`);
+        i.disabled = fna.checked;
+        if (fna.checked) { i.dataset.was = i.value; i.value = ''; } else { i.value = i.dataset.was || isoOf(f[k] !== 'Not applicable' ? f[k] : f[`${k}Was`] || ''); i.focus(); }
+        return;
+      }
       const b = e.target.closest('[data-expna]'); if (!b) return;
       const f = saved.files[b.dataset.expna];
       if (b.checked) Object.assign(f, { validWas: f.valid, valid: 'Not applicable', validNa: true, edited: true, flag: null, conf: 98 });
@@ -1083,7 +1111,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         <p class="lead">Invite the companies that work for you. I&rsquo;ll ask each one for the documents its country requires, read them as they come in, and tell you when one is missing or about to expire.</p>
         <div class="gs-pane gs-inv">
           <button type="button" class="gs-inv-opt" data-inv="one"><span class="gs-inv-i">${PLUS_I}</span><span><b>Add a supplier</b><small>By its country and company code. Not on C&#8209;MORE yet? I&rsquo;ll invite it to join.</small></span>${CHEV_I}</button>
-          <button type="button" class="gs-inv-opt" data-inv="many"><span class="gs-inv-i">${XLS_I}</span><span><b>Invite suppliers from Excel file</b><small>Upload a list, check it, and send every invitation at once.</small></span>${CHEV_I}</button>
+          <button type="button" class="gs-inv-opt" data-inv="many"><span class="gs-inv-i">${XLS_I}</span><span><b>Invite suppliers from Excel file</b><small>Choose the documents you need from them, upload a list, check it, and send every invitation at once.</small></span>${CHEV_I}</button>
         </div>
         ${l.length ? `<div class="gs-pane gs-inv-done"><p class="gs-lh">Invited <span class="gs-inv-n">${l.length}</span></p>
           <ul>${l.slice(0, 5).map((x) => `<li><span class="gs-inv-ok">${OK}</span><span><b>${esc(x.name)}</b><small>${esc([x.city, x.email].filter(Boolean).join(' · '))}</small></span></li>`).join('')}</ul>
@@ -1117,8 +1145,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-tuck]')) { tuck(true); return; }
       if (t('[data-untuck]')) { tuck(false); return; }
       const b = t('[data-inv]'); if (!b) return;
-      // many: straight to choosing the Excel file (asked already here, so not again in Add a supplier)
-      if (b.dataset.inv === 'many' && window.CMSupplierImport) { window.CMSupplierImport.pick(); return; }
+      // many: straight to inviting from Excel (the documents to ask for, then the file), not Add a supplier
+      if (b.dataset.inv === 'many' && window.CMSupplierImport) { window.CMSupplierImport.invite(); return; }
       add.open();
     });
     const h = me.querySelector('#gs-title'); if (h) h.focus({ preventScroll: true });
