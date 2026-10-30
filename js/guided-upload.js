@@ -94,10 +94,15 @@
     if (!ok.length && !opt.length) els.forEach((el, i) => { if (el) el.innerHTML = drawn[i]; });
     else { if (all.length) paintStrip(els[0], all, ok); identity(); home(ok.concat(opt.filter((x) => !ok.some((y) => y.d.code === x.d.code)))); }
     // only on a change she made now, not when the page first draws what was already there
-    if (stripped) els.forEach((el, i) => { if (el && el.innerHTML !== before[i]) { el.classList.remove('gs-live'); void el.offsetWidth; el.classList.add('gs-live'); el.addEventListener('animationend', function off(e) { if (e.target === el) { el.classList.remove('gs-live'); el.removeEventListener('animationend', off); } }); } });
+    if (stripped) els.forEach((el, i) => { if (el && el.innerHTML !== before[i]) flash(el); });
     stripped = true;
   };
   let stripped = false;
+  const flash = (el) => {
+    if (!el) return;
+    el.classList.remove('gs-live'); void el.offsetWidth; el.classList.add('gs-live');
+    el.addEventListener('animationend', function off(e) { if (e.target === el) { el.classList.remove('gs-live'); el.removeEventListener('animationend', off); } });
+  };
   // who the company is, as its registration documents say: each fact as soon as it's accepted
   const identity = () => {
     const box = document.querySelector('#empty .co-id-l');
@@ -1164,13 +1169,25 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (at < 0) { t.ended = true; keep(); return false; }
     keep();
     let changed = false;
-    const step = (i, quiet, files) => {
+    // a step just finished with new documents: the homepage beside the drawer scrolls to them and
+    // they flash; before leaving for a step on another page, a moment to see them first
+    const SHOW_MS = 2600;
+    const showPage = () => {
+      const sec = document.querySelector('#empty .co-docs-sec');
+      if (!sec) return false;
+      const bar = document.querySelector('header.top'), off = (bar ? bar.getBoundingClientRect().bottom : 0) + 16; // clear of the sticky top bar
+      window.scrollTo({ top: Math.max(0, scrollY + sec.getBoundingClientRect().top - off), behavior: reduced() ? 'auto' : 'smooth' });
+      flash(document.querySelector('#empty .co-k[data-go="docs"]')); flash(sec);
+      return true;
+    };
+    const step = (i, quiet, files, reveal) => {
       const a = areas[i];
       // each step where its documents live: Workers and Equipment on their Documents page
       t.on = a; keep();
-      if (!here(a)) { leave(PLACE[a] || 'my-company.html?page'); return; }
+      if (!here(a)) { const go = () => leave(PLACE[a] || 'my-company.html?page'); if (reveal && showPage()) setTimeout(go, SHOW_MS); else go(); return; }
       show(a);
       const n = areas.findIndex((x, j) => j > i && !t.passed.includes(x)); // the next step not done yet
+      if (reveal) setTimeout(showPage, 0); // the drawer stays open on the next step, the page beside it
       (a === 'suppliers' ? invite : open)(a, {
         files, skip: a === 'company' ? regCodes() : [],
         tour: { at: i, count: areas.length, bar: shown.map((x) => ({ l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: t.passed.includes(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
@@ -1178,7 +1195,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           changed = changed || c;
           // back: to the step before, as it was left (its page, if it lives elsewhere)
           if (how === 'back') { t.passed = t.passed.filter((x) => x !== areas[i - 1]); keep(); step(i - 1, true); return; }
-          if (how === 'next') { t.passed.push(a); keep(); if (n >= 0) { step(n, true); return; } }
+          if (how === 'next') { t.passed.push(a); keep(); if (n >= 0) { step(n, true, undefined, c && onHome); return; } }
           t.ended = true; t.on = null; keep(); // done, or Skip setup, Escape
           if (how === 'next' && !onHome) { leave('my-company.html?page'); return; } // "Go to my company"
           if (changed) location.reload();
