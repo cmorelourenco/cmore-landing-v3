@@ -464,6 +464,17 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-inv-ok svg { width: 0.75rem; height: 0.75rem; }
 .gs-inv-n { display: inline-grid; place-items: center; min-width: 1.375rem; height: 1.375rem; margin-left: 0.25rem; padding: 0 0.375rem; border-radius: 9999px; background: var(--color-mid-beige); font-size: 0.75rem; }
 .gs-inv-done .gs-hint { margin-top: 0.5rem; }
+/* inviting the team from the panel: the page's own form (js/team.js styles its parts) */
+.gs-tm { display: grid; gap: 1rem; padding: 1.125rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-light-beige); }
+.gs-tm .tm-checks { grid-template-columns: 1fr; }
+.gs-tm .input { width: 100%; height: 2.75rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); text-align: left; }
+.gs-tm .input:focus { outline: none; border-color: var(--color-graphite); }
+.gs-tm .input.is-bad { border-color: var(--color-coral); }
+.gs-tm .set-f { display: grid; gap: 0.5rem; text-align: left; }
+.gs-tm .set-f > label, .gs-tm .tm-lbl { font-size: 0.875rem; font-weight: 600; color: var(--color-ink); }
+.gs-tm .gs-tm-hint { margin-top: 0.5rem; text-align: left; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.gs-tm-foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.gs-tm-foot .tm-sent { font-size: 0.875rem; color: var(--color-ink-muted); }
 @media (prefers-reduced-motion: reduce) { .gs-dock.intake { transition: none; } }
 .gs-tour .eyebrow { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .gs-tour-bar { list-style: none; margin: 0.75rem 0 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 0.375rem; }
@@ -1158,6 +1169,126 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const h = me.querySelector('#gs-title'); if (h) h.focus({ preventScroll: true });
   };
 
+  // ---- the last step: the people who work on the company with you, on Team management -----------
+  // The same rules as the page's own invite (js/team.js, js/access.js): you give only the roles yours
+  // may give; a manager or user needs at least one group (a manager hands out only their own); an
+  // owner is on the whole family of companies; an admin, on this one and the ones ticked. Access of
+  // their own, on top of groups, is set on the page. From Excel: the page's own upload and list,
+  // with the panel folded beside it until they're sent or the list is cancelled.
+  const people = (area, opts = {}) => {
+    const tour = opts.tour, A = window.CMAccess;
+    if (wrap || !tour || !A) return;
+    const { ROLES, ORDER, GRANTS, grouped, teamOf } = A;
+    const id = org.id;
+    const ctx = () => { const t = teamOf(id), v = A.viewer(t), role = v.role; return { t, v, role, mine: grouped(role) ? (v.groups || []) : t.groups.map((g) => g.id), grants: GRANTS[role] || [] }; };
+    const family = () => { const top = (O.parentOf && O.parentOf(id)) || id; return [top].concat(O.childrenOf ? O.childrenOf(top) : []).map((x) => O.byId(x)).filter(Boolean); };
+    const others = () => (O.list ? O.list().filter((o) => o.id !== id) : []);
+    const valid = (e) => /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]{2,}$/.test(e);
+    const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    const mineSent = () => { const c = ctx(); return c.t.invites.filter((v) => A.manages(c.role) || v.by === c.v.email); };
+    const before = ctx().t.invites.length;
+    const c0 = ctx();
+    const f = { on: false, emails: '', role: c0.grants.includes('user') ? 'user' : c0.grants[0], groups: [], also: [], err: '', gerr: '', sent: '' };
+    let excel = false; // folded beside the page's own Excel list
+    const form = (c) => {
+      if (!c.grants.length) return '<p class="tm-note">Users can&rsquo;t invite people. Ask a manager or an admin of this company.</p>';
+      const g = grouped(f.role);
+      return `<form class="gs-pane gs-tm" id="gs-tm" novalidate>
+          <div class="set-f"><label for="gs-tm-emails">Work emails</label><input class="input${f.err && f.emails ? ' is-bad' : ''}" id="gs-tm-emails" type="text" inputmode="email" autocomplete="off" placeholder="name@company.com, another@company.com" value="${esc(f.emails)}"><p class="set-err" role="alert">${f.err}</p></div>
+          ${c.grants.length > 1 ? `<div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="gs-tm-role" value="${r}"${r === f.role ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[f.role][1]}</p></div>`
+            : '<p class="tm-note">As a manager, you invite users, into the groups you are in.</p>'}
+          ${f.role === 'owner' ? `<p class="tm-note">An owner sees and does everything on ${family().map((o) => esc(o.name)).join(', ')}, and on any subsidiary added later.</p>` : ''}
+          ${f.role === 'admin' && c.role === 'owner' && others().length ? `<div class="set-f"><span class="tm-lbl">Also make them admin of</span><div class="tm-checks">${others().map((o) => `<label><input type="checkbox" name="gs-tm-also" value="${esc(o.id)}"${f.also.includes(o.id) ? ' checked' : ''}><span>${esc(o.name)}</span></label>`).join('')}</div></div>` : ''}
+          ${g ? `<div class="set-f"><span class="tm-lbl">Groups: the pages they&rsquo;ll open</span><div class="tm-checks">${c.t.groups.map((x) => { const ok = c.mine.includes(x.id); return `<label class="${ok ? '' : 'is-off'}"${ok ? '' : ' title="You can only add people to groups you are in"'}><input type="checkbox" name="gs-tm-g" value="${esc(x.id)}"${f.groups.includes(x.id) ? ' checked' : ''}${ok ? '' : ' disabled'}><span>${esc(x.name)}<small>${x.content.filter((k) => A.PAGE_NAME[k]).map((k) => A.PAGE_NAME[k]).join(', ') || 'No pages yet'}</small></span></label>`; }).join('')}</div>
+            <p class="set-err" role="alert">${f.gerr}</p>${A.manages(c.role) ? '<p class="gs-hint gs-tm-hint">Access of their own, on top of their groups, is on Team management, once they&rsquo;re invited.</p>' : ''}</div>` : ''}
+          <div class="gs-tm-foot"><span class="tm-sent" role="status">${f.sent}</span><button type="submit" class="btn btn-primary btn-sm">Send invite</button></div>
+        </form>`;
+    };
+    const body = () => {
+      const c = ctx(), l = mineSent(), back = tour.back || false;
+      const fig = almaHtml();
+      const gName = (gid) => (c.t.groups.find((x) => x.id === gid) || {}).name;
+      return `${fig ? `<span class="gs-mini" aria-hidden="true"><span class="alma-media">${fig}</span></span>` : ''}
+        <p class="says">ALMA</p>
+        <h1 id="gs-title" tabindex="-1">Last, your team. <span class="soft">Who works on ${called()} with you?</span></h1>
+        <p class="lead">Invite the people who&rsquo;ll keep its documents up to date. Their role says what they can do; for managers and users, their groups say which pages they open.</p>
+        <div class="gs-pane gs-inv">
+          <button type="button" class="gs-inv-opt" data-tinv="one" aria-expanded="${f.on}"><span class="gs-inv-i">${PLUS_I}</span><span><b>Invite people by email</b><small>One or several at once, with the role and groups they&rsquo;ll have.</small></span>${CHEV_I}</button>
+          ${f.on ? form(c) : ''}
+          ${c.grants.length ? `<button type="button" class="gs-inv-opt" data-tinv="many"><span class="gs-inv-i">${XLS_I}</span><span><b>Invite people from Excel file</b><small>A list of emails with their roles and groups. Check it on Team management, then send every invitation at once.</small></span>${CHEV_I}</button>` : ''}
+        </div>
+        ${l.length ? `<div class="gs-pane gs-inv-done"><p class="gs-lh">Invited <span class="gs-inv-n">${l.length}</span></p>
+          <ul>${l.slice(-5).reverse().map((x) => `<li><span class="gs-inv-ok">${OK}</span><span><b>${esc(x.name || x.email)}</b><small>${esc([x.name ? x.email : '', ROLES[x.role] ? ROLES[x.role][0] : '', (x.groups || []).map(gName).filter(Boolean).join(', ')].filter(Boolean).join(' · '))}</small></span></li>`).join('')}</ul>
+          ${l.length > 5 ? `<p class="gs-hint">And ${l.length - 5} more, on Team management.</p>` : ''}</div>` : ''}
+        <div class="actions gs-nav3${l.length ? ' no-skip' : ''}"><span>${back ? `<button class="link-btn gs-back" type="button" data-back>${BACK_I}${back}</button>` : `<button class="link-btn gs-back" type="button" disabled>${BACK_I}Back</button>`}</span>
+          <span>${l.length ? '' : '<button class="link-btn" type="button" data-close="next">I&rsquo;ll do it later</button>'}</span>
+          <span><button class="btn btn-primary" type="button" data-close="next">${tour.next ? `Next: ${esc(tour.next)}` : 'Finish setup'}</button></span></div>`;
+    };
+    wrap = document.createElement('div');
+    wrap.className = 'intake over-page gs gs-dock' + (tour.quiet ? ' is-quiet' : '');
+    wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-modal', 'true'); wrap.setAttribute('aria-labelledby', 'gs-title');
+    wrap.innerHTML = `${tourRail(tour)}<div class="intake-inner">${tourHead(tour)}<div class="intake-screen alma-ask"><div id="gs-body">${body()}</div></div></div>`;
+    document.body.appendChild(wrap);
+    const me = wrap;
+    // repainted in place: the field she's in keeps its focus
+    const paintBody = (focus) => { if (wrap !== me) return; me.querySelector('#gs-body').innerHTML = body(); const el = focus && me.querySelector(focus); if (el) el.focus({ preventScroll: true }); };
+    // the page's list changed (an invite sent there, or its Excel list sent or cancelled)
+    const onTeam = () => { if (excel) { excel = false; tuck(false); } paintBody(); };
+    const close = (how = '') => {
+      if (wrap !== me) return;
+      document.removeEventListener('keydown', onKey); document.removeEventListener('cm-team', onTeam);
+      wrap = null;
+      if (how === 'next' || how === 'back' || how.startsWith('go:')) { me.classList.add('is-leaving'); setTimeout(() => me.remove(), 1200); } else me.remove();
+      if (opts.onClose) opts.onClose(ctx().t.invites.length !== before, how);
+    };
+    const onKey = (e) => { if (e.key !== 'Escape' || wrap !== me || me.classList.contains('is-tucked')) return; close('end'); };
+    document.addEventListener('keydown', onKey); document.addEventListener('cm-team', onTeam);
+    const send = () => {
+      const c = ctx(), t = c.t;
+      const raw = f.emails.split(/[\s,;]+/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+      f.err = f.gerr = ''; f.sent = '';
+      if (!raw.length) f.err = 'Add at least one email.';
+      else if (raw.some((x) => !valid(x))) { const bad = raw.filter((x) => !valid(x)); f.err = `Check ${bad.length === 1 ? 'this email' : 'these emails'}: ${esc(bad.join(', '))}.`; }
+      if (f.err) { paintBody('#gs-tm-emails'); return; }
+      if (!c.grants.includes(f.role)) f.role = c.grants.includes('user') ? 'user' : c.grants[0];
+      const groups = grouped(f.role) ? f.groups.filter((g) => c.mine.includes(g)) : [];
+      if (grouped(f.role) && !groups.length) { f.gerr = 'Pick at least one group: it decides which pages they open.'; paintBody(); return; }
+      const also = f.role === 'owner' ? family().map((o) => o.id).filter((x) => x !== id) : f.role === 'admin' ? f.also.slice() : [];
+      const known = new Set(t.members.map((m) => m.email.toLowerCase()).concat(t.invites.map((v) => v.email)));
+      const fresh = [...new Set(raw)].filter((x) => !known.has(x));
+      if (!fresh.length) { f.err = raw.length === 1 ? 'They are already in the team, or invited.' : 'They are all already in the team, or invited.'; paintBody('#gs-tm-emails'); return; }
+      fresh.forEach((email) => t.invites.push({ email, role: f.role, groups, also, sent: today(), by: c.v.email }));
+      A.save(id, t);
+      also.forEach((oid) => { const o = teamOf(oid); fresh.forEach((email) => { if (!o.invites.some((v) => v.email === email)) o.invites.push({ email, role: f.role, groups: [], also: [id], sent: today(), by: c.v.email }); }); A.save(oid, o); });
+      const skipped = raw.length - fresh.length;
+      f.sent = `Invite sent to ${esc(fresh.length === 1 ? fresh[0] : fresh.length + ' people')}.${skipped ? ` ${skipped} already in the team.` : ''}`;
+      f.emails = '';
+      document.dispatchEvent(new CustomEvent('cm-team', { detail: 'panel' })); // the page's list shows them too
+      paintBody('#gs-tm-emails');
+    };
+    me.addEventListener('submit', (e) => { if (!e.target.closest('#gs-tm')) return; e.preventDefault(); send(); });
+    me.addEventListener('input', (e) => { if (e.target.id === 'gs-tm-emails') { f.emails = e.target.value; if (f.err) { f.err = ''; e.target.classList.remove('is-bad'); const er = e.target.parentNode.querySelector('.set-err'); if (er) er.textContent = ''; } } });
+    me.addEventListener('change', (e) => {
+      const n = e.target.name;
+      if (n === 'gs-tm-role') { f.role = e.target.value; f.gerr = ''; paintBody(`[name="gs-tm-role"][value="${f.role}"]`); return; }
+      if (n === 'gs-tm-g' || n === 'gs-tm-also') { const k = n === 'gs-tm-g' ? 'groups' : 'also'; f[k] = [...me.querySelectorAll(`[name="${n}"]:checked`)].map((x) => x.value); if (n === 'gs-tm-g' && f.gerr) { f.gerr = ''; const er = e.target.closest('.set-f').querySelector('.set-err'); if (er) er.textContent = ''; } }
+    });
+    me.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.id === 'gs-tm-emails') { e.preventDefault(); send(); } });
+    me.addEventListener('click', (e) => {
+      const t = (q) => e.target.closest(q);
+      if (t('[data-close]')) { e.preventDefault(); close(t('[data-close]').dataset.close || ''); return; }
+      if (t('[data-back]')) { close('back'); return; }
+      if (t('[data-tuck]')) { tuck(true); return; }
+      if (t('[data-untuck]')) { excel = false; tuck(false); return; }
+      const b = t('[data-tinv]'); if (!b) return;
+      if (b.dataset.tinv === 'one') { f.on = !f.on; f.sent = ''; paintBody(f.on ? '#gs-tm-emails' : '[data-tinv="one"]'); return; }
+      // from Excel: the page's own upload, its list beside the folded panel
+      const pick = document.querySelector('#team-body [data-bulk-pick]');
+      if (pick) { excel = true; tuck(true); pick.click(); }
+    });
+    const h = me.querySelector('#gs-title'); if (h) h.focus({ preventScroll: true });
+  };
+
   // ---- the company homepage's own way in: its drop zone and "Start company profile" ---------------
   // for a company added in this session they open ALMA on the Company section, not the general intake
   if (document.querySelector('#empty')) {
@@ -1182,12 +1313,13 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   // suppliers, invited to share theirs. Each step can be skipped; "Skip setup" (or Escape) leaves it all
   // for later, on the empty homepage. Where it got to is kept, so coming back carries on from there.
   // (Workers and Equipment come back as steps once they open)
-  const TOUR = ['registration', 'company', 'suppliers'];
-  const STEP = { registration: 'Registration', company: 'Company documents', suppliers: 'Invite suppliers' };
+  const TOUR = ['registration', 'company', 'suppliers', 'team'];
+  const STEP = { registration: 'Registration', company: 'Company documents', suppliers: 'Invite suppliers', team: 'Invite your team' };
   const regCodes = () => asks('registration').map((d) => d.code);
   const docsOf = (a) => (a === 'suppliers' ? [] : a === 'company' ? asks('company').filter((d) => !regCodes().includes(d.code)) : asks(a));
   const invitedN = () => (window.CM_SUPPLIERS ? window.CM_SUPPLIERS.list().filter((x) => x.status === 'invited').length : saved.invited || 0);
-  const complete = (a) => (a === 'suppliers' ? invitedN() > 0 : docsOf(a).every((d) => (saved.files[d.code] || {}).ok));
+  const teamN = () => { const A = window.CMAccess; return A ? A.teamOf(org.id).invites.length : 0; };
+  const complete = (a) => (a === 'suppliers' ? invitedN() > 0 : a === 'team' ? teamN() > 0 : docsOf(a).every((d) => (saved.files[d.code] || {}).ok));
   const first = (() => { try { return ((JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || '').split(/\s+/)[0]; } catch (e) { return ''; } })();
   const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1232,9 +1364,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   // where each step happens: the homepage for the company's own documents (its top for Registration,
   // its documents for the rest), the Documents page's section for Workers and Equipment
   const onHome = !!document.querySelector('#empty');
-  // its documents, Workers and Equipment; My suppliers for inviting suppliers
-  const PLACE = { workers: 'company-details.html?area=workers', equipment: 'company-details.html?area=equipment', suppliers: 'suppliers.html' };
-  const here = (a) => (a === 'suppliers' ? /suppliers\.html$/.test(location.pathname) : PLACE[a] ? /company-details/.test(location.pathname) && new URLSearchParams(location.search).get('area') === a : onHome);
+  // its documents, Workers and Equipment; My suppliers for inviting suppliers; Team management for the team
+  const PLACE = { workers: 'company-details.html?area=workers', equipment: 'company-details.html?area=equipment', suppliers: 'suppliers.html', team: 'team.html' };
+  const here = (a) => (a === 'suppliers' ? /suppliers\.html$/.test(location.pathname) : a === 'team' ? /team\.html$/.test(location.pathname) : PLACE[a] ? /company-details/.test(location.pathname) && new URLSearchParams(location.search).get('area') === a : onHome);
   // to another page: this one fades out, the next fades in (its head reads cm-tour-fade)
   const leave = (url) => {
     try { sessionStorage.setItem('cm-tour-fade', '1'); } catch (e) {}
@@ -1257,7 +1389,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (o.again) { t.ended = false; t.passed = t.passed.filter(complete); }
     // Workers and Equipment show, marked coming soon, but aren't steps until they open:
     // Company documents is the last step meanwhile
-    const shown = TOUR.filter((a) => a === 'suppliers' ? !!PLACE.suppliers : docsOf(a).length), areas = shown.filter((a) => !SOON.areas.includes(a));
+    const shown = TOUR.filter((a) => a === 'suppliers' || a === 'team' ? !!PLACE[a] : docsOf(a).length), areas = shown.filter((a) => !SOON.areas.includes(a));
     const at = areas.findIndex((a) => !t.passed.includes(a));
     if (at < 0) { t.ended = true; keep(); return false; }
     keep();
@@ -1281,7 +1413,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       show(a);
       const n = areas.findIndex((x, j) => j > i && !t.passed.includes(x)); // the next step not done yet
       if (reveal) setTimeout(showPage, 0); // the drawer stays open on the next step, the page beside it
-      (a === 'suppliers' ? invite : open)(a, {
+      (a === 'suppliers' ? invite : a === 'team' ? people : open)(a, {
         files, skip: a === 'company' ? regCodes() : [],
         tour: { at: i, count: areas.length, bar: shown.map((x) => ({ a: x, l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: complete(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
         onClose: (c, how) => {

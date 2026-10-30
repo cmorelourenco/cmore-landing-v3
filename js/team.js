@@ -23,7 +23,10 @@
   // what someone was given alone, on top of their groups
   const own = (a) => (a ? a.content.filter((k) => CNAME[k]).map((k) => gaveText(a, k)).join(', ') : '');
   const gave = (g, k) => { const sc = (g.scope || {})[k], n = PART_NOUN(k); return CNAME[k] + (sc ? ` <small class="tm-part-n">(${sc.length} of ${PARTS[k].length} ${n[1]})</small>` : ''); };
-  const save = (id, t) => A.save(id, t);
+  // ALMA's setup panel, docked here as its last step (js/guided-upload.js), hears of every change,
+  // and the page repaints when she sends invites from it
+  const save = (id, t) => { A.save(id, t); document.dispatchEvent(new CustomEvent('cm-team')); };
+  document.addEventListener('cm-team', (e) => { if (e.detail === 'panel') paint(); });
 
   const cur = O.current();
   const others = O.list().filter((o) => o.id !== cur.id);
@@ -850,7 +853,7 @@
     if (e.target.closest('[data-sel-clear]')) { sel.clear(); paint(); return; }
     if (e.target.closest('[data-dw-open]')) { openDrawer(); return; }
     if (e.target.closest('[data-bulk-pick]')) { const f = box.querySelector('#tm-bulk-file'); f.value = ''; f.click(); return; }
-    if (e.target.closest('[data-bulk-cancel]')) { bulk = null; paint(); return; }
+    if (e.target.closest('[data-bulk-cancel]')) { bulk = null; paint(); document.dispatchEvent(new CustomEvent('cm-team')); return; }
     const be = e.target.closest('[data-bulk-edit]') || (!e.target.closest('input, button, a, label, .tm-rev-c') && e.target.closest('tr[data-bulk-i]'));
     if (be && bulk) { const i = +(be.dataset.bulkEdit || be.dataset.bulkI); bulk.picked = new Set([i]); keepRev(() => paint()); openBdw(); return; }
     if (e.target.closest('[data-bulk-role]')) { openBdw(); return; }
