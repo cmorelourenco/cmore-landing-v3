@@ -1283,7 +1283,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (reveal) setTimeout(showPage, 0); // the drawer stays open on the next step, the page beside it
       (a === 'suppliers' ? invite : open)(a, {
         files, skip: a === 'company' ? regCodes() : [],
-        tour: { at: i, count: areas.length, bar: shown.map((x) => ({ a: x, l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: t.passed.includes(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
+        tour: { at: i, count: areas.length, bar: shown.map((x) => ({ a: x, l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: complete(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
         onClose: (c, how) => {
           changed = changed || c;
           // back: to the step before, as it was left (its page, if it lives elsewhere)
