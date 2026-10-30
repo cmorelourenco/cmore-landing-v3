@@ -1410,7 +1410,7 @@ a{color:var(--color-ink);text-decoration-color:var(--color-activation)}a:hover{c
 @property --fill{syntax:'<percentage>';inherits:false;initial-value:0%}
 @property --hdr{syntax:'<length>';inherits:true;initial-value:9rem}
 /* --bar is the early-access strip under the header; --hdr is everything pinned at the top */
-:root{--bar:0px;/* the strip above the header: none now (the Halloween campaign has ended); 3.25rem, with an .ea-strip, to run one again */--hdr:calc(4.5rem + var(--bar));transition:--hdr .32s var(--ease-brand,ease)}
+:root{--bar:0px;/* the strip above the header: none now; 3.25rem, with an .ea-strip, to run a campaign in it */--hdr:calc(4.5rem + var(--bar));transition:--hdr .32s var(--ease-brand,ease)}
 /* scrolling down hides the header but never the strip: it stays pinned at the top of the window */
 :root.hdr-hidden{--hdr:var(--bar)}
 /* the header sits under the strip and travels with it */
@@ -1419,32 +1419,16 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 .ea-strip{position:sticky;top:0;z-index:51;height:var(--bar);background:var(--color-graphite);display:flex;justify-content:center;transition:transform .32s var(--ease-brand,ease)}
 
 .ea-strip{overflow:hidden}
-/* the words sit above the bats and embers, on their own graphite so nothing crosses the letters */
+/* the words, on their own graphite */
 .ea-block{background:var(--color-graphite);padding-inline:1.25rem}
 .ea-block{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:1rem;height:100%;padding-inline:2rem;color:var(--color-off-white);white-space:nowrap}
 .ea-block p{margin:0;display:inline-flex;align-items:center;gap:.5rem;font-size:1.0625rem;font-weight:400;letter-spacing:-0.005em}
 .ea-block p>span{white-space:nowrap}
-/* ---- The haunt: what lives in the band around the words ----------------
-   A flight of small bats drifting across at different sizes and speeds, and
-   coral embers rising all along the band. Decoration only: hidden from
-   assistive tech, under the words' own graphite, and off under reduced motion. */
-.ea-bat{position:absolute;left:0;top:50%;width:1.375rem;height:.6875rem;color:var(--color-off-white);opacity:.3;pointer-events:none;animation:ea-bat var(--d,26s) linear var(--dl,0s) infinite}
-.ea-bat svg{display:block;width:100%;height:100%}
-.ea-bat .w{transform-box:view-box;transform-origin:32px 16px;animation:bat-flap-l .42s ease-in-out infinite alternate}
-.ea-bat .wr{animation-name:bat-flap-r}
-@keyframes ea-bat{from{transform:translate(-3rem,calc(-50% + var(--y,0px)))}to{transform:translate(calc(100vw + 3rem),calc(-50% + var(--y,0px)))}}
-/* the ones heading left: the same flight played backwards, the bat drawn mirrored so it faces its way */
-.ea-bat.rtl{animation-direction:reverse}
-.ea-bat.rtl svg{transform:scaleX(-1)}
-@keyframes bat-flap-l{from{transform:rotate(-18deg)}to{transform:rotate(16deg)}}
-@keyframes bat-flap-r{from{transform:rotate(18deg)}to{transform:rotate(-16deg)}}
-.ea-ember{position:absolute;bottom:-4px;left:var(--x);width:3px;height:3px;border-radius:1px;background:var(--color-coral);opacity:0;pointer-events:none;animation:ea-ember var(--d,4s) linear var(--dl,0s) infinite}
-@keyframes ea-ember{0%{opacity:0;transform:translate(0,0) rotate(0)}12%{opacity:1}100%{opacity:0;transform:translate(var(--sx,6px),-3.4rem) rotate(180deg)}}
 /* the button breathes coral, so the band has one live point of activation */
 .ea-block a{animation:ea-pulse 2.6s ease-in-out infinite}
 @keyframes ea-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,109,79,0)}50%{box-shadow:0 0 0 5px rgba(244,109,79,.35)}}
 
-@media (prefers-reduced-motion:reduce){.ea-bat,.ea-ember{display:none}.ea-block a{animation:none}}
+@media (prefers-reduced-motion:reduce){.ea-block a{animation:none}}
 .ea-block b{font-weight:700;color:var(--color-off-white)}
 /* the coral activation underline, drawn in once the page has loaded */
 /* the offer itself in bold coral; no underline here, the header's own mark is enough */

@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script>/* trick or treat: the cursor the Halloween tag handed out earlier in this tab */try { var cmCur = sessionStorage.getItem('cm-cursor'); if (cmCur === 'bat' || cmCur === 'candy') document.documentElement.classList.add(cmCur + '-cursor'); } catch (e) {}</script>
 <title>Choose your plan · C-MORE</title>
 <meta name="robots" content="noindex">
 <style>
@@ -158,84 +157,11 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 .price strong { font-size: 3.5rem; line-height: 1; font-weight: 600; letter-spacing: -.03em; }
 .price .per { font-size: 1.0625rem; }
 .price .note { font-size: .9375rem; }
-.price .note .promo { font-weight: 500; color: var(--color-ink); }
-.plan[aria-checked="true"] .price .note .promo { color: var(--color-off-white); }
 .feats { display: flex; flex-direction: column; gap: .625rem; padding-top: 1.125rem; border-top: 1px solid var(--color-mid-beige); font-size: .9375rem; line-height: 1.5; }
 .plan[aria-checked="true"] .feats { border-top-color: rgba(250,250,250,.16); }
 .feats span { display: flex; align-items: center; gap: .625rem; }
 .feats svg { flex: none; }
-/* Halloween: a headline under the annual card's perks */
-.treat { display: block; padding-top: 1.125rem; border-top: 1px solid var(--color-mid-beige); font-size: 1.25rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; color: var(--color-coral); text-wrap: balance; }
-.plan[aria-checked="true"] .treat { border-top-color: rgba(250,250,250,.16); }
 .tag { position: absolute; top: -13px; left: 1.875rem; padding: 5px 12px; border-radius: var(--radius-pill); background: var(--color-coral); color: var(--color-graphite); font-size: .75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
-/* The founders' price, struck through in coral beside the Halloween price. */
-.price .was { position: relative; text-decoration: none; font-size: 1.75rem; font-weight: 500; letter-spacing: -.02em; line-height: 1; margin-right: .25rem; }
-.price .was::after { content: ""; position: absolute; left: -.1em; right: -.1em; top: 50%; height: 2px; background: var(--color-coral); transform: rotate(-8deg); border-radius: 1px; }
-/* The Halloween tag: a paper label on a thread, hung from the top edge of the
-   card between the title and the radio. It sways a little, from the knot. */
-/* Tied to the bottom edge of the card: the knot sits on the border, the
-   thread drops below the card and the label dangles under it, towards the
-   right. It sways from the knot. */
-.hang { position: absolute; top: 100%; right: 2.5rem; width: 0; display: block; z-index: 1; transform-origin: 50% 0; animation: hang-sway 5s ease-in-out infinite alternate; }
-.hang::before { content: ""; position: absolute; left: 50%; top: 0; width: .5rem; height: .5rem; border-radius: 50%; translate: -50% -50%; background: var(--color-off-white); box-shadow: inset 0 0 0 1px var(--color-sand-400); }
-.hang-thread { display: block; width: 1px; height: 1.75rem; margin-inline: auto; background: var(--color-sand-400); }
-.hang-tag { position: relative; display: inline-flex; align-items: center; gap: .4rem; translate: -50% 0; padding: .4rem .75rem .4rem .6rem; border-radius: .5rem;
-  background: var(--color-off-white); color: var(--color-graphite); font-size: .75rem; font-weight: 600; letter-spacing: .04em; white-space: nowrap;
-  box-shadow: 0 1px 2px rgba(52,52,52,.08), 0 10px 24px -12px rgba(52,52,52,.45); }
-.hang-tag::before { content: ""; position: absolute; left: 50%; top: -.2rem; width: .35rem; height: .35rem; border-radius: 50%; translate: -50% 0; background: var(--color-sand-400); }
-.hang-tag svg { width: 1.5rem; height: 1.5rem; color: var(--color-coral); flex: none; }
-/* the carved face and the lobe line are cut out in the tag's own paper colour */
-.hang-tag svg .lobe { stroke: var(--color-off-white); stroke-width: 1.4; }
-.hang-tag svg .face { fill: var(--color-off-white); }
-.plan:not([aria-checked="true"]) .hang-tag { border: 1px solid var(--color-line); box-shadow: 0 1px 2px rgba(52,52,52,.05); }
-@keyframes hang-sway { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
-@media (prefers-reduced-motion: reduce) { .hang { animation: none; } }
-/* ---- Bats --------------------------------------------------------------
-   Continue to checkout lets a colony of bats out of the button. They scatter up and
-   across the screen, flapping, and are gone in under three seconds; the
-   pumpkin's face flickers like a candle while they go. Each bat's path is
-   its own custom properties, set by the script. Nothing under reduced
-   motion beyond the flicker. */
-/* The pointer brushes the tag: crossing it from the left knocks it to the
-   right (and the other way round), harder the faster the cursor was moving,
-   and it swings back on a damped spring, pivoting at the knot. The script
-   runs the spring and writes --nudge each frame. */
-/* A bat for a cursor: the pixel bat from the reference, sampled onto its grid, graphite with sand-400
-   highlight pixels and a one-pixel off-white outline so it reads on the graphite card and any dark
-   ground, 39x35, 1px per cell (a 2x copy for Retina; image-set picks it). Hotspot on the head, the
-   arrow as fallback. On for the whole flow once the tag has been clicked, off when it is clicked
-   again; kept for the tab so checkout follows (html.bat-cursor). */
-:root { --cursor-bat: -webkit-image-set(url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAjCAYAAAAXMhMjAAABiUlEQVR4nM2YzWrDMAzH5TD8SoMc+0aDHXfssdA36tHQV8plO2wqQpVkW1KW/qHQJrH1s6wPpwUO0rZt3/xarbXQ32X0wT2A1nV9fG+tPdkvOIA/mA0n2dGEoAsAwL3dxMnwE4WaAaPPFWpcGoyr8HhyForbfBi0JvIARsFqrWXBi2iYB6bHQAYYwF/MjQCi0V4cesE4AwDAm3RTMm6lPQeTEsyjRbuhAXAQrnu7wcfnVxDrVyJcb3vRixLg+3pKAVPhAPqZKcVUduFW4VCtNXOLMwo12uEy4WqtpVdivFmp2RuG44MsL2Z5kGoIDsD2YtSD2oKH4VCZnUSal2oaTpsoKikkXHA4Ua9Qj0rz+FP7ik6Ymb0uz/2XXLETPXlQ0dBw1Tmu7ISgZYrqpbf1JeC0znIo3PVyNg+mITgazNh3Z2ufdTANBTbfDjziR19sUuAk9d6DNUn/MqTHXO8MOKPdEiIDcNdsHS3W2gLcjX9G1LgWh4d0CIxBaZuvl7M5Nj1be9K6geS5H4kBACmNF7lZAAAAAElFTkSuQmCC") 1x, url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE4AAABGCAYAAABi+aJwAAACO0lEQVR4nO2aQU4DMQxFZ1A1V0LKkhshsWTJEokbsYzElWZTNhgktyHOT5xk2v9WqNN2ps7DsZOsy52x7/vZ8r5t29b/rj+0eZz74zeqrUZiFnK/J4Rw9fUY47/fK7+fxoGsemRyIzG7cdbfU4o2kcaBnOSPr/hp+kAqd4wyMfU8rUzT3yfm0TiQixwnWEdM/+/3Ms8rl6VgjmvEhR3oSPYyb7RprOMqSVpRa15r42YxTaBxIKfUBYmwjLSMgHWkW9V7vU3TpJ6XxoEkjRO0eTnQVQeNvp+1s+kFjQPJGqcpzXUaMcma68S055dX6H5e0DiQ4lqrdpazdhijZ9NcPUrjQIoDt23bWtMVhBBM9tTexxsaB1I8q2p0zirNRTqXjbbMWm/SOBDYOG1GaU+rr5d2Ft5wJ9+J6hwnpFZThNpVldmgcSDuM1irPYzRK74aGgfSrWaqNa+XcdY6ksaBdAvc7L2nsO/72TKz0ziQZnVcDj2KvXKXFX0aKQeNA+lmnFBq2CxGamgcCAMHwsCBTN85eJOaRdmrOtFtVi09g9Kb0q6GxoEwcCAMHAgD94N1VURg4EC696qz8PH+tizL3/m7x/BU9HkaBzLMuNR6XKqS9+o05KRn6UkCGgcybA8gN4PpToP7qjfCIXadrr3uZaB1f5XGgUxvnMZ7XY/GOXO4wOkTATHGIac5Dxe4WThsr9p6RZmdQycOa5ymVY/L83HOHK6Os5Kr92Q9Tq+O0DhnbtY4oXTWpXHOfAOHySiybp0c+gAAAABJRU5ErkJggg==") 2x) 33 1;
-        --cursor-bat-1x: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAjCAYAAAAXMhMjAAABiUlEQVR4nM2YzWrDMAzH5TD8SoMc+0aDHXfssdA36tHQV8plO2wqQpVkW1KW/qHQJrH1s6wPpwUO0rZt3/xarbXQ32X0wT2A1nV9fG+tPdkvOIA/mA0n2dGEoAsAwL3dxMnwE4WaAaPPFWpcGoyr8HhyForbfBi0JvIARsFqrWXBi2iYB6bHQAYYwF/MjQCi0V4cesE4AwDAm3RTMm6lPQeTEsyjRbuhAXAQrnu7wcfnVxDrVyJcb3vRixLg+3pKAVPhAPqZKcVUduFW4VCtNXOLMwo12uEy4WqtpVdivFmp2RuG44MsL2Z5kGoIDsD2YtSD2oKH4VCZnUSal2oaTpsoKikkXHA4Ua9Qj0rz+FP7ik6Ymb0uz/2XXLETPXlQ0dBw1Tmu7ISgZYrqpbf1JeC0znIo3PVyNg+mITgazNh3Z2ufdTANBTbfDjziR19sUuAk9d6DNUn/MqTHXO8MOKPdEiIDcNdsHS3W2gLcjX9G1LgWh4d0CIxBaZuvl7M5Nj1be9K6geS5H4kBACmNF7lZAAAAAElFTkSuQmCC") 33 1; }
-.hang-tag { cursor: pointer; pointer-events: auto; transform-origin: 50% 0; rotate: var(--nudge, 0deg); }
-html.bat-cursor, html.bat-cursor * { cursor: var(--cursor-bat-1x), auto !important; cursor: var(--cursor-bat), auto !important; }
-/* A treat for a cursor: a wrapped sweet on the diagonal, pixel art like the bat — coral with a
-   darker underside, three off-white stripes and crimped wrapper ends, 27x27, hotspot on the top-left
-   tip. Which one you get is decided when the tag is clicked (html.candy-cursor). */
-:root { --cursor-candy: -webkit-image-set(url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAbCAYAAACN1PRVAAABlUlEQVR4nLWWMWrDMBSGf4fUBwgEF7z5DFqcLjlDIFNzg3Zqtk6ZuqVTj9At4DN4qbroDN4KMQYfwIs7hKfaqqRItfpDIDayvvc/PT0pgkGMsZ7+CyEi0zgfzWygj7eXEAwzjEBFFqN+PfwvjEC6AKZqfm3CIouxqboQrIszApV5ijJPg02uKhqCVLV1AwBGuG+VzgBz1S2SJSiQMk/BOQfnXAbGGOt91jNSB+sckuLjCd1+i/h4ku9WqxUAN5ejATYwAbr9dvTsAxyVvhAioh/ws2YkAqninGuDtcJ0autm5MIEJ+AkmG7iIVx1a3N3FXb7XgJwS6mtuK7CaH+dd2sJdEmpN8xWWaaU/hlGorIG/FLqDSN3w3blklLqLGqxOPU2+ohzLmHAxanN1frza/Ts3EiHURZZLFN63q2xSJZo60b2UlU39w+4e3x2h+mgQ9GBqwOSwyAXGcZYPzzdN1Un9xyBhBDRXPv1RBVZPFovKrRgsE3V/bq7qHvVuTfapE5qOtmDwEjJ00GCdB0oSIEAbjfob+hcylLb2EW4AAAAAElFTkSuQmCC") 1x, url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAA2CAYAAACMRWrdAAAB7UlEQVR4nO2aP0oDQRSHfxHNAQSJYOcZ0hibnEGw0htopZ1VKjutzA20EjxDGtdmz2AnGAQPEAtt/BH2xcf8yZsYZufrZmezDPl4b96+2Q4C6ff7339dr+u6E/qslGz89wJSsel7ozT1fHcNADg8vzJekg3tNSZNPe13AQDT21GaFRnRXmOEpjRodl2yY3uMafuUBk0evc6MlmRD/sakqcnBXuPG4csbAHesrQvZGuu4TGl8Tj8a49AYS5098zfG2u/rYRz0AJrb7u00rndvHhvj2eUxgHmsSqwN5m9MwzfmJDRGU9IgGQwGjbGVuXyNaROxJrXY0uaJtbn2GdOgSVYgWjaUpuS8hpW5bI15v49pcB/bvZ8E/U7LllVVAVg0F0ox5ktobLn2udg382JMQ8aWVjsSzaiE+6RWW7ooxiR8/6p+x++nw8b8stlyWYoxwuwU2s2KrURiKcY0WCHI7lWqbOlLMSaRscYsKc1ZZcvQk9RsjZl1huQ/yipdGiM0FhtbroqkGPNFiwXGnowtGmW2dGVPja2TMwDzM/FiLJbY8zbia07GXDGWGtn9knCf1M7tCPe1bI2Z9zxSQZO+pzXF2KrQak6Jq2tVjKXG9WYeesZdjK2a3sUIwOL3kL4d4WyNrU3lQay+Oc7W2A+IzdjxtCv5PAAAAABJRU5ErkJggg==") 2x) 5 1;
-        --cursor-candy-1x: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABsAAAAbCAYAAACN1PRVAAABlUlEQVR4nLWWMWrDMBSGf4fUBwgEF7z5DFqcLjlDIFNzg3Zqtk6ZuqVTj9At4DN4qbroDN4KMQYfwIs7hKfaqqRItfpDIDayvvc/PT0pgkGMsZ7+CyEi0zgfzWygj7eXEAwzjEBFFqN+PfwvjEC6AKZqfm3CIouxqboQrIszApV5ijJPg02uKhqCVLV1AwBGuG+VzgBz1S2SJSiQMk/BOQfnXAbGGOt91jNSB+sckuLjCd1+i/h4ku9WqxUAN5ejATYwAbr9dvTsAxyVvhAioh/ws2YkAqninGuDtcJ0autm5MIEJ+AkmG7iIVx1a3N3FXb7XgJwS6mtuK7CaH+dd2sJdEmpN8xWWaaU/hlGorIG/FLqDSN3w3blklLqLGqxOPU2+ohzLmHAxanN1frza/Ts3EiHURZZLFN63q2xSJZo60b2UlU39w+4e3x2h+mgQ9GBqwOSwyAXGcZYPzzdN1Un9xyBhBDRXPv1RBVZPFovKrRgsE3V/bq7qHvVuTfapE5qOtmDwEjJ00GCdB0oSIEAbjfob+hcylLb2EW4AAAAAElFTkSuQmCC") 5 1; }
-html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !important; cursor: var(--cursor-candy), auto !important; }
-.hang-in { display: block; transform-origin: 50% 0; will-change: transform; }
-.hang.is-lit .hang-in { animation: hang-kick 1.4s cubic-bezier(.22,1,.36,1); }
-@keyframes hang-kick { 0% { transform: rotate(0); } 18% { transform: rotate(10deg); } 45% { transform: rotate(-7deg); } 70% { transform: rotate(3.5deg); } 88% { transform: rotate(-1.5deg); } 100% { transform: rotate(0); } }
-.hang.is-lit svg .face { animation: jack-flicker 1.8s steps(1, end) 3; }
-@keyframes jack-flicker { 0%, 100% { fill: var(--color-off-white); } 10% { fill: #ffd27a; } 25% { fill: var(--color-off-white); } 40% { fill: #ffc24a; } 55% { fill: #ffd27a; } 75% { fill: var(--color-off-white); } 85% { fill: #ffc24a; } }
-.bats { position: fixed; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
-/* --size scales each bat: small ones far and quick, big ones close and slow */
-.bat { position: absolute; left: 0; top: 0; width: calc(2.75rem * var(--size, 1)); height: calc(1.375rem * var(--size, 1)); color: var(--color-graphite);
-  translate: var(--x0) var(--y0); will-change: transform, opacity;
-  animation: bat-fly var(--dur, 2.6s) cubic-bezier(.2,.6,.25,1) var(--delay, 0s) both, bat-fade var(--dur, 2.6s) linear var(--delay, 0s) both; }
-.bat .bob { display: block; width: 100%; height: 100%; will-change: transform;
-  animation: bat-bob var(--bob, 1.1s) ease-in-out var(--delay, 0s) infinite alternate; }
-.bat svg { display: block; width: 100%; height: 100%; overflow: visible; transform: rotate(var(--tilt, 0deg)); }
-.bat .w { transform-box: view-box; transform-origin: 32px 16px; animation: bat-flap var(--flap, .26s) ease-in-out var(--delay, 0s) infinite alternate; }
-.bat .wr { animation-name: bat-flap-r; }
-@keyframes bat-fly  { from { transform: translate(0, 0) scale(.4); } to { transform: translate(var(--dx), var(--dy)) scale(1); } }
-@keyframes bat-fade { 0% { opacity: 0; } 6% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes bat-bob  { from { transform: translateY(-5px); } to { transform: translateY(5px); } }
-@keyframes bat-flap   { from { transform: rotate(-24deg); } to { transform: rotate(22deg); } }
-@keyframes bat-flap-r { from { transform: rotate(24deg); } to { transform: rotate(-22deg); } }
-@media (prefers-reduced-motion: reduce) { .bats { display: none; } .hang.is-lit .hang-in { animation: none; } .hang-tag { rotate: 0deg; transition: none; } }
 .actions { display: flex; flex-direction: column; align-items: center; gap: 1rem; padding-top: .25rem; margin-top: 2.25rem; }
 .actions .btn { padding-inline: 1.75rem; }
 
@@ -245,8 +171,6 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
 /* on to ALMA: the same off-white dissolve the sign-up used, so the company page arrives on one colour */
 .to-company { position: fixed; inset: 0; z-index: 999; pointer-events: none; background: var(--color-off-white); opacity: 0; transition: opacity .9s ease; }
 .to-company.on { opacity: 1; }
-/* on to checkout: the page's content fades out under the bats while the sphere keeps turning behind them */
-.to-checkout .reg { opacity: 0; transition: opacity .9s ease .2s; }
 
 @media (max-width: 760px) {
   .pay-page .reg-main { padding-top: 1.75rem; }
@@ -260,12 +184,8 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   .price .per { font-size: .9375rem; } .price .note { font-size: .875rem; }
   .feats { font-size: .875rem; gap: .5rem; padding-top: .875rem; }
   .tag { left: 1.375rem; top: -12px; font-size: .6875rem; padding: 4px 10px; }
-  .price .was { font-size: 1.375rem; }
   .actions { gap: .875rem; }
   .actions .btn { width: 100%; height: 3.25rem; }
-  /* on a phone the monthly card follows underneath, so the annual card leaves room for the tag to hang */
-  .plan[data-plan="annual"] { margin-bottom: 2.75rem; }
-  .hang { right: 4rem; } .hang-thread { height: 1.25rem; } .hang-tag { font-size: .6875rem; padding: .3rem .6rem .3rem .5rem; }
   /* annual first on a phone */
   .plan[data-plan="annual"] { order: -1; }
 }
@@ -329,24 +249,18 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
 
           <button type="button" class="plan" role="radio" aria-checked="true" data-plan="annual" tabindex="0">
             <span class="tag">Founders’ early access</span>
-            <!-- Halloween: a paper tag on a thread, hung from the top edge of the card -->
-            <span class="hang" aria-hidden="true"><span class="hang-in">
-              <span class="hang-thread"></span>
-              <span class="hang-tag"><svg viewBox="0 0 32 32" fill="currentColor" aria-hidden="true"><path d="M16.3 10c-.1-2.3.8-4.4 2.6-5.9.6-.5 1.5-.4 2 .2.4.6.3 1.4-.2 1.9-1.1.9-1.8 2.1-2 3.6" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><ellipse cx="9.6" cy="19.6" rx="7.6" ry="9.1"/><ellipse cx="22.4" cy="19.6" rx="7.6" ry="9.1"/><ellipse cx="16" cy="19.6" rx="6.5" ry="9.9" class="lobe"/><g class="face"><path d="M9.9 18.2h3.8l-1.9-3.6z"/><path d="M18.3 18.2h3.8l-1.9-3.6z"/><path d="M14.9 21h2.2L16 19.2z"/><path d="M9.5 22.6c2.1 4.6 10.9 4.6 13 0l-1.7 1.1-1.5-1.1-1.6 1.6-1.7-1.3-1.7 1.3-1.6-1.6-1.5 1.1z"/></g></svg><span>Trick or treat</span></span>
-            </span></span>
             <span class="head">
               <span class="kind"><small class="muted">Annual</small><span>Commit for the year</span></span>
               <span class="radio" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#343434" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
             </span>
             <span class="price">
-              <span class="amt"><s class="was muted" aria-label="Was"><span id="y-was">$500</span></s><strong id="y-amt">$400</strong><span class="per muted">/ year</span></span>
-              <span class="note muted" id="y-note"><b class="promo">Halloween price until 31 Oct</b> · $33.33 / month · save $200</span>
+              <span class="amt"><strong id="y-amt">$500</strong><span class="per muted">/ year</span></span>
+              <span class="note muted" id="y-note">Works out at $41.67 / month · save $100</span>
             </span>
             <span class="feats">
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Billed once a year</span>
               <span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Full founding-member perks</span>
             </span>
-            <span class="treat">Halloween offer, no tricks just treats</span>
           </button>
 
         </div>
@@ -375,8 +289,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   const plans = [...document.querySelectorAll('.plan')];
   // ---- currency: USD, EUR or CNY, carried between the plan picker and checkout ----
   // Prices per currency. EUR and CNY are placeholders until the real ones are set.
-  // y is the Halloween price on the annual plan (until 31 Oct); yWas is the founders' price it is struck through from.
-  const CUR = { usd: { sym: '$', m: 50, y: 400, yWas: 500 }, eur: { sym: '€', m: 50, y: 400, yWas: 500 }, cny: { sym: '¥', m: 360, y: 2880, yWas: 3600 } };
+  const CUR = { usd: { sym: '$', m: 50, y: 500 }, eur: { sym: '€', m: 50, y: 500 }, cny: { sym: '¥', m: 360, y: 3600 } };
   const money = (c, n) => CUR[c].sym + n.toLocaleString('en-US', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
   let cur = (() => { const v = qs.get('cur'); if (CUR[v]) return v; try { const s = sessionStorage.getItem('cm-cur'); if (CUR[s]) return s; } catch (e) {} return 'usd'; })();
   const curBtns = [...document.querySelectorAll('#cur [role="radio"]')];
@@ -401,8 +314,7 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
     document.getElementById('m-amt').textContent = money(cur, c.m);
     document.getElementById('m-note').textContent = money(cur, c.m * 12) + ' over the 12 months';
     document.getElementById('y-amt').textContent = money(cur, c.y);
-    document.getElementById('y-was').textContent = money(cur, c.yWas);
-    document.getElementById('y-note').innerHTML = '<b class="promo">Halloween price until 31 Oct</b> · ' + money(cur, Math.round(c.y / 12 * 100) / 100) + ' / month · save ' + money(cur, c.m * 12 - c.y);
+    document.getElementById('y-note').textContent = 'Works out at ' + money(cur, Math.round(c.y / 12 * 100) / 100) + ' / month · save ' + money(cur, c.m * 12 - c.y);
   });
   setCur(cur);
 
@@ -423,142 +335,11 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   const q = qs.get('plan');
   if (q === 'monthly' || q === 'annual') select(q);
 
-  // ---- Bats: the colony that carries Continue to checkout ---------------------
-  // release() builds one flight from a point; the submit handler below calls it.
-  {
-    const BAT = '<svg viewBox="0 0 64 32" fill="currentColor" aria-hidden="true">'
-      + '<path class="w" d="M32 15C27 5 15 3 2 9c6 2 8 6 4 11 6-2 12-1 14 5 3-4 7-5 12-2z"/>'
-      + '<path class="w wr" d="M32 15c5-10 17-12 30-6-6 2-8 6-4 11-6-2-12-1-14 5-3-4-7-5-12-2z"/>'
-      + '<path d="M28 10l2-5 2 4 2-4 2 5c2 2 2 8 0 11-1 2-3 4-4 6-1-2-3-4-4-6-2-3-2-9 0-11z"/></svg>';
-    const hangTag = document.querySelector('.hang-tag'), hang = document.querySelector('.hang');
-    // Directional hover. The cursor's horizontal speed as it crosses the tag's
-    // edge becomes an impulse on a damped spring: brushed from the left it
-    // swings right, from the right it swings left, faster for a faster hand.
-    // Leaving brushes it again the other way. While the cursor rests on it,
-    // the tag leans a little toward the side the cursor is on.
-    if (hangTag && !reduced) {
-      let lastX = null, lastT = 0, vx = 0;
-      addEventListener('pointermove', (e) => {
-        const t = performance.now();
-        if (lastX !== null && t > lastT) vx = (e.clientX - lastX) / (t - lastT); // px per ms
-        lastX = e.clientX; lastT = t;
-      }, { passive: true });
-      let angle = 0, vel = 0, lean = 0, raf = 0, prev = 0;
-      const K = 0.0032, C = 0.0085; // stiffness and damping, per ms
-      const step = (now) => {
-        const dt = Math.min(32, now - prev || 16); prev = now;
-        const acc = -K * (angle - lean) - C * vel;
-        vel += acc * dt; angle += vel * dt;
-        if (angle > 16) { angle = 16; vel = Math.min(vel, 0); } else if (angle < -16) { angle = -16; vel = Math.max(vel, 0); } // a tag on a thread, not a propeller
-        hangTag.style.setProperty('--nudge', angle.toFixed(2) + 'deg');
-        if (Math.abs(angle - lean) > 0.05 || Math.abs(vel) > 0.001) raf = requestAnimationFrame(step);
-        else { raf = 0; hangTag.style.setProperty('--nudge', lean.toFixed(2) + 'deg'); }
-      };
-      const kick = (impulse) => { vel += impulse; if (!raf) { prev = performance.now(); raf = requestAnimationFrame(step); } };
-      const side = (e) => { const r = hangTag.getBoundingClientRect(); return (e.clientX - (r.left + r.width / 2)) / (r.width / 2); };
-      // crossing in: speed sets the strength, the side it came from the direction
-      hangTag.addEventListener('pointerenter', (e) => {
-        const dir = Math.abs(vx) > 0.05 ? Math.sign(vx) : -Math.sign(side(e)) || 1;
-        kick(dir * Math.min(0.5, 0.12 + Math.abs(vx) * 0.22));
-      });
-      // resting on it: a small lean away from the cursor's side, as if held off by it
-      hangTag.addEventListener('pointermove', (e) => {
-        lean = -Math.max(-1, Math.min(1, side(e))) * 4;
-        if (!raf) { prev = performance.now(); raf = requestAnimationFrame(step); }
-      });
-      // crossing out: brushed once more in the direction of travel, then it settles to rest
-      hangTag.addEventListener('pointerleave', () => {
-        lean = 0;
-        kick(Math.sign(vx || 1) * Math.min(0.35, 0.08 + Math.abs(vx) * 0.16));
-      });
-    }
-    // each press is its own flight; past six in the air the oldest is let go
-    const flights = [];
-    // opts.n: how many; opts.lift: how much the whole flight leans upward (0 = the card fan, 1 = straight up);
-    // opts.full: the whole circle instead of a fan, so they leave by every edge of the viewport;
-    // opts.pace: speed multiplier; opts.spread: seconds the launches are spread over
-    const release = (e, card, opts = {}) => {
-      if (reduced) return;
-      // from the pointer if there is one, from the card's centre for a keyboard press
-      const r = card.getBoundingClientRect();
-      const px = e.clientX || r.left + r.width / 2, py = e.clientY || r.top + r.height / 2;
-      const x0 = px - 22, y0 = py - 11;
-      const layer = document.createElement('div'); layer.className = 'bats';
-      // a big flight: 28 to 36 bats in four sizes. Small ones are far away — quick, light, fast wingbeat;
-      // big ones are close — slower, heavier, and they leave last
-      const n = opts.n || 28 + Math.floor(Math.random() * 9);
-      const lift = opts.lift || 0, pace = opts.pace || 1, spread = opts.spread || 0.55;
-      for (let i = 0; i < n; i++) {
-        const b = document.createElement('i'); b.className = 'bat'; b.innerHTML = '<span class="bob">' + BAT + '</span>';
-        // fan out upwards and to both sides, each on its own timing
-        const span = opts.full ? 360 : 150 - lift * 70; // leaning upward narrows the fan
-        const ang = (-90 - span / 2 + (i / (n - 1)) * span + (Math.random() * 20 - 10)) * Math.PI / 180;
-        const size = [0.45, 0.7, 1, 1.35][Math.floor(Math.random() * 4)]; // four sizes, from distant to close
-        const quick = 1.45 - size * 0.5; // small bats cover ground faster
-        const dist = Math.max(innerWidth, innerHeight) * (0.6 + Math.random() * 0.6) * quick * (1 + lift * 0.4);
-        b.style.setProperty('--size', size);
-        b.style.setProperty('--x0', x0 + 'px'); b.style.setProperty('--y0', y0 + 'px');
-        b.style.setProperty('--dx', Math.cos(ang) * dist + 'px');
-        b.style.setProperty('--dy', Math.sin(ang) * dist * 0.85 + 'px');
-        b.style.setProperty('--tilt', (Math.cos(ang) * 22) + 'deg');
-        b.style.setProperty('--dur', ((1.6 + size * 1.1 + Math.random() * 1.0) / pace) + 's'); // 1.6 s for the smallest, up to ~4 s for the biggest
-        b.style.setProperty('--bob', (0.6 + size * 0.5 + Math.random() * 0.4) + 's');
-        b.style.setProperty('--delay', (Math.random() * spread) + 's');                     // a burst, not a queue
-        b.style.setProperty('--flap', (0.12 + size * 0.14 + Math.random() * 0.06) + 's');  // small wings beat faster
-        layer.appendChild(b);
-      }
-      document.body.appendChild(layer);
-      flights.push(layer);
-      if (flights.length > 6) flights.shift().remove();
-      setTimeout(() => { layer.remove(); const i = flights.indexOf(layer); if (i > -1) flights.splice(i, 1); }, 5600);
-    };
-    window.releaseBats = release;
-    // choosing the annual plan (when it wasn't the one chosen) lets a burst out of the card,
-    // from the spot pressed — the Halloween offer waking up. Re-clicking it does nothing more.
-    const annualCard = plans.find((c) => c.dataset.plan === 'annual');
-    if (annualCard) annualCard.addEventListener('click', (e) => {
-      if (annualCard.dataset.wasChecked === 'true') return;
-      release(e, annualCard, { lift: 0.4 });
-    });
-    // the state before the click, read on the way down so the click handler above can compare
-    plans.forEach((c) => c.addEventListener('pointerdown', () => { c.dataset.wasChecked = c.getAttribute('aria-checked'); }));
-    plans.forEach((c) => c.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') c.dataset.wasChecked = c.getAttribute('aria-checked'); }));
-    // the tag: a kick on its thread, the pumpkin flickers, and the card-sized burst flies up from it
-    if (hangTag && hang) hangTag.addEventListener('click', (e) => {
-      hang.classList.remove('is-lit'); void hang.offsetWidth; hang.classList.add('is-lit');
-      release(e, hangTag, { lift: 0.4 });
-      // Trick or treat: the pointer becomes a bat or a sweet for the rest of the payment flow, a coin
-      // toss each time it is handed out; clicking the tag again hands it back
-      const html = document.documentElement;
-      if (html.classList.contains('bat-cursor') || html.classList.contains('candy-cursor')) {
-        html.classList.remove('bat-cursor', 'candy-cursor');
-        try { sessionStorage.removeItem('cm-cursor'); } catch (err) {}
-      } else {
-        const pick = Math.random() < 0.5 ? 'bat' : 'candy';
-        html.classList.add(pick + '-cursor');
-        try { sessionStorage.setItem('cm-cursor', pick); } catch (err) {}
-      }
-    });
-  }
 
   // ---- on to checkout, with the chosen plan -----------------------------------
-  // Continue on the annual plan: a whole colony leaves the button in every
-  // direction and clears the viewport while the page fades out beneath them,
-  // the sphere still turning, and checkout comes up on the same ground — the
-  // bats carry the step change. Monthly, and reduced motion, go straight there.
   document.getElementById('plan-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    const next = 'checkout.html?plan=' + chosen + '&cur=' + cur;
-    // the trick-or-treat cursor is handed back here: checkout starts with the ordinary pointer
-    document.documentElement.classList.remove('bat-cursor', 'candy-cursor');
-    try { sessionStorage.removeItem('cm-cursor'); } catch (err) {}
-    // the colony is the Halloween offer's, so it only flies for the annual plan
-    if (reduced || chosen !== 'annual') { location.href = next; return; }
-    const btn = e.submitter || document.querySelector('#plan-form .btn-primary');
-    const r = btn.getBoundingClientRect();
-    window.releaseBats({ clientX: r.left + r.width / 2, clientY: r.top + r.height / 2 }, btn, { n: 72, full: true, pace: 1.35, spread: 0.7 });
-    document.documentElement.classList.add('to-checkout');
-    setTimeout(() => { location.href = next; }, 1250);
+    location.href = 'checkout.html?plan=' + chosen + '&cur=' + cur;
   });
 
   // Back goes to the sign-up's last step, the company's NIPC (register.html#company), which that page remembers for this tab.
@@ -570,8 +351,8 @@ html.candy-cursor, html.candy-cursor * { cursor: var(--cursor-candy-1x), auto !i
   }));
   addEventListener('pageshow', (e) => {
     if (!e.persisted) return;
-    document.documentElement.classList.remove('leaving', 'to-checkout');
-    document.querySelectorAll('.to-company, .bats').forEach((v) => v.remove());
+    document.documentElement.classList.remove('leaving');
+    document.querySelectorAll('.to-company').forEach((v) => v.remove());
   });
 })();
 </script>
