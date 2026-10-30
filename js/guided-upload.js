@@ -304,6 +304,14 @@ html.tour-fading main.page { transition: opacity .45s ease; }
 .gs-vat-f label span { font-weight: 400; color: var(--color-ink-subtle); }
 .gs-vat-f input { width: 100%; height: 2.5rem; padding: 0 0.75rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
 .gs-vat-f input:focus { outline: none; border-color: var(--color-graphite); }
+/* an expired document: a new expiry date, or none (not applicable), as in the questionnaires */
+.gs-card.is-expired:not(.is-ok) { border-color: var(--color-coral); }
+.gs-exp-f { display: flex; flex-wrap: wrap; align-items: end; gap: 0.625rem 1.25rem; margin-top: 0.875rem; }
+.gs-exp-f label { display: grid; gap: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink); }
+.gs-exp-f input[type="date"] { height: 2.5rem; padding: 0 0.75rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
+.gs-exp-f input[type="date"]:focus { outline: none; border-color: var(--color-graphite); }
+.gs-exp-f .gs-exp-na { display: flex; align-items: center; gap: 0.5rem; height: 2.5rem; font-weight: 500; cursor: pointer; }
+.gs-exp-f .gs-exp-na input { width: 1rem; height: 1rem; accent-color: var(--color-graphite); }
 .gs-vat-ok { margin-top: 0.75rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
 .gs-card footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-top: 1rem; }
 .gs-card footer > span { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem 1.25rem; }
@@ -533,14 +541,24 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (vat) return Object.assign(readAs(d, file), { vat, mismatch: true, conf: 50, flag: null, ok: false });
       return readAs(d, file);
     };
+    // an expiry date already past: a few weeks to a few months ago, issued a term before that
+    const lapse = (d, h) => {
+      const v = new Date(); v.setDate(v.getDate() - (15 + (h % 160)));
+      const i = new Date(v); i.setMonth(i.getMonth() - monthsOf(d));
+      return { valid: dt(v), issued: dt(i) };
+    };
     const readAs = (d, file) => {
       const h = hash(d.code + file.name + org.id), now = new Date(), months = monthsOf(d);
       const issued = new Date(now); issued.setDate(now.getDate() - (months <= 4 ? 4 + (h % 24) : 30 + (h % 170)));
       let valid = 'No expiry';
+      const dates = {};
       if (!/no expiry/i.test(d.expiryRule || '')) { const v = new Date(issued); v.setMonth(v.getMonth() + months); valid = dt(v); }
-      const flagged = docs.length > 1 && d.code === FLAGGED && valid !== 'No expiry';
+      // prototype: a file named as old or expired is one whose date has passed
+      const old = valid !== 'No expiry' && /\b(expired?|expirad[oa]|caducad[oa]|old|antig[oa])\b/i.test(String(file.name).replace(/[_.-]/g, ' '));
+      if (old) Object.assign(dates, lapse(d, h));
+      const flagged = !old && docs.length > 1 && d.code === FLAGGED && valid !== 'No expiry';
       return {
-        area, file: file.name, country: countryName, issued: dt(issued), valid, by: issuer(d), ref: codeOf(d, h, issued),
+        area, file: file.name, country: countryName, issued: dt(issued), valid, by: issuer(d), ref: codeOf(d, h, issued), ...dates,
         // nothing is accepted for the user: low confidence (what she couldn't read cleanly) must be,
         // before going on; medium and high may be, or go in as she read them (step2, data-confirm)
         conf: flagged ? 55 + (h % 15) : h % 4 ? 90 + (h % 9) : 78 + (h % 10), flag: flagged ? 'valid' : null, ok: false, edited: false,
@@ -617,12 +635,21 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
 
     // step 2: what she read, to accept or put right
     const FIELDS = [['country', 'Country'], ['by', 'Issued by'], ['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    // expired: the date read has passed. It needs a new one if it's still in force, or none (the
+    // date not applicable), or a current version of the file, before it can be accepted
+    const lapsed = (f) => !!f && !f.validNa && !Number.isNaN(Date.parse(f.valid)) && Date.parse(f.valid) < new Date().setHours(0, 0, 0, 0);
+    const isoOf = (v) => { const t = Date.parse(v); if (Number.isNaN(t)) return ''; const x = new Date(t); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+    const expBlock = (d, f) => {
+      if (editing === d.code || (!lapsed(f) && !f.validNa)) return '';
+      return `${lapsed(f) ? `<p class="gs-why">This document expired on <b>${esc(f.valid)}</b>. If it&rsquo;s still in force, give it its new expiry date. If it has none, mark the date not applicable. Or replace it with a current version.</p>` : ''}
+        <div class="gs-exp-f">${lapsed(f) ? `<label>New expiry date<input type="date" data-newexp="${d.code}" value="${isoOf(f.valid)}"></label>` : ''}<label class="gs-exp-na"><input type="checkbox" data-expna="${d.code}"${f.validNa ? ' checked' : ''}>Expiry date not applicable</label></div>`;
+    };
     const card = (d) => {
-      const f = saved.files[d.code], ed = editing === d.code;
+      const f = saved.files[d.code], ed = editing === d.code, ex = lapsed(f);
       const flagged = f.flag && !f.edited;
       if (!f.country) f.country = countryName;
       const label = (k, l) => (k === 'ref' && CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : l);
-      const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${flagged && f.flag === k ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">` : esc(f[k])}</dd></div>`).join('');
+      const fields = FIELDS.map(([k, l0]) => [k, label(k, l0)]).map(([k, l]) => `<div class="${(flagged && f.flag === k) || (ex && k === 'valid') ? 'is-flag' : ''}"><dt>${l}</dt><dd>${ed ? `<input name="${k}" value="${esc(f[k])}" aria-label="${l}">` : esc(f[k])}</dd></div>`).join('');
       // another company's VAT number: upload the right one, reject it, or approve it, saying why
       if (f.mismatch && !ed) {
         const who = called(), own = ownTax(), why = whyDraft[d.code] != null ? whyDraft[d.code] : f.vatReason || '';
@@ -632,41 +659,45 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         ${f.ok ? `<p class="gs-vat-ok">Approved with a different VAT number. Your reason: &ldquo;${esc(f.vatReason)}&rdquo;</p>`
           : `<p class="gs-why">This document is for VAT number <b>${esc(fmtTax(f.vat))}</b>${own ? `, not ${who}&rsquo;s (${esc(fmtTax(own))})` : ', not the one on your other documents'}. Upload the right one, or reject it. If it does belong here, approve it and say why.</p>
           <div class="gs-vat-f"><label for="gs-why-${d.code}">Why it belongs here <span>Needed to approve</span></label><input id="gs-why-${d.code}" data-why="${d.code}" value="${esc(why)}" maxlength="240" placeholder="e.g. It&rsquo;s our NIPC before the 2024 merger" autocomplete="off"></div>`}
+        ${f.ok ? '' : expBlock(d, f)}
         <footer><span><button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-one="${d.code}">Upload a new document</button></span>
-          <span>${f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-approve="${d.code}"${why.trim() ? '' : ' disabled'}>${OK}Approve</button>`}</span></footer>
+          <span>${f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-approve="${d.code}"${why.trim() && !ex ? '' : ' disabled'}>${OK}Approve</button>`}</span></footer>
       </article>`;
       }
-      return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}" data-card="${d.code}">
-        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
+      return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}${ex ? ' is-expired' : ''}" data-card="${d.code}">
+        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${ex ? '<span class="co-badge b-over">Expired</span>' : f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
         <dl class="gs-fields">${fields}</dl>
-        ${flagged ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly: the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
+        ${expBlock(d, f)}
+        ${flagged && !ex ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly: the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
         <footer><span>${ed ? '' : `<button class="link-btn" type="button" data-peek="${d.code}">Preview</button><button class="link-btn" type="button" data-edit="${d.code}">Make changes</button><button class="link-btn" type="button" data-one="${d.code}">Replace file</button>`}</span>
           <span>${ed ? `<button class="link-btn" type="button" data-cancel>Cancel</button><button class="gs-acc" type="button" data-save="${d.code}">${OK}Save changes</button>`
-            : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-accept="${d.code}">${OK}Accept</button>`}</span></footer>
+            : f.ok ? `<button class="link-btn" type="button" data-unaccept="${d.code}">Undo</button><span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc gs-rej" type="button" data-reject="${d.code}">${NO}Reject</button><button class="gs-acc" type="button" data-accept="${d.code}"${ex ? ' disabled title="Give it a new expiry date, or mark the date not applicable"' : ''}>${OK}Accept</button>`}</span></footer>
       </article>`;
     };
     // what must be accepted (or rejected, or replaced) before going on: low confidence, or another
     // company's VAT number
-    const mustCheck = (f) => f.conf < 75 || f.mismatch;
+    const mustCheck = (f) => f.conf < 75 || f.mismatch || lapsed(f);
     const step2 = () => {
       // the low-confidence ones, the only ones waiting on the user, first
-      const list = filed().slice().sort((a, b) => saved.files[a.code].conf - saved.files[b.code].conf), left = list.filter((d) => !saved.files[d.code].ok).length;
-      // one with another company's VAT number isn't in Accept all: it needs its own reason
-      const vat = list.filter((d) => saved.files[d.code].mismatch && !saved.files[d.code].ok).length, plain = left - vat;
+      const key = (d) => (lapsed(saved.files[d.code]) && !saved.files[d.code].ok ? -1 : saved.files[d.code].conf); // expired first
+      const list = filed().slice().sort((a, b) => key(a) - key(b)), left = list.filter((d) => !saved.files[d.code].ok).length;
+      // one with another company's VAT number isn't in Accept all: it needs its own reason; nor is an expired one
+      const vat = list.filter((d) => saved.files[d.code].mismatch && !saved.files[d.code].ok).length;
+      const exN = list.filter((d) => !saved.files[d.code].ok && !saved.files[d.code].mismatch && lapsed(saved.files[d.code])).length, plain = left - vat - exN;
       const needs = list.filter((d) => !saved.files[d.code].ok && mustCheck(saved.files[d.code])).length;
       const all = editing != null ? '' : plain ? `<button class="gs-acc" type="button" data-accept-all>${OK}Accept ${vat ? 'the rest' : 'all'}</button>` : left ? '' : `<button class="gs-acc" type="button" data-unaccept-all>Unaccept all</button>`;
       return `${sec}<span class="gs-mini" aria-hidden="true"><span class="alma-media">${alma()}</span></span>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">Here&rsquo;s what I read. <span class="soft">Does it look right?</span></h1>
         <p class="lead">${needs ? `${needs === 1 ? 'One needs' : `${needs} need`} you before you continue: check ${needs === 1 ? 'it' : 'them'} and accept, change or reject.` : left ? 'Nothing needs you before you continue.' : 'You&rsquo;ve accepted them all.'}${left - needs > 0 ? ` Accept the others if they look right, or leave them: they go into ${A.sec || A.title} as I read them.` : ` Once you continue, they go into ${A.sec || A.title}.`}</p>
-        <div class="gs-pane">${vat ? `<p class="gs-note" role="status">${vat === 1 ? 'One document has' : `${vat} documents have`} a VAT number that isn&rsquo;t ${called()}&rsquo;s. Upload the right ${vat === 1 ? 'one' : 'ones'}, reject ${vat === 1 ? 'it' : 'them'}, or approve ${vat === 1 ? 'it' : 'each'} with a reason.</p>` : ''}${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
+        <div class="gs-pane">${exN ? `<p class="gs-note" role="status">${exN === 1 ? 'One document has' : `${exN} documents have`} expired. Give ${exN === 1 ? 'it' : 'each'} its new expiry date if still in force, mark the date not applicable, or replace ${exN === 1 ? 'it' : 'them'} with a current version.</p>` : ''}${vat ? `<p class="gs-note" role="status">${vat === 1 ? 'One document has' : `${vat} documents have`} a VAT number that isn&rsquo;t ${called()}&rsquo;s. Upload the right ${vat === 1 ? 'one' : 'ones'}, reject ${vat === 1 ? 'it' : 'them'}, or approve ${vat === 1 ? 'it' : 'each'} with a reason.</p>` : ''}${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
           <p class="gs-conf">Low confidence needs you; medium and high are up to you. Open any one to see what I read, field by field, with where I read it.</p>
           <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>
           <div class="gs-cards">${list.map(card).join('')}</div>
           ${list.length > 1 && plain ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}</div>
         ${nav('Back to upload', tour ? `<button class="link-btn" type="button" data-close="next">${tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>` : '',
           `<button class="btn btn-primary" type="button" data-confirm${list.length && !needs && editing == null ? '' : ' disabled'}>Continue</button>`)}
-        ${needs ? `<p class="gs-d gs-hint">Check ${needs === 1 ? 'the document' : `the ${needs} documents`} marked low confidence${vat ? ' or with a different VAT number' : ''} to continue.</p>` : ''}`;
+        ${needs ? `<p class="gs-d gs-hint">Check ${needs === 1 ? 'the document' : `the ${needs} documents`} marked low confidence${vat ? ', with a different VAT number' : ''}${exN ? ' or expired' : ''} to continue.</p>` : ''}`;
     };
 
     // Registration, between the review and the end: who the company is, as its registration
@@ -791,6 +822,15 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         const pick = fresh.filter((d) => d.code !== 'CO-02').pop();
         if (pick && !fresh.some((d) => saved.files[d.code].mismatch)) Object.assign(saved.files[pick.code], { vat: madeUp(), mismatch: true, conf: 50, flag: null, ok: false });
       }
+      // and in every step, one document whose expiry date has already passed, so ALMA's check always
+      // shows: given a new date, its date marked not applicable, or replaced. Once a step: what's
+      // added after, a current version among it, is read as it is
+      if (!st.expSim) {
+        const fresh = docs.filter((d) => saved.files[d.code] && !saved.files[d.code].checked && st.pending.includes(saved.files[d.code].file));
+        const pick = fresh.find((d) => { const f = saved.files[d.code]; return !f.mismatch && !f.flag && f.valid !== 'No expiry' && !lapsed(f); });
+        if (pick) { Object.assign(saved.files[pick.code], lapse(pick, hash(pick.code + org.id)), { conf: Math.max(saved.files[pick.code].conf, 90) }); st.expSim = true; }
+        else if (fresh.some((d) => lapsed(saved.files[d.code]))) st.expSim = true; // one was already
+      }
       st.pending = []; st.kept = st.kept.concat(extra); saved.extra += extra.length;
       return extra;
     };
@@ -873,6 +913,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // in place: repainting would reload the file above and move the scroll
       if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
       if (t('[data-show]')) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (t('[data-dwaccept]') && lapsed(saved.files[peek]) && !saved.files[peek].mismatch) { const c = peek; closePeek(); const i = wrap.querySelector(`[data-newexp="${c}"]`); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } return; }
       if (t('[data-dwaccept]') && saved.files[peek].mismatch) { const c = peek; closePeek(); const i = wrap.querySelector(`[data-why="${c}"]`); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } return; }
       if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); strip(); closePeek(); return; } // accepted: back to the review, where its card now shows it
       if (t('[data-dwedit]')) { const c = peek; closePeek(); editing = c; paint(); const i = wrap.querySelector(`[data-card="${c}"] .is-flag input`) || wrap.querySelector(`[data-card="${c}"] input`); if (i) i.focus(); }
@@ -946,12 +987,14 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-go]')) { const n = +code('go'); if (n === 2) validate(); else goStep(n); return; }
       if (t('[data-more]')) { goStep(1); return; }
       if (t('[data-unaccept-all]')) { filed().forEach((d) => { saved.files[d.code].ok = false; }); keep(); paint(); strip(); return; }
-      if (t('[data-accept-all]')) { filed().forEach((d) => { if (!saved.files[d.code].mismatch) saved.files[d.code].ok = true; }); keep(); paint(); strip(); return; }
+      if (t('[data-accept-all]')) { filed().forEach((d) => { if (!saved.files[d.code].mismatch && !lapsed(saved.files[d.code])) saved.files[d.code].ok = true; }); keep(); paint(); strip(); return; }
       if (t('[data-approve]')) {
         const c = code('approve'), why = (whyDraft[c] || '').trim();
         if (!why) { const i = wrap.querySelector(`[data-why="${c}"]`); if (i) i.focus(); return; }
+        if (lapsed(saved.files[c])) return;
         Object.assign(saved.files[c], { ok: true, vatReason: why }); delete whyDraft[c]; keep(); paint(); strip(); return;
       }
+      if (t('[data-accept]') && lapsed(saved.files[code('accept')])) return;
       if (t('[data-accept]')) { saved.files[code('accept')].ok = true; delete saved.files[code('accept')].unchecked; keep(); paint(); strip(); return; }
       if (t('[data-unaccept]')) { const f = saved.files[code('unaccept')]; f.ok = false; if (f.mismatch) whyDraft[code('unaccept')] = f.vatReason || ''; keep(); paint(); strip(); return; }
       if (t('[data-edit]')) {
@@ -966,7 +1009,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         FIELDS.forEach(([k]) => { const v = el.querySelector(`input[name="${k}"]`).value.trim(); if (v && v !== f[k]) { f[k] = v; changed = true; } });
         // checked by a person: what's there now is what they say, so it reads as sure
         if (changed || f.flag) Object.assign(f, { edited: true, flag: null, conf: 98 });
-        f.ok = !f.mismatch || !!f.vatReason; editing = null; keep(); paint(); strip(); return;
+        f.ok = (!f.mismatch || !!f.vatReason) && !lapsed(f); editing = null; keep(); paint(); strip(); return;
       }
       if (t('[data-reject]')) {
         // not this document, or not read right: the reading goes, and the document is asked for again
@@ -984,6 +1027,22 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // a card being edited stays put so its fields can be clicked into
       const cardEl = t('.gs-card');
       if (cardEl && !t('button, a, input, select, textarea, label') && editing !== cardEl.dataset.card) openPeek(cardEl.dataset.card);
+    });
+    // an expired one: its new date, kept when you leave the field or press Enter (typed a part at a
+    // time, a date field reports every step); or its date not applicable, or back again
+    const newDate = (i) => {
+      const f = saved.files[i.dataset.newexp]; if (!f || !i.value) return;
+      const x = new Date(i.value + 'T00:00'); if (Number.isNaN(x.getTime()) || dt(x) === f.valid) return;
+      Object.assign(f, { valid: dt(x), edited: true, flag: null, conf: 98 }); keep(); paint(); strip();
+    };
+    wrap.addEventListener('focusout', (e) => { const i = e.target.closest('[data-newexp]'); if (i) newDate(i); });
+    wrap.addEventListener('keydown', (e) => { const i = e.target.closest('[data-newexp]'); if (i && e.key === 'Enter') { e.preventDefault(); newDate(i); } });
+    wrap.addEventListener('change', (e) => {
+      const b = e.target.closest('[data-expna]'); if (!b) return;
+      const f = saved.files[b.dataset.expna];
+      if (b.checked) Object.assign(f, { validWas: f.valid, valid: 'Not applicable', validNa: true, edited: true, flag: null, conf: 98 });
+      else { Object.assign(f, { valid: f.validWas || f.valid, validNa: false }); if (lapsed(f)) f.ok = false; }
+      keep(); paint(); strip();
     });
     // typing the reason: Approve opens up once there is one; Enter approves
     wrap.addEventListener('input', (e) => {
