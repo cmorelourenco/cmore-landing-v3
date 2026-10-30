@@ -4,8 +4,8 @@
    the documents it lets you see. A document opens in the drawer, as everywhere else: the supplier's
    file, its status, and what the catalog says about it. The data is js/suppliers.js. */
 (() => {
-  const S = window.CM_SUPPLIERS, box = document.getElementById('sup-body'), home = document.getElementById('co-sup-mx');
-  if (!S || (!box && !home)) return;
+  const S = window.CM_SUPPLIERS, box = document.getElementById('sup-body'), home = document.getElementById('co-sup-mx'), fresh = document.getElementById('ce-sup-mx');
+  if (!S || (!box && !home && !fresh)) return;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('');
   const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
@@ -200,6 +200,32 @@
     const go = (r) => { location.href = `suppliers.html?id=${encodeURIComponent(r.dataset.sup)}`; };
     home.addEventListener('click', (e) => { const g = e.target.closest('[data-sup]'); if (g) go(g); });
     home.addEventListener('keydown', (e) => { const g = e.target.closest('[data-sup]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(g); } });
+  }
+  // a new company's homepage: none yet, then every one invited (in setup or since), in the same
+  // matrix; and the suppliers card in Your compliance counts them
+  const paintFresh = () => {
+    const all = S.list().sort(urgent), MAX = 8;
+    const add = '<a class="btn co-btn-light btn-sm co-sup-add" href="suppliers.html?add">Add a supplier</a>';
+    fresh.innerHTML = all.length
+      ? matrix(all.slice(0, MAX), true) + `<div class="co-pager-row">${add}<a href="suppliers.html" class="co-link co-pager-all">View all ${all.length > 1 ? `${all.length} ` : ''}supplier${all.length === 1 ? '' : 's'}</a></div>`
+      : `<div class="co-card co-sup-none"><b class="co-row-n">No suppliers yet</b><span class="co-subtle">Invite them and ALMA collects their documents: you see each one here as they share it.</span></div><div class="co-pager-row">${add}</div>`;
+    const k = document.querySelector('#empty .co-k[href^="ecosystem.html"]');
+    if (!k || !all.length) return;
+    const inv = all.filter((x) => x.status === 'invited').length, on = all.filter((x) => x.status === 'invited' && x.invite.onCmore).length;
+    k.href = 'suppliers.html'; k.classList.remove('is-zero');
+    k.querySelector('.co-k-n').textContent = all.length;
+    k.querySelector('.co-k-nl').textContent = inv === all.length ? 'invited' : `supplier${all.length === 1 ? '' : 's'}`;
+    k.querySelector('.co-k-d').textContent = inv ? `Waiting for ${inv === all.length ? 'them' : `${inv} of them`} to join. I'll collect their documents as they share them.` : 'Open one for the documents behind each dot.';
+    k.querySelector('.co-k-chips').innerHTML = `<span class="co-k-chip co-k-ok${on ? '' : ' is-zero'}"><b>${on}</b> on C&#8209;MORE</span><span class="co-k-chip co-k-miss${inv - on ? '' : ' is-zero'}"><b>${inv - on}</b> to join</span>`;
+  };
+  // the demo company's empty page stays as it always was: its own list is the filled page's
+  if (fresh && S.DEMO) fresh.closest('section').remove();
+  else if (fresh) {
+    paintFresh();
+    document.addEventListener('cm-suppliers', paintFresh);
+    const go = (r) => { location.href = `suppliers.html?id=${encodeURIComponent(r.dataset.sup)}`; };
+    fresh.addEventListener('click', (e) => { const g = e.target.closest('[data-sup]'); if (g) go(g); });
+    fresh.addEventListener('keydown', (e) => { const g = e.target.closest('[data-sup]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(g); } });
   }
   if (!box) return;
 

@@ -76,20 +76,23 @@
   // completion: the company's documents, its workers' when it has employees and its equipment's
   // when it brings machines to site, accepted out of all of them. The strip's link opens ALMA on the
   // first section with something missing.
-  const counted = () => ['company'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).filter((a) => !SOON.areas.includes(a)).flatMap((a) => asks(a).filter((d) => a !== 'company' || d.requirement === 'mandatory').map((d) => Object.assign({ area: a }, { d }))); // what's optional doesn't count against it
+  // Registration is what's mandatory of the company itself; the Company step's documents are all optional
+  const counted = () => ['registration'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).filter((a) => !SOON.areas.includes(a)).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d }))); // what's optional doesn't count against it
+  // the optional ones accepted: on the homepage's Documents card and table, but not in its completion
+  const extras = () => asks('company').filter((d) => (saved.files[d.code] || {}).ok).map((d) => ({ area: 'company', d, opt: true }));
   // the homepage follows along while ALMA asks, docked beside it: each part she changes (the strip,
   // who the company is, its Documents card and table) shows its new state and catches the eye. With
   // nothing accepted (again), each part goes back to how the page drew it
-  const LIVE = ['#empty .co-strip', '#empty .co-id-l', '#empty .co-k[data-go="docs"]', '#empty .co-sec:has(.co-docs-tbl)'];
+  const LIVE = ['#empty .co-strip', '#empty .co-id-l', '#empty .co-k[data-go="docs"]', '#empty .co-sec:has(.co-docs-tbl)', '#empty .co-band-l .co-h-xl'];
   let drawn = null;
   const strip = () => {
     const els = LIVE.map((q) => document.querySelector(q));
     if (!els[0]) return;
     if (!drawn) drawn = els.map((el) => el && el.innerHTML);
     const before = els.map((el) => el && el.innerHTML);
-    const all = counted(), ok = all.filter((x) => (saved.files[x.d.code] || {}).ok);
-    if (!ok.length) els.forEach((el, i) => { if (el) el.innerHTML = drawn[i]; });
-    else { paintStrip(els[0], all, ok); identity(); home(ok); }
+    const all = counted(), ok = all.filter((x) => (saved.files[x.d.code] || {}).ok), opt = extras();
+    if (!ok.length && !opt.length) els.forEach((el, i) => { if (el) el.innerHTML = drawn[i]; });
+    else { if (all.length) paintStrip(els[0], all, ok); identity(); home(ok.concat(opt.filter((x) => !ok.some((y) => y.d.code === x.d.code)))); }
     // only on a change she made now, not when the page first draws what was already there
     if (stripped) els.forEach((el, i) => { if (el && el.innerHTML !== before[i]) { el.classList.remove('gs-live'); void el.offsetWidth; el.classList.add('gs-live'); el.addEventListener('animationend', function off(e) { if (e.target === el) { el.classList.remove('gs-live'); el.removeEventListener('animationend', off); } }); } });
     stripped = true;
@@ -129,17 +132,20 @@
     if (!card || !tbl || !ok.length) return;
     const e = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const soon = (f) => { const t = Date.parse(f.valid); return !Number.isNaN(t) && t - Date.now() < 30 * 864e5; };
-    const rows = ok.map((x) => ({ d: x.d, a: x.area, f: saved.files[x.d.code] })).sort((a, b) => (Date.parse(a.f.valid) || Infinity) - (Date.parse(b.f.valid) || Infinity));
+    const rows = ok.map((x) => ({ d: x.d, a: x.area, f: saved.files[x.d.code], opt: x.opt })).sort((a, b) => (Date.parse(a.f.valid) || Infinity) - (Date.parse(b.f.valid) || Infinity));
     const expiring = rows.filter((r) => soon(r.f)).length;
     card.classList.remove('is-zero');
     card.querySelector('.co-k-n').textContent = ok.length;
     card.querySelector('.co-k-nl').textContent = `document${ok.length === 1 ? '' : 's'} on file`;
     card.querySelector('.co-k-d').textContent = expiring ? `${expiring} expire${expiring === 1 ? 's' : ''} within a month.` : 'All in order. I’ll tell you before one expires.';
     card.querySelector('.co-k-chips').innerHTML = `<span class="co-k-chip co-k-ok"><b>${ok.length - expiring}</b> valid</span><span class="co-k-chip co-k-exp${expiring ? '' : ' is-zero'}"><b>${expiring}</b> expiring</span>`;
+    // Your compliance: what's in so far, or what will soon need you
+    const head = document.querySelector('#empty .co-band-l .co-h-xl');
+    if (head) head.innerHTML = expiring ? `${expiring} document${expiring === 1 ? '' : 's'}<br><span style="font-weight:600">expire${expiring === 1 ? 's' : ''} within a month.</span>` : 'Off to a good start,<br><span style="font-weight:600">everything is in order.</span>';
     const sec = tbl.closest('.co-sec');
     sec.querySelector('.co-h-l').textContent = 'Your documents';
     sec.querySelector('.co-sec-head .co-muted').textContent = 'What you’ve uploaded, soonest to expire first. Drop more on ALMA and they join the list.';
-    tbl.tBodies[0].innerHTML = rows.map(({ d, a, f }) => `<tr data-code="${d.code}" tabindex="0" role="link"><td><span class="n">${e(d.name.en)}</span><span class="d">${e(f.file)}</span></td><td>Your company</td><td class="c">${AREA[a].title}</td><td class="c">${e(f.valid === 'No expiry' ? '—' : f.valid)}</td><td class="c"><span class="co-badge ${soon(f) ? 'b-pend">Expiring' : 'b-ok">Valid'}</span></td></tr>`).join('');
+    tbl.tBodies[0].innerHTML = rows.map(({ d, a, f, opt }) => `<tr data-code="${d.code}" tabindex="0" role="link"><td><span class="n">${e(d.name.en)}</span><span class="d">${e(f.file)}${opt ? ' &middot; Optional' : ''}</span></td><td>Your company</td><td class="c">${AREA[a].title}</td><td class="c">${e(f.valid === 'No expiry' ? '—' : f.valid)}</td><td class="c"><span class="co-badge ${soon(f) ? 'b-pend">Expiring' : 'b-ok">Valid'}</span></td></tr>`).join('');
     const go = (r) => { location.href = `company-details.html?open=${encodeURIComponent(r.dataset.code)}`; };
     tbl.tBodies[0].onclick = (ev) => { const r = ev.target.closest('tr[data-code]'); if (r) go(r); };
     tbl.tBodies[0].onkeydown = (ev) => { const r = ev.target.closest('tr[data-code]'); if (r && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); go(r); } };

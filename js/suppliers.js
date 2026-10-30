@@ -115,7 +115,14 @@ window.CM_SUPPLIERS = (() => {
   });
   // suppliers added in this tab (js/supplier-add.js): invited, with the documents asked of them,
   // and nothing shared until they join and give their consent. Kept for the tab, per persona.
-  const ADD_KEY = 'cm-sup-added' + (BEATRIZ ? '-beatriz' : '');
+  // Whose they are: the demo company has the list above and keeps its invitations under the key it
+  // always had; a company added in this session (or the test user's own) starts with none, and
+  // keeps its own
+  const get = (st, k) => { try { return JSON.parse(st.getItem(k) || 'null'); } catch (e) { return null; } };
+  const ORG = get(sessionStorage, 'cm-org') || get(localStorage, 'cm-last-org-' + (BEATRIZ ? 'beatriz' : 'miguel')) || 'home';
+  const TEST = /^test@c-more\.test$/i.test((get(sessionStorage, 'cm-person') || {}).email || '');
+  const DEMO = ORG === 'home' && !TEST;
+  const ADD_KEY = 'cm-sup-added' + (BEATRIZ ? '-beatriz' : '') + (DEMO ? '' : `-${TEST ? 'test-' : ''}${ORG}`);
   const added = () => { try { return JSON.parse(sessionStorage.getItem(ADD_KEY) || '[]') || []; } catch (e) { return []; } };
   const fromInvite = (a) => ({
     id: a.id, name: a.name, city: a.city || a.countryName, services: a.services || [], workers: null, since: a.invited.split(' ').pop(), nipc: a.code, email: a.email,
@@ -127,7 +134,7 @@ window.CM_SUPPLIERS = (() => {
   // where each one stands: invited (hasn't joined your list yet), pending consent (joined, but hasn't
   // given you all the documents you asked for), accepted (everything asked for is shared)
   LIST.forEach((s) => { s.status = s.consents.some((c) => c.state === 'pending') ? 'pending' : 'accepted'; });
-  const all = () => added().map(fromInvite).concat(LIST);
+  const all = () => added().map(fromInvite).concat(DEMO ? LIST : []);
   const SUP_STATUS = { invited: ['Invited', 'b-neu'], pending: ['Pending consent', 'b-pend'], accepted: ['Accepted', 'b-ok'] };
   const addInvite = (a) => { const l = added(); l.unshift(a); try { sessionStorage.setItem(ADD_KEY, JSON.stringify(l)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-suppliers')); };
   // companies already on C-MORE that aren't your suppliers yet, by country and code (digits only).
@@ -160,5 +167,5 @@ window.CM_SUPPLIERS = (() => {
   // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
   const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products' }
     : { id: 'NIPC', scope: 'projects' };
-  return { WORDS, CATS, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
+  return { WORDS, CATS, DEMO, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
 })();
