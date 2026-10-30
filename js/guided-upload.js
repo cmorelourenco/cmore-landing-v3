@@ -472,6 +472,11 @@ button.gs-acc:hover { border-color: var(--color-graphite); }
 .gs-tour-bar li.is-done span { background: var(--color-graphite); }
 .gs-tour-bar li.is-on span { background: var(--color-coral); }
 .gs-tour-bar li.is-on { font-weight: 600; color: var(--color-ink); }
+/* the other steps: a click away, to move faster than step by step */
+.gs-tour-bar button { display: grid; gap: 0.375rem; width: 100%; padding: 0 0 0.125rem; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.gs-tour-bar button:hover, .gs-tour-bar button:focus-visible { color: var(--color-ink); }
+.gs-tour-bar button:hover em { text-decoration: underline; text-underline-offset: 2px; }
+.gs-tour-bar li:not(.is-done) button:hover span { background: var(--color-sand-400); }
 .gs-tour-bar li.is-soon span { background: repeating-linear-gradient(90deg, var(--color-line) 0 6px, transparent 6px 10px); }
 .gs-tour-bar li.is-soon { opacity: .75; }
 .gs-tour-l { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.375rem; font-style: normal; }
@@ -515,7 +520,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       </nav>`;
   const tourHead = (tour) => `<header class="gs-tour">
           <div class="gs-tour-t"><span class="eyebrow">Set up ${called()} &middot; Step ${tour.at + 1} of ${tour.count}</span><span class="gs-tour-acts"><button class="link-btn" type="button" data-close="end">Skip setup</button><button type="button" class="gs-fold" data-tuck aria-label="Hide the setup panel" title="Hide the panel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg></button></span></div>
-          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.bar.map((b) => `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"${b.on ? ' aria-current="step"' : ''}${b.soon ? ' aria-disabled="true"' : ''}><span></span><em class="gs-tour-l">${esc(b.l)}${b.soon ? SOON.badge : ''}</em></li>`).join('')}</ol>
+          <ol class="gs-tour-bar" aria-label="Setting up your company">${tour.bar.map((b) => { const in_ = `<span></span><em class="gs-tour-l">${esc(b.l)}${b.soon ? SOON.badge : ''}</em>`; return `<li class="${b.on ? 'is-on' : b.soon ? 'is-soon' : b.done ? 'is-done' : ''}"${b.on ? ' aria-current="step"' : ''}${b.soon ? ' aria-disabled="true"' : ''}>${b.on || b.soon ? in_ : `<button type="button" data-close="go:${b.a}" aria-label="Go to ${esc(b.l.toLowerCase())}${b.done ? ', done' : ''}">${in_}</button>`}</li>`; }).join('')}</ol>
         </header>`;
   const open = (area, opts = {}) => {
     if (wrap || !AREA[area]) return;
@@ -973,7 +978,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       // on to the next step: this panel empties out under the next one (or while the page changes)
       // rather than vanishing
       const old = wrap; keep(); wrap = null; dwEl.remove(); document.removeEventListener('keydown', onKey);
-      if (tour && ((how === 'next' && tour.next) || how === 'back')) { old.classList.add('is-leaving'); setTimeout(() => old.remove(), 1200); } else old.remove();
+      if (tour && ((how === 'next' && tour.next) || how === 'back' || how.startsWith('go:'))) { old.classList.add('is-leaving'); setTimeout(() => old.remove(), 1200); } else old.remove();
       if (!tour) document.documentElement.classList.remove('intake-open');
       changedAny = JSON.stringify(accepted(docs).map((d) => d.code)) !== before;
       strip();
@@ -1133,7 +1138,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (wrap !== me) return;
       document.removeEventListener('keydown', onKey); document.removeEventListener('cm-suppliers', onList); document.removeEventListener('cm-sup-review', onReview);
       wrap = null;
-      if (how === 'next' || how === 'back') { me.classList.add('is-leaving'); setTimeout(() => me.remove(), 1200); } else me.remove();
+      if (how === 'next' || how === 'back' || how.startsWith('go:')) { me.classList.add('is-leaving'); setTimeout(() => me.remove(), 1200); } else me.remove();
       if (opts.onClose) opts.onClose(invited().length !== before, how);
     };
     // Escape leaves the setup, unless the Add a supplier drawer is what's open, or the panel is folded
@@ -1278,11 +1283,19 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (reveal) setTimeout(showPage, 0); // the drawer stays open on the next step, the page beside it
       (a === 'suppliers' ? invite : open)(a, {
         files, skip: a === 'company' ? regCodes() : [],
-        tour: { at: i, count: areas.length, bar: shown.map((x) => ({ l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: t.passed.includes(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
+        tour: { at: i, count: areas.length, bar: shown.map((x) => ({ a: x, l: STEP[x], on: x === a, soon: SOON.areas.includes(x), done: t.passed.includes(x) })), next: n >= 0 ? STEP[areas[n]] : '', back: i > 0 ? `Back to ${STEP[areas[i - 1]].toLowerCase()}` : '', quiet, refresh: onHome ? null : () => leave(location.pathname + location.search) },
         onClose: (c, how) => {
           changed = changed || c;
           // back: to the step before, as it was left (its page, if it lives elsewhere)
           if (how === 'back') { t.passed = t.passed.filter((x) => x !== areas[i - 1]); keep(); step(i - 1, true); return; }
+          // a step picked on the bar: ahead, the ones on the way count as skipped (as Skip this step
+          // does); back, it's open again, and so are those after it left unfinished, so Next goes through them
+          const j = how.startsWith('go:') ? areas.indexOf(how.slice(3)) : -1;
+          if (j >= 0) {
+            if (j > i) areas.slice(i, j).forEach((x) => { if (!t.passed.includes(x)) t.passed.push(x); });
+            else t.passed = t.passed.filter((x) => !areas.slice(j + 1, i).includes(x) || complete(x));
+            t.passed = t.passed.filter((x) => x !== areas[j]); keep(); step(j, true, undefined, c && onHome && j > i); return;
+          }
           if (how === 'next') { t.passed.push(a); keep(); if (n >= 0) { step(n, true, undefined, c && onHome); return; } }
           t.ended = true; t.on = null; keep(); // done, or Skip setup, Escape
           if (how === 'next' && !onHome) { leave('my-company.html?page'); return; } // "Go to my company"
