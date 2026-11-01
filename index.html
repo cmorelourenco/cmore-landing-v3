@@ -1610,7 +1610,8 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
    space left between the benefits and the Know more cue, however tall the window is */
 .hero-pin>.container-site{flex:1 1 auto;width:100%}
 .hero-pin>.container-site::before{content:"";flex:1 1 0}
-.hero-cta{flex:1.25 1 auto;display:flex;align-items:center;justify-content:center;gap:clamp(1.5rem,3.5vw,3.5rem);padding-block:clamp(1.5rem,4vh,3rem)}
+/* the counter, and Join now under it */
+.hero-cta{flex:1.25 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(1rem,2.5vh,1.75rem);padding-block:clamp(1.5rem,4vh,3rem)}
 /* on shorter screens the headline and the four points start closer to the header, and the space
    that frees up goes to the counter and the button below, which then sit less tightly */
 @media (max-height:900px){.hero-pin{padding-top:clamp(.75rem,2.5vh,1.5rem)!important}.hero-pin>.container-site::before{flex-grow:.3}}
@@ -1700,7 +1701,8 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 <li><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"></path></svg><div><b>Identify new potential</b><span>suppliers and contractors</span></div></li>
 </ul>
 <div class="hero-cta" style="will-change:transform">
-<p class="hero-count" aria-label="3,500 and more members already on the C-MORE ecosystem"><span class="hero-num" aria-hidden="true"><span id="hero-count" data-to="3500">3,500</span><span class="plus">+</span></span><span class="hero-count-what">members already on the<br>C-MORE ecosystem</span></p>
+<p class="hero-count" aria-label="3,600 and more members already on the C-MORE ecosystem"><span class="hero-num" aria-hidden="true"><span id="hero-count" data-to="3600">3,600</span><span class="plus">+</span></span><span class="hero-count-what">members already on the<br>C-MORE ecosystem</span></p>
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="160px,52px">Join now</x-import>
 </div>
 </div>
 <div class="hero-cue-wrap">
@@ -1784,7 +1786,7 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
         </div>
         </div>
 <div class="perks-cta">
-<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="240px,52px">Get early access</x-import>
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="160px,52px">Join now</x-import>
 </div>
 </div>
 </div>
@@ -1863,7 +1865,7 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 <div class="container-site">
 <div class="cl-head">
 <span class="eyebrow">Clients &amp; partners</span>
-<p class="cl-num" aria-label="3,500 and more"><span id="cl-count" data-to="3500">3,500</span><span class="plus" aria-hidden="true">+</span></p>
+<p class="cl-num" aria-label="3,600 and more"><span id="cl-count" data-to="3600">3,600</span><span class="plus" aria-hidden="true">+</span></p>
 <div class="cl-what">
 <h2><span class="cl-mark">Already on C-MORE</span>. <span class="soft">From the companies below to their suppliers.</span></h2>
 <p>Clients, suppliers and partners connected through one place, sharing what is asked when it is asked.</p>
@@ -2012,7 +2014,7 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 <div class="mesh" aria-hidden="true"><div class="mesh__web"></div></div>
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.CTA" heading="Welcome to the C-⁠MORE ecosystem." hint-size="100%,420px">
 <div class="eco-steps"><div class="eco-frame"><ol class="eco-track" aria-label="How to get started"><li class="eco-step"><span class="eco-node" aria-hidden="true">1</span><h3 class="eco-title">Join</h3><p class="eco-desc">Create your account in a couple of minutes. Quickly and guided.</p></li><li class="eco-step"><span class="eco-node" aria-hidden="true">2</span><h3 class="eco-title">Invite</h3><p class="eco-desc">Bring in your team, your suppliers and your clients.</p></li><li class="eco-step"><span class="eco-node" aria-hidden="true">3</span><h3 class="eco-title">Connect</h3><p class="eco-desc">Everyone shares what is asked, when it is asked. No more chasing.</p></li></ol><div class="eco-flow" aria-hidden="true"><i style="--d:4.38s;--dl:-0.06s;--y:-7px;--s:4px;--r:-90deg"></i><i style="--d:3.97s;--dl:-0.74s;--y:7px;--s:5px;--r:90deg"></i><i style="--d:3.95s;--dl:-1.19s;--y:-2px;--s:4px;--r:-90deg"></i><i style="--d:4.56s;--dl:-1.86s;--y:-5px;--s:5px;--r:-90deg"></i><i style="--d:4.93s;--dl:-2.42s;--y:3px;--s:4px;--r:90deg"></i><i style="--d:3.88s;--dl:-2.9s;--y:0px;--s:6px;--r:90deg"></i><i style="--d:4.77s;--dl:-3.3s;--y:7px;--s:5px;--r:90deg"></i><i style="--d:4.85s;--dl:-3.83s;--y:2px;--s:4px;--r:-90deg"></i><i style="--d:5.08s;--dl:-4.31s;--y:-2px;--s:6px;--r:-90deg"></i></div></div></div>
-<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="base" href="register.html" hint-size="220px,52px">Get early access</x-import>
+<x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="base" href="register.html" hint-size="160px,52px">Join now</x-import>
 </x-import>
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.Footer" dc-props="{{ footerProps }}" hint-size="100%,340px"></x-import>
 </div>
@@ -2115,7 +2117,7 @@ class Component extends DCLogic {
       this._offHdr = () => { cancelAnimationFrame(raf); removeEventListener('scroll', req); document.body.removeEventListener('scroll', req); show(); };
     })();
     (() => {
-      // "Get early access": the sign-up page is loaded into a sheet below the fold and slides up
+      // "Join now": the sign-up page is loaded into a sheet below the fold and slides up
       // while the landing keeps scrolling, so it reads as the next section rather than a new page.
       // When it lands, the browser moves to the real page, which is pixel-identical to the sheet.
       const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;

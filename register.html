@@ -373,7 +373,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
         </div>
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
         <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button><br><button type="button" class="link-btn" data-login-try="f">Beatriz Nogueira</button><br><button type="button" class="link-btn" data-login-try="t">Test user</button> <span style="white-space:nowrap">(starts empty)</span></p>
-        <p class="hint" style="margin-top:0.5rem;text-align:center">New here? <a class="link-btn" href="register.html" data-to-signup>Get early access</a></p>
+        <p class="hint" style="margin-top:0.5rem;text-align:center">New here? <a class="link-btn" href="register.html" data-to-signup>Join now</a></p>
       </section>
 
       <!-- Forgot password: the email (filled in when this browser remembers one), then a code, a new password, done -->
@@ -1071,7 +1071,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const topLink = document.querySelector('[data-to-login]');
   const mode = (login) => {
     document.title = (login ? 'Log in' : 'Get early access') + ' · C-MORE';
-    topLink.innerHTML = login ? 'New here? <b>Get early access</b>' : 'Already have an account? <b>Log in</b>';
+    topLink.innerHTML = login ? 'New here? <b>Join now</b>' : 'Already have an account? <b>Log in</b>';
     topLink.setAttribute('href', login ? 'register.html' : 'register.html?login');
   };
   const toLogin = () => { show('login'); mode(true); history.replaceState(null, '', 'register.html?login'); setTimeout(() => liPw.focus({ preventScroll: true }), 80); };

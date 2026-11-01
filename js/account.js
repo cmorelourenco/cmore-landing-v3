@@ -1,6 +1,6 @@
 /* The landing header's account menu.
    [data-account-menu] becomes the person icon; pressing it opens a small menu with the
-   two ways in: Log in, or Get early access. Same look and keyboard behaviour as the
+   two ways in: Log in, or Join now. Same look and keyboard behaviour as the
    language picker, so the header has one kind of dropdown. */
 (() => {
   const css = `
@@ -38,7 +38,7 @@
       `<div class="acct-menu" id="acct-menu" role="menu" aria-label="Account">` +
       `<a role="menuitem" tabindex="-1" href="register.html?login">${LOGIN}<span>Log in<small>Already on C&#8209;MORE</small></span></a>` +
       `<div class="sep" role="separator"></div>` +
-      `<a role="menuitem" tabindex="-1" href="register.html">${JOIN}<span>Get early access<small>Create your account</small></span></a>` +
+      `<a role="menuitem" tabindex="-1" href="register.html">${JOIN}<span>Join now<small>Create your account</small></span></a>` +
       `</div>`;
     host.replaceChildren(wrap);
     const btn = wrap.querySelector('.acct-btn'), items = [...wrap.querySelectorAll('[role="menuitem"]')];
