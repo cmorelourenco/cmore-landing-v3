@@ -58,7 +58,7 @@
 .hf-body { flex: 1; min-height: 0; overflow: auto; padding: 1.25rem 1.5rem 1.5rem; display: grid; gap: 1.25rem; align-content: start; }
 .hf-foot { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem 1.25rem; border-top: 1px solid var(--color-line); }
 .hf-foot-l { margin-right: auto; min-width: 0; font-size: 0.8125rem; line-height: 1.4; color: var(--color-ink-subtle); }
-.hf-foot-l b { font-weight: 500; color: var(--color-ink-muted); overflow-wrap: anywhere; }
+.hf .btn:disabled { opacity: .45; cursor: default; pointer-events: none; }
 .hf-f { display: grid; gap: 0.375rem; min-width: 0; border: 0; padding: 0; margin: 0; }
 .hf-f > label, .hf-f > legend { padding: 0; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink); }
 .hf-opt { font-weight: 400; color: var(--color-sand-500); }
@@ -153,9 +153,9 @@
         <div class="hf-shots" id="hf-shots"></div>
         <input type="file" id="hf-file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
         <p class="hf-err" id="hf-shot-err"></p></div>`;
-    footer.innerHTML = `<p class="hf-foot-l">We reply to <b>${esc(mail)}</b>, usually within one working day.</p>
-      <button type="button" class="btn btn-quiet" data-hf-close>Cancel</button><button type="submit" class="btn btn-primary">Send</button>`;
-    paintShots();
+    footer.innerHTML = `<p class="hf-foot-l" id="hf-why"></p>
+      <button type="button" class="btn btn-quiet" data-hf-close>Cancel</button><button type="submit" class="btn btn-primary" aria-describedby="hf-why">Send</button>`;
+    paintShots(); ready();
   }
 
   function paintShots() {
@@ -185,6 +185,15 @@
     c.classList.toggle('is-near', n >= MAX * 0.9 && n < MAX); c.classList.toggle('is-full', n >= MAX);
   };
 
+  // Send stays off until there's a subject, an area and a description; the footer says what's missing
+  function ready() {
+    const b = footer.querySelector('[type="submit"]'), why = footer.querySelector('#hf-why'); if (!b) return;
+    const v = (id) => !!body.querySelector(id).value.trim();
+    const miss = [!v('#hf-subject') && 'a subject', !v('#hf-area') && 'an area', !v('#hf-desc') && 'a description'].filter(Boolean);
+    b.disabled = miss.length > 0;
+    why.textContent = miss.length ? `Add ${miss.length > 1 ? `${miss.slice(0, -1).join(', ')} and ${miss[miss.length - 1]}` : miss[0]} to send.` : '';
+  }
+
   function check() {
     const f = [['#hf-subject', 'Add a subject.'], ['#hf-area', 'Choose the area it&rsquo;s about.'], ['#hf-desc', 'Tell us a little more.']];
     let first = null;
@@ -203,7 +212,7 @@
     const ref = `HF-${String(Date.now()).slice(-5)}`;
     sent = true;
     body.innerHTML = `<div class="hf-done" role="status"><span class="hf-done-tick">${TICK}</span>
-      <h3>Thanks, we&rsquo;ve got it</h3><p>We&rsquo;ll reply to <b>${esc(mail)}</b>, usually within one working day.</p>
+      <h3>Thanks, we&rsquo;ve got it</h3><p>We&rsquo;ll reply to <b>${esc(mail)}</b>.</p>
       <dl class="hf-sum"><dt>Reference</dt><dd>${ref}</dd><dt>Type</dt><dd>${k()[1]}</dd><dt>Subject</dt><dd>${esc(subject)}</dd><dt>Area</dt><dd>${esc(area)}</dd>${n ? `<dt>Screenshots</dt><dd>${n}</dd>` : ''}</dl></div>`;
     footer.innerHTML = `<button type="button" class="btn btn-quiet" data-hf-again>Send another</button><button type="button" class="btn btn-primary" data-hf-close>Done</button>`;
     shots.forEach((s) => URL.revokeObjectURL(s.url)); shots = [];
@@ -251,11 +260,13 @@
     }
   });
   el.addEventListener('change', (e) => {
+    ready();
     if (e.target.name === 'hf-kind') { kind = e.target.value; body.querySelector('#hf-subject').placeholder = k()[2]; body.querySelector('#hf-desc').placeholder = k()[3]; }
     if (e.target.id === 'hf-file') { take(e.target.files); e.target.value = ''; }
     if (e.target.id === 'hf-area' && e.target.value) { e.target.classList.remove('is-bad'); body.querySelector('#hf-area-err').textContent = ''; }
   });
   el.addEventListener('input', (e) => {
+    ready();
     if (e.target.id === 'hf-desc') { if (e.target.value.length > MAX) e.target.value = e.target.value.slice(0, MAX); count(); }
     if (e.target.classList.contains('is-bad') && e.target.value.trim()) { e.target.classList.remove('is-bad'); body.querySelector(`#${e.target.id}-err`).textContent = ''; }
   });

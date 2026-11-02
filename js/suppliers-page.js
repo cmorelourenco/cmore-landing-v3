@@ -379,7 +379,10 @@
 
   if (id && !sup) { box.innerHTML = '<div class="co-card sp-none">That supplier isn&rsquo;t in your list. <a href="suppliers.html">See all your suppliers</a>.</div>'; return; }
   if (sup) page(sup); else list();
-  window.CMSupPage = { refresh: () => { if (!sup) list(); } }; // a supplier just added (js/supplier-add.js)
+  // a line on top of the consent log, until the page reloads
+  const addLog = (ev) => { logged.unshift(ev); const l = document.getElementById('sp-log'); if (l) l.insertAdjacentHTML('afterbegin', `<li><time>${esc(ev.at)}</time><span class="cd-dot is-${ev.tone}" aria-hidden="true"></span><span><b>${ev.what}</b><small>${ev.sub}</small></span></li>`); };
+  // a supplier just added (js/supplier-add.js); asking again for consents (js/supplier-ask.js)
+  window.CMSupPage = { refresh: () => { if (!sup) list(); }, sup, addLog, today };
   box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
   box.addEventListener('click', (e) => {
     const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
@@ -387,9 +390,8 @@
     if (!r) return;
     r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: r.dataset.sent || 'Reminder sent' }));
     // and the log says so, on top
-    const c = sup && sup.consents.find((x) => x.id === r.dataset.remind), l = document.getElementById('sp-log');
+    const c = sup && sup.consents.find((x) => x.id === r.dataset.remind);
     const ev = { at: today(), tone: 'neu', what: r.dataset.sent ? `You asked again for ${esc(c ? c.title : 'their consent')}` : `You sent a reminder${c && sup.status !== 'invited' ? ` about ${esc(c.title)}` : ''}`, sub: `To ${esc(sup ? sup.email : '')}` };
-    logged.unshift(ev);
-    if (l) l.insertAdjacentHTML('afterbegin', `<li><time>${esc(ev.at)}</time><span class="cd-dot is-${ev.tone}" aria-hidden="true"></span><span><b>${ev.what}</b><small>${ev.sub}</small></span></li>`);
+    addLog(ev);
   });
 })();
