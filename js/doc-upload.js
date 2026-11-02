@@ -421,7 +421,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const refOf = (s, r) => (r.ref != null ? r.ref : refFor(s, r));
     // the fields the setup shows for each document, in its order; dates kept as everywhere else
     // (17 Jan 2027), given to the date pickers as 2027-01-17
-    const FIELDS = [['country', 'Country'], ['by', 'Issued by'], ['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    const FIELDS = [['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
     const DATES = ['issued', 'valid'], NA = ['Not applicable', 'No expiry'];
     const COUNTRY = { PT: 'Portugal', ES: 'Spain', FR: 'France', US: 'United States', BR: 'Brazil', GB: 'United Kingdom', DE: 'Germany' };
     const valsOf = (r) => ({ country: r.country != null ? r.country : COUNTRY[(M.PROFILE || {}).country] || (M.PROFILE || {}).country || '', by: r.by != null ? r.by : plain(M.issuerOf(r.slot.d.cat) || 'The issuing body'),

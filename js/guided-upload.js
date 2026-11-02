@@ -46,9 +46,9 @@
   // company adds its people and machines they're asked for one by one.
   const profile = DM.profileOf(org);
   const AREA = {
-    registration: { title: 'Registration', what: 'registration documents', sec: 'Company', who: 'To put WHO on C-MORE, I need the N documents that show it&rsquo;s registered in WHERE.' },
-    company: { title: 'Company', what: 'company documents', who: `None of these is required. Add the ones you have: each helps clients trust a ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company in WHERE.` },
-    workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you in WHERE. One file each for now. Once you add your team, I&rsquo;ll ask for them person by person.' },
+    registration: { title: 'Registration', what: 'registration documents', sec: 'Company', who: 'To put WHO on C-MORE, I need the N documents that show it&rsquo;s registered.' },
+    company: { title: 'Company', what: 'company documents', who: `None of these is required. Add the ones you have: each helps clients trust a ${profile.sector === 'construction' ? 'construction' : (org.sector || 'your').toLowerCase()} company.` },
+    workers: { title: 'Workers', what: 'workers&rsquo; documents', who: 'These N cover the people who work for you. One file each for now. Once you add your team, I&rsquo;ll ask for them person by person.' },
     equipment: { title: 'Equipment', what: 'equipment documents', who: 'These N cover the machines you bring to site. One file each for now. Once you add your machines, I&rsquo;ll ask for them machine by machine.' },
   };
   const TYPICAL = { workers: [{ nationality: profile.country, specialRisk: false, certifiedOperator: false, employmentType: 'permanent' }], equipment: [{ yearBuilt: 2020, measuring: false, certified: false }] };
@@ -654,7 +654,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     };
 
     // step 2: what she read, to accept or put right
-    const FIELDS = [['country', 'Country'], ['by', 'Issued by'], ['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    const FIELDS = [['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
     // expired: the date read has passed. It needs a new one if it's still in force, or none (the
     // date not applicable), or a current version of the file, before it can be accepted
     const lapsed = (f) => !!f && !f.validNa && !Number.isNaN(Date.parse(f.valid)) && Date.parse(f.valid) < new Date().setHours(0, 0, 0, 0);
