@@ -266,8 +266,29 @@ window.CM_SOON = {
   screen: (what, verb = 'is') => `<section class="cm-soon-page" aria-labelledby="cm-soon-t"><span class="alma-media cm-soon-alma" aria-hidden="true">${(window.ESG && window.ESG.SPHERES) || ''}</span>
     <p class="cm-soon-says">ALMA</p><h1 id="cm-soon-t">${what} ${verb} coming soon. <span>Stay tuned.</span></h1>
     <p class="cm-soon-p">I&rsquo;m getting it ready for you. I&rsquo;ll let you know the moment it opens.</p>
+    ${cmSoonAsk(what)}
     <a class="btn btn-quiet" href="${cmSoonHome()}">Back to my company</a></section>`,
 };
+// "Email me when it opens": one per coming-soon feature, kept for the tab (prototype: no email is sent)
+const cmSoonKey = (what) => what.replace(/<[^>]*>|&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+const cmSoonList = () => { try { return JSON.parse(sessionStorage.getItem('cm-soon-notify')) || []; } catch (e) { return []; } };
+const cmSoonMail = () => { try { return (JSON.parse(sessionStorage.getItem('cm-person')) || {}).email || ''; } catch (e) { return ''; } };
+function cmSoonAsk(what) {
+  const k = cmSoonKey(what), on = cmSoonList().includes(k), mail = cmSoonMail();
+  return `<div class="cm-soon-ask" data-soon-key="${k}">${on
+    ? `<div class="cm-soon-on" role="status"><span class="cm-soon-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+      <span class="cm-soon-on-t"><b>You&rsquo;re on the list</b><small>We&rsquo;ll email ${mail ? `<span>${mail.replace(/</g, '&lt;')}</span>` : 'you'} when it opens.</small></span>
+      <button type="button" class="cm-soon-undo" data-soon-off aria-label="Undo, don&rsquo;t email me">Undo</button></div>`
+    : `<button type="button" class="btn btn-primary" data-soon-on>Email me when it opens</button>`}</div>`;
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-soon-on], [data-soon-off]'); if (!b) return;
+  const box = b.closest('.cm-soon-ask'), k = box.dataset.soonKey, l = cmSoonList().filter((x) => x !== k);
+  if (b.hasAttribute('data-soon-on')) l.push(k);
+  try { sessionStorage.setItem('cm-soon-notify', JSON.stringify(l)); } catch (err) { /* private window: it just isn't kept */ }
+  box.outerHTML = cmSoonAsk(k);
+  const n = document.querySelector(`.cm-soon-ask[data-soon-key="${k}"] button`); if (n) n.focus({ preventScroll: true });
+});
 (() => {
   const st = document.createElement('style');
   st.textContent = `
@@ -288,11 +309,26 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
 .cm-soon-page h1 span { font-weight: 300; }
 .cm-soon-p { margin-top: 0.875rem; max-width: 30rem; font-size: 1.0625rem; line-height: 1.5; color: var(--color-ink-muted); }
 .cm-soon-page .btn { margin-top: 2rem; }
-/* inside a page's section (the homepage's projects): smaller, and nowhere to go back to */
+.cm-soon-ask { display: grid; justify-items: center; gap: 0.5rem; margin-top: 2rem; min-height: 2.75rem; }
+.cm-soon-ask .btn { margin-top: 0; }
+.cm-soon-ask + .btn { margin-top: 1rem; }
+.cm-soon-on { display: flex; align-items: center; gap: 0.875rem; width: min(26rem, 100%); padding: 0.75rem 0.75rem 0.75rem 0.875rem; border: 1px solid var(--color-line); border-radius: 1rem;
+  background: var(--color-surface); box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px -12px rgba(0,0,0,.12); text-align: left; animation: cm-soon-in .45s var(--ease-brand) both; }
+.cm-soon-tick { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%; background: var(--color-positive-subtle); color: var(--color-positive); }
+.cm-soon-tick svg { width: 1.125rem; height: 1.125rem; }
+.cm-soon-on-t { flex: 1; min-width: 0; display: grid; gap: 0.125rem; }
+.cm-soon-on-t b { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
+.cm-soon-on-t small { font-size: 0.8125rem; line-height: 1.35; color: var(--color-ink-muted); }
+.cm-soon-on-t small span { color: var(--color-ink); font-weight: 500; overflow-wrap: anywhere; }
+.cm-soon-undo { flex: none; height: 2rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; background: none; font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
+.cm-soon-undo:hover { background: var(--color-light-beige); color: var(--color-ink); }
+@keyframes cm-soon-in { from { opacity: 0; transform: translateY(4px) scale(.98); } }
+@media (prefers-reduced-motion: reduce) { .cm-soon-on { animation: none; } }
 .cm-soon-page.is-inline { min-height: 0; padding: 1.5rem 0 1rem; }
 .cm-soon-page.is-inline .cm-soon-alma { width: min(11rem, 40vw); }
 .cm-soon-page.is-inline h1 { font-size: clamp(1.5rem, 3vw, 2rem); }
-.cm-soon-page.is-inline .btn { display: none; }
+.cm-soon-page.is-inline > .btn { display: none; }
+.cm-soon-page.is-inline .cm-soon-ask { margin-top: 1.25rem; }
 #cdetails.is-soon :is(.cd-hero, #cd-drop, .cd-cards, .cd-sec > .co-wrap > .co-sub-head) { display: none; }
 #cdetails.is-soon .cm-soon-page { min-height: calc(100svh - 16rem); }`;
   document.head.appendChild(st);
