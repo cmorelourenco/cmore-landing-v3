@@ -2237,10 +2237,11 @@ body { transition: background-color .9s ease; }
     badge.className = 'co-badge ' + (yes ? 'b-ok' : 'b-neu'); badge.textContent = b.dataset.answer;
     row.querySelector('.co-acts').replaceWith(Object.assign(document.createElement('span'), { className: 'co-subtle', style: 'font-size:.875rem', textContent: 'Just now' }));
   }));
-  // The license drop: takes a file by drag or by browsing, names it, and waits for
-  // "Hand it to ALMA". She reads it, files it, and the page catches up: the action is
-  // done, the table row is in order, the profile and the score move. Prototype: the
-  // file never leaves the machine.
+  // The license drop: takes a file by drag or by browsing and opens ALMA's upload drawer on the
+  // licence (js/doc-upload.js), as everywhere else: she reads it, the user views it, corrects
+  // what she got wrong, and saves; then the page catches up: the action is done, the table row
+  // is in order, the profile and the score move. Without the drawer, it names the file and waits
+  // for "Hand it to ALMA". Prototype: the file never leaves the machine.
   const coDrop = document.getElementById('co-drop'), coFile = document.getElementById('co-file');
   if (coDrop && coFile) {
     const $c = (id) => document.getElementById(id);
@@ -2248,8 +2249,18 @@ body { transition: background-color .9s ease; }
     const idle = { t: t.textContent, s: sub.innerHTML };
     let picked = null, state = 'idle';
     const setState = (st) => { state = st; coDrop.classList.toggle('has-file', st === 'file'); coDrop.classList.toggle('is-reading', st === 'reading'); coDrop.classList.toggle('is-filed', st === 'filed'); };
-    const took = (f) => {
-      if (!f || state === 'reading' || state === 'filed') return;
+    const lic = () => window.DOC_MODEL && window.DOC_MODEL.DOCS.find((d) => d.code === 'CO-03');
+    const toALMA = (all) => window.CMUpload && lic() && all && all.length && window.CMUpload.open(`doc:${lic().id}`, { files: all, onSaved: (done) => {
+      const r = done.find((x) => x.slot.code === 'CO-03'); if (!r) return;
+      setState('filed'); acts.hidden = true;
+      t.textContent = 'Filed: your construction licence, valid again.';
+      sub.textContent = `Valid until ${r.read.valid}. Prototype: nothing was uploaded or saved.`;
+      if (window.HOME_DOCS) window.HOME_DOCS.render();
+    } });
+    const took = (f, all) => {
+      if (state === 'reading' || state === 'filed') return;
+      if (toALMA(all || (f ? [f] : []))) return;
+      if (!f) return;
       picked = f;
       t.textContent = 'Got it: ' + f.name;
       sub.textContent = 'Hand it over and I will read it, date it and file it.';
@@ -2260,10 +2271,10 @@ body { transition: background-color .9s ease; }
     coDrop.addEventListener('click', (e) => { if (state === 'idle' && !e.target.closest('button')) browse(e); });
     coDrop.addEventListener('keydown', (e) => { if (state === 'idle' && e.target === coDrop && (e.key === 'Enter' || e.key === ' ')) browse(e); });
     coFile.addEventListener('click', (e) => e.stopPropagation());
-    coFile.addEventListener('change', () => took(coFile.files[0]));
+    coFile.addEventListener('change', () => took(coFile.files[0], [...coFile.files]));
     coDrop.addEventListener('dragover', (e) => { e.preventDefault(); if (state === 'idle' || state === 'file') coDrop.classList.add('is-over'); });
     coDrop.addEventListener('dragleave', () => coDrop.classList.remove('is-over'));
-    coDrop.addEventListener('drop', (e) => { e.preventDefault(); coDrop.classList.remove('is-over'); took(e.dataTransfer.files[0]); });
+    coDrop.addEventListener('drop', (e) => { e.preventDefault(); coDrop.classList.remove('is-over'); took(e.dataTransfer.files[0], [...e.dataTransfer.files]); });
     $c('co-again').addEventListener('click', (e) => { e.stopPropagation(); browse(e); });
     $c('co-hand').addEventListener('click', (e) => {
       e.stopPropagation();

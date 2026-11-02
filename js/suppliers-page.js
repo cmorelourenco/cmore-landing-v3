@@ -78,6 +78,15 @@
 .sp-kpi small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .sp-kpi.is-bad b { color: var(--color-critical, #b3261e); }
 .sp-sec { margin-top: 2.25rem; }
+/* the consent log: newest first, a date, a dot for what happened, and what it covered */
+.sp-log { margin-top: 1rem; padding: 0.5rem 1.25rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); list-style: none; }
+.sp-log li { display: grid; grid-template-columns: 7.5rem 0.75rem minmax(0, 1fr); gap: 0 0.875rem; align-items: baseline; padding: 0.75rem 0; font-size: 0.875rem; color: var(--color-ink-muted); }
+.sp-log li + li { border-top: 1px solid var(--color-mid-beige); }
+.sp-log time { font-size: 0.8125rem; color: var(--color-ink-subtle); white-space: nowrap; }
+.sp-log .cd-dot { width: 0.625rem; height: 0.625rem; align-self: center; }
+.sp-log b { font-weight: 500; color: var(--color-ink); }
+.sp-log small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+@media (max-width: 40rem) { .sp-log li { grid-template-columns: 0.75rem minmax(0, 1fr); } .sp-log time { grid-column: 2; } .sp-log .cd-dot { grid-row: span 2; } }
 .sp-sec > h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; }
 .sp-sec > p { margin-top: 0.25rem; font-size: 0.9375rem; color: var(--color-ink-muted); }
 .sp-consent { margin-top: 1rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); overflow: hidden; }
@@ -241,6 +250,29 @@
   }
   if (!box) return;
 
+  // ---- the consent log: when each was asked for, given, removed, and what happened to its documents --
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const when = (t) => { const [d, m, y] = String(t || '').split(' '); return MON.includes(m) ? new Date(+y, MON.indexOf(m), +d).getTime() : 0; };
+  const today = () => { const t = new Date(); return `${t.getDate()} ${MON[t.getMonth()]} ${t.getFullYear()}`; };
+  const logged = []; // what you do on this page (a reminder, asking again): on top, until the page reloads
+  const events = (s) => {
+    const For = (c) => (c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`), n = (c) => `${c.docs.length} document${c.docs.length === 1 ? '' : 's'}`;
+    if (s.status === 'invited') return [{ at: s.invite.invited, tone: 'neu', what: `You invited ${esc(s.name)}`, sub: `${s.invite.onCmore ? 'To your supplier list' : 'To join C&#8209;MORE'} &middot; ${n(s.consents[0])} asked for` }];
+    return s.consents.flatMap((c) => {
+      if (c.state === 'pending') return [{ at: c.granted, tone: 'wait', what: `You asked for ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)} &middot; waiting for their answer` }];
+      const given = { at: c.granted, tone: 'ok', what: `Consent given: ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)}` };
+      if (c.state === 'removed') return [given, { at: c.removed, tone: 'off', what: `Consent removed: ${esc(c.title)}`, sub: `You no longer see its ${n(c)}` }];
+      // a document that ran out under it, on the day it did
+      return [given].concat(c.docs.filter((d) => d.status === 'expired' && when(d.valid)).map((d) => ({ at: d.valid, tone: 'bad', what: `${esc(d.name)} expired`, sub: `Under ${esc(c.title)}${d.note ? ' &middot; ' + esc(d.note) : ''}` })));
+    });
+  };
+  const log = (s) => {
+    const seen = new Set(), all = logged.concat(events(s).sort((a, b) => when(b.at) - when(a.at)))
+      .filter((e) => { const k = e.at + e.what; if (seen.has(k)) return false; seen.add(k); return true; }); // a document under two consents, once
+    return `<section class="sp-sec" aria-labelledby="sp-log-h"><h2 id="sp-log-h">Consent log</h2><p>Everything that happened between you and ${esc(s.name)}, newest first.</p>
+      <ol class="sp-log" id="sp-log">${all.map((e) => `<li><time>${esc(e.at)}</time><span class="cd-dot is-${e.tone}" aria-hidden="true"></span><span><b>${e.what}</b><small>${e.sub}</small></span></li>`).join('')}</ol></section>`;
+  };
+
   // ---- one supplier: who they are, and a table for each consent -----------------------------------
   const page = (s) => {
     const k = S.stats(s);
@@ -261,7 +293,7 @@
           <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"></colgroup><thead><tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th></tr></thead>
             <tbody>${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}</span></td><td class="hide-s">${esc(d.requirement)}</td><td><span class="co-badge b-neu">Not shared yet</span></td></tr>`).join('')}</tbody></table>
           <div class="sp-wait"><span>${CLOCK}You&rsquo;ll see each one as soon as they share it.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(s.id)}">Send a reminder</button></div>
-        </article></section>`;
+        </article></section>${log(s)}`;
       return;
     }
     const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending'), removed = s.consents.filter((c) => c.state === 'removed');
@@ -290,7 +322,8 @@
       <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Consents they&rsquo;ve given you</h2><p>What ${esc(s.name)} lets you see, and for which ${S.WORDS.scope}. The documents stay current: when they renew one, you see the new one.</p>
         ${given.length ? given.map(consent).join('') : `<div class="co-card sp-none">${removed.length ? 'They no longer share any consent with you.' : 'They haven&rsquo;t given you a consent yet.'}</div>`}</section>
       ${removed.length ? `<section class="sp-sec" aria-labelledby="sp-removed"><h2 id="sp-removed">Consents they&rsquo;ve removed</h2><p>${esc(s.name)} stopped sharing these with you. Ask again, and you see the documents as soon as they say yes.</p>${removed.map(gone).join('')}</section>` : ''}
-      ${pending.length ? `<section class="sp-sec" aria-labelledby="sp-asked"><h2 id="sp-asked">Waiting for their answer</h2><p>Consents you asked for that ${esc(s.name)} hasn&rsquo;t answered yet.</p>${pending.map(ask).join('')}</section>` : ''}`;
+      ${pending.length ? `<section class="sp-sec" aria-labelledby="sp-asked"><h2 id="sp-asked">Waiting for their answer</h2><p>Consents you asked for that ${esc(s.name)} hasn&rsquo;t answered yet.</p>${pending.map(ask).join('')}</section>` : ''}
+      ${log(s)}`;
   };
 
   // ---- a document, in the drawer (.docd .cdd, as in Documents) ------------------------------------
@@ -351,6 +384,12 @@
   box.addEventListener('click', (e) => {
     const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
     const r = e.target.closest('[data-remind]');
-    if (r) r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: r.dataset.sent || 'Reminder sent' }));
+    if (!r) return;
+    r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: r.dataset.sent || 'Reminder sent' }));
+    // and the log says so, on top
+    const c = sup && sup.consents.find((x) => x.id === r.dataset.remind), l = document.getElementById('sp-log');
+    const ev = { at: today(), tone: 'neu', what: r.dataset.sent ? `You asked again for ${esc(c ? c.title : 'their consent')}` : `You sent a reminder${c && sup.status !== 'invited' ? ` about ${esc(c.title)}` : ''}`, sub: `To ${esc(sup ? sup.email : '')}` };
+    logged.unshift(ev);
+    if (l) l.insertAdjacentHTML('afterbegin', `<li><time>${esc(ev.at)}</time><span class="cd-dot is-${ev.tone}" aria-hidden="true"></span><span><b>${ev.what}</b><small>${ev.sub}</small></span></li>`);
   });
 })();

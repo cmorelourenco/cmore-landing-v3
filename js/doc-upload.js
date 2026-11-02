@@ -294,12 +294,67 @@ window.CMUpload = (() => {
 .cd-group-k .cd-group-up { margin-left: auto; }
 .cd-wk-tbl .cd-ed { white-space: nowrap; text-align: right; }
 [data-drop].is-drop > td { background: var(--color-coral-tint, #fdf1ee) !important; }
-[data-drop].is-drop > td:first-child { box-shadow: inset 3px 0 0 var(--color-coral); }`;
+[data-drop].is-drop > td:first-child { box-shadow: inset 3px 0 0 var(--color-coral); }
+/* a drawer, as the setup's (js/guided-upload.js): in from the right, the page's full height, 40rem wide */
+.cmu { display: block; padding: 0; }
+.cmu-panel, .cmu-panel.is-wide { position: absolute; top: 0; right: 0; bottom: 0; width: min(40rem, 100vw); max-height: none; border-radius: 0; opacity: 1; transform: translateX(100%); transition: transform .3s cubic-bezier(.2, .8, .2, 1); box-shadow: -24px 0 60px -30px rgba(52, 52, 52, .35); }
+.cmu.is-open .cmu-panel { transform: none; }
+.cmu-head { padding: 1.25rem 1rem 1rem 1.5rem; border-bottom: 1px solid var(--color-line); }
+.cmu-body { padding: 1.25rem 1.5rem; }
+@media (prefers-reduced-motion: reduce) { .cmu-panel { transition: none; } }
+/* what she read, card by card: the file opens beside the drawer; its values can be corrected */
+.cmu-r:not(.is-editing):not(.is-off) { cursor: pointer; transition: border-color .2s, box-shadow .2s; }
+.cmu-r:not(.is-editing):not(.is-off):hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -16px rgba(52, 52, 52, .25); }
+.cmu-r-t { flex: 1; min-width: 0; }
+.cmu-r-t h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; }
+.cmu-r-t p { margin-top: 0.125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-r-h .co-badge { flex: none; }
+.cmu-r-h .cmu-peek { max-width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; color: var(--color-ink); cursor: pointer; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.2em; transition: text-decoration-color .15s; }
+.cmu-r-h .cmu-peek:hover, .cmu-r-h .cmu-peek:focus-visible { text-decoration-color: var(--color-coral); }
+.cmu-r.is-ok { border-color: color-mix(in oklab, var(--color-positive, #3d7a2c) 45%, var(--color-line)); }
+.cmu-r.is-expired:not(.is-ok) { border-color: var(--color-coral); }
+.cmu-r.is-off { opacity: 1; background: var(--color-off-white); }
+.cmu-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 2.25rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
+.cmu-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0; padding: 0.875rem 0 0; border-top: 1px solid var(--color-line); }
+.cmu-fields dt { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.cmu-fields dd { margin: 0.25rem 0 0; font-size: 0.9375rem; color: var(--color-ink); overflow-wrap: anywhere; }
+.cmu-fields .is-flag dd { color: var(--color-coral-deep, #b5432c); font-weight: 600; }
+.cmu-fields input { width: 100%; padding: 0.4375rem 0.625rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
+.cmu-fields input:focus { outline: none; border-color: var(--color-graphite); }
+.cmu-fields .is-flag input { border-color: var(--color-coral); }
+.cmu-fields input:disabled { background: var(--color-surface-sunken, #f3f1ec); color: var(--color-ink-subtle); }
+.cmu-fields .cmu-fna { display: flex; align-items: center; gap: 0.375rem; margin-top: 0.375rem; font-size: 0.8125rem; color: var(--color-ink-muted); cursor: pointer; }
+.cmu-fields .cmu-fna input { width: 0.9375rem; height: 0.9375rem; padding: 0; accent-color: var(--color-graphite); }
+.cmu-why { padding: 0.5rem 0.75rem; border-radius: 0.375rem; background: var(--color-coral-tint, #f9e7e3); font-size: 0.875rem; color: var(--color-ink); }
+.cmu-exp { display: flex; flex-wrap: wrap; align-items: end; gap: 0.625rem 1.25rem; }
+.cmu-exp label { display: grid; gap: 0.375rem; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink); }
+.cmu-exp input[type="date"] { height: 2.5rem; padding: 0 0.75rem; border: 1px solid var(--color-sand-400); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; color: var(--color-ink); }
+.cmu-exp input[type="date"]:focus { outline: none; border-color: var(--color-graphite); }
+.cmu-exp .cmu-exp-na { display: flex; align-items: center; gap: 0.5rem; height: 2.5rem; font-weight: 500; cursor: pointer; }
+.cmu-exp .cmu-exp-na input { width: 1rem; height: 1rem; accent-color: var(--color-graphite); }
+/* Accept: as the setup's, a small square-cornered button; accepted, it takes the brand green */
+.cmu-acc { display: inline-flex; align-items: center; gap: 0.375rem; height: 2.25rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.375rem; background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: border-color .15s, background-color .15s; }
+.cmu-acc svg { width: 0.875rem; height: 0.875rem; }
+button.cmu-acc:hover:not(:disabled) { border-color: var(--color-graphite); }
+button.cmu-acc:disabled { opacity: .45; cursor: default; }
+.cmu .btn:disabled { opacity: .45; cursor: default; } /* as the setup's (.gs .btn:disabled) */
+.cmu-acc.is-ok { border-color: var(--color-ok, #a6d8a0); background: var(--color-ok, #a6d8a0); color: var(--color-graphite); cursor: default; }
+.cmu-r-acts { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1.25rem; font-size: 0.8125rem; }
+.cmu-r-acts > span { display: inline-flex; align-items: center; gap: 1.25rem; }
+.cmu-checks input { width: 100%; height: 2.25rem; padding: 0 0.625rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface, #fff); font: inherit; font-size: 0.875rem; color: var(--color-ink); }
+.cmu-checks input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 12%, transparent); }
+.cmu-panel { z-index: 2; }
+.cmu-dw { z-index: 1; pointer-events: none; } /* under the upload drawer, which stays usable beside it: it slides out from behind it */
+.cmu-dw .docd-scrim { display: none; }
+.cmu-dw .docd-panel { pointer-events: auto; right: 40rem; width: min(40rem, calc(100vw - 45rem)); box-shadow: -24px 0 48px -24px rgba(52, 52, 52, .35); }
+@media (max-width: 75rem) { .cmu-dw { z-index: 3; } .cmu-dw .docd-panel { right: 0; width: min(40rem, 100vw); } } /* no room beside it: over it */`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   const XI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>';
   const FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
+  const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const CROSS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg>';
   const SPIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
   const OK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd"/></svg>';
   const WARN = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>';
@@ -361,6 +416,68 @@ window.CMUpload = (() => {
       $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-prev>${stage ? 'Previous' : 'Back to the files'}</button><span class="cmu-foot-l">${open ? `${open} file${open === 1 ? '' : 's'} still to decide` : 'Every change decided'}</span>`
         + (last ? `<button type="button" class="btn btn-primary btn-sm" data-commit${open ? ' disabled' : ''}>Save what you approved</button>` : '<button type="button" class="btn btn-primary btn-sm" data-next>Next</button>');
     };
+    // her confidence, or that the user corrected her; the reference she read, or the one typed over it
+    const confOf = (r) => (!r.slot ? '' : r.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : r.how === 'sure' ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>');
+    const refOf = (s, r) => (r.ref != null ? r.ref : refFor(s, r));
+    // the fields the setup shows for each document, in its order; dates kept as everywhere else
+    // (17 Jan 2027), given to the date pickers as 2027-01-17
+    const FIELDS = [['country', 'Country'], ['by', 'Issued by'], ['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    const DATES = ['issued', 'valid'], NA = ['Not applicable', 'No expiry'];
+    const COUNTRY = { PT: 'Portugal', ES: 'Spain', FR: 'France', US: 'United States', BR: 'Brazil', GB: 'United Kingdom', DE: 'Germany' };
+    const valsOf = (r) => ({ country: r.country != null ? r.country : COUNTRY[(M.PROFILE || {}).country] || (M.PROFILE || {}).country || '', by: r.by != null ? r.by : plain(M.issuerOf(r.slot.d.cat) || 'The issuing body'),
+      ref: refOf(r.slot, r), issued: r.read.issued, valid: r.read.valid });
+    const isoOf = (v) => { const t = Date.parse(v); if (Number.isNaN(t)) return ''; const x = new Date(t); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+    const fromIso = (v) => fmt(new Date(v + 'T00:00'));
+    // expired: the date read has passed; it needs a new one, none (not applicable), or a current file
+    const lapsedR = (r) => !!r.slot && !NA.includes(r.read.valid) && !Number.isNaN(Date.parse(r.read.valid)) && Date.parse(r.read.valid) < new Date().setHours(0, 0, 0, 0);
+    const corrected = (r) => Object.assign(r, { edited: true, how: 'sure' });
+
+    // ---- the file, beside the drawer (as the setup's preview): the file itself, and what she read --
+    const dw = document.createElement('div');
+    dw.className = 'docd cdd cmu-dw'; dw.hidden = true;
+    dw.innerHTML = `<div class="docd-scrim"></div><aside class="docd-panel" role="dialog" aria-labelledby="cmu-dw-t" tabindex="-1">
+        <header class="docd-head"><span class="docd-ico" aria-hidden="true">${FILE}</span><div class="docd-t"><h3 id="cmu-dw-t"></h3><p id="cmu-dw-sub"></p></div>
+          <button type="button" class="dlg-x" data-dwx aria-label="Close the preview">${XI}</button></header>
+        <div class="docd-bar"><span>The file you uploaded</span><span id="cmu-dw-conf"></span></div>
+        <div class="docd-body" id="cmu-dw-body"></div>
+        <footer class="docd-foot"><span id="cmu-dw-foot"></span><span class="cdd-acts" id="cmu-dw-acts"></span></footer>
+      </aside>`;
+    el.appendChild(dw);
+    let peek = null;
+    const paintPeek = () => {
+      const r = results[peek]; if (!r) { closePeek(); return; }
+      const s = r.slot, q = (id) => dw.querySelector('#' + id);
+      q('cmu-dw-t').textContent = s ? label(s) : r.file.name;
+      q('cmu-dw-sub').innerHTML = `${esc(r.file.name)}${r.file.size ? ' &middot; ' + size(r.file.size) : ''}`;
+      q('cmu-dw-conf').innerHTML = s && lapsedR(r) ? '<span class="co-badge b-over">Expired</span>' : confOf(r);
+      const kv = (k, v) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`;
+      const v = s ? valsOf(r) : {};
+      const read = s ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><dl class="pd-facts cdd-facts">${kv(s.who ? 'Name on it' : 'Holder', esc(s.who || plain(M.D.company || 'Your company')))}${FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => kv(l, esc(v[f]))).join('')}</dl></section>`
+        : `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><p class="cdd-desc">She couldn&rsquo;t tell which document this is. Choose where it goes in the drawer.</p></section>`;
+      q('cmu-dw-body').innerHTML = (window.CMFiles ? window.CMFiles.view({ name: r.file.name, type: r.file.type, size: r.file.size, blob: r.file }) : '') + read;
+      // as the setup's: whether it's accepted, Make changes, Accept
+      q('cmu-dw-foot').textContent = !r.on ? 'Left out' : !s ? 'Needs a place' : r.ok ? 'Accepted' : 'Not accepted yet';
+      q('cmu-dw-acts').innerHTML = !s || !r.on ? '' : `<button type="button" class="link-btn" data-dwedit>Make changes</button>${r.ok ? `<span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-dwaccept${lapsedR(r) ? ' disabled title="Give it a new expiry date, or mark the date not applicable"' : ''}>${TICK}Accept</button>`}`;
+    };
+    const edit = (k) => { results.forEach((x, j) => { x.editing = j === k; }); paint(); const c = el.querySelector(`.cmu-r[data-card="${k}"]`), i = c && (c.querySelector('.is-flag input') || c.querySelector('.cmu-fields input')); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } };
+    // Replace file: another file in its place, read again
+    let swapAt = null;
+    const swapIn = Object.assign(document.createElement('input'), { type: 'file', id: 'cmu-swap', hidden: true });
+    el.appendChild(swapIn);
+    swapIn.addEventListener('change', () => {
+      const f = swapIn.files[0], r = results[swapAt]; if (!f || !r) return;
+      files[files.indexOf(r.file)] = f;
+      Object.assign(r, { file: f, read: r.slot ? readDates(r.slot, f) : r.read, ref: null, by: null, country: null, edited: false, editing: false, ok: false });
+      paint(); if (peek === swapAt) paintPeek();
+    });
+    const openPeek = (k) => { peek = k; dw.hidden = false; paintPeek(); setTimeout(() => dw.classList.add('is-open'), 20); dw.querySelector('.docd-panel').focus({ preventScroll: true }); };
+    const closePeek = () => { if (dw.hidden) return; dw.classList.remove('is-open'); peek = null; setTimeout(() => { if (peek == null) dw.hidden = true; }, 250); };
+    dw.addEventListener('click', (e) => {
+      if (e.target.closest('[data-dwx]')) { const k = peek; closePeek(); const b = el.querySelector(`.cmu-peek[data-peek="${k}"]`); if (b) b.focus({ preventScroll: true }); return; }
+      if (e.target.closest('[data-dwedit]')) { const k = peek; closePeek(); edit(k); return; }
+      if (e.target.closest('[data-dwaccept]')) { results[peek].ok = true; paint(); closePeek(); } // accepted: back to the review, where its card shows it
+    });
+
     const paint = () => {
       const body = $('cmu-body'), foot = $('cmu-foot');
       panel.classList.toggle('is-wide', step === 4);
@@ -378,23 +495,45 @@ window.CMUpload = (() => {
         body.innerHTML = `<div class="cmu-list"><h3>ALMA is reading</h3>${files.map((f, k) => `<div class="cmu-f ${k < reading ? 'is-done' : k === reading ? 'is-reading' : ''}"><span class="cmu-ic">${k < reading ? OK : k === reading ? SPIN : FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${k < reading ? 'Checked' : k === reading ? 'Reading the name, dates and issuer&hellip;' : 'Waiting'}</small></div>`).join('')}</div>`;
         foot.innerHTML = '<span class="cmu-foot-l">Checking each one with the body that issued it.</span>';
       } else {
+        // as the setup's review (js/guided-upload.js): how many are accepted, Accept all; expired first
         const on = results.filter((r) => r.on), ready = on.filter((r) => r.slot);
-        body.innerHTML = results.map((r, k) => {
-          const s = r.slot, ask = r.on && !s;
-          const checks = s ? `<dl class="cmu-checks">
-            <div><dt>Document</dt><dd${r.how === 'guess' ? ' class="is-warn"' : ''}>${r.how === 'guess' ? WARN : OK}${esc(s.name)}</dd></div>
-            <div><dt>${s.who ? 'Name on it' : 'Holder'}</dt><dd${r.how === 'guess' ? ' class="is-warn"' : ''}>${r.how === 'guess' ? WARN : OK}${esc(s.who || plain(M.D.company || 'Your company'))}</dd></div>
-            <div><dt>Issued by</dt><dd>${OK}${esc(plain(M.issuerOf(s.d.cat) || 'The issuing body'))} &middot; ${esc(r.read.issued)}</dd></div>
-            <div><dt>Valid until</dt><dd>${OK}${esc(r.read.valid)}</dd></div></dl>` : '';
-          const conf = s ? (r.how === 'sure' ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>') : '';
-          return `<section class="cmu-r${r.on ? '' : ' is-off'}${ask ? ' is-ask' : ''}" aria-label="${esc(r.file.name)}">
-            <div class="cmu-r-h"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(r.file.name)}</span>${conf}<label><input type="checkbox" data-on="${k}"${r.on ? ' checked' : ''}> Save it</label></div>
+        const order = results.map((r, k) => k).sort((a, b) => (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
+        const acc = ready.filter((r) => r.ok).length, exN = ready.filter((r) => lapsedR(r) && !r.ok).length, editing = results.some((r) => r.editing);
+        const all = editing || !ready.length ? '' : ready.some((r) => !r.ok && !lapsedR(r)) ? `<button class="cmu-acc" type="button" data-accept-all>${TICK}Accept ${exN ? 'the rest' : 'all'}</button>` : acc === ready.length ? '<button class="cmu-acc" type="button" data-unaccept-all>Unaccept all</button>' : '';
+        const bar = ready.length ? `${exN ? `<p class="cmu-note" role="status">${exN === 1 ? 'One document has' : `${exN} documents have`} expired. Give ${exN === 1 ? 'it' : 'each'} its new expiry date if still in force, mark the date not applicable, or replace ${exN === 1 ? 'it' : 'them'} with a current version.</p>` : ''}
+          <div class="cmu-bar"><span>${acc} of ${ready.length} accepted</span>${all}</div>` : '';
+        body.innerHTML = bar + order.map((k) => {
+          const r = results[k], s = r.slot, ask = r.on && !s, ex = s && lapsedR(r), v = s ? valsOf(r) : {};
+          // left out (rejected): it says so, and can come back
+          if (!r.on) return `<section class="cmu-r is-off" data-card="${k}" aria-label="${esc(r.file.name)}"><div class="cmu-r-h"><div class="cmu-r-t"><h3>${esc(s ? label(s) : r.file.name)}</h3><p>${esc(r.file.name)} &middot; left out, nothing is saved from it</p></div><button type="button" class="link-btn" data-undo-rej="${k}">Undo</button></div></section>`;
+          // the fields, as in the setup: read as she read them, or (Make changes) as fields, the dates
+          // with a date picker that can also be not applicable
+          const fieldsOf = () => FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => {
+            const flag = ex && f === 'valid', na = DATES.includes(f) && NA.includes(v[f]);
+            const input = !DATES.includes(f) ? `<input name="${f}" value="${esc(v[f])}" aria-label="${l}">`
+              : `<input type="date" name="${f}" value="${na ? '' : isoOf(v[f])}" aria-label="${l}"${na ? ' disabled' : ''}><label class="cmu-fna"><input type="checkbox" data-fna="${f}"${na ? ' checked' : ''}>Not applicable</label>`;
+            return `<div${flag ? ' class="is-flag"' : ''}><dt>${l}</dt><dd>${r.editing ? input : esc(v[f])}</dd></div>`;
+          }).join('');
+          const expBlock = !ex || r.editing ? '' : `<p class="cmu-why">This document expired on <b>${esc(v.valid)}</b>. If it&rsquo;s still in force, give it its new expiry date. If it has none, mark the date not applicable. Or replace it with a current version.</p>
+            <div class="cmu-exp"><label>New expiry date<input type="date" data-newexp="${k}" value="${isoOf(v.valid)}"></label><label class="cmu-exp-na"><input type="checkbox" data-expna="${k}">Expiry date not applicable</label></div>`;
+          const left = r.editing ? '' : `<button type="button" class="link-btn" data-peek="${k}">Preview</button>${s ? `<button type="button" class="link-btn" data-edit="${k}">Make changes</button>` : ''}<button type="button" class="link-btn" data-swap="${k}">Replace file</button>`;
+          const right = r.editing ? `<button type="button" class="link-btn" data-cancel="${k}">Cancel</button><button class="cmu-acc" type="button" data-fixsave="${k}">${TICK}Save changes</button>`
+            : r.ok ? `<button type="button" class="link-btn" data-unaccept="${k}">Undo</button><span class="cmu-acc is-ok">${TICK}Accepted</span>`
+            : `<button class="cmu-acc cmu-rej" type="button" data-reject="${k}">${CROSS}Reject</button>${s ? `<button class="cmu-acc" type="button" data-accept="${k}"${ex ? ' disabled title="Give it a new expiry date, or mark the date not applicable"' : ''}>${TICK}Accept</button>` : ''}`;
+          const badge = ex ? '<span class="co-badge b-over">Expired</span>' : confOf(r);
+          return `<section class="cmu-r${ask ? ' is-ask' : ''}${r.editing ? ' is-editing' : ''}${ex ? ' is-expired' : ''}${r.ok ? ' is-ok' : ''}" data-card="${k}" aria-label="${esc(r.file.name)}">
+            <div class="cmu-r-h"><div class="cmu-r-t"><h3><button type="button" class="cmu-peek" data-peek="${k}">${esc(s ? label(s) : r.file.name)}</button></h3><p>${s ? esc(r.file.name) : 'Not placed yet'}</p></div>${badge}</div>
             ${r.note ? `<p class="cmu-note">${r.note}</p>` : ''}
-            ${r.on ? `<label class="cmu-to"><span>${oneDoc && s && s.who ? 'Filed for' : 'Filed as'}</span><select data-to="${k}">${options(s ? s.key : '')}</select></label>${checks}` : ''}
+            <label class="cmu-to"><span>${oneDoc && s && s.who ? 'Filed for' : 'Filed as'}</span><select data-to="${k}"${r.editing ? ' disabled' : ''}>${options(s ? s.key : '')}</select></label>
+            ${s ? `<dl class="cmu-fields">${fieldsOf()}</dl>` : ''}${expBlock}
+            <footer class="cmu-r-acts"><span>${left}</span><span>${right}</span></footer>
           </section>`;
         }).join('');
-        const left = on.length - ready.length, nd = reviewOf(results).length; // files that differ from what's on file
-        foot.innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${left ? `${left} still need${left === 1 ? 's' : ''} a place` : ''}</span><button type="button" class="btn btn-primary btn-sm" data-save${ready.length && !left ? '' : ' disabled'}>${nd ? `Review ${nd} change${nd === 1 ? '' : 's'}` : ready.length === 1 ? 'Save it' : `Save ${ready.length} documents`}</button>`;
+        // on: what wasn't accepted goes in as she read it (as the setup's Continue); an expired one, a
+        // file without a place, or a card being edited waits for the user
+        const left = on.length - ready.length, nd = reviewOf(results).length, wait = left || exN || editing;
+        const why = editing ? 'Save or cancel your changes first' : left ? `${left} still need${left === 1 ? 's' : ''} a place` : exN ? `${exN} expired: give ${exN === 1 ? 'it' : 'each'} a new date` : '';
+        foot.innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${why}</span><button type="button" class="btn btn-primary btn-sm" data-save${ready.length && !wait ? '' : ' disabled'}>${nd ? `Review ${nd} change${nd === 1 ? '' : 's'}` : ready.length === 1 ? 'Save it' : `Save ${ready.length} documents`}</button>`;
       }
     };
     const add = (list) => { const l = [...(list || [])]; if (!l.length) return; files = files.concat(l); step = 1; paint(); };
@@ -418,7 +557,7 @@ window.CMUpload = (() => {
       }));
       done.forEach((r) => {
         const s = r.slot;
-        if (s.i == null) M.saveDoc(s.code, { status: 'valid', issued: r.read.issued, valid: r.read.valid, note: '', ref: refFor(s, r), by: M.issuerOf(s.d.cat), conf: r.conf, edited: false });
+        if (s.i == null) M.saveDoc(s.code, { status: 'valid', issued: r.read.issued, valid: r.read.valid, note: '', ref: refOf(s, r), by: r.by != null ? r.by : M.issuerOf(s.d.cat), conf: r.edited ? 98 : r.conf, edited: !!r.edited });
         else M.saveRecord(s.code, s.i, { status: 'valid', exp: r.read.valid });
         if (window.CMFiles) window.CMFiles.put(s.i == null ? s.code : `${s.code}#${s.i}`, r.file);
       });
@@ -440,10 +579,11 @@ window.CMUpload = (() => {
     };
     const close = () => {
       el.classList.remove('is-open'); document.removeEventListener('keydown', onKey, true);
-      setTimeout(() => el.remove(), 220);
+      dw.classList.remove('is-open');
+      setTimeout(() => el.remove(), 300);
       if (last && last.focus && last.isConnected) last.focus({ preventScroll: true });
     };
-    const onKey = (e) => { if (e.key === 'Escape' && step !== 2) { e.stopPropagation(); close(); } };
+    const onKey = (e) => { if (e.key !== 'Escape' || step === 2) return; e.stopPropagation(); if (peek != null) closePeek(); else close(); };
     document.addEventListener('keydown', onKey, true);
     el.addEventListener('click', (e) => {
       const t = (s) => e.target.closest(s);
@@ -451,8 +591,36 @@ window.CMUpload = (() => {
       if (t('#cmu-drop')) { $('cmu-file').value = ''; $('cmu-file').click(); return; }
       if (t('[data-rm]')) { files.splice(+t('[data-rm]').dataset.rm, 1); paint(); return; }
       if (t('[data-read]')) { if (files.length) read(); return; }
-      if (t('[data-back]')) { step = 1; paint(); return; }
+      if (t('[data-back]')) { closePeek(); step = 1; paint(); return; }
+      if (t('[data-peek]')) { openPeek(+t('[data-peek]').dataset.peek); return; }
+      if (t('[data-edit]')) { edit(+t('[data-edit]').dataset.edit); return; }
+      if (t('[data-cancel]')) { const k = +t('[data-cancel]').dataset.cancel; results[k].editing = false; paint(); el.querySelector(`[data-edit="${k}"]`)?.focus(); return; }
+      if (t('[data-fixsave]')) {
+        // what was typed over what she read, as in the setup: a date picker gives 2027-01-17, kept as
+        // 17 Jan 2027; a date can be not applicable. Checked by a person, it reads as sure
+        const k = +t('[data-fixsave]').dataset.fixsave, r = results[k], card = el.querySelector(`.cmu-r[data-card="${k}"]`), v = valsOf(r);
+        let changed = false;
+        FIELDS.forEach(([f]) => {
+          const box = card.querySelector(`[data-fna="${f}"]`), na = box && box.checked, inp = card.querySelector(`input[name="${f}"]`); if (!inp) return;
+          const raw = na ? 'Not applicable' : inp.value.trim(), val = !na && DATES.includes(f) && raw ? fromIso(raw) : raw;
+          if (!val || val === v[f]) return;
+          changed = true;
+          if (DATES.includes(f)) r.read = Object.assign({}, r.read, { [f]: val }); else r[f] = val;
+        });
+        if (changed) corrected(r);
+        r.editing = false; if (lapsedR(r)) r.ok = false;
+        paint(); if (peek === k) paintPeek(); el.querySelector(`[data-edit="${k}"]`)?.focus(); return;
+      }
+      if (t('[data-accept]')) { const k = +t('[data-accept]').dataset.accept; results[k].ok = true; paint(); if (peek === k) paintPeek(); return; }
+      if (t('[data-unaccept]')) { const k = +t('[data-unaccept]').dataset.unaccept; results[k].ok = false; paint(); if (peek === k) paintPeek(); return; }
+      if (t('[data-accept-all]')) { results.forEach((r) => { if (r.on && r.slot && !lapsedR(r)) r.ok = true; }); paint(); return; }
+      if (t('[data-unaccept-all]')) { results.forEach((r) => { r.ok = false; }); paint(); return; }
+      // Reject: not this document, or not read right; it's left out, and Undo brings it back
+      if (t('[data-reject]')) { const k = +t('[data-reject]').dataset.reject; Object.assign(results[k], { on: false, ok: false, editing: false }); if (peek === k) closePeek(); paint(); return; }
+      if (t('[data-undo-rej]')) { results[+t('[data-undo-rej]').dataset.undoRej].on = true; paint(); return; }
+      if (t('[data-swap]')) { swapAt = +t('[data-swap]').dataset.swap; $('cmu-swap').value = ''; $('cmu-swap').click(); return; }
       if (t('[data-save]')) {
+        closePeek();
         // anything that differs from what's on file waits for the user's approval
         reviews = reviewOf(results); stage = 0;
         if (reviews.length) { step = 4; paint(); panel.scrollTop = 0; $('cmu-body').scrollTop = 0; } else save();
@@ -470,19 +638,41 @@ window.CMUpload = (() => {
       }
       if (t('[data-next]')) { stage = Math.min(stage + 1, stages().length - 1); paint(); $('cmu-body').scrollTop = 0; return; }
       if (t('[data-prev]')) { if (stage) { stage -= 1; } else step = 3; paint(); $('cmu-body').scrollTop = 0; return; }
-      if (t('[data-commit]')) { save(); }
+      if (t('[data-commit]')) { save(); return; }
+      // anywhere else on a card: its preview, as in the setup
+      const card = t('.cmu-r[data-card]');
+      if (card && !card.classList.contains('is-editing') && !card.classList.contains('is-off') && !t('button, a, input, select, textarea, label')) openPeek(+card.dataset.card);
     });
     el.addEventListener('keydown', (e) => { if (e.target.id === 'cmu-drop' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.click(); } });
+    // an expired one: its new date, kept when you leave the field or press Enter (a date field reports
+    // every step as it's typed); or its expiry date not applicable
+    const newDate = (i) => {
+      const r = results[+i.dataset.newexp]; if (!r || !i.value) return;
+      const v = fromIso(i.value); if (v === r.read.valid || v === 'NaN undefined NaN') return;
+      r.read = Object.assign({}, r.read, { valid: v }); corrected(r); paint(); if (peek === +i.dataset.newexp) paintPeek();
+    };
+    el.addEventListener('focusout', (e) => { const i = e.target.closest('[data-newexp]'); if (i) newDate(i); });
+    el.addEventListener('keydown', (e) => { const i = e.target.closest('[data-newexp]'); if (i && e.key === 'Enter') { e.preventDefault(); newDate(i); } });
     el.addEventListener('change', (e) => {
       if (e.target.id === 'cmu-file') { add(e.target.files); return; }
-      const on = e.target.closest('[data-on]'); if (on) { results[+on.dataset.on].on = on.checked; paint(); return; }
+      const fna = e.target.closest('[data-fna]');
+      if (fna) {
+        // the box empties and locks the date; untick it and the date it had comes back
+        const card = fna.closest('[data-card]'), r = results[+card.dataset.card], i = card.querySelector(`input[name="${fna.dataset.fna}"]`);
+        i.disabled = fna.checked;
+        if (fna.checked) { i.dataset.was = i.value; i.value = ''; } else { i.value = i.dataset.was || isoOf(r.read[fna.dataset.fna]); i.focus(); }
+        return;
+      }
+      const xna = e.target.closest('[data-expna]');
+      if (xna) { const k = +xna.dataset.expna, r = results[k]; r.read = Object.assign({}, r.read, { valid: 'Not applicable' }); corrected(r); paint(); if (peek === k) paintPeek(); return; }
+      const on = e.target.closest('[data-on]'); if (on) { results[+on.dataset.on].on = on.checked; paint(); if (peek === +on.dataset.on) paintPeek(); return; }
       const to = e.target.closest('[data-to]');
       if (to) {
         // moved by hand: it takes that slot (whatever had it is left without one), and the dates follow it
         const r = results[+to.dataset.to], s = pool.find((x) => x.key === to.value);
         results.forEach((o) => { if (o !== r && o.slot === s) { o.slot = null; o.note = 'Its place went to another file. Choose where this one goes.'; } });
-        Object.assign(r, { slot: s, how: 'sure', note: '', read: readDates(s, r.file) });
-        paint();
+        Object.assign(r, { slot: s, how: 'sure', note: '', read: readDates(s, r.file), ref: null, by: null, country: null, edited: false, ok: false });
+        paint(); if (peek != null) paintPeek();
       }
     });
     el.addEventListener('dragover', (e) => { e.preventDefault(); const z = $('cmu-drop'); if (z) z.classList.add('is-over'); });
