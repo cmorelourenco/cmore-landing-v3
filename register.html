@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Get early access · C-MORE</title>
+<title>Sign-up · C-MORE</title>
 <meta name="robots" content="noindex">
 <style>
 /* Figtree, the brand face — same self-hosted files as the landing. */
@@ -403,7 +403,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
       <!-- 1. Sign up: a provider, or a name and an email -->
       <section class="step is-on" data-step="signup" aria-labelledby="t-signup">
-        <p class="eyebrow">Get early access</p>
+        <p class="eyebrow">Sign-up</p>
         <h1 class="title" id="t-signup">Create your account.</h1>
         <p class="subtitle">Three quick steps, and you are in.</p>
         <ol class="stepper" data-at="1" aria-label="Sign-up steps">
@@ -435,7 +435,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
       <!-- 2. Code: verifies the email -->
       <section class="step" data-step="code" aria-labelledby="t-code">
-        <p class="eyebrow" data-flow-eyebrow>Get early access</p>
+        <p class="eyebrow" data-flow-eyebrow>Sign-up</p>
         <h1 class="title" id="t-code">Check your inbox.</h1>
         <p class="subtitle">Enter the six digits we sent to <b id="code-email" style="font-weight:500;color:var(--color-ink)">you</b>.</p>
         <ol class="stepper" data-at="2" aria-label="Sign-up steps">
@@ -457,7 +457,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
       <!-- 3. Password -->
       <section class="step" data-step="password" aria-labelledby="t-password">
-        <p class="eyebrow" data-flow-eyebrow>Get early access</p>
+        <p class="eyebrow" data-flow-eyebrow>Sign-up</p>
         <h1 class="title" id="t-password">Create a password.</h1>
         <p class="subtitle"><span id="pw-lead">You will log in with it and</span> <b id="pw-email" style="font-weight:500;color:var(--color-ink)">your email</b>.</p>
         <ol class="stepper" data-at="3" aria-label="Sign-up steps">
@@ -982,7 +982,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const STEP_LABELS = { signup: ['Your details', 'Verify email', 'Create password'], reset: ['Your email', 'Verify email', 'New password'] };
   const setFlow = (mode) => {
     flow = mode; const reset = mode === 'reset';
-    document.querySelectorAll('[data-flow-eyebrow]').forEach((e) => (e.textContent = reset ? 'Password recovery' : 'Get early access'));
+    document.querySelectorAll('[data-flow-eyebrow]').forEach((e) => (e.textContent = reset ? 'Password recovery' : 'Sign-up'));
     document.querySelectorAll('[data-step="code"] .stepper, [data-step="password"] .stepper').forEach((ol) => {
       ol.setAttribute('aria-label', reset ? 'Password recovery steps' : 'Sign-up steps');
       ol.querySelectorAll('.lbl').forEach((l, i) => (l.textContent = STEP_LABELS[mode][i]));
@@ -1070,7 +1070,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   // the header's link and the tab title follow the mode: log in, or sign up
   const topLink = document.querySelector('[data-to-login]');
   const mode = (login) => {
-    document.title = (login ? 'Log in' : 'Get early access') + ' · C-MORE';
+    document.title = (login ? 'Log in' : 'Sign-up') + ' · C-MORE';
     topLink.innerHTML = login ? 'New here? <b>Join now</b>' : 'Already have an account? <b>Log in</b>';
     topLink.setAttribute('href', login ? 'register.html' : 'register.html?login');
   };
