@@ -31,7 +31,8 @@ window.CM_SUPPLIERS = (() => {
     certs: ['Certifications', ['CO-21', 'CO-21.1', 'CO-21.2']],
   };
   // [name, city, services, workers, since, NIPC, contact, consents, problems]
-  //   consents: [set, project (or null for all projects), granted, state]  — state: given | pending
+  //   consents: [set, project (or null for all projects), granted, state, removed]  — state: given | pending | removed
+  //     (removed: they stopped sharing it, on that date; you no longer see its documents)
   //   problems: { code: [status, expiry, note] } — anything not valid
   const RAW = BEATRIZ ? [
     ['Asankragwa Cocoa Farmers', 'Tarkwa, Ghana', ['Cocoa beans'], 840, '2025', 'C0004518272', 'office@asankragwacocoa.org',
@@ -57,6 +58,8 @@ window.CM_SUPPLIERS = (() => {
       [['legal', null, '22 Jan 2026', 'given'], ['esg', 'rub', '22 Jan 2026', 'given']], {}],
     ['Madeireira Floresta Norte', 'Belém, Brazil', ['Logs (Ipê, Jatobá)'], 90, '2026', '15.902.441/0001-08', 'contato@florestanorte.com.br',
       [['legal', null, '6 Oct 2026', 'pending']], {}],
+    ['Hacienda La Cumbre', 'Quetzaltenango, Guatemala', ['Green coffee (Arabica)'], 60, '2024', '8417733-2', 'ventas@haciendalacumbre.gt',
+      [['legal', null, '3 Apr 2024', 'removed', '28 Oct 2026'], ['esg', 'rc', '3 Apr 2024', 'removed', '28 Oct 2026']], {}],
   ] : [
     ['Madeiras do Norte', 'Paredes', ['Lumber supply', 'Carpentry'], 21, '2026', '509 812 334', 'geral@madeirasdonorte.pt',
       [['legal', null, '12 Feb 2026', 'given'], ['insurance', null, '12 Feb 2026', 'given'], ['workers', 'sj', '3 Mar 2026', 'given'], ['hs', 'sj', '14 Oct 2026', 'pending']],
@@ -78,6 +81,8 @@ window.CM_SUPPLIERS = (() => {
       [['legal', null, '11 Nov 2025', 'given'], ['insurance', null, '11 Nov 2025', 'given'], ['workers', 'go', '2 Feb 2026', 'given']], {}],
     ['Canalizações do Porto', 'Porto', ['Plumbing'], 13, '2026', '514 965 380', 'obras@canalizacoesporto.pt',
       [['legal', null, '9 Sep 2026', 'pending']], {}],
+    ['Climatização Vouga', 'Aveiro', ['HVAC'], 18, '2025', '512 337 604', 'geral@climavouga.pt',
+      [['legal', null, '14 May 2025', 'removed', '28 Oct 2026'], ['insurance', null, '14 May 2025', 'removed', '28 Oct 2026']], {}],
     ['Eletro Norte', 'Braga', ['Electrical'], 31, '2026', '511 448 096', 'geral@eletronorte.pt',
       [['legal', null, '1 Aug 2026', 'given'], ['insurance', null, '1 Aug 2026', 'given'], ['workers', 'sj', '1 Aug 2026', 'given']], {}],
   ];
@@ -103,8 +108,8 @@ window.CM_SUPPLIERS = (() => {
     const id = slug(name);
     return {
       id, name, city, services, workers, since, nipc, email,
-      consents: consents.map(([set, project, granted, state], i) => ({
-        id: `${id}-${i}`, title: SETS[set][0], codes: SETS[set][1], project: project ? PROJECTS[project] : null, granted, state,
+      consents: consents.map(([set, project, granted, state, removed], i) => ({
+        id: `${id}-${i}`, title: SETS[set][0], codes: SETS[set][1], project: project ? PROJECTS[project] : null, granted, state, removed,
         docs: SETS[set][1].filter((c) => byCode[c]).map((c) => {
           const p = problems[c];
           return { code: c, name: byCode[c].name.en, section: byCode[c].section.en, cat: category(c), requirement: C.labels.requirement[byCode[c].requirement] || '',
@@ -132,10 +137,11 @@ window.CM_SUPPLIERS = (() => {
         requirement: a.required.includes(c) ? 'Mandatory' : 'Optional', status: 'missing', valid: '—', note: '' })) }],
   });
   // where each one stands: invited (hasn't joined your list yet), pending consent (joined, but hasn't
-  // given you all the documents you asked for), accepted (everything asked for is shared)
-  LIST.forEach((s) => { s.status = s.consents.some((c) => c.state === 'pending') ? 'pending' : 'accepted'; });
+  // given you all the documents you asked for), accepted (everything asked for is shared), consent
+  // removed (they stopped sharing every consent they'd given you)
+  LIST.forEach((s) => { s.status = s.consents.every((c) => c.state === 'removed') ? 'removed' : s.consents.some((c) => c.state === 'pending') ? 'pending' : 'accepted'; });
   const all = () => added().map(fromInvite).concat(DEMO ? LIST : []);
-  const SUP_STATUS = { invited: ['Invited', 'b-neu'], pending: ['Pending consent', 'b-pend'], accepted: ['Accepted', 'b-ok'] };
+  const SUP_STATUS = { invited: ['Invited', 'b-neu'], pending: ['Pending consent', 'b-pend'], accepted: ['Accepted', 'b-ok'], removed: ['Consent removed', 'b-over'] };
   const addInvite = (a) => { const l = added(); l.unshift(a); try { sessionStorage.setItem(ADD_KEY, JSON.stringify(l)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-suppliers')); };
   // companies already on C-MORE that aren't your suppliers yet, by country and code (digits only).
   // Prototype: made up, so the flow can find one.
@@ -162,7 +168,7 @@ window.CM_SUPPLIERS = (() => {
     const uniq = [...new Map(seen.map((d) => [d.code, d])).values()];
     const bad = uniq.filter((d) => ['missing', 'expired'].includes(d.status)).length, soon = uniq.filter((d) => ['expiring', 'processing'].includes(d.status)).length;
     const ok = uniq.filter((d) => d.status === 'valid').length;
-    return { shared: uniq.length, bad, soon, ok, pct: uniq.length ? Math.round((ok / uniq.length) * 100) : 0, given: s.consents.filter((c) => c.state === 'given').length, pending: s.consents.filter((c) => c.state === 'pending').length };
+    return { shared: uniq.length, bad, soon, ok, pct: uniq.length ? Math.round((ok / uniq.length) * 100) : 0, given: s.consents.filter((c) => c.state === 'given').length, pending: s.consents.filter((c) => c.state === 'pending').length, removed: s.consents.filter((c) => c.state === 'removed').length };
   };
   // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
   const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products' }

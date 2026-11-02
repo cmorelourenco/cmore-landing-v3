@@ -38,6 +38,7 @@
 .co-sup-sec .co-sup-add { grid-column: 1; justify-self: start; }
 .co-sup-none { display: grid; gap: 0.25rem; padding: 1.25rem 1.5rem; }
 .cd-dot.is-wait { background: transparent; border: 2px dashed var(--color-sand-400); box-sizing: border-box; }
+.cd-dot.is-off { background: transparent; border: 2px solid var(--color-critical); box-sizing: border-box; } /* shared once, consent since removed */
 .sp-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1rem; }
 .sp-card { display: grid; gap: 0.875rem; height: 100%; padding: 1.25rem; border: 1px solid var(--color-line); border-radius: 1rem; background: var(--color-surface); color: inherit; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; }
 .sp-card:hover { border-color: var(--color-sand-400); box-shadow: 0 8px 24px -16px rgba(52, 52, 52, .25); transform: translateY(-1px); }
@@ -63,6 +64,7 @@
 .sp-add:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .sp-add svg { width: 1rem; height: 1rem; }
 .sp-card.is-invited { border-style: dashed; background: var(--color-light-beige); }
+.sp-card.is-removed { background: var(--color-light-beige); }
 .sp-head { display: flex; align-items: center; gap: 1.25rem; }
 .sp-head > div { flex: 1 1 auto; min-width: 0; }
 @media (max-width: 34rem) { .sp-head { flex-direction: column; align-items: flex-start; } }
@@ -90,6 +92,7 @@
 .sp-ch-b .co-badge { display: inline-flex; align-items: center; height: 1.5rem; margin: 0; vertical-align: top; white-space: nowrap; }
 .sp-ch h3 { margin: 0; }
 .sp-consent.is-pending { border-style: dashed; background: var(--color-light-beige); }
+.sp-consent.is-removed { background: var(--color-light-beige); }
 .sp-tbl { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
 .sp-tbl th { padding: 0.625rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); background: var(--color-light-beige); }
 .sp-tbl td { padding: 0.75rem 1.25rem; border-top: 1px solid var(--color-mid-beige); vertical-align: middle; color: var(--color-ink-muted); } /* every cell on the row's centre line */
@@ -131,6 +134,14 @@
       <span class="sp-foot"><span>Invited on ${esc(s.invite.invited)} &middot; ${esc(s.email || s.invite.countryName)}</span>${CHEV}</span>
     </a></li>`;
     }
+    // consent removed: they stopped sharing, so there's nothing to see; when, and since when they supply you
+    if (s.status === 'removed') {
+      return `<li><a class="sp-card is-removed" href="suppliers.html?id=${esc(s.id)}">${id}
+      <span class="sp-meter"><span class="sp-meter-t"><span>No longer sharing documents</span></span><i><span style="width:0"></span></i></span>
+      <span class="sp-chips">${stTag(s)}</span>
+      <span class="sp-foot"><span>Consent removed on ${esc(s.consents[0].removed)} &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
+    </a></li>`;
+    }
     // where they stand first, then what needs chasing
     const chips = [stTag(s), k.bad ? `<span class="co-badge b-over">${k.bad} need${k.bad === 1 ? 's' : ''} attention</span>` : '', k.soon ? `<span class="co-badge b-pend">${k.soon} expiring or in review</span>` : ''].filter(Boolean).join(''); // all in order needs no chip of its own: Accepted says it
     return `<li><a class="sp-card" href="suppliers.html?id=${esc(s.id)}">${id}
@@ -146,10 +157,10 @@
   const catAt = (c) => (S.CATS.includes(c) ? S.CATS.indexOf(c) : S.CATS.length);
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
-  const overall = (k, s) => (s && s.status === 'invited' ? ['Invited', 'b-neu'] : k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Pending consent', 'b-neu'] : ['All in order', 'b-ok']);
-  // what needs chasing first (missing or expired, then expiring or in review), then the ones in
-  // order, then those waiting on a consent, and the ones invited last
-  const GROUP = { 'Needs attention': 0, 'Expiring or in review': 1, 'All in order': 2, 'Pending consent': 3, Invited: 4 };
+  const overall = (k, s) => (s && s.status === 'invited' ? ['Invited', 'b-neu'] : s && s.status === 'removed' ? ['Consent removed', 'b-over'] : k.bad ? ['Needs attention', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : k.pending && !k.shared ? ['Pending consent', 'b-neu'] : ['All in order', 'b-ok']);
+  // what needs chasing first (missing or expired, a consent removed, then expiring or in review),
+  // then the ones in order, then those waiting on a consent, and the ones invited last
+  const GROUP = { 'Needs attention': 0, 'Consent removed': 1, 'Expiring or in review': 2, 'All in order': 3, 'Pending consent': 4, Invited: 5 };
   const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return GROUP[overall(x, a)[0]] - GROUP[overall(y, b)[0]] || y.bad - x.bad || y.soon - x.soon || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
   const matrix = (shown, bare) => {
@@ -163,17 +174,18 @@
         const say = n ? `${n} of ${docs.length} need${n === 1 ? 's' : ''} a look` : `${docs.length} document${docs.length === 1 ? '' : 's'}, all valid`;
         return `<td class="c"><span class="cd-dot is-${TONE[worst]}" title="${esc(a)}: ${say}"></span><span class="sr-only">${esc(a)}: ${say}</span></td>`;
       }
+      if (of('removed').length) return `<td class="c"><span class="cd-dot is-off" title="${esc(a)}: consent removed, no longer shared"></span><span class="sr-only">${esc(a)}: consent removed, no longer shared</span></td>`;
       if (of('pending').length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
       return `<td class="c"><span class="cd-dash" title="Not asked of them">&mdash;</span></td>`;
     };
     const rows = shown.map((s) => { const [l, c] = overall(S.stats(s), s); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc([s.services[0], s.city].filter(Boolean).join(' · '))}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
-    const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
+    const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].concat(shown.some((s) => s.status === 'removed') ? [['off', 'Consent removed']] : []).map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
       <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span><span>Open a supplier for the documents behind each dot.</span></p></section>`;
   };
   const list = () => {
-    const is = { attention: (s) => S.stats(s).bad > 0, invited: (s) => s.status === 'invited', pending: (s) => s.status === 'pending' };
+    const is = { attention: (s) => S.stats(s).bad > 0 || s.status === 'removed', invited: (s) => s.status === 'invited', pending: (s) => s.status === 'pending' };
     const all = S.list(), n = { all: all.length, attention: all.filter(is.attention).length, invited: all.filter(is.invited).length, pending: all.filter(is.pending).length };
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
     const shown = all.filter((s) => (filt === 'all' || is[filt](s)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
@@ -192,7 +204,7 @@
   if (home && orgOf() !== 'home') home.closest('section').hidden = true;
   else if (home) {
     // only the ones with an alert: something missing or expired, expiring or in review
-    const all = S.list(), alert = all.filter((s) => { const k = S.stats(s); return k.bad || k.soon; }).sort(urgent);
+    const all = S.list(), alert = all.filter((s) => { const k = S.stats(s); return k.bad || k.soon || s.status === 'removed'; }).sort(urgent);
     const add = '<a class="btn co-btn-light btn-sm co-sup-add" href="suppliers.html?add">Add a supplier</a>'; // the flow, on My suppliers (js/supplier-add.js)
     home.innerHTML = (alert.length ? matrix(alert, true) : `<div class="co-card co-sup-none"><b class="co-row-n">All your suppliers are in order</b><span class="co-subtle">Nothing missing, expired or expiring across your ${all.length} suppliers.</span></div>`)
       // as under the homepage's other tables: View all on the right
@@ -252,7 +264,7 @@
         </article></section>`;
       return;
     }
-    const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending');
+    const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending'), removed = s.consents.filter((c) => c.state === 'removed');
     // the card's title is the table's first row, so the consent's badge sits in the Expiry date
     // column, level with the title
     const consent = (c) => `<article class="sp-consent">
@@ -265,13 +277,19 @@
         <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; you asked on ${esc(c.granted)}</p></div><span class="co-badge b-pend">Waiting for their answer</span></header>
         <div class="sp-wait"><span>${CLOCK}Until they say yes you can&rsquo;t see: ${c.docs.map((d) => esc(d.name)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}">Send a reminder</button></div>
       </article>`;
+    // one they stopped sharing: what it covered, which you no longer see, and asking for it again
+    const gone = (c) => `<article class="sp-consent is-removed">
+        <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; given on ${esc(c.granted)} &middot; removed on ${esc(c.removed)}</p></div><span class="co-badge b-over">Consent removed</span></header>
+        <div class="sp-wait"><span>You can no longer see: ${c.docs.map((d) => esc(d.name)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}" data-sent="Request sent">Ask again</button></div>
+      </article>`;
     box.innerHTML = `<div class="sp-kpis">
         <div class="sp-kpi"><span>Documents you can see</span><b>${k.shared}</b><small>${k.ok} in order</small></div>
         <div class="sp-kpi${k.bad ? ' is-bad' : ''}"><span>Need attention</span><b>${k.bad}</b><small>${k.bad ? 'Missing or expired' : k.soon ? `${k.soon} expiring or in review` : 'Nothing to chase'}</small></div>
-        <div class="sp-kpi"><span>Consents</span><b>${k.given}</b><small>${k.pending ? `${k.pending} waiting for their answer` : 'All answered'}</small></div>
+        <div class="sp-kpi${k.removed ? ' is-bad' : ''}"><span>Consents</span><b>${k.given}</b><small>${k.removed ? `${k.removed} removed` : k.pending ? `${k.pending} waiting for their answer` : 'All answered'}</small></div>
       </div>
       <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Consents they&rsquo;ve given you</h2><p>What ${esc(s.name)} lets you see, and for which ${S.WORDS.scope}. The documents stay current: when they renew one, you see the new one.</p>
-        ${given.length ? given.map(consent).join('') : '<div class="co-card sp-none">They haven&rsquo;t given you a consent yet.</div>'}</section>
+        ${given.length ? given.map(consent).join('') : `<div class="co-card sp-none">${removed.length ? 'They no longer share any consent with you.' : 'They haven&rsquo;t given you a consent yet.'}</div>`}</section>
+      ${removed.length ? `<section class="sp-sec" aria-labelledby="sp-removed"><h2 id="sp-removed">Consents they&rsquo;ve removed</h2><p>${esc(s.name)} stopped sharing these with you. Ask again, and you see the documents as soon as they say yes.</p>${removed.map(gone).join('')}</section>` : ''}
       ${pending.length ? `<section class="sp-sec" aria-labelledby="sp-asked"><h2 id="sp-asked">Waiting for their answer</h2><p>Consents you asked for that ${esc(s.name)} hasn&rsquo;t answered yet.</p>${pending.map(ask).join('')}</section>` : ''}`;
   };
 
@@ -333,6 +351,6 @@
   box.addEventListener('click', (e) => {
     const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
     const r = e.target.closest('[data-remind]');
-    if (r) r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: 'Reminder sent' }));
+    if (r) r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: r.dataset.sent || 'Reminder sent' }));
   });
 })();
