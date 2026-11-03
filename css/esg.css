@@ -931,3 +931,14 @@ html[data-persona="beatriz"] [data-only="miguel"] { display: none !important; }
 .cm-exp small { font-size: 0.75rem; color: var(--color-ink-subtle); }
 .cm-exp.is-note, .cm-exp.is-none { color: var(--color-ink-subtle); white-space: normal; }
 .c > .cm-exp { justify-items: end; text-align: right; }
+
+/* ---- every data table: the first column left, the last right, everything between centred ----
+   One rule for the whole app, so columns line up the same way everywhere. A row that spans the
+   table (a consent's title, a note under a document, a citation) keeps to the left. */
+:is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) :is(th, td) { text-align: center !important; }
+:is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) :is(th, td):first-child { text-align: left !important; }
+:is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) :is(th, td):last-child:not(:first-child) { text-align: right !important; }
+:is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) td[colspan]:first-child { text-align: left !important; }
+/* what sits in a cell as a block or a row of its own follows the cell */
+:is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) :is(th, td):not(:first-child):not(:last-child) > .cm-exp { justify-items: center; }
+:is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) td:not(:first-child):not(:last-child) > .esgq-src-btn { display: block; width: fit-content; margin-inline: auto; }
