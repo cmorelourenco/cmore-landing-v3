@@ -148,7 +148,7 @@
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}${noteRow ? ' has-note' : ''}"${attrs}>` +
       `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span></td>` +
-      `<td>${d.valid === '—' ? dash : d.valid}</td>` +
+      `<td>${d.valid === '—' ? dash : window.DOC_MODEL.expHtml(d.valid)}</td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
       `<td class="cd-ed"><span class="cd-ed-in">${naB}${up}${hasRoster ? opener : ''}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');

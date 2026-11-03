@@ -157,8 +157,10 @@ window.CO_PROFILE = (() => {
   const line = (p) => [label(SECTORS, p.sector), p.employees && `${label(EMPLOYEES, p.employees)} people`, p.tax && taxLabel(p), formLabel(p), p.city].filter(Boolean).join(' · ');
   const today = () => { const d = new Date(); return `Since ${d.getDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]} ${d.getFullYear()}`; };
   const initials = (n) => n.replace(/\b(LLC|Inc\.?|Co\.?|Ltd\.?|Lda\.?|S\.A\.?|GmbH|BV|NV)(?=\W|$)/gi, '').split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
-  const SAY = { pending: (c) => `Wants to see: ${c.what}. ${c.when}.`, accepted: (c) => `Sees: ${c.what}. ${c.when}.`, declined: (c) => `Asked to see: ${c.what}. You declined.`, stopped: (c) => `Saw: ${c.what}. You stopped sharing.` };
-  const manage = () => Object.assign(document.createElement('a'), { className: 'btn co-btn-ghost co-btn-sm', href: 'company-profile.html#consents', textContent: 'Manage' });
+  const SAY = { pending: (c) => `Wants to see: ${c.what}.`, accepted: (c) => `Sees: ${c.what}.`, declined: (c) => `Asked to see: ${c.what}. You declined.`, stopped: (c) => `Saw: ${c.what}. You stopped sharing.` };
+  // when it was asked for, or since when it's shared: a line of its own under what they see
+  const WHEN = (c) => (c.state === 'pending' || c.state === 'accepted' ? c.when || '' : '');
+  const manage = () => Object.assign(document.createElement('a'), { className: 'btn co-btn-ghost co-btn-sm', href: 'clients.html', textContent: 'Manage' });
   const BADGE = { pending: ['b-pend', 'Pending'], accepted: ['b-ok', 'Accepted'], declined: ['b-neu', 'Declined'], stopped: ['b-neu', 'Stopped'] };
 
   // ---- the form: the same fields in Settings and in ALMA's check -----------------------------------
@@ -401,8 +403,10 @@ window.CO_PROFILE = (() => {
   // the company page: name, line, logo, and the consent rows answered elsewhere
   const applyToCompanyPage = () => {
     emptyLogo();
-    const box = document.querySelector(`#filled .co-id-main.persona-${who()}-only`); if (!box) return;
+    const box = document.querySelector(`#filled .co-id-main.persona-${who()}-only`);
     const p = load();
+    // the company's own card, where the page has one for this person (the consents below, either way)
+    if (box) {
     box.querySelector('.co-name').textContent = p.trading || p.name;
     box.querySelector('.co-subtle').textContent = line(p);
     if (p.logo && p.logo !== DEFAULTS[who()].logo) {
@@ -412,24 +416,30 @@ window.CO_PROFILE = (() => {
       // no logo any more: the company's initials, as on the profile page
       box.querySelector('.co-logo').replaceWith(Object.assign(document.createElement('span'), { className: 'co-logo co-logo-ini', textContent: initials(p.trading || p.name) }));
     }
-    const rows = [...document.querySelectorAll(`#filled .persona-${who()}-only > .co-row`)];
+    }
+    // Miguel's rows are marked data-only, Beatriz's by class; a name as the page spells it (Mota‑Engil, with a non-breaking hyphen)
+    const rows = [...document.querySelectorAll(`#filled :is(.persona-${who()}-only, [data-only="${who()}"]) > .co-row`)];
+    const nameOf = (row) => { const n = row.querySelector('.co-row-n'); return n ? n.firstChild.textContent.trim().replace(/\u2011/g, '-') : ''; };
     rows.forEach((row) => {
-      const n = row.querySelector('.co-row-n'), name = n && n.firstChild.textContent.trim(), c = p.consents.find((x) => x.name === name); if (!c) return;
+      const name = nameOf(row), c = p.consents.find((x) => x.name === name); if (!c) return;
       const badge = row.querySelector('.co-badge'); [badge.className, badge.textContent] = ['co-badge ' + BADGE[c.state][0], BADGE[c.state][1]];
       if (c.state !== 'pending') {
-        // an answered request is managed on the company profile, like the ones answered before
+        // an answered request is managed in My clients, like the ones answered before
         const acts = row.querySelector('.co-acts, a.btn'); if (acts) acts.replaceWith(manage());
         row.classList.remove('co-req');
         row.querySelector('.co-row-t > .co-subtle').textContent = SAY[c.state](c);
+        const t = row.querySelector('.co-row-t'), w = WHEN(c); let el = t.querySelector('.co-when');
+        if (w && !el) el = t.appendChild(Object.assign(document.createElement('span'), { className: 'co-subtle co-when' }));
+        if (el) { if (w) el.textContent = w; else el.remove(); }
       }
     });
     // answering on the company page is remembered here too
     rows.forEach((row) => row.querySelectorAll('[data-answer]').forEach((b) => b.addEventListener('click', () => {
-      const q = load(), c = q.consents.find((x) => x.name === row.querySelector('.co-row-n').firstChild.textContent.trim()); if (!c) return;
+      const q = load(), c = q.consents.find((x) => x.name === nameOf(row)); if (!c) return;
       c.state = b.dataset.answer === 'Accepted' ? 'accepted' : 'declined'; if (c.state === 'accepted') c.when = today(); save(q);
     })));
   };
 
-  return { load, save, line, today, BADGE, SAY, applyToCompanyPage, defaults: () => JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)),
+  return { load, save, line, today, BADGE, SAY, WHEN, applyToCompanyPage, defaults: () => JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)),
     SECTIONS, section, wire, collect, value, check, isEU, sectorOfCode, subsOfCae, label, formLabel, revenueLabel, FORMS, SECTORS, SUBSECTORS, EMPLOYEES, initials };
 })();

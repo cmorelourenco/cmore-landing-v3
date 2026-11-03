@@ -923,3 +923,11 @@ html[data-persona="beatriz"] [data-only="miguel"] { display: none !important; }
 ::view-transition-old(cm-top), ::view-transition-old(cm-sn), ::view-transition-old(cm-alma) { display: none; }
 ::view-transition-new(cm-top), ::view-transition-new(cm-sn), ::view-transition-new(cm-alma) { animation: none; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }
+
+/* an expiry in a table (DOC_MODEL.expHtml): the date on its line, what it's about under it; a value
+   with no date as a quiet note. Right-aligned columns keep it right-aligned */
+.cm-exp { display: inline-grid; gap: 0.125rem; line-height: 1.3; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cm-exp b { font-weight: inherit; color: inherit; }
+.cm-exp small { font-size: 0.75rem; color: var(--color-ink-subtle); }
+.cm-exp.is-note, .cm-exp.is-none { color: var(--color-ink-subtle); white-space: normal; }
+.c > .cm-exp { justify-items: end; text-align: right; }

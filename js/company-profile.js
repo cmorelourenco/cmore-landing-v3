@@ -60,25 +60,7 @@
   }));
   $('#cp-logo-rm').addEventListener('click', () => { p.logo = ''; CO_PROFILE.save(p); paintLogo(); flash($('#identification .set-saved'), 'Logo removed'); });
 
-  // ---- consents: who may see the company's documents --------------------------------------------------
-  const list = $('#cp-consents');
-  const ACTS = {
-    pending: (i) => `<button type="button" class="btn btn-primary co-btn-sm" data-c="${i}" data-to="accepted">Accept</button><button type="button" class="btn co-btn-ghost co-btn-sm" data-c="${i}" data-to="declined">Decline</button>`,
-    accepted: (i) => `<button type="button" class="btn co-btn-ghost co-btn-sm" data-c="${i}" data-to="stopped">Stop sharing</button>`,
-    declined: (i) => `<button type="button" class="btn co-btn-ghost co-btn-sm" data-c="${i}" data-to="accepted">Accept instead</button>`,
-    stopped: (i) => `<button type="button" class="btn co-btn-ghost co-btn-sm" data-c="${i}" data-to="accepted">Share again</button>`,
-  };
-  const SAY = CO_PROFILE.SAY;
-  const paintConsents = () => {
-    if (!p.consents.length) { list.innerHTML = '<div class="co-list-empty"><span class="co-row-n">No requests yet</span><span class="co-subtle">When a client asks to see your documents, it shows up here for a yes or a no.</span></div>'; return; }
-    list.innerHTML = p.consents.map((c, i) => `<div class="co-row"><div class="co-row-t"><span class="co-row-n">${esc(c.name)} <span class="co-badge ${CO_PROFILE.BADGE[c.state][0]}">${CO_PROFILE.BADGE[c.state][1]}</span></span><span class="co-subtle">${esc(SAY[c.state](c))}</span></div><div class="co-acts">${ACTS[c.state](i)}</div></div>`).join('');
-  };
-  list.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-c]'); if (!b) return;
-    const c = p.consents[+b.dataset.c]; c.state = b.dataset.to; if (c.state === 'accepted') c.when = CO_PROFILE.today();
-    CO_PROFILE.save(p); paintConsents();
-    const again = list.querySelector(`[data-c="${b.dataset.c}"]`); if (again) again.focus({ preventScroll: true });
-  });
+  // the clients who may see the company's documents, and stopping it: My clients (clients.html)
 
   // ---- the section in view is the one marked on the left, as in Settings --------------------------------
   const links = [...document.querySelectorAll('.set-nav a:not([data-out])')], cards = links.map((a) => document.querySelector(a.getAttribute('href')));
@@ -94,7 +76,7 @@
     scrollTo({ top: t.getBoundingClientRect().top + scrollY - 96, behavior: 'smooth' }); history.replaceState(null, '', a.getAttribute('href'));
   }));
 
-  fill(); paintLogo(); paintConsents();
+  fill(); paintLogo();
   const at = location.hash && document.querySelector(location.hash);
   if (at && at.classList.contains('set-card')) setTimeout(() => scrollTo({ top: at.getBoundingClientRect().top + scrollY - 96 }), 60);
   setTimeout(mark, 120);

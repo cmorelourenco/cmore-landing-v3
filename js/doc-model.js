@@ -462,5 +462,16 @@ window.DOC_MODEL = (() => {
   const needing = () => DOCS.filter((d) => counted(d) && RANK[d.status] > 0).sort((a, b) => rank(a) - rank(b));
   const DATA = DOCS.map((d) => Object.assign(d, { text: textOf(d) }));
 
-  return { ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  // an expiry as a table shows it: the date on its line, what it's about under it ("Next report",
+  // "Next figures"); a value with no date ("Reviewed yearly", "No expiry") as a quiet note. Never cut
+  // or broken mid-date (css/esg.css .cm-exp)
+  const expHtml = (v) => {
+    const t = String(v == null ? '' : v).trim();
+    if (!t || t === '—') return '<span class="cm-exp is-none">&mdash;</span>';
+    const m = /^(.*?),\s*((?:\d{1,2}\s+)?[A-Z][a-z]{2,8}\.?\s+\d{4})$/.exec(t);
+    if (m) return `<span class="cm-exp"><b>${esc(m[2])}</b><small>${esc(m[1])}</small></span>`;
+    if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
+    return `<span class="cm-exp is-note">${esc(t)}</span>`;
+  };
+  return { expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

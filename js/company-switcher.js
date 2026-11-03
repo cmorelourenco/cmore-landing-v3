@@ -341,6 +341,7 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
   const OPEN = window.CM_SOON_OPEN || [];
   if (OPEN.includes('ecosystem')) delete PAGES['ecosystem.html'];
   if (OPEN.includes('questionnaires')) ['questionnaires.html', 'esg-questionnaire.html', 'esg-results.html'].forEach((k) => { delete PAGES[k]; });
+  if (!OPEN.includes('clients')) PAGES['clients.html'] = ['My clients', 'My clients']; // open for the demo company only (js/access.js)
   const page = q.get('soon') === 'clients' && !OPEN.includes('clients') ? ['My clients', 'My clients'] : PAGES[path];
   const main = document.querySelector('main.page');
   if (page && main) {
@@ -349,6 +350,8 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
     document.querySelectorAll('.sn-item').forEach((a) => { const on = a.getAttribute('title') === page[1]; a.classList.toggle('is-on', on); if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
   }
   const clients = document.querySelector('.sn-item[title="My clients"]');
+  // open: the side menu's My clients is the page (js/clients-page.js)
+  if (clients && OPEN.includes('clients') && clients.dataset.sn !== 'here') { clients.setAttribute('href', 'clients.html'); clients.dataset.sn = 'go'; }
   if (clients && !OPEN.includes('clients')) {
     clients.setAttribute('href', 'ecosystem.html?soon=clients'); clients.removeAttribute('data-sn');
     clients.addEventListener('click', (e) => { e.stopImmediatePropagation(); }, true);
