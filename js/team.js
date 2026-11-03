@@ -67,6 +67,7 @@
 .tm-own { padding-top: 1.25rem; border-top: 1px solid var(--color-line); }
 .tm-x { border: 0; background: none; padding: 0; font: inherit; font-size: 0.8125rem; color: var(--color-ink-subtle); text-decoration: underline; text-decoration-color: var(--color-line); text-underline-offset: 0.2em; cursor: pointer; }
 .tm-x:hover { color: var(--color-ink); text-decoration-color: var(--color-coral); }
+.tm-x:disabled { color: var(--color-sand-500); text-decoration: none; cursor: default; }
 .tm-edit { grid-column: 1 / -1; display: grid; gap: 0.875rem; margin-top: 0.375rem; padding: 1rem; border-radius: 0.75rem; background: var(--color-light-beige); }
 .tm-edit select.input { height: 2.5rem; max-width: 14rem; font-size: 0.875rem; }
 .tm-invite { display: grid; gap: 1rem; padding: 1.25rem; border-radius: 0.875rem; background: var(--color-light-beige); }
@@ -312,7 +313,7 @@
     };
     // pending invites: a manager sees and handles only the ones they sent
     const mineInvite = (v) => manages(c.role) || v.by === c.v.email;
-    const invite = (v, i) => `<li><span class="tm-pic is-pending" aria-hidden="true">${MAIL}</span><span class="tm-t"><b>${esc(v.email)}</b><small>${ROLES[v.role][0]} &middot; invited ${esc(v.sent)}${v.resent ? ' &middot; sent again' : ''}</small><span class="tm-tags">${reach(t, v)}</span></span>${mineInvite(v) ? `<span class="tm-r"><button type="button" class="tm-x" data-resend="${i}">Resend</button><button type="button" class="tm-x" data-cancel="${i}">Cancel</button></span>` : '<span></span>'}</li>`;
+    const invite = (v, i) => `<li><span class="tm-pic is-pending" aria-hidden="true">${MAIL}</span><span class="tm-t"><b>${esc(v.email)}</b><small>${ROLES[v.role][0]} &middot; invited ${esc(v.sent)}${v.resent ? ' &middot; sent again' : ''}</small><span class="tm-tags">${reach(t, v)}</span></span>${mineInvite(v) ? `<span class="tm-r">${v.sent === today() ? `<button type="button" class="tm-x" disabled title="Sent today. You can send it again tomorrow.">Sent today</button>` : `<button type="button" class="tm-x" data-resend="${i}">Resend</button>`}<button type="button" class="tm-x" data-cancel="${i}">Cancel</button></span>` : '<span></span>'}</li>`;
     // managers and users see the people who share a group with them, and the owners and admins
     const visible = manages(c.role) ? t.members : t.members.filter((m) => m === c.v || manages(m.role) || (m.groups || []).some((g) => c.mine.includes(g)));
     const invites = t.invites.map((v, i) => [v, i]).filter(([v]) => mineInvite(v));
@@ -813,14 +814,17 @@
     const also = role === 'owner' ? family().map((o) => o.id).filter((id) => id !== cur.id) : role === 'admin' ? [...box.querySelectorAll('[name="also"]:checked')].map((x) => x.value) : [];
     const known = new Set(t.members.map((m) => m.email.toLowerCase()).concat(t.invites.map((v) => v.email)));
     const fresh = [...new Set(raw)].filter((x) => !known.has(x));
-    if (!fresh.length) { err.textContent = raw.length === 1 ? 'They are already in the team, or invited.' : 'They are all already in the team, or invited.'; return; }
+    const member = new Set(t.members.map((m) => m.email.toLowerCase()));
+    const why = (x) => (member.has(x) ? `${x} is already in the team` : `${x} is already invited. Resend it from Waiting to accept`);
+    if (!fresh.length) { err.textContent = raw.length === 1 ? `${why(raw[0])}.` : 'They are all already in the team, or invited.'; document.getElementById('tm-emails').classList.add('is-bad'); return; }
     fresh.forEach((email) => t.invites.push(Object.assign({ email, role, groups, also, sent: today(), by: c.v.email }, access ? { access: JSON.parse(JSON.stringify(access)) } : {})));
     save(cur.id, t);
     // the same invite shows on each company it also covers
     also.forEach((id) => { const o = teamOf(id); fresh.forEach((email) => { if (!o.invites.some((v) => v.email === email)) o.invites.push({ email, role, groups: [], also: [cur.id], sent: today(), by: c.v.email }); }); save(id, o); });
     const skipped = raw.length - fresh.length;
-    flash = `Invite sent to ${fresh.length === 1 ? fresh[0] : fresh.length + ' people'}.${skipped ? ` ${skipped} already in the team.` : ''}`;
+    flash = `Invite sent to ${fresh.length === 1 ? fresh[0] : fresh.length + ' people'}.${skipped ? ` ${skipped} already in the team, or invited.` : ''}`;
     paint();
+    toast(`<b>Invite sent to ${fresh.length === 1 ? esc(fresh[0]) : `${fresh.length} people`}</b><span>${skipped ? `${skipped} left out: already in the team, or invited.` : `They join ${esc(cur.name)} once they accept.`}</span>`);
     const again = document.getElementById('tm-emails'); if (again) again.focus();
   });
   box.addEventListener('input', (e) => { if (e.target.id === 'tm-emails') { e.target.classList.remove('is-bad'); document.getElementById('tm-err').textContent = ''; } });
@@ -867,7 +871,8 @@
       const ready = checkRows(c, bulk.rows).filter((r) => r.ok);
       ready.forEach((r) => t.invites.push(Object.assign({ email: r.email, name: r.name, role: r.role, groups: r.groups, also: r.role === 'owner' ? family().map((o) => o.id).filter((id) => id !== cur.id) : [], sent: today(), by: c.v.email }, grouped(r.role) && r.access ? { access: r.access } : {})));
       save(cur.id, t);
-      flash = `${ready.length} invite${ready.length === 1 ? '' : 's'} sent from ${bulk.file}.`; bulk = null; paint();
+      flash = `${ready.length} invite${ready.length === 1 ? '' : 's'} sent from ${bulk.file}.`; const fileName = bulk.file; bulk = null; paint();
+      toast(`<b>${ready.length} invite${ready.length === 1 ? '' : 's'} sent</b><span>From ${esc(fileName)}</span>`);
       const st = box.querySelector('.tm-sent'); if (st) st.scrollIntoView({ block: 'center' });
       return;
     }
@@ -884,7 +889,12 @@
     const cn = e.target.closest('[data-cancel]');
     if (cn) { t.invites.splice(+cn.dataset.cancel, 1); save(cur.id, t); paint(); return; }
     const s = e.target.closest('[data-resend]');
-    if (s) { t.invites[+s.dataset.resend].resent = true; t.invites[+s.dataset.resend].sent = today(); save(cur.id, t); paint(); }
+    if (s) {
+      // one email a day to the same address: once sent again, Resend waits until tomorrow
+      const v = t.invites[+s.dataset.resend]; if (!v || v.sent === today()) return;
+      v.resent = true; v.sent = today(); save(cur.id, t); paint();
+      toast(`<b>Invite sent again to ${esc(v.email)}</b><span>You can send it again tomorrow.</span>`);
+    }
   });
 
   // the pages something opens (a group, or one person's own access), each whole or in part: some of

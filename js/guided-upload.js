@@ -923,12 +923,17 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       dq('gs-dw-t').textContent = d.name.en;
       dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
       dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f);
-      // the file itself, not a page drawn from what she read (js/doc-files.js)
+      // the page as she read it, and the file itself one click away (js/doc-files.js)
       dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + read;
       const slot = dq('gs-dw-file'), at = peek;
       const fill = (html) => { if (peek === at && slot.isConnected) slot.innerHTML = html; };
       if (!window.CMFiles) fill('');
-      else window.CMFiles.get(d.code).then((r) => r || window.CMFiles.get('~' + f.file)).then((r) => fill(r ? window.CMFiles.view(r) : window.CMFiles.missing(f.file)));
+      else {
+        // the page with each value she read highlighted, numbered as the citations below (js/doc-files.js)
+        const P = window.CMFiles.plain, byRow = rows.find(([n]) => /issued by/i.test(n));
+        const spec = { title: d.name.en, file: f.file, holder: P(company), issuer: byRow ? P(byRow[1]) : '', fields: rows.map(([n, v, fl], i) => ({ name: P(n), value: fl ? '' : P(String(v).replace(/<span class="co-badge[^>]*>.*?<\/span>/g, '')), flag: fl, i })) };
+        window.CMFiles.get(d.code).then((r) => r || window.CMFiles.get('~' + f.file)).then((r) => fill(window.CMFiles.preview(r, spec)));
+      }
       dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
       dq('gs-dw-acts').innerHTML = f.mismatch ? `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Approved</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Approve with a reason</button>`}`
         : `<button class="link-btn" type="button" data-dwedit>Make changes</button>${f.ok ? `<span class="gs-acc is-ok">${OK}Accepted</span>` : `<button class="gs-acc" type="button" data-dwaccept>${OK}Accept</button>`}`;
@@ -940,8 +945,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const t = (sel) => e.target.closest(sel);
       if (t('[data-dwclose]')) { closePeek(); return; }
       // in place: repainting would reload the file above and move the scroll
-      if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
-      if (t('[data-show]')) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; if (open && window.CMFiles.show) window.CMFiles.show(dwEl, +cb.dataset.cite); return; }
+      if (t('[data-show]')) { if (!window.CMFiles.show(dwEl, +t('[data-show]').dataset.show)) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
       if (t('[data-dwaccept]') && lapsed(saved.files[peek]) && !saved.files[peek].mismatch) { const c = peek; closePeek(); const i = wrap.querySelector(`[data-newexp="${c}"]`); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } return; }
       if (t('[data-dwaccept]') && saved.files[peek].mismatch) { const c = peek; closePeek(); const i = wrap.querySelector(`[data-why="${c}"]`); if (i) { i.scrollIntoView({ block: 'center' }); i.focus({ preventScroll: true }); } return; }
       if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); strip(); closePeek(); return; } // accepted: back to the review, where its card now shows it

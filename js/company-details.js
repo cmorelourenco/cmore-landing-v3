@@ -266,15 +266,22 @@
       ${hasFile ? '<p class="cdd-na-w">Its current file stays in its versions, read-only.</p>' : ''}
       <div class="cdd-na-acts"><button type="submit" class="btn btn-primary btn-sm" id="cdd-na-go" disabled>Mark as not applicable</button></div>
     </form>` : '';
-    // the file itself (js/doc-files.js): the one uploaded for it, or a plain note that the demo has none
+    // the file (js/doc-files.js): a row that opens its preview
     dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + about;
     dq('cdd-body').scrollTop = 0;
-    if (hasFile) {
+    // the page with each value ALMA read highlighted, numbered as the citations: Preview opens it in a
+    // drawer of its own beside this one, as the setup's (js/doc-files.js)
+    dState.pv = null;
+    if (hasFile && window.CMFiles) {
+      const by = fields.find((x, i) => cites[i] && !x.flag && /issued by|issuer|authority|insurer|certification body|registry/i.test(x.name));
+      const spec = { title: d.name, file, holder: decode(String(window.DOC_MODEL.D.company || '')), issuer: by ? decode(String(by.value).replace(/<[^>]+>/g, '')) : (d.cat.usuallyIssuedBy || '').split(';')[0].trim(),
+        fields: fields.map((x, i) => (cites[i] ? { name: x.name, value: x.flag ? '' : decode(String(x.value).replace(/<[^>]+>/g, '')), flag: x.flag, i } : null)).filter(Boolean) };
+      dState.pv = { title: d.name + (v ? ` · ${v.label}` : ''), sub: file, code: d.code, noFile: !!v, spec };
       const slot = dq('cdd-file'), drawn = dState;
-      const put = (html) => { if (dState === drawn && slot.isConnected) slot.innerHTML = html; };
-      if (v || !window.CMFiles) put(window.CMFiles ? window.CMFiles.missing(file) : '');
-      else window.CMFiles.get(d.code).then((r) => put(r ? window.CMFiles.view(r) : window.CMFiles.missing(file)));
+      slot.innerHTML = window.CMFiles.fileRow(file);
+      if (!v) window.CMFiles.get(d.code).then((r) => { if (r && dState === drawn && slot.isConnected) slot.innerHTML = window.CMFiles.fileRow(r.name); });
     }
+    window.CMFiles && window.CMFiles.closePeek(dw);
     dq('cdd-foot').textContent = v ? `Read-only. Uploaded by ${v.by}; replaced on ${v.replaced}.` : hasFile ? (d.edited ? 'Edited by user: changes to ALMA’s reading are logged and visible to clients.' : `Issued ${d.issued}${d.valid && d.valid !== '—' ? ' · ' + (/^\d/.test(d.valid) ? 'expires ' : '') + d.valid : ''}`) : '';
     dq('cdd-acts').innerHTML = v ? `<button type="button" class="btn btn-quiet btn-sm" data-cdd-cur>Back to current version</button>`
       : (canNa(d) && d.status !== 'na' && !dState.na ? '<button type="button" class="link-btn" data-na-open>Doesn&rsquo;t apply to us</button>' : '')
@@ -296,6 +303,7 @@
     if (dw.hidden) { dLast = document.activeElement; dw.hidden = false; requestAnimationFrame(() => dw.classList.add('is-open')); document.documentElement.classList.add('dlg-open'); setTimeout(() => dPanel.focus({ preventScroll: true }), 320); }
   };
   const closeDrawer = () => {
+    if (window.CMFiles) window.CMFiles.closePeek(dw);
     dw.classList.remove('is-open'); document.documentElement.classList.remove('dlg-open');
     setTimeout(() => { dw.hidden = true; }, 300);
     if (dLast && dLast.focus) dLast.focus({ preventScroll: true });
@@ -314,13 +322,18 @@
     if (cb) {
       const fig = dw.querySelector('#cdd-cite-' + cb.dataset.cite), open = fig.hidden;
       fig.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation';
+      // and the preview opens beside, at that value, highlighted
+      if (open && dState.pv) window.CMFiles.openPeek(dw, dState.pv, +cb.dataset.cite);
       return;
     }
     const sh = e.target.closest('[data-cite-show]');
     if (sh) {
-      // the passage is on the file itself: bring the file into view
-      const fileEl = dw.querySelector('#cdd-file');
-      if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // the passage is on the page: the preview opens beside, at that value
+      if (dState.pv) window.CMFiles.openPeek(dw, dState.pv, +sh.dataset.citeShow);
+      return;
+    }
+    if (e.target.closest('[data-cmf-peek]')) {
+      if (dState.pv) window.CMFiles.openPeek(dw, dState.pv);
       return;
     }
     if (e.target.closest('[data-na-undo]')) { undoNa(docById(dState.list[dState.k])); dState.na = false; render(); drawDoc(); return; }

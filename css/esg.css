@@ -909,3 +909,17 @@ html[data-persona="beatriz"] .persona-miguel-only { display: none !important; }
 html:not([data-persona="beatriz"]) .persona-beatriz-only { display: none !important; }
 /* blocks that belong to Miguel's demo company only: left alone for him, hidden for Beatriz */
 html[data-persona="beatriz"] [data-only="miguel"] { display: none !important; }
+
+/* ---- moving between pages: one smooth cross-fade, not a blank frame ----
+   The browser keeps the page on screen until the next one is ready, then fades between them. The
+   header, the side menu and ALMA's folded rail are the same on both, so they stay put instead of
+   blinking out. Browsers without cross-page transitions simply load the page as before. */
+@view-transition { navigation: auto; }
+.top { view-transition-name: cm-top; }
+.sn { view-transition-name: cm-sn; }
+.cmj, .cmu.is-tucked .cmu-panel { view-transition-name: cm-alma; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; animation-timing-function: ease; }
+::view-transition-group(cm-top), ::view-transition-group(cm-sn), ::view-transition-group(cm-alma) { animation-duration: .22s; }
+::view-transition-old(cm-top), ::view-transition-old(cm-sn), ::view-transition-old(cm-alma) { display: none; }
+::view-transition-new(cm-top), ::view-transition-new(cm-sn), ::view-transition-new(cm-alma) { animation: none; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }

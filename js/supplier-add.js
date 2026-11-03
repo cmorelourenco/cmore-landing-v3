@@ -228,6 +228,9 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
       if (f.step === 1) {
         if (!f.found.on) {
           f.errs = { name: f.name.trim() ? '' : 'Enter their company name.', email: emailOk(f.email.trim()) ? '' : f.email.trim() ? 'That doesn&rsquo;t look like an email address.' : 'Enter an email we can send the invitation to.' };
+          // an email already on your supplier list isn't invited twice
+          const dup = !f.errs.email && S.list().find((x) => x.email && x.email.toLowerCase() === f.email.trim().toLowerCase());
+          if (dup) f.errs.email = `This email is already on your supplier list (${esc(dup.name)}). <a href="suppliers.html?id=${esc(dup.id)}">Open them</a>${dup.status === 'invited' ? ' to send a reminder' : ' to ask for more'}.`;
           if (f.errs.name || f.errs.email) { paint(f.errs.name ? '[name="name"]' : '[name="email"]'); return; }
         }
         if (!f.picked) f.picked = new Set(docsFor().filter((d) => d.req).map((d) => d.code));

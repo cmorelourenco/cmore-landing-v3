@@ -87,16 +87,16 @@
     // each removed consent with something ticked is asked again for; the rest goes as one new request
     const again = GROUPS.filter((g) => g.removed && k(g)), extra = GROUPS.filter((g) => !g.removed).flatMap((g) => g.docs.filter((d) => picked.has(d.code)));
     again.forEach((g) => {
-      asked.add(g.key);
+      asked.add(g.key); if (P.nudge) P.nudge(g.key);
       const b = document.querySelector(`[data-remind="${CSS.escape(g.key)}"]`);
-      if (b) b.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: 'Request sent' }));
+      if (b) b.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: 'Request sent', title: 'You can ask again tomorrow.' }));
       const n = k(g);
       P.addLog({ at, tone: 'neu', what: `You asked again for ${esc(g.title)}`, sub: `${n === g.docs.length ? 'All' : `${n} of`} ${g.docs.length} document${g.docs.length === 1 ? '' : 's'} · ${to}` });
     });
     if (extra.length) P.addLog({ at, tone: 'neu', what: `You asked for ${extra.length} more document${extra.length === 1 ? '' : 's'}`, sub: `${extra.slice(0, 3).map((d) => esc(d.name)).join(', ')}${extra.length > 3 ? ` and ${extra.length - 3} more` : ''} · ${to}` });
     const n = picked.size;
     close();
-    A.toast(`Asked ${sup.name} for ${n} document${n === 1 ? '' : 's'}.`);
+    A.toast(`Asked ${sup.name} for ${n} document${n === 1 ? '' : 's'}. You can ask again tomorrow.`);
   };
 
   // Ask again opens the drawer (instead of sending straight away, js/suppliers-page.js)

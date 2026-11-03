@@ -351,7 +351,11 @@
     dq('sp-dw-st').innerHTML = tag(d.status);
     const file = `${d.name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}.pdf`;
     const fileHtml = d.status === 'missing' ? `<div class="cmf-none">${DOCI}<h4>They haven&rsquo;t uploaded it yet</h4><p>${esc(d.note || 'ALMA has asked them for it.')}</p></div>`
-      : window.CMFiles ? window.CMFiles.missing(`${sup.name}’s ${file}`, `The demo&rsquo;s suppliers have no files behind their documents. On C&#8209;MORE you see the file ${esc(sup.name)} uploaded, exactly as it is.`) : '';
+      // the page as ALMA read it, each value highlighted: Preview opens it beside, as the setup's (js/doc-files.js)
+      : window.CMFiles && window.CMFiles.fileRow ? window.CMFiles.fileRow(file, 'Simulated: the demo&rsquo;s suppliers have no files') : '';
+    at.pv = d.status === 'missing' || !window.CMFiles ? null : { title: d.name, sub: `${sup.name} · ${file}`, noFile: true, spec: { title: d.name, file, holder: sup.name, issuer: (cat.usuallyIssuedBy || '').split(';')[0].trim(),
+      fields: [[S.WORDS.id, sup.nipc], ['Issued by', (cat.usuallyIssuedBy || '').split(';')[0].trim()], ['Valid until', d.valid === '—' ? '' : d.valid]].filter(([, v]) => v).map(([name, value]) => ({ name, value })) } };
+    if (window.CMFiles) window.CMFiles.closePeek(dw);
     const kv = (k, v) => (v ? `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>` : '');
     dq('sp-dw-body').innerHTML = fileHtml
       + `<section class="cdd-card"><h4 class="eyebrow">This document</h4><dl class="pd-facts cdd-facts">${kv('Status', tag(d.status))}${kv('Expiry date', esc(d.valid === '—' ? 'Not on file' : d.valid))}${d.note ? kv('Note', esc(d.note)) : ''}${kv('Issued by', esc((cat.usuallyIssuedBy || '').split(';')[0]))}${kv('Section', esc(d.section))}</dl></section>`
@@ -367,9 +371,10 @@
     dw.hidden = false; document.documentElement.style.overflow = 'hidden'; drawDoc();
     setTimeout(() => dw.classList.add('is-open'), 20); dw.querySelector('.docd-panel').focus();
   };
-  const closeDoc = () => { dw.classList.remove('is-open'); document.documentElement.style.overflow = ''; setTimeout(() => { dw.hidden = true; }, 280); if (back && back.isConnected) back.focus(); at = null; };
+  const closeDoc = () => { if (window.CMFiles) window.CMFiles.closePeek(dw); dw.classList.remove('is-open'); document.documentElement.style.overflow = ''; setTimeout(() => { dw.hidden = true; }, 280); if (back && back.isConnected) back.focus(); at = null; };
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-x]')) { closeDoc(); return; }
+    if (e.target.closest('[data-cmf-peek]')) { if (at && at.pv) window.CMFiles.openPeek(dw, at.pv); return; }
     const st = e.target.closest('[data-step]'); if (st && !st.disabled) { at.i += +st.dataset.step; drawDoc(); }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && at) closeDoc(); });
@@ -378,17 +383,27 @@
   box.addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const r = e.target.closest('[data-doc]'), g = e.target.closest('[data-sup]'); if (r) { e.preventDefault(); openDoc(r.dataset.doc); } else if (g) { e.preventDefault(); goSup(g); } });
 
   if (id && !sup) { box.innerHTML = '<div class="co-card sp-none">That supplier isn&rsquo;t in your list. <a href="suppliers.html">See all your suppliers</a>.</div>'; return; }
-  if (sup) page(sup); else list();
+  // one reminder a day to the same supplier: kept for the tab, so a reload doesn't let it go again
+  const NUDGE = 'cm-sup-nudged';
+  const nudged = () => { try { return JSON.parse(sessionStorage.getItem(NUDGE)) || {}; } catch (e) { return {}; } };
+  const nudge = (key) => { const n = nudged(); n[key] = today(); try { sessionStorage.setItem(NUDGE, JSON.stringify(n)); } catch (e) {} };
+  const sentToday = (key) => nudged()[key] === today();
+  const quiet = (b) => b.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: b.dataset.sent ? 'Request sent today' : 'Reminder sent today', title: 'You can send another tomorrow.' }));
+  if (sup) { page(sup); box.querySelectorAll('[data-remind]').forEach((b) => { if (sentToday(b.dataset.remind)) quiet(b); }); } else list();
   // a line on top of the consent log, until the page reloads
   const addLog = (ev) => { logged.unshift(ev); const l = document.getElementById('sp-log'); if (l) l.insertAdjacentHTML('afterbegin', `<li><time>${esc(ev.at)}</time><span class="cd-dot is-${ev.tone}" aria-hidden="true"></span><span><b>${ev.what}</b><small>${ev.sub}</small></span></li>`); };
   // a supplier just added (js/supplier-add.js); asking again for consents (js/supplier-ask.js)
-  window.CMSupPage = { refresh: () => { if (!sup) list(); }, sup, addLog, today };
+  window.CMSupPage = { refresh: () => { if (!sup) list(); }, sup, addLog, today, nudge: (k) => nudge(k), sentToday: (k) => sentToday(k) };
+
   box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
   box.addEventListener('click', (e) => {
     const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
     const r = e.target.closest('[data-remind]');
     if (!r) return;
+    if (sentToday(r.dataset.remind)) { quiet(r); return; }
+    nudge(r.dataset.remind);
     r.replaceWith(Object.assign(document.createElement('span'), { className: 'sp-sent', textContent: r.dataset.sent || 'Reminder sent' }));
+    if (window.CMSupplierAdd) window.CMSupplierAdd.toast(`${r.dataset.sent ? 'Request' : 'Reminder'} sent to ${sup ? sup.email || sup.name : 'them'}. You can send another tomorrow.`);
     // and the log says so, on top
     const c = sup && sup.consents.find((x) => x.id === r.dataset.remind);
     const ev = { at: today(), tone: 'neu', what: r.dataset.sent ? `You asked again for ${esc(c ? c.title : 'their consent')}` : `You sent a reminder${c && sup.status !== 'invited' ? ` about ${esc(c.title)}` : ''}`, sub: `To ${esc(sup ? sup.email : '')}` };

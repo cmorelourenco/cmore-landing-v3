@@ -278,9 +278,18 @@ window.CMUpload = (() => {
 .cmu-sign.is-leave { background: var(--color-critical-subtle, #fbe9e7); color: var(--color-critical, #b3261e); }
 .cmu-sign.is-role { background: var(--color-informative-subtle, #e6eef8); color: var(--color-informative, #2f5c8a); }
 .cmu-crew.is-off li { opacity: .5; }
-.cmu-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 130; transform: translate(-50%, 1rem); display: flex; align-items: center; gap: 0.625rem; max-width: calc(100vw - 2rem); padding: 0.75rem 1rem; border-radius: 0.75rem; background: var(--color-graphite, #343434); color: #fff; font-size: 0.875rem; box-shadow: 0 12px 32px -12px rgba(0, 0, 0, .4); opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; }
-.cmu-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
-.cmu-toast svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-ok, #a6d8a0); }
+/* folded, as the setup's panel folds (js/guided-upload.js): a rail on the right, the page usable;
+   ALMA keeps reading, and the rail says how far she is */
+.cmu-head .cmu-acts { flex: none; display: flex; align-items: center; gap: 0.375rem; }
+.cmu .cmu-panel { transition: transform .3s cubic-bezier(.2, .8, .2, 1), width .35s var(--ease-brand, ease); } /* over the drawer rule below, which only slides it */
+.cmu.is-tucked { pointer-events: none; }
+.cmu.is-still .cmu-panel, .cmu.is-still .cmu-scrim { transition: none !important; }
+.cmu.is-tucked .cmu-scrim { opacity: 0; }
+.cmu.is-tucked .cmu-panel { pointer-events: auto; width: 4.5rem; overflow: hidden; }
+.cmu.is-tucked :is(.cmu-head, .cmu-body, .cmu-foot) { display: none; }
+.cmu.is-tucked .cmu-dw { display: none; }
+.cmu-hide { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.75rem; background: var(--color-light-beige); font-size: 0.875rem; line-height: 1.45; color: var(--color-ink-muted); }
+.cmu-hide span { flex: 1; }
 /* the tables' own way in: a quiet Upload / Replace on each row, a matrix cell that takes a file */
 .cd-up { display: inline-flex; align-items: center; gap: 0.3125rem; height: 2rem; padding: 0 0.625rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface, #fff); font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink); white-space: nowrap; cursor: pointer; }
 .cd-up:hover { border-color: var(--color-ink-subtle); background: var(--color-off-white); }
@@ -358,25 +367,25 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
   const SPIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
   const OK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd"/></svg>';
   const WARN = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd"/></svg>';
+  const FOLD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg>';
   const size = (b) => (!b ? '' : b < 1e6 ? Math.max(1, Math.round(b / 1e3)) + ' KB' : (b / 1e6).toFixed(1) + ' MB');
 
-  let toastEl = null, toastT = 0;
-  const toast = (html) => {
-    if (!toastEl) { toastEl = document.createElement('div'); toastEl.className = 'cmu-toast'; toastEl.setAttribute('role', 'status'); document.body.appendChild(toastEl); }
-    toastEl.innerHTML = OK + `<span>${html}</span>`; toastEl.classList.add('is-on');
-    clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('is-on'), 4200);
-  };
+  // the toast, shared with the pages that show ALMA reading on their own (js/alma-job.js)
+  const toast = (html, act) => { if (window.CMAlmaJob) window.CMAlmaJob.toast(html, act); };
 
   const open = (spec, opts = {}) => {
     const R0 = resolve(spec); if (!R0 || !R0.pool.length) return false;
     const { pool, focus } = R0;
     const fs = focus && pool.find((s) => s.key === focus);
     let files = [...(opts.files || [])], step = 1, results = [], reading = 0, reviews = [], stage = 0;
+    // a job picked up from another page opens at once with its files' names; the files follow
+    if (opts.later) opts.later.then((list) => list.forEach((f, k) => { const was = files[k]; files[k] = f; results.forEach((r) => { if (r.file === was) r.file = f; }); }));
     const last = document.activeElement;
     const el = document.createElement('div');
     el.className = 'cmu'; el.hidden = true;
     el.innerHTML = `<div class="cmu-scrim" data-x></div><div class="cmu-panel" role="dialog" aria-modal="true" aria-labelledby="cmu-h" tabindex="-1">
-      <header class="cmu-head"><div class="cmu-t"><p class="eyebrow">ALMA</p><h2 id="cmu-h">${esc(R0.title)}</h2><p>${R0.lead}</p></div><button type="button" class="cmu-x" data-x aria-label="Close">${XI}</button></header>
+      <header class="cmu-head"><div class="cmu-t"><p class="eyebrow">ALMA</p><h2 id="cmu-h">${esc(R0.title)}</h2><p>${R0.lead}</p></div><span class="cmu-acts"><button type="button" class="cmu-fold" data-tuck aria-label="Hide the panel" title="Hide the panel">${FOLD}</button><button type="button" class="cmu-x" data-x aria-label="Close">${XI}</button></span></header>
+      <nav class="cmu-rail" aria-label="ALMA, uploading documents" hidden>${window.CMAlmaJob ? window.CMAlmaJob.rail() : ''}</nav>
       <div class="cmu-body" id="cmu-body"></div><footer class="cmu-foot" id="cmu-foot"></footer>
       <input type="file" id="cmu-file" multiple hidden></div>`;
     document.body.appendChild(el);
@@ -454,7 +463,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const v = s ? valsOf(r) : {};
       const read = s ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><dl class="pd-facts cdd-facts">${kv(s.who ? 'Name on it' : 'Holder', esc(s.who || plain(M.D.company || 'Your company')))}${FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => kv(l, esc(v[f]))).join('')}</dl></section>`
         : `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><p class="cdd-desc">She couldn&rsquo;t tell which document this is. Choose where it goes in the drawer.</p></section>`;
-      q('cmu-dw-body').innerHTML = (window.CMFiles ? window.CMFiles.view({ name: r.file.name, type: r.file.type, size: r.file.size, blob: r.file }) : '') + read;
+      // the page with each value she read highlighted, the file as uploaded one click away (js/doc-files.js)
+      const rec = { name: r.file.name, type: r.file.type, size: r.file.size, blob: r.file };
+      const spec = s ? { title: plain(label(s)), file: r.file.name, issuer: v.by && !/^(Not applicable|No expiry)$/.test(v.by) ? v.by : '', fields: [{ name: s.who ? 'Name on it' : 'Holder', value: s.who || plain(M.D.company || 'Your company') }].concat(FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => ({ name: l, value: v[f] }))) } : null;
+      q('cmu-dw-body').innerHTML = (window.CMFiles ? (spec && window.CMFiles.preview ? window.CMFiles.preview(rec, spec) : window.CMFiles.view(rec)) : '') + read;
       // as the setup's: whether it's accepted, Make changes, Accept
       q('cmu-dw-foot').textContent = !r.on ? 'Left out' : !s ? 'Needs a place' : r.ok ? 'Accepted' : 'Not accepted yet';
       q('cmu-dw-acts').innerHTML = !s || !r.on ? '' : `<button type="button" class="link-btn" data-dwedit>Make changes</button>${r.ok ? `<span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-dwaccept${lapsedR(r) ? ' disabled title="Give it a new expiry date, or mark the date not applicable"' : ''}>${TICK}Accept</button>`}`;
@@ -493,6 +505,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         foot.innerHTML = `<button type="button" class="link-btn" data-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-read${files.length ? '' : ' disabled'}>${files.length > 1 ? `Check ${files.length} files with ALMA` : 'Check it with ALMA'}</button>`;
       } else if (step === 2) {
         body.innerHTML = `<div class="cmu-list"><h3>ALMA is reading</h3>${files.map((f, k) => `<div class="cmu-f ${k < reading ? 'is-done' : k === reading ? 'is-reading' : ''}"><span class="cmu-ic">${k < reading ? OK : k === reading ? SPIN : FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${k < reading ? 'Checked' : k === reading ? 'Reading the name, dates and issuer&hellip;' : 'Waiting'}</small></div>`).join('')}</div>`;
+        body.insertAdjacentHTML('afterbegin', `<div class="cmu-hide"><span>${files.length > 1 ? 'This can take a few minutes.' : 'This can take a minute.'} Hide the panel and keep working: I&rsquo;ll let you know when I&rsquo;m done.</span><button type="button" class="btn btn-quiet btn-sm" data-tuck>Hide panel</button></div>`);
         foot.innerHTML = '<span class="cmu-foot-l">Checking each one with the body that issued it.</span>';
       } else {
         // as the setup's review (js/guided-upload.js): how many are accepted, Accept all; expired first
@@ -537,15 +550,49 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       }
     };
     const add = (list) => { const l = [...(list || [])]; if (!l.length) return; files = files.concat(l); step = 1; paint(); };
-    const read = () => {
-      step = 2; reading = 0; paint();
+    // folded to its rail: the page in full view while she reads; the rail (or the toast) opens it again
+    let tucked = false;
+    const rail = () => {
+      const n = results.filter((x) => x.on).length || files.length;
+      if (window.CMAlmaJob) window.CMAlmaJob.paint(el.querySelector('.cmu-rail'), step === 2 ? { reading: true, at: Math.min(reading + 1, files.length), total: files.length } : { done: step === 3, n });
+    };
+    const tuck = (on) => {
+      tucked = on; if (on) closePeek();
+      el.classList.toggle('is-tucked', on); el.querySelector('.cmu-rail').hidden = !on;
+      panel.setAttribute('aria-modal', String(!on));
+      [el.querySelector('.cmu-head'), $('cmu-body'), $('cmu-foot')].forEach((x) => { x.inert = on; });
+      if (on) { rail(); el.querySelector('.cmu-rail .cmu-fold').focus({ preventScroll: true }); }
+      else { (el.querySelector('select, [data-save]') || panel).focus({ preventScroll: true }); }
+    };
+    // she reads by the clock, kept as a job for the tab (js/alma-job.js): leave the page and she
+    // carries on; come back and the drawer picks up where she is
+    const read = (job) => {
       const quick = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // a few seconds a file in the demo, so there's time to fold it away (she takes up to two minutes)
+      if (!job) {
+        job = { spec, start: Date.now(), per: quick ? 120 : 2400, files: files.map((f) => ({ name: f.name, type: f.type || '', size: f.size || 0 })) };
+        if (window.CMAlmaJob) window.CMAlmaJob.save(job);
+        if (window.CMFiles) files.forEach((f, k) => window.CMFiles.put(`~job:${k}`, f));
+      }
+      const J = window.CMAlmaJob, at = () => Math.min(files.length, Math.floor((Date.now() - job.start) / job.per));
+      step = 2; reading = at(); paint(); if (tucked) rail();
       const tick = () => {
-        reading += 1;
-        if (reading >= files.length) { results = place(pool, focus, files); step = 3; paint(); el.querySelector('select, [data-save]')?.focus({ preventScroll: true }); return; }
-        paint(); setTimeout(tick, quick ? 120 : 650);
+        if (!el.isConnected || step !== 2) return;
+        reading = at();
+        if (reading >= files.length) {
+          results = place(pool, focus, files); step = 3; paint();
+          if (tucked) {
+            rail();
+            const n = results.filter((x) => x.on).length;
+            if (!job.told) toast(J ? J.doneMsg(n) : 'ALMA has read your files.', ['Review', () => tuck(false)]);
+          } else el.querySelector('select, [data-save]')?.focus({ preventScroll: true });
+          job.told = true; if (J) J.save(job);
+          return;
+        }
+        paint(); if (tucked) rail();
+        setTimeout(tick, Math.max(60, job.start + (reading + 1) * job.per - Date.now() + 30));
       };
-      setTimeout(tick, quick ? 120 : 900);
+      setTimeout(tick, Math.max(60, job.start + (reading + 1) * job.per - Date.now() + 30));
     };
     const save = () => {
       // what was rejected stays as it was; the rest is filed
@@ -571,27 +618,36 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         const msg = parts.join(' &middot; ') + '.';
         // the crew is part of how the pages are drawn: they come back with it, and the message after
         if (nCrew) { M.saveCrew(crew); try { sessionStorage.setItem('cm-upload-toast', msg); } catch (e) {} location.reload(); return; }
-        toast(msg); if (opts.onSaved) opts.onSaved(done); return;
+        say(msg, done); return;
       }
-      toast(done.length === 1 ? `${esc(done[0].slot.name)}${done[0].slot.who ? ` for ${esc(done[0].slot.who)}` : ''} saved. ALMA checked it, valid until ${esc(done[0].read.valid)}.`
-        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`);
-      if (opts.onSaved) opts.onSaved(done);
+      say(done.length === 1 ? `${esc(done[0].slot.name)}${done[0].slot.who ? ` for ${esc(done[0].slot.who)}` : ''} saved. ALMA checked it, valid until ${esc(done[0].read.valid)}.`
+        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`, done);
+    };
+    // the message, and the page brought up to date: by its own callback, or (a job picked up from
+    // another page, which has none) by drawing it again, the message carried over
+    const say = (msg, done) => {
+      if (opts.onSaved) { toast(msg); opts.onSaved(done); return; }
+      if (opts.resumed) { try { sessionStorage.setItem('cm-upload-toast', msg); } catch (e) {} location.reload(); return; }
+      toast(msg);
     };
     const close = () => {
+      if (window.CMAlmaJob) window.CMAlmaJob.clear();
       el.classList.remove('is-open'); document.removeEventListener('keydown', onKey, true);
       dw.classList.remove('is-open');
       setTimeout(() => el.remove(), 300);
       if (last && last.focus && last.isConnected) last.focus({ preventScroll: true });
     };
-    const onKey = (e) => { if (e.key !== 'Escape' || step === 2) return; e.stopPropagation(); if (peek != null) closePeek(); else close(); };
+    const onKey = (e) => { if (e.key !== 'Escape' || step === 2 || tucked) return; e.stopPropagation(); if (peek != null) closePeek(); else close(); };
     document.addEventListener('keydown', onKey, true);
     el.addEventListener('click', (e) => {
       const t = (s) => e.target.closest(s);
-      if (t('[data-x]')) { if (step !== 2) close(); return; }
+      if (t('[data-tuck]')) { tuck(true); return; }
+      if (t('[data-untuck]')) { tuck(false); return; }
+      if (t('[data-x]')) { if (step !== 2 && !tucked) close(); return; }
       if (t('#cmu-drop')) { $('cmu-file').value = ''; $('cmu-file').click(); return; }
       if (t('[data-rm]')) { files.splice(+t('[data-rm]').dataset.rm, 1); paint(); return; }
       if (t('[data-read]')) { if (files.length) read(); return; }
-      if (t('[data-back]')) { closePeek(); step = 1; paint(); return; }
+      if (t('[data-back]')) { closePeek(); step = 1; if (window.CMAlmaJob) window.CMAlmaJob.clear(); paint(); return; }
       if (t('[data-peek]')) { openPeek(+t('[data-peek]').dataset.peek); return; }
       if (t('[data-edit]')) { edit(+t('[data-edit]').dataset.edit); return; }
       if (t('[data-cancel]')) { const k = +t('[data-cancel]').dataset.cancel; results[k].editing = false; paint(); el.querySelector(`[data-edit="${k}"]`)?.focus(); return; }
@@ -680,8 +736,11 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     el.addEventListener('drop', (e) => { e.preventDefault(); if (step !== 2) add(e.dataTransfer.files); });
     paint();
     el.hidden = false;
-    setTimeout(() => { el.classList.add('is-open'); panel.focus({ preventScroll: true }); }, 20);
-    if (files.length && opts.files) setTimeout(read, 200); // dropped straight on a row: ALMA starts reading
+    // picked up from another page, folded: already there, as it was on the page before (no slide in)
+    if (opts.resume && opts.tucked) { el.classList.add('is-still', 'is-open'); requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('is-still'))); }
+    else setTimeout(() => { el.classList.add('is-open'); panel.focus({ preventScroll: true }); }, 20);
+    if (opts.resume) { read(opts.resume); if (opts.tucked) tuck(true); }
+    else if (files.length && opts.files) setTimeout(() => read(), 200); // dropped straight on a row: ALMA starts reading
     return true;
   };
 
@@ -707,5 +766,19 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
   // a message carried over a reload (a worker list approved)
   try { const t = sessionStorage.getItem('cm-upload-toast'); if (t) { sessionStorage.removeItem('cm-upload-toast'); setTimeout(() => toast(t), 500); } } catch (e) {}
 
-  return { open, can, button, wire, toast, NO_FILE };
+  // a job from another page (js/alma-job.js): its files back from the file store, the drawer folded
+  // where she is; how: 'open' or 'review' opens it (from the rail or the toast on another page)
+  const resume = (job, how) => {
+    if (!can(job.spec)) { if (window.CMAlmaJob) window.CMAlmaJob.clear(); return; }
+    // drawn now, before the page first shows, so the move between pages is seamless (css/esg.css)
+    const solo = document.querySelector('.cmj'); if (solo) solo.remove();
+    const stub = job.files.map((m) => new File([''], m.name, { type: m.type }));
+    const back = (m, k) => (window.CMFiles ? window.CMFiles.get(`~job:${k}`) : Promise.resolve(null)).then((r) => (r && r.blob ? new File([r.blob], r.name || m.name, { type: r.type || m.type }) : stub[k]));
+    if (how) history.replaceState(null, '', location.pathname + location.search.replace(/[?&]alma=\w+/, '').replace(/^&/, '?'));
+    open(job.spec, { files: stub, later: Promise.all(job.files.map(back)), resume: job, tucked: !how, resumed: true });
+  };
+  // a job running when this page loads: picked up straight away
+  if (window.CMAlmaJob) { const job = window.CMAlmaJob.get(); if (job) resume(job, new URLSearchParams(location.search).get('alma')); }
+
+  return { open, can, button, wire, toast, resume, NO_FILE };
 })();

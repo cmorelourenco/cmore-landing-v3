@@ -2,8 +2,8 @@
    highlighted, between the page before and the pages after, so an answer can be checked against
    its evidence without leaving the questionnaire. It walks only the citations of the answer it
    was opened from. Prototype: the passage is real, the prose around it is filler picked from the
-   document's name so a page always reads the same; anything but a PDF has no preview, and the
-   drawer says so while still showing the passage. */
+   document's name so a page always reads the same. Every kind of file is shown this way (a Word
+   document or a spreadsheet too), labelled as a simulated preview when it isn't a PDF. */
 window.ESG_DOC = (() => {
   const FILLER = [
     'This document applies to all employees, officers and directors of the Company and, where stated, to third parties acting on its behalf. It is reviewed at least annually by the responsible function and approved by the governance body named in the control sheet.',
@@ -55,19 +55,12 @@ window.ESG_DOC = (() => {
   const render = (c) => {
     const ext = ((/\.([a-z0-9]+)$/i.exec(c.src || '') || [])[1] || '').toLowerCase(), kind = KIND[ext] || 'file';
     $('docd-title').textContent = c.src; $('docd-sub').textContent = c.loc;
-    if (ext !== 'pdf') {
-      $('docd-page').textContent = kind[0].toUpperCase() + kind.slice(1) + ' · no preview';
-      $('docd-note').textContent = '';
-      $('docd-foot').textContent = 'The passage ALMA quoted is shown; the file itself can’t be previewed here.';
-      body.innerHTML = `<div class="docd-none"><span class="docd-ico" aria-hidden="true">${DOC}</span><h4>No preview for this file</h4>
-        <p>This is ${/^[aeiou]/i.test(kind) ? 'an' : 'a'} ${kind} (.${esc(ext)}), and only PDFs can be shown here. Open it in Documents to read it in full.</p>
-        <div class="docd-q"><span>Passage ALMA quoted${c.loc ? ' · ' + esc(c.loc) : ''}</span><blockquote>${marked(c)}</blockquote></div></div>`;
-    } else {
+    {
       const loc = parseLoc(c.loc), seed = hash(c.src + c.loc);
       let total = 14 + (seed % 26); const page = loc.page || 1 + (seed % 9); if (page > total) total = page + 3;
       const first = Math.max(1, page - 1), last = Math.min(total, page + 2);
       $('docd-page').textContent = `Cited on page ${page} of ${total}`;
-      $('docd-note').textContent = `Showing pages ${first}–${last}`;
+      $('docd-note').textContent = ext === 'pdf' ? `Showing pages ${first}–${last}` : `${kind[0].toUpperCase() + kind.slice(1)} · simulated preview`;
       $('docd-foot').textContent = 'The highlighted passage is the one ALMA quoted.';
       let h = ''; for (let p = first; p <= last; p++) h += sheet(c, p, total, seed, p === page);
       body.innerHTML = h;
