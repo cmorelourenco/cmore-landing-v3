@@ -2,7 +2,8 @@
    pages they can open, and inviting more. The rules themselves (roles, groups, pages, the demo
    team) are js/access.js; this page shows and edits them.
      Owners and admins manage people, roles and groups. A manager invites users, only into groups
-     they are in themselves. A user can't open this page.
+     they are in themselves, and removes the users who are only in those groups. A user can't open
+     this page.
    "Preview as" shows the whole app as someone else on the team would see it (js/access.js).
    Prototype: nothing is emailed. */
 (() => {
@@ -46,8 +47,33 @@
   };
   // changing someone's role or groups, or removing them: an owner anyone; an admin anyone but an owner
   const canEdit = (c, m) => m !== c.v && (c.role === 'owner' || (c.role === 'admin' && m.role !== 'owner'));
+  // removing them: whoever can edit them; and a manager, the users whose groups are all ones the manager is in
+  const canRemove = (c, m) => canEdit(c, m) || (c.role === 'manager' && m !== c.v && m.role === 'user' && (m.groups || []).length > 0 && m.groups.every((g) => c.mine.includes(g)));
 
   const css = `
+.tm-dlg .dlg-card { max-width: 30rem; }
+.tm-dlg .dlg-head { align-items: flex-start; text-align: left; padding: 1.75rem 3.5rem 0.75rem 1.75rem; }
+.tm-dlg .dlg-head h2 { font-size: 1.375rem; padding: 0 !important; }
+.tm-dlg .dlg-body { padding: 0 1.75rem; }
+.tm-dlg ul { margin: 0.25rem 0 0; padding: 0.375rem; list-style: none; border-radius: 0.75rem; background: var(--color-light-beige); display: grid; gap: 0.125rem; max-height: 14rem; overflow: auto; }
+.tm-dlg li { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.625rem; }
+.tm-dlg li > span:last-child { display: grid; min-width: 0; font-size: 0.875rem; line-height: 1.35; }
+.tm-dlg li b { font-weight: 600; }
+.tm-dlg li small { font-size: 0.8125rem; color: var(--color-ink-subtle); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-dlg .tm-pic { width: 2rem; height: 2rem; font-size: 0.75rem; }
+.tm-dlg .dlg-foot { padding: 1.25rem 1.75rem 1.5rem; }
+.tm-dlg .btn.is-danger { background: var(--color-critical) !important; border-color: var(--color-critical) !important; color: #fff !important; }
+.tm-rm { padding: 0.3125rem 0.75rem; border: 1px solid var(--color-critical); border-radius: 999px; background: none; font: inherit; font-size: 0.8125rem; color: var(--color-ink-subtle); cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+.tm-rm:hover { background: var(--color-critical-subtle); color: var(--color-ink); }
+.tm-rm:focus-visible { outline: 2px solid var(--color-critical); outline-offset: 2px; }
+.tm-rmi { display: grid; place-items: center; width: 2rem; height: 2rem; margin: -0.375rem -0.375rem -0.375rem 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--color-ink-subtle); cursor: pointer; transition: background .15s, color .15s; }
+.tm-rmi svg { width: 1.125rem; height: 1.125rem; }
+.tm-rmi:hover { background: var(--color-critical-subtle); color: var(--color-critical); }
+.tm-rmi:focus-visible { outline: 2px solid var(--color-critical); outline-offset: 1px; }
+.tm-selbar .tm-rm { color: var(--color-off-white); }
+.tm-selbar .tm-rm:hover { background: color-mix(in oklab, var(--color-critical) 25%, transparent); }
+.tm-own-st { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.25rem 1rem; margin: 0; padding: 0.625rem 0.875rem; border-radius: 0.625rem; background: var(--color-light-beige); font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-muted); }
+.tm-own-st.is-set { background: var(--color-coral-tint); color: var(--color-ink); }
 .tm-list { display: grid; margin: 0; padding: 0; list-style: none; border: 1px solid var(--color-line); border-radius: 0.875rem; overflow: hidden; }
 .tm-list > li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.5rem 0.875rem; padding: 0.875rem 1rem; }
 .tm-list > li + li { border-top: 1px solid var(--color-mid-beige); }
@@ -111,8 +137,9 @@
 .tm-note { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; border-radius: 0.75rem; background: var(--color-light-beige); font-size: 0.875rem; color: var(--color-ink-subtle); }
 .tm-edit .tm-note, .tm-invite .tm-note { background: var(--color-surface); }
 .tm-as { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1rem; padding: 0.625rem 0.875rem; border: 1px dashed var(--color-sand-400); border-radius: 0.75rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-.tm-as label { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--color-ink); }
-.tm-as select.input { height: 2.25rem; width: auto; font-size: 0.8125rem; }
+.tm-as label { display: flex; align-items: center; gap: 0.5rem; min-width: 0; max-width: 100%; font-weight: 600; color: var(--color-ink); }
+.tm-as select.input { height: 2.25rem; width: auto; min-width: 0; max-width: 100%; font-size: 0.8125rem; }
+#team-body { grid-template-columns: minmax(0, 1fr); }
 .tm-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
 .tm-group { display: grid; align-content: start; gap: 0.5rem; padding: 1rem 1.125rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); }
 .tm-group.is-mine { border-color: var(--color-graphite); }
@@ -275,10 +302,11 @@
 .tm-plan-t small .tm-to { font-weight: 600; }
 .tm-plan > li.is-same { opacity: .7; }
 .tm-perm-note { margin-top: 0.875rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-@media (max-width: 40rem) { .tm-checks, .tm-groups { grid-template-columns: 1fr; } .tm-list > li { grid-template-columns: auto minmax(0, 1fr); } .tm-list.is-sel > li { grid-template-columns: 1rem auto minmax(0, 1fr); } .tm-r { grid-column: 1 / -1; justify-content: flex-start; padding-left: 3.125rem; } }`;
+@media (max-width: 40rem) { .tm-checks, .tm-groups { grid-template-columns: 1fr; } .tm-list > li { grid-template-columns: auto minmax(0, 1fr); } .tm-list.is-sel > li { grid-template-columns: 1rem auto minmax(0, 1fr); } .tm-r { grid-column: 1 / -1; justify-content: flex-start; padding-left: 3.125rem; } .tm-r .tm-rmi { margin-left: auto; } }`;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
   const initials = (n) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
+  const BIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5h17"/><path d="M8.5 6.5V5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v1.5"/><path d="M5.5 6.5l.85 12.2A2.5 2.5 0 0 0 8.84 21h6.32a2.5 2.5 0 0 0 2.49-2.3l.85-12.2"/><path d="M10 11v5.5M14 11v5.5"/></svg>';
   const MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
   const gName = (t, id) => (t.groups.find((g) => g.id === id) || {}).name;
   // what someone sees, as tags: everything for an owner or admin, their groups otherwise
@@ -302,7 +330,7 @@
       const roles = ORDER.filter((r) => c.grants.includes(r) || r === m.role);
       const pickBox = selecting ? (edit ? `<input type="checkbox" class="tm-sel" data-sel="${i}"${sel.has(i) ? ' checked' : ''} aria-label="Select ${esc(m.name)}">` : '<span></span>') : '';
       return `<li class="${sel.has(i) ? 'is-picked' : ''}${changed.has(i) ? ' is-changed' : ''}">${pickBox}<span class="tm-pic" aria-hidden="true">${esc(initials(m.name))}</span><span class="tm-t"><b>${esc(m.name)}${m === c.v ? `<span class="tm-you">${as === 'you' ? 'You' : 'Previewing as'}</span>` : ''}</b><small>${esc(m.email)}${m.title ? ' &middot; ' + esc(m.title) : ''}</small><span class="tm-tags">${reach(t, m)}</span></span>`
-        + `<span class="tm-r"><span class="tm-role">${ROLES[m.role][0]}</span>${edit && !open ? `<button type="button" class="tm-x" data-edit="${i}">Edit</button>` : ''}</span>`
+        + `<span class="tm-r"><span class="tm-role">${ROLES[m.role][0]}</span>${edit && !open ? `<button type="button" class="tm-x" data-edit="${i}">Edit</button>` : ''}${canRemove(c, m) && !open ? `<button type="button" class="tm-rmi" data-rm="${i}" aria-label="Remove ${esc(m.name)} from ${esc(cur.name)}" title="Remove from company">${BIN}</button>` : ''}</span>`
         + (open ? `<form class="tm-edit" data-save="${i}">
             <div class="set-f"><label for="tm-er">Role</label><select class="input" id="tm-er" name="role">${roles.map((r) => `<option value="${r}"${r === m.role ? ' selected' : ''}>${ROLES[r][0]}</option>`).join('')}</select></div>
             <div class="tm-scope" data-escope="groups"${grouped(m.role) ? '' : ' hidden'}><span class="tm-lbl">Groups</span>${groupChecks(c, m.groups || [], 'eg')}</div>
@@ -325,7 +353,7 @@
     const peopleHtml = `<div class="tm-ph"><h3 class="set-sub">People in ${esc(cur.name)} <span class="set-opt">${visible.length}</span></h3>${selecting ? `<label class="tm-all"><input type="checkbox" data-sel-all${editable.length && editable.every((i) => sel.has(i)) ? ' checked' : ''}>Select all</label>` : ''}</div>
       ${roleMsg}
       <ul class="tm-list${selecting ? ' is-sel' : ''}${sel.size ? ' has-bar' : ''}" aria-label="People in ${esc(cur.name)}">${visible.map((m) => member(m, t.members.indexOf(m))).join('')}</ul>
-      ${sel.size ? `<div class="tm-selbar${A.previewing() ? ' is-raised' : ''}" role="region" aria-label="Selected people"><span class="tm-selbar-t"><b>${sel.size} selected</b><span>${[...sel].map((i) => t.members[i]).filter(Boolean).map((m) => esc(m.name.split(' ')[0])).join(', ')}</span></span><span class="tm-selbar-a"><button type="button" class="tm-x" data-sel-clear>Clear</button><button type="button" class="btn btn-primary btn-sm" data-dw-open>Change role</button></span></div>` : ''}`;
+      ${sel.size ? `<div class="tm-selbar${A.previewing() ? ' is-raised' : ''}" role="region" aria-label="Selected people"><span class="tm-selbar-t"><b>${sel.size} selected</b><span>${[...sel].map((i) => t.members[i]).filter(Boolean).map((m) => esc(m.name.split(' ')[0])).join(', ')}</span></span><span class="tm-selbar-a"><button type="button" class="tm-x" data-sel-clear>Clear</button><button type="button" class="tm-rm" data-sel-remove>Remove</button><button type="button" class="btn btn-primary btn-sm" data-dw-open>Change role</button></span></div>` : ''}`;
     const invitesHtml = invites.length ? `<h3 class="set-sub">Waiting to accept <span class="set-opt">${invites.length}</span></h3><ul class="tm-list" aria-label="Pending invites">${invites.map(([v, i]) => invite(v, i)).join('')}</ul>` : '';
     box.innerHTML = `
       ${previewBar(t)}
@@ -371,14 +399,20 @@
   let single = false;
   // one person's own access, being edited: pages (or parts of them) on top of their groups
   let dAccess = { content: [], scope: {} }, dAccessErr = '';
+  // with several selected: each keeps their own access ('keep'), or they all get what's picked ('set')
+  let dOwn = 'keep', dAccess0 = { content: [], scope: {} };
+  // above the picker, with several: whether it's in use yet, and the way back to each keeping their own
+  const ownNote = (mode, n, attr) => (mode === 'set'
+    ? `<p class="tm-own-st is-set"><span>All ${n} get exactly what&rsquo;s ticked below, replacing what each had alone.</span><button type="button" class="tm-x" ${attr}>Keep each person&rsquo;s own instead</button></p>`
+    : '<p class="tm-own-st"><span>Nothing changes until you tick something: each keeps what they have now. Tick pages, sections or projects to give them all the same.</span></p>');
   const plan = (c) => [...sel].map((i) => [i, c.t.members[i]]).filter(([, m]) => m).map(([i, m]) => {
     const to = dRole, ng = grouped(to) ? (dGroups.size || single ? [...dGroups] : (m.groups || [])) : [];
     const fg = grouped(m.role) ? (m.groups || []) : [];
-    // their own access: changed only from their Edit; with several selected, each keeps theirs
-    const fa = grouped(m.role) && m.access ? m.access : null;
-    const na = !grouped(to) ? null : single ? (dAccess.content.length ? dAccess : null) : fa;
+    // their own access: what's picked, for one person or for all of them ('set'); else each keeps theirs
+    const fa = grouped(m.role) && m.access ? m.access : null, pickd = single || dOwn === 'set';
+    const na = !grouped(to) ? null : pickd ? (dAccess.content.length ? dAccess : null) : fa;
     const same = m.role === to && fg.join() === ng.join() && JSON.stringify(fa) === JSON.stringify(na);
-    const problem = !canEdit(c, m) ? 'You can&rsquo;t change them' : single && dAccessErr ? 'Pick what they open' : grouped(to) && !ng.length && !na ? 'Needs a group or access of their own' : '';
+    const problem = !canEdit(c, m) ? 'You can&rsquo;t change them' : pickd && dAccessErr ? 'Pick what they open' : grouped(to) && !ng.length && !na ? 'Needs a group or access of their own' : '';
     return { i, m, to, fg, ng, fa, na, same, problem };
   });
   const gl = (t, ids, r, a) => (grouped(r) ? [ids.map((id) => gName(t, id)).filter(Boolean).map(esc).join(', ') || (a ? '' : 'No groups'), a ? `Own: ${own(a)}` : ''].filter(Boolean).join(' + ') : r === 'owner' ? 'Every page · parent and subsidiaries' : 'Every page of this company');
@@ -391,6 +425,8 @@
         <div class="set-f"><span class="tm-lbl">New role</span><div class="tm-roles" role="radiogroup" aria-label="New role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="dw-role" value="${r}"${r === dRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[dRole][1]}</p></div>
         ${grouped(dRole) ? `<div class="set-f"><span class="tm-lbl">Groups${one ? '' : ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>'}</span>${groupChecks(c, [...dGroups], 'dg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
         ${one && grouped(dRole) && manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, just for ${esc(one.m.name.split(' ')[0])}. For when one person needs a little more than a group gives.</p>${picker(dAccess, 'u')}${dAccessErr ? `<p class="set-err" role="alert">${esc(dAccessErr)}</p>` : ''}</div>` : ''}
+        ${!one && grouped(dRole) && manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, such as some of Documents&rsquo; sections or some of the projects.</p>
+          ${ownNote(dOwn, rows.length, 'data-dw-own-keep')}${picker(dAccess, 'u')}${dAccessErr ? `<p class="set-err" role="alert">${esc(dAccessErr)}</p>` : ''}</div>` : ''}
         <div class="set-f"><span class="tm-lbl">What changes</span>
           <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
             <span class="tm-pic" aria-hidden="true">${esc(initials(r.m.name))}</span>
@@ -400,20 +436,18 @@
               ${r.problem ? `<span class="co-badge b-over">${r.problem}</span>` : r.same ? '<span class="co-badge b-neu">No change</span>' : ''}</span>
             ${one ? '' : `<button type="button" class="tm-x" data-unsel="${r.i}" aria-label="Take ${esc(r.m.name)} out">Remove</button>`}</li>`).join('')}</ul></div>
       </div>
-      <footer class="tm-dw-f">${one ? `<button type="button" class="tm-x" data-dw-remove="${one.i}">Remove from ${esc(cur.name)}</button>` : `<span>${moving} change${moving === 1 ? '' : 's'}${stuck ? ` &middot; ${stuck} to sort out` : ''}</span>`}<span class="tm-selbar-a"><button type="button" class="tm-x" data-dw-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-dw-apply${moving && !stuck ? '' : ' disabled'}>Apply ${moving || ''} change${moving === 1 ? '' : 's'}</button></span></footer>`;
+      <footer class="tm-dw-f">${one ? `<button type="button" class="tm-rm" data-dw-remove="${one.i}">Remove user from company</button>` : `<span>${moving} change${moving === 1 ? '' : 's'}${stuck ? ` &middot; ${stuck} to sort out` : ''}</span>`}<span class="tm-selbar-a"><button type="button" class="tm-x" data-dw-close>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-dw-apply${moving && !stuck ? '' : ' disabled'}>Apply ${moving || ''} change${moving === 1 ? '' : 's'}</button></span></footer>`;
   };
   let dwBack = null;
   const openDrawer = () => { dwBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintDrawer(); panel.focus(); };
   const closeDrawer = () => { if (single) { single = false; sel.clear(); dGroups.clear(); paint(); } dw.hidden = true; document.documentElement.style.overflow = ''; if (dwBack && dwBack.isConnected) dwBack.focus(); else { const b = box.querySelector('[data-dw-open]'); if (b) b.focus(); } };
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-dw-close]')) { closeDrawer(); return; }
-    if (pickerAll(e)) { const b = e.target.closest('[data-parts-all], [data-parts-none]'); readOwn(); repaintKeep(`[data-parts-${b.hasAttribute('data-parts-all') ? 'all' : 'none'}="${b.dataset.partsAll || b.dataset.partsNone}"]`); return; }
+    if (e.target.closest('[data-dw-own-keep]')) { dOwn = 'keep'; dAccess = JSON.parse(JSON.stringify(dAccess0)); dAccessErr = ''; repaintKeep('.tm-own .tm-checks input'); return; }
+    if (pickerAll(e)) { const b = e.target.closest('[data-parts-all], [data-parts-none]'); dOwn = 'set'; readOwn(); repaintKeep(`[data-parts-${b.hasAttribute('data-parts-all') ? 'all' : 'none'}="${b.dataset.partsAll || b.dataset.partsNone}"]`); return; }
     const rm = e.target.closest('[data-dw-remove]');
     if (rm) {
-      const t = ctx().t, m = t.members[+rm.dataset.dwRemove];
-      if (!m || !confirm(`Remove ${m.name} from ${cur.name}? They lose access straight away.`)) return;
-      t.members.splice(+rm.dataset.dwRemove, 1); save(cur.id, t); closeDrawer(); paint(); toast(`<b>${esc(m.name)} was removed</b><span>They no longer have access to ${esc(cur.name)}</span>`);
-      return;
+      askRemove([+rm.dataset.dwRemove]); return;
     }
     const u = e.target.closest('[data-unsel]');
     if (u) { sel.delete(+u.dataset.unsel); paint(); if (!sel.size) closeDrawer(); else paintDrawer(); return; }
@@ -432,9 +466,11 @@
   });
   // their own access: read on every change, so the rest of the drawer (what changes, Apply) follows
   const readOwn = () => { const r = readPicker(panel, 'u'); dAccess = { content: r.content, scope: r.scope }; dAccessErr = r.err || ''; };
-  const repaintKeep = (sel0) => { const y = panel.scrollTop; paintDrawer(); panel.scrollTop = y; const el = sel0 && panel.querySelector(sel0); if (el) el.focus({ preventScroll: true }); };
+  // the drawer's body is what scrolls: keep its place across the repaint
+  const keepScroll = (root, fn) => { const b = root.querySelector('.tm-dw-b'), y = b ? b.scrollTop : 0; fn(); const b2 = root.querySelector('.tm-dw-b'); if (b2) b2.scrollTop = y; };
+  const repaintKeep = (sel0) => { keepScroll(panel, paintDrawer); const el = sel0 && panel.querySelector(sel0); if (el) el.focus({ preventScroll: true }); };
   dw.addEventListener('change', (e) => {
-    if (pickerChange(e.target, 'u')) { const f = e.target; readOwn(); repaintKeep(`[name="${f.name}"][value="${f.value}"]`); return; }
+    if (pickerChange(e.target, 'u')) { const f = e.target; dOwn = 'set'; readOwn(); repaintKeep(`[name="${f.name}"][value="${f.value}"]`); return; }
     if (e.target.name === 'dw-role') { dRole = e.target.value; paintDrawer(); const r = panel.querySelector(`[name="dw-role"][value="${dRole}"]`); if (r) r.focus(); return; }
     if (e.target.name === 'dg') { e.target.checked ? dGroups.add(e.target.value) : dGroups.delete(e.target.value); const v = e.target.value; paintDrawer(); const g = panel.querySelector(`[name="dg"][value="${v}"]`); if (g) g.focus(); }
   });
@@ -465,6 +501,43 @@
     el.addEventListener('mouseenter', () => clearTimeout(tm)); el.addEventListener('mouseleave', () => { tm = setTimeout(go, 2500); });
   };
   // previewing the page as someone else on the team
+  // ---- removing people: a word first, since they lose access at once -----------------------------------
+  const rdlg = document.createElement('div');
+  rdlg.className = 'dlg tm-dlg'; rdlg.hidden = true;
+  rdlg.innerHTML = `<div class="dlg-scrim" data-rx></div><div class="dlg-card" role="alertdialog" aria-modal="true" aria-labelledby="tm-rdlg-t" aria-describedby="tm-rdlg-p">
+      <button type="button" class="dlg-x" data-rx aria-label="Close">${XI}</button>
+      <div class="dlg-head"><h2 id="tm-rdlg-t"></h2><p id="tm-rdlg-p"></p></div><div class="dlg-body"><ul id="tm-rdlg-l"></ul></div>
+      <div class="dlg-foot"><button type="button" class="btn btn-quiet" data-rx>Keep them</button><button type="button" class="btn btn-primary is-danger" id="tm-rdlg-go">Remove</button></div></div>`;
+  document.body.appendChild(rdlg);
+  let removing = [], rBack = null;
+  const askRemove = (idx) => {
+    const c = ctx(), ms = idx.map((i) => c.t.members[i]).filter((m) => m && canRemove(c, m));
+    if (!ms.length) return;
+    removing = ms; rBack = document.activeElement;
+    const one = ms.length === 1, first = (m) => esc(m.name.split(' ')[0]);
+    rdlg.querySelector('#tm-rdlg-t').innerHTML = one ? `Remove ${esc(ms[0].name)} from ${esc(cur.name)}?` : `Remove ${ms.length} people from ${esc(cur.name)}?`;
+    rdlg.querySelector('#tm-rdlg-p').innerHTML = `${one ? first(ms[0]) : 'They'} lose${one ? 's' : ''} access to ${esc(cur.name)} straight away and can&rsquo;t sign in to it any more. What they uploaded stays. You can invite them again at any time.`;
+    rdlg.querySelector('#tm-rdlg-l').innerHTML = ms.map((m) => `<li><span class="tm-pic" aria-hidden="true">${esc(initials(m.name))}</span><span><b>${esc(m.name)}</b><small>${esc(m.email)} &middot; ${ROLES[m.role][0]}</small></span></li>`).join('');
+    rdlg.querySelector('#tm-rdlg-go').textContent = one ? `Remove ${ms[0].name.split(' ')[0]}` : `Remove ${ms.length} people`;
+    rdlg.hidden = false; document.documentElement.classList.add('dlg-open');
+    setTimeout(() => rdlg.querySelector('.btn[data-rx]').focus(), 30);
+  };
+  const shutRemove = () => { rdlg.hidden = true; document.documentElement.classList.remove('dlg-open'); removing = []; if (!dw.hidden) document.documentElement.style.overflow = 'hidden'; if (rBack && rBack.isConnected) rBack.focus(); };
+  rdlg.addEventListener('click', (e) => { if (e.target.closest('[data-rx]')) shutRemove(); });
+  rdlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); shutRemove(); } });
+  rdlg.querySelector('#tm-rdlg-go').addEventListener('click', () => {
+    const c = ctx(), t = c.t, gone = new Set(removing.map((m) => m.email)), ms = t.members.filter((m) => gone.has(m.email));
+    if (!ms.length) { shutRemove(); return; }
+    t.members = t.members.filter((m) => !gone.has(m.email));
+    save(cur.id, t);
+    rBack = null; shutRemove();
+    single = false; sel.clear(); dGroups.clear(); changed.clear(); editing = null;
+    if (!dw.hidden) closeDrawer(); else paint();
+    toast(ms.length === 1 ? `<b>${esc(ms[0].name)} was removed</b><span>They no longer have access to ${esc(cur.name)}</span>`
+      : `<b>${ms.length} people were removed</b><span>They no longer have access to ${esc(cur.name)}</span>`);
+    const h = box.querySelector('.tm-ph h3'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
+  });
+
   const previewBar = (t) => manages(teamOf(cur.id).members.find((m) => m.you).role) ? `<div class="tm-as"><span>See the app as someone else on the team would: only the pages they can open.</span><label for="tm-as">Preview as <select class="input" id="tm-as">${t.members.map((m) => `<option value="${m.you ? 'you' : esc(m.email)}"${(m.you ? 'you' : m.email) === as ? ' selected' : ''}>${m.you ? 'You' : esc(m.name)} &middot; ${ROLES[m.role][0]}${grouped(m.role) && (m.groups || []).length ? ' (' + m.groups.map((g) => gName(t, g)).filter(Boolean).map(esc).join(', ') + ')' : ''}</option>`).join('')}</select></label></div>` : '';
   const pickedRole = () => { const r = box.querySelector('[name="tm-role"]:checked') || box.querySelector('input[type="hidden"][name="tm-role"]'); return r ? r.value : null; };
   const showScope = () => {
@@ -562,7 +635,7 @@
 
   // ---- the drawer: the role (and groups) the people picked on the list are invited with ---------------
   const bulkChanged = new Set();
-  let bRole = 'user', bAccess = { content: [], scope: {} }, bAccessErr = '';
+  let bRole = 'user', bAccess = { content: [], scope: {} }, bAccessErr = '', bOwn = 'keep', bAccess0 = { content: [], scope: {} };
   const bGroups = new Set();
   const bdw = document.createElement('div');
   bdw.className = 'tm-dw'; bdw.hidden = true;
@@ -572,8 +645,8 @@
   // each person picked: the role and groups they'd be invited with, and anything in the way
   const bPlan = (c) => { const rows = checkRows(c, bulk.rows); return [...bulk.picked].filter((i) => rows[i]).map((i) => {
     const r = rows[i], from = r.role || '', ng = grouped(bRole) ? (bGroups.size ? [...bGroups] : r.groups) : [];
-    // their own access: set here for one person; several keep each their own
-    const one = bulk.picked.size === 1, fa = grouped(from) ? r.access : null, na = !grouped(bRole) ? null : one ? (bAccess.content.length ? bAccess : null) : fa;
+    // their own access: set here for one person, or for all of them ('set'); else each keeps their own
+    const one = bulk.picked.size === 1 || bOwn === 'set', fa = grouped(from) ? r.access : null, na = !grouped(bRole) ? null : one ? (bAccess.content.length ? bAccess : null) : fa;
     const same = from === bRole && r.groups.join() === ng.join() && JSON.stringify(fa || null) === JSON.stringify(na || null);
     const problem = one && bAccessErr ? 'Pick what they open' : grouped(bRole) && !ng.length && !na ? 'Needs a group or access of their own' : '';
     return { i, r, from, ng, fa, na, same, problem };
@@ -588,6 +661,8 @@
         <div class="set-f"><span class="tm-lbl">Role</span><div class="tm-roles" role="radiogroup" aria-label="Role">${ORDER.filter((r) => c.grants.includes(r)).map((r) => `<label><input type="radio" name="bdw-role" value="${r}"${r === bRole ? ' checked' : ''}>${ROLES[r][0]}</label>`).join('')}</div><p class="tm-role-d">${ROLES[bRole][1]}</p></div>
         ${grouped(bRole) ? `<div class="set-f"><span class="tm-lbl">Groups${rows.length > 1 ? ' <span class="set-opt">&middot; leave empty to keep each person&rsquo;s own</span>' : ''}</span>${groupChecks(c, [...bGroups], 'bdg')}</div>` : '<p class="tm-note">Owners and admins open every page, so groups don&rsquo;t apply.</p>'}
         ${rows.length === 1 && grouped(bRole) && manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, just for ${who(rows[0])}.</p>${picker(bAccess, 'b')}${bAccessErr ? `<p class="set-err" role="alert">${esc(bAccessErr)}</p>` : ''}</div>` : ''}
+        ${rows.length > 1 && grouped(bRole) && manages(c.role) ? `<div class="set-f tm-own"><span class="tm-lbl">Their own access <span class="set-opt">&middot; optional</span></span><p class="tm-role-d">On top of their groups: pages, or parts of them, such as some of Documents&rsquo; sections or some of the projects.</p>
+          ${ownNote(bOwn, rows.length, 'data-bdw-own-keep')}${picker(bAccess, 'b')}${bAccessErr ? `<p class="set-err" role="alert">${esc(bAccessErr)}</p>` : ''}</div>` : ''}
         <div class="set-f"><span class="tm-lbl">Who</span>
           <ul class="tm-plan">${rows.map((r) => `<li class="${r.problem ? 'is-bad' : r.same ? 'is-same' : ''}">
             <span class="tm-pic" aria-hidden="true">${esc(initialsOf(r.r))}</span>
@@ -607,13 +682,15 @@
     const grants = ctx().grants, top = Object.keys(count).filter((r) => grants.includes(r)).sort((a, b) => count[b] - count[a])[0];
     bRole = top || (grants.includes('user') ? 'user' : grants[0]);
     bGroups.clear(); if (picked.length === 1) picked[0].groups.forEach((g) => bGroups.add(g));
-    bAccess = JSON.parse(JSON.stringify(picked.length === 1 && picked[0].access ? picked[0].access : { content: [], scope: {} })); bAccessErr = '';
+    const acc = picked.map((r) => JSON.stringify(r.access || null)), alike = acc.every((x) => x === acc[0]) && acc[0] !== 'null';
+    bAccess = alike ? JSON.parse(acc[0]) : { content: [], scope: {} }; bAccessErr = ''; bOwn = 'keep'; bAccess0 = JSON.parse(JSON.stringify(bAccess));
     bdwBack = document.activeElement; bdw.hidden = false; document.documentElement.style.overflow = 'hidden'; paintBdw(); bpanel.focus();
   };
   const closeBdw = () => { bdw.hidden = true; document.documentElement.style.overflow = ''; if (bdwBack && bdwBack.isConnected) bdwBack.focus({ preventScroll: true }); };
   bdw.addEventListener('click', (e) => {
     if (e.target.closest('[data-bdw-close]')) { closeBdw(); return; }
-    if (pickerAll(e)) { const b = e.target.closest('[data-parts-all], [data-parts-none]'); bReadOwn(); bRepaintKeep(`[data-parts-${b.hasAttribute('data-parts-all') ? 'all' : 'none'}="${b.dataset.partsAll || b.dataset.partsNone}"]`); return; }
+    if (e.target.closest('[data-bdw-own-keep]')) { bOwn = 'keep'; bAccess = JSON.parse(JSON.stringify(bAccess0)); bAccessErr = ''; bRepaintKeep('.tm-own .tm-checks input'); return; }
+    if (pickerAll(e)) { const b = e.target.closest('[data-parts-all], [data-parts-none]'); bOwn = 'set'; bReadOwn(); bRepaintKeep(`[data-parts-${b.hasAttribute('data-parts-all') ? 'all' : 'none'}="${b.dataset.partsAll || b.dataset.partsNone}"]`); return; }
     const u = e.target.closest('[data-bdw-unsel]');
     if (u) { bulk.picked.delete(+u.dataset.bdwUnsel); keepRev(() => paint()); if (!bulk.picked.size) closeBdw(); else paintBdw(); return; }
     if (e.target.closest('[data-bdw-drop]')) {
@@ -632,9 +709,9 @@
     }
   });
   const bReadOwn = () => { const r = readPicker(bpanel, 'b'); bAccess = { content: r.content, scope: r.scope }; bAccessErr = r.err || ''; };
-  const bRepaintKeep = (q) => { const y = bpanel.scrollTop; paintBdw(); bpanel.scrollTop = y; const el = q && bpanel.querySelector(q); if (el) el.focus({ preventScroll: true }); };
+  const bRepaintKeep = (q) => { keepScroll(bpanel, paintBdw); const el = q && bpanel.querySelector(q); if (el) el.focus({ preventScroll: true }); };
   bdw.addEventListener('change', (e) => {
-    if (pickerChange(e.target, 'b')) { const f = e.target; bReadOwn(); bRepaintKeep(`[name="${f.name}"][value="${f.value}"]`); return; }
+    if (pickerChange(e.target, 'b')) { const f = e.target; bOwn = 'set'; bReadOwn(); bRepaintKeep(`[name="${f.name}"][value="${f.value}"]`); return; }
     if (e.target.name === 'bdw-role') { bRole = e.target.value; paintBdw(); const r = bpanel.querySelector(`[name="bdw-role"][value="${bRole}"]`); if (r) r.focus(); return; }
     if (e.target.name === 'bdg') { e.target.checked ? bGroups.add(e.target.value) : bGroups.delete(e.target.value); paintBdw(); const g = bpanel.querySelector(`[name="bdg"][value="${e.target.value}"]`); if (g) g.focus(); }
   });
@@ -855,7 +932,15 @@
     if (e.target.closest('#tm-form .tm-own') && pickerAll(e)) return;
     if (e.target.closest('[data-bulk-template]')) { template(); return; }
     if (e.target.closest('[data-sel-clear]')) { sel.clear(); paint(); return; }
-    if (e.target.closest('[data-dw-open]')) { openDrawer(); return; }
+    if (e.target.closest('[data-dw-open]')) {
+      // their own access starts as what they all have alike, if they do, to keep or change
+      const ms = [...sel].map((i) => t.members[i]).filter(Boolean), acc = ms.map((m) => JSON.stringify(grouped(m.role) && m.access ? m.access : null));
+      // and the role, the one most of them have now (that you can give)
+      const n = {}; ms.forEach((m) => { if (c.grants.includes(m.role)) n[m.role] = (n[m.role] || 0) + 1; });
+      dRole = Object.keys(n).sort((a, b) => n[b] - n[a])[0] || (c.grants.includes('user') ? 'user' : c.grants[0]); dGroups.clear();
+      dOwn = 'keep'; dAccessErr = ''; dAccess = acc.every((x) => x === acc[0]) && acc[0] !== 'null' ? JSON.parse(acc[0]) : { content: [], scope: {} }; dAccess0 = JSON.parse(JSON.stringify(dAccess));
+      openDrawer(); return;
+    }
     if (e.target.closest('[data-bulk-pick]')) { const f = box.querySelector('#tm-bulk-file'); f.value = ''; f.click(); return; }
     if (e.target.closest('[data-bulk-cancel]')) { bulk = null; paint(); document.dispatchEvent(new CustomEvent('cm-team')); return; }
     const be = e.target.closest('[data-bulk-edit]') || (!e.target.closest('input, button, a, label, .tm-rev-c') && e.target.closest('tr[data-bulk-i]'));
@@ -885,7 +970,10 @@
     }
     if (e.target.closest('[data-cancel-edit]')) { editing = null; paint(); return; }
     const r = e.target.closest('[data-remove]');
-    if (r) { const m = t.members[+r.dataset.remove]; if (!confirm(`Remove ${m.name} from ${cur.name}? They lose access straight away.`)) return; t.members.splice(+r.dataset.remove, 1); editing = null; save(cur.id, t); paint(); return; }
+    if (r) { askRemove([+r.dataset.remove]); return; }
+    const rmb = e.target.closest('[data-rm]');
+    if (rmb) { askRemove([+rmb.dataset.rm]); return; }
+    if (e.target.closest('[data-sel-remove]')) { askRemove([...sel]); return; }
     const cn = e.target.closest('[data-cancel]');
     if (cn) { t.invites.splice(+cn.dataset.cancel, 1); save(cur.id, t); paint(); return; }
     const s = e.target.closest('[data-resend]');
@@ -1017,9 +1105,10 @@
     ['Pages they open', [SOME('All of them'), SOME('All of them'), SOME('The ones their groups, or their own access, give them, whole or in part'), SOME('The ones their groups, or their own access, give them, whole or in part')]],
     ['Upload and edit, on those pages', [YES, YES, YES, NO]],
     ['Invite people', [SOME('Any role'), SOME('Admins, managers and users'), SOME('Users, into their own groups'), NO]],
-    ['Change roles and groups, remove people', [YES, SOME('Except owners'), NO, NO]],
+    ['Change roles and groups', [YES, SOME('Except owners'), NO, NO]],
+    ['Remove people', [YES, SOME('Except owners'), SOME('Users only in their own groups'), NO]],
     ['Create and edit groups', [YES, YES, NO, NO]],
-    ['Team management', [YES, YES, SOME('To invite users'), NO]],
+    ['Team management', [YES, YES, SOME('To invite and remove users'), NO]],
     ['Company settings and billing', [YES, YES, NO, NO]],
     ['Add subsidiaries and new companies', [YES, NO, NO, NO]],
   ];

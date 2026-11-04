@@ -37,7 +37,7 @@ window.CMAccess = (() => {
   const ROLES = {
     owner: ['Owner', 'Every page, on the parent company and its subsidiaries.'],
     admin: ['Admin', 'Every page of this company, people and permissions included.'],
-    manager: ['Manager', 'The pages their groups give them, to edit. Invites users to them.'],
+    manager: ['Manager', 'The pages their groups give them, to edit. Invites users to them, and removes them.'],
     user: ['User', 'The pages their groups give them, to view.'],
   };
   const ORDER = Object.keys(ROLES);
@@ -191,7 +191,7 @@ window.CMAccess = (() => {
       main.innerHTML = `<section class="co-sec"><div class="co-wrap"><div class="co-card" style="max-width:36rem;margin:3rem auto;padding:2rem;display:grid;gap:0.75rem;text-align:center">
         <span class="eyebrow" style="justify-self:center">No access</span>
         <h1 class="co-h-l" style="font-size:1.75rem">${as ? esc(v.name.split(' ')[0]) + ' can&rsquo;t' : 'You can&rsquo;t'} open ${NAME_OF[page]}.</h1>
-        <p class="co-muted">${page === 'team' ? 'Only owners, admins and managers can. Managers use it to invite users into their groups.' : page === 'settings' ? 'Only owners and admins can.' : grouped(v.role) ? `It isn&rsquo;t part of ${as ? 'their' : 'your'} access${(v.groups || []).length ? ` (${v.groups.map((id) => (t.groups.find((g) => g.id === id) || {}).name).filter(Boolean).map(esc).join(', ')})` : ''}. An admin can add ${as ? 'them' : 'you'} to a group that includes it, or give it to ${as ? 'them' : 'you'} alone.` : 'Ask an owner or an admin of this company.'}</p>
+        <p class="co-muted">${page === 'team' ? 'Only owners, admins and managers can. Managers use it to invite and remove users in their groups.' : page === 'settings' ? 'Only owners and admins can.' : grouped(v.role) ? `It isn&rsquo;t part of ${as ? 'their' : 'your'} access${(v.groups || []).length ? ` (${v.groups.map((id) => (t.groups.find((g) => g.id === id) || {}).name).filter(Boolean).map(esc).join(', ')})` : ''}. An admin can add ${as ? 'them' : 'you'} to a group that includes it, or give it to ${as ? 'them' : 'you'} alone.` : 'Ask an owner or an admin of this company.'}</p>
         <a class="btn btn-primary" style="justify-self:center" href="my-company.html?filled">Go to the company overview</a></div></div></section>`;
     }
     // the preview bar
