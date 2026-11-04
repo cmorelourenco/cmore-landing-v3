@@ -217,7 +217,7 @@
     if (k.state === 'pending') return asked;
     if (k.state === 'declined') return asked.concat([{ at: k.on, tone: 'off', what: `You declined ${esc(k.title)}`, sub: 'They see none of it' }]);
     const given = { at: k.granted, tone: 'ok', what: `You gave consent: ${esc(k.title)}`, sub: `${For(k)} &middot; ${n(k)}` };
-    if (k.state === 'stopped') return asked.concat([given, { at: k.on, tone: 'off', what: `You stopped sharing ${esc(k.title)}`, sub: `They no longer see its ${n(k)}` }]);
+    if (k.state === 'stopped') return asked.concat([given, { at: k.on, tone: 'off', what: `You stopped sharing ${esc(k.title)}`, sub: 'They keep what they were shown until then; nothing you upload after reaches them' }]);
     // what ran out while they could see it
     return asked.concat([given], k.docs.filter((d) => d.status === 'expired' && when(d.valid)).map((d) => ({ at: d.valid, tone: 'bad', what: `${esc(d.name)} expired`, sub: `They see it as expired, under ${esc(k.title)}` })));
   });
@@ -228,17 +228,37 @@
   };
 
   // ---- one client: what it's waiting for, what you share, what you no longer share -------------------
-  const rowsOf = (k, exp = true) => k.docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}${d.tone === 'bad' ? ' &middot; <a class="cl-fix" href="company-details.html">Fix in Documents</a>' : ''}</span></td><td class="hide-s">${esc(d.requirement || '')}</td><td>${tag(d)}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(d.valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(d.valid)}</td>` : ''}</tr>`).join('');
+  // each document's versions, and which of them this client sees (js/doc-model.js, CM_VERSIONS)
+  const V = window.CM_VERSIONS, vOpen = new Set();
+  const vKey = (k, d) => `${k.id}|${d.code}`;
+  const vRow = (k, d) => (V && vOpen.has(vKey(k, d)) ? `<tr class="cmv-tr"><td colspan="4">${V.list(d.versions, { owner: true, cur: tag(d), they: k.state === 'given' ? 'They see it' : 'They keep it' })}</td></tr>` : '');
+  const vBtn = (k, d) => (V && d.versions ? V.button(vKey(k, d), d.versions, { owner: true, open: vOpen.has(vKey(k, d)), verb: k.state === 'given' ? 'Sees' : 'Keeps' }) : '');
+  // a consent they no longer have: what they keep of each document, the newest version they saw
+  const keptOf = (d) => (d.kept ? { st: d.kept.current ? tag(d) : V.stateOf(d.kept) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-neu">Replaced</span>', valid: d.kept.valid, say: d.kept.current ? 'The current version' : `${esc(d.kept.label)}` } : null);
+  const rowsOf = (k, exp = true) => k.docs.map((d) => {
+    const kp = k.state === 'stopped' ? keptOf(d) : null, gone = k.state === 'stopped' || k.state === 'declined';
+    const st = gone ? (kp ? kp.st : '<span class="co-badge b-neu">Not shared</span>') : tag(d), valid = gone ? (kp ? kp.valid : '—') : d.valid;
+    const sub = gone ? (kp ? `They keep: ${kp.say}` : 'They never saw it') : `${esc(d.code)} &middot; ${esc(d.section)}${d.tone === 'bad' ? ' &middot; <a class="cl-fix" href="company-details.html">Fix in Documents</a>' : ''}`;
+    return `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${sub}</span>${k.state === 'pending' || k.state === 'declined' ? '' : vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td>${st}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}</tr>${k.state === 'pending' || k.state === 'declined' ? '' : vRow(k, d)}`;
+  }).join('');
   const table = (k, title, b) => `<table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp"></colgroup><thead>
       <tr class="sp-ch"><td colspan="4"><div class="cl-ch"><div><h3>${esc(k.title)}</h3><p>${title}</p></div>${b}</div></td></tr>
-      <tr><th>Document</th><th class="hide-s">Requirement</th><th>${k.state === 'given' ? 'They see' : 'Status'}</th><th class="c cl-exp-c">Expiry date</th></tr></thead><tbody>${rowsOf(k)}</tbody></table>`;
+      <tr><th>Document</th><th class="hide-s">Requirement</th><th>${k.state === 'given' ? 'They see' : k.state === 'stopped' ? 'They keep' : 'Status'}</th><th class="c cl-exp-c">Expiry date</th></tr></thead><tbody>${rowsOf(k)}</tbody></table>`;
   const given = (k) => `<article class="sp-consent" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; given on ${esc(k.granted)} &middot; ${n(k)}`, '<span class="co-badge b-ok">Sharing</span>')}
-      <div class="cl-acts"><span>When you renew one of these, they see the new one.</span><span><button type="button" class="btn co-btn-ghost co-btn-sm cl-stop" data-stop="${esc(k.id)}">Stop sharing</button></span></div></article>`;
+      <div class="cl-acts"><span>When you renew one of these, they see the new one, and keep the earlier ones they&rsquo;ve seen.</span><span><button type="button" class="btn co-btn-ghost co-btn-sm cl-stop" data-stop="${esc(k.id)}">Stop sharing</button></span></div></article>`;
   const asked = (k) => `<article class="sp-consent is-pending" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; asked on ${esc(k.asked)} &middot; ${n(k)}`, '<span class="co-badge b-pend">Waiting for your answer</span>')}
-      <div class="cl-acts"><span>${CLOCK}Nothing is shared until you say yes.</span><span><button type="button" class="link-btn" data-decline="${esc(k.id)}">Decline</button><button type="button" class="btn btn-primary btn-sm" data-share="${esc(k.id)}">Share these ${n(k)}</button></span></div></article>`;
-  const gone = (k) => `<article class="sp-consent is-removed" data-k="${esc(k.id)}">
+      <div class="cl-acts"><span>${CLOCK}Nothing is shared until you say yes. Then they see the current version of each, as it is today, and every one you upload after.</span><span><button type="button" class="link-btn" data-decline="${esc(k.id)}">Decline</button><button type="button" class="btn btn-primary btn-sm" data-share="${esc(k.id)}">Share these ${n(k)}</button></span></div></article>`;
+  // stopped: they keep what they were shown until then (each document's newest version they saw),
+  // and see nothing uploaded after; declined: they never saw any of it
+  const gone = (k) => {
+    const kept = k.state === 'stopped' && k.docs.some((d) => d.kept);
+    const again = `<button type="button" class="btn co-btn-ghost co-btn-sm" data-share="${esc(k.id)}">${k.state === 'declined' ? 'Share these' : 'Share again'}</button>`;
+    if (!kept) return `<article class="sp-consent is-removed" data-k="${esc(k.id)}">
       <header class="sp-consent-h"><div><h3>${esc(k.title)}</h3><p>${For(k)} &middot; ${k.state === 'declined' ? `declined on ${esc(k.on)}` : `given on ${esc(k.granted)} &middot; stopped on ${esc(k.on)}`}</p></div><span class="co-badge b-neu">${k.state === 'declined' ? 'Declined' : 'Stopped'}</span></header>
-      <div class="sp-wait"><span>They no longer see: ${k.docs.map((d) => esc(d.name)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-share="${esc(k.id)}">${k.state === 'declined' ? 'Share these' : 'Share again'}</button></div></article>`;
+      <div class="sp-wait"><span>They don&rsquo;t see: ${k.docs.map((d) => esc(d.name)).join(', ')}.</span>${again}</div></article>`;
+    return `<article class="sp-consent is-removed" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; given on ${esc(k.granted)} &middot; stopped on ${esc(k.on)}`, '<span class="co-badge b-neu">Stopped</span>')}
+      <div class="cl-acts"><span>They keep what you shared until ${esc(k.on)}, as it was. Nothing you upload from then on reaches them.</span><span>${again}</span></div></article>`;
+  };
   const page = (c) => {
     document.title = `${c.name} · My clients · C-MORE`;
     if (crumb) crumb.innerHTML = `<a href="my-company.html?filled">My company</a><span aria-hidden="true">/</span><a href="clients.html">My clients</a><span aria-hidden="true">/</span><span aria-current="page">${esc(c.name)}</span>`;
@@ -297,6 +317,8 @@
   const go = (r) => { location.href = `clients.html?id=${encodeURIComponent(r.dataset.cl)}`; };
   box.addEventListener('click', (e) => {
     const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
+    const vb = e.target.closest('[data-vers]');
+    if (vb) { const key = vb.dataset.vers; vOpen.has(key) ? vOpen.delete(key) : vOpen.add(key); const y = scrollY; paint(); scrollTo(0, y); const b = box.querySelector(`[data-vers="${CSS.escape(key)}"]`); if (b) b.focus({ preventScroll: true }); return; }
     const r = e.target.closest('[data-cl]'); if (r) { go(r); return; }
     const s = e.target.closest('[data-stop]'); if (s) { ask(s.dataset.stop); return; }
     const sh = e.target.closest('[data-share]');

@@ -82,37 +82,8 @@
   const rosterConf = (d) => { const l = d.roster.filter((r) => !NO_FILE.includes(r.status)).map((r) => (r.status === 'attention' ? 61 : 86 + (hash(d.code + r.i) % 14))); return l.length ? Math.min(...l) : null; };
 
   // ---- earlier versions ---------------------------------------------------------------------------
-  // Every document keeps the versions it replaced. A monthly one has last month's, and the month
-  // before; a yearly one last year's; one renewed on change, the one before the change. Prototype:
-  // made up from each document's renewal rule and its current issue date, the same every time.
-  const MON = MONTHS;
-  const parse = (s) => { const m = /^(\d{1,2}) (\w{3}) (\d{4})$/.exec(s || ''); return m ? new Date(+m[3], MON.indexOf(m[2]), +m[1]) : null; };
-  const fmt = (dt) => `${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}`;
-  const addM = (dt, n) => new Date(dt.getFullYear(), dt.getMonth() + n, Math.min(dt.getDate(), 28));
-  const versionsOf = (d) => {
-    // a company added in this session has only the file it just uploaded
-    if (d.kind || NO_FILE.includes(d.status) || d.status === 'archived' || window.DOC_MODEL.ORG) return [];
-    const now = parse(d.issued); if (!now) return [];
-    const r = (d.cat.renewal || '').toLowerCase(), h = hash(d.code);
-    const monthly = /month/.test(r) && !/6/.test(r);
-    const step = monthly ? 1 : /6|six/.test(r) ? 6 : /3 years/.test(r) ? 36 : /1.2 years/.test(r) ? 18 : /change|revision|amend|plan|client|entry|delivery|transport|assembly|posting|product/.test(r) || !r ? 0 : 12;
-    const n = monthly ? 4 : step ? 2 + (h % 2) : 1;
-    const gap = step || 14 + (h % 18);
-    const who = monthly ? ['Ana Rocha, accountant', 'Ana Rocha, accountant', 'Miguel Ferreira'] : ['Miguel Ferreira', 'Helena Ferreira'];
-    const out = [];
-    let replacedOn = now;
-    for (let k = 1; k <= n; k++) {
-      const issued = addM(now, -gap * k);
-      const expires = d.valid === 'No expiry' ? 'No expiry' : monthly ? fmt(addM(issued, 1)) : fmt(addM(issued, step || 12));
-      out.push({
-        label: monthly ? `${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][issued.getMonth()]} ${issued.getFullYear()}` : `Version of ${fmt(issued)}`,
-        issued: fmt(issued), valid: expires, replaced: fmt(replacedOn), by: who[k % who.length],
-        ref: d.ref ? refOf(d.code + k, String(issued.getFullYear())) : '', conf: 86 + (hash(d.code + k) % 13),
-      });
-      replacedOn = issued;
-    }
-    return out;
-  };
+  // Every document keeps the versions it replaced, newest first (js/doc-model.js)
+  const versionsOf = window.DOC_MODEL.versionsOf;
 
   const citeFor = (d) => {
     const fl = d.cat.fields || [];
@@ -147,7 +118,7 @@
     const noteRow = d.note ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="5"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}</span></td></tr>` : '';
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}${noteRow ? ' has-note' : ''}"${attrs}>` +
-      `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span></td>` +
+      `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span>${!hasRoster && nv > 1 ? `<button type="button" class="cmv-btn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}">${nv} versions${CHEV_D}</button>` : ''}</td>` +
       `<td>${d.valid === '—' ? dash : window.DOC_MODEL.expHtml(d.valid)}</td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
@@ -158,8 +129,8 @@
   // any of them opens in the drawer (earlier ones read-only)
   const history = (d) => {
     const vs = versionsOf(d);
-    const cur = NO_FILE.includes(d.status) ? '' : `<tr class="is-cur" data-version="${d.id}:0" tabindex="0" role="button"><td><b>Current</b><span class="d">${d.status === 'archived' ? 'Archived' : 'In use'} &middot; ${esc(d.ref || '—')}</span></td><td>${d.issued === '—' ? dash : d.issued}</td><td>${d.valid === '—' ? dash : d.valid}</td><td>${dash}</td><td>${confCell(confOf(d))}</td><td class="cd-h-go">Open</td></tr>`;
-    const rows = vs.map((v, k) => `<tr data-version="${d.id}:${k + 1}" tabindex="0" role="button"><td><b>${esc(v.label)}</b><span class="d">Archived &middot; ${esc(v.ref || '—')} &middot; uploaded by ${escE(v.by)}</span></td><td>${v.issued}</td><td>${v.valid}</td><td>${v.replaced}</td><td>${confCell(v.conf)}</td><td class="cd-h-go">Open</td></tr>`).join('');
+    const cur = NO_FILE.includes(d.status) ? '' : `<tr class="is-cur" data-version="${d.id}:0" tabindex="0" role="button"><td><b>Current</b><span class="d">${d.status === 'archived' ? 'Archived' : 'In use'} &middot; ${d.ref || '—'}</span></td><td>${d.issued === '—' ? dash : d.issued}</td><td>${d.valid === '—' ? dash : d.valid}</td><td>${dash}</td><td>${confCell(confOf(d))}</td><td class="cd-h-go">Open</td></tr>`;
+    const rows = vs.map((v, k) => `<tr data-version="${d.id}:${k + 1}" tabindex="0" role="button"><td><b>${esc(v.label)}</b><span class="d">Archived &middot; ${v.ref || '—'} &middot; uploaded by ${escE(v.by)}</span></td><td>${v.issued}</td><td>${v.valid}</td><td>${v.replaced}</td><td>${confCell(v.conf)}</td><td class="cd-h-go">Open</td></tr>`).join('');
     const empty = !cur && !rows ? `<p class="cd-h-none">No versions yet. Once a file is uploaded, every version it replaces is kept here.</p>`
       : !rows ? `<p class="cd-h-none">No earlier versions: this is the first one on C&#8209;MORE.</p>` : '';
     return `<tr class="cd-exp"><td colspan="5"><div class="cd-hist">
@@ -267,7 +238,11 @@
       <div class="cdd-na-acts"><button type="submit" class="btn btn-primary btn-sm" id="cdd-na-go" disabled>Mark as not applicable</button></div>
     </form>` : '';
     // the file (js/doc-files.js): a row that opens its preview
-    dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + about;
+    // every version, current and earlier, valid or expired: any opens here (earlier ones read-only)
+    const V = window.CM_VERSIONS, all = V && hasFile || v ? window.DOC_MODEL.allVersionsOf(d) : [];
+    const versions = all.length > 1 ? `<section class="cdd-card"><h4 class="eyebrow">Versions</h4><p class="cdd-desc">Every version stays here, valid or expired. Clients keep the ones they were shown, even after you stop sharing.</p>
+      <ul class="cmv">${all.map((x, k) => `<li class="cmv-i is-link${k === vk ? ' is-on' : ''}" data-cdd-ver="${k}" role="button" tabindex="0" aria-current="${k === vk}"><span class="cmv-t"><b>${x.current ? 'Current' : esc(x.label)}${k === vk ? ' <small class="cmv-here">Showing</small>' : ''}</b><small>Uploaded ${esc(x.uploaded || x.issued)} &middot; ${x.valid === 'No expiry' ? 'no expiry' : !V.parse(x.valid) ? 'no expiry date yet' : x.current ? `expiry date ${esc(x.valid)}` : `${V.stateOf(x) === 'expired' ? 'expired' : 'valid until'} ${esc(x.valid)}`}</small></span><span class="cmv-s">${x.current ? `<span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>` : V.stateOf(x) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-neu">Replaced</span>'}</span></li>`).join('')}</ul></section>` : '';
+    dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + versions + about;
     dq('cdd-body').scrollTop = 0;
     // the page with each value ALMA read highlighted, numbered as the citations: Preview opens it in a
     // drawer of its own beside this one, as the setup's (js/doc-files.js)
@@ -314,6 +289,7 @@
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) { closeDrawer(); return; }
     if (e.target.closest('[data-cdd-cur]')) { dState.v = 0; drawDoc(); return; }
+    const cv = e.target.closest('[data-cdd-ver]'); if (cv) { dState.v = +cv.dataset.cddVer; dState.cite = null; drawDoc(); return; }
     const up = e.target.closest('[data-cdd-up]');
     if (up) { const d = docById(dState.list[dState.k]); if (window.CMUpload) window.CMUpload.open(`doc:${d.id}`, { onSaved: () => { render(); drawDoc(); } }); return; }
     if (e.target.closest('[data-na-open]')) { dState.na = true; drawDoc(); const first = dw.querySelector('[name="na-r"]'); if (first) first.focus(); return; }
@@ -360,6 +336,7 @@
   });
   document.addEventListener('keydown', (e) => {
     if (dw.hidden) return;
+    const cv = e.target.closest && e.target.closest('[data-cdd-ver]'); if (cv && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); cv.click(); return; }
     if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); }
     else if (e.target.closest && e.target.closest('input, textarea')) return;
     else if (e.key === 'ArrowLeft' && !dState.v) stepDoc(-1);

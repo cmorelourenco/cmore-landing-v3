@@ -4,6 +4,93 @@
    machines), the state of each document (status, dates, reference, note), and the marks the company
    makes itself (Not applicable). Pages read window.DOC_MODEL; none of them keeps a copy of its own,
    so the homepage's counts and alerts always match the Documents page. */
+/* A document's versions, and who sees which. Every document keeps the versions it replaced: the
+   company sees them all, current and earlier, valid or expired. A client sees a version if it was
+   the current one when the client was given consent, or was uploaded while the consent stood: so
+   a client keeps what it was shown after the consent is stopped, never sees what's uploaded after,
+   and one given consent today sees only the current version, expired or not.
+   window.CM_VERSIONS: parse(date), fmt(date), addM(date, months), seen(versions, periods), stateOf(version),
+     list(versions, { owner, cur }) and button(key, versions, { owner, open }): the list under a row, and its toggle.
+     versions: newest first, each { uploaded, valid, … }; periods: [{ from, to }] (dates, to null while it stands). */
+window.CM_VERSIONS = (() => {
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const parse = (s) => { const m = /^(\d{1,2}) (\w{3}) (\d{4})$/.exec(String(s || '').trim()); return m ? new Date(+m[3], MON.indexOf(m[2]), +m[1]) : null; };
+  const fmt = (dt) => `${dt.getDate()} ${MON[dt.getMonth()]} ${dt.getFullYear()}`;
+  const addM = (dt, n) => new Date(dt.getFullYear(), dt.getMonth() + n, Math.min(dt.getDate(), 28));
+  const now = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+  // a version as it stands: still valid, or expired (by its own expiry date)
+  const stateOf = (v) => { const e = parse(v.valid); return e && e < now() ? 'expired' : 'valid'; };
+  // each version, marked: seen by the client or not, and why not
+  const seen = (versions, periods) => {
+    const ps = (periods || []).map((p) => ({ from: parse(p.from), to: p.to ? parse(p.to) : null })).filter((p) => p.from);
+    return versions.map((v, i) => {
+      const up = parse(v.uploaded) || parse(v.issued);
+      const ok = !!up && ps.some((p) => (up > p.from && (!p.to || up <= p.to))
+        // the one in place when the consent was given: the newest uploaded by then
+        || (up <= p.from && !versions.slice(0, i).some((w) => { const u = parse(w.uploaded) || parse(w.issued); return u && u <= p.from; })));
+      const last = ps.length ? ps[ps.length - 1] : null;
+      const why = ok ? '' : !ps.length ? 'never' : last.to && up > last.to ? 'after' : up < ps[0].from ? 'before' : 'gap';
+      return Object.assign({}, v, { seen: ok, why });
+    });
+  };
+  // ---- the list, under a document's row ---------------------------------------------------------------
+  // Newest first. For the company (owner): every version, and whether this client sees it and, if
+  // not, why. For a client: only the ones it sees. cur: the current one's badge, when it has its own.
+  const esc = (x) => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const WHY = { before: 'From before they had access', after: 'Uploaded after you stopped sharing', gap: 'Uploaded while you weren&rsquo;t sharing', never: 'Not shared' };
+  const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  // the newest one a client was shown reads as it stands (valid or expired), not as replaced: what
+  // replaced it isn't theirs to know
+  const badge = (v, cur, top) => (v.current && cur ? cur : v.current || top ? (stateOf(v) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-ok">Valid</span>')
+    : stateOf(v) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-neu">Replaced</span>');
+  const V_DATE = (x) => !!parse(x);
+  const list = (versions, o = {}) => {
+    const vs = o.owner ? versions : versions.filter((v) => v.seen);
+    return `<ul class="cmv${o.owner ? ' is-owner' : ''}">${vs.map((v) => `<li class="cmv-i${o.owner && !v.seen ? ' is-off' : ''}">
+        <span class="cmv-t"><b>${v.current ? 'Current' : esc(v.label)}</b><small>Uploaded ${esc(v.uploaded || v.issued)} &middot; ${v.valid === 'No expiry' ? 'no expiry' : !V_DATE(v.valid) ? 'no expiry date yet' : v.current && o.cur ? `expiry date ${esc(v.valid)}` : `${stateOf(v) === 'expired' ? 'expired' : 'valid until'} ${esc(v.valid)}`}</small></span>
+        <span class="cmv-s">${badge(v, o.cur, !o.owner && v === vs[0])}</span>
+        ${o.owner ? `<span class="cmv-w">${v.seen ? `<span class="cmv-yes">${TICK}${o.they || 'They see it'}</span>` : `<span class="cmv-no">${WHY[v.why] || WHY.never}</span>`}</span>` : ''}</li>`).join('')}</ul>`;
+  };
+  // the button that opens it: how many of them, for whom
+  const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>';
+  const button = (key, versions, o = {}) => {
+    const n = versions.filter((v) => v.seen).length, all = versions.length;
+    if (!all || (!o.owner && n < 2) || (o.owner && all < 2 && n === all)) return '';
+    const vb = o.verb || 'Sees', say = o.owner ? (n === all ? `${vb} all ${all} versions` : `${vb} ${n} of ${all} versions`) : `${n} versions`;
+    return `<button type="button" class="cmv-btn${o.open ? ' is-open' : ''}" data-vers="${esc(key)}" aria-expanded="${!!o.open}">${say}${CHEV}</button>`;
+  };
+  if (!document.getElementById('cmv-css')) {
+    const st = document.createElement('style'); st.id = 'cmv-css';
+    st.textContent = `
+.cmv-btn { display: inline-flex; align-items: center; gap: 0.25rem; margin: 0.375rem 0 0; padding: 0.125rem 0.5rem 0.125rem 0.625rem; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-surface); font: inherit; font-size: 0.75rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
+.cmv-btn:hover { border-color: var(--color-sand-400); color: var(--color-ink); }
+.cmv-btn svg { width: 0.875rem; height: 0.875rem; transition: transform .15s; }
+.cmv-btn.is-open svg { transform: rotate(180deg); }
+.sp-tbl td > .cmv-btn { display: flex; width: fit-content; }
+tr.cmv-tr > td { padding: 0 1rem 0.875rem !important; background: var(--color-surface); }
+.cmv { display: grid; margin: 0; padding: 0.25rem 0; list-style: none; border-radius: 0.75rem; background: var(--color-light-beige); }
+.cmv-i { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.25rem 1rem; padding: 0.5rem 0.875rem; text-align: left; }
+.cmv.is-owner .cmv-i { grid-template-columns: minmax(0, 1fr) auto minmax(9rem, auto); }
+.cmv-i + .cmv-i { border-top: 1px solid var(--color-mid-beige); }
+.cmv-t { display: grid; min-width: 0; font-size: 0.875rem; line-height: 1.35; }
+.cmv-t b { font-weight: 600; }
+.cmv-t small { font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmv-i.is-off .cmv-t, .cmv-i.is-off .cmv-s { opacity: 0.55; }
+.cmv-w { justify-self: end; font-size: 0.8125rem; text-align: right; }
+.cmv-yes { display: inline-flex; align-items: center; gap: 0.3125rem; color: var(--color-positive, #2e7d4f); font-weight: 500; }
+.cmv-yes svg { width: 0.875rem; height: 0.875rem; }
+.cmv-no { color: var(--color-ink-subtle); }
+.cmv-i.is-link { cursor: pointer; }
+.cmv-i.is-link:hover { background: color-mix(in oklab, var(--color-mid-beige) 45%, transparent); }
+.cmv-i.is-link:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
+.cmv-i.is-on { box-shadow: inset 3px 0 0 var(--color-coral); }
+.cmv-here { margin-left: 0.375rem; font-size: 0.75rem; font-weight: 500; color: var(--color-coral-deep, var(--color-ink-subtle)); }
+@media (max-width: 40rem) { .cmv.is-owner .cmv-i { grid-template-columns: minmax(0, 1fr) auto; } .cmv-w { grid-column: 1 / -1; justify-self: start; text-align: left; } }`;
+    document.head.appendChild(st);
+  }
+  return { parse, fmt, addM, seen, stateOf, list, button, MON };
+})();
+
 window.DOC_MODEL = (() => {
   const CAT = window.DOC_CATALOG || { docs: [], labels: {} };
   const R = window.DocRules;
@@ -435,9 +522,61 @@ window.DOC_MODEL = (() => {
     naMarks[d.code] = d.orig.status === 'na' ? { undone: true } : undefined; if (!naMarks[d.code]) delete naMarks[d.code]; saveNa();
     Object.assign(d, { status: back, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' }); d.text = textOf(d);
   };
-  DOCS.forEach((d) => { if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); });
+  DOCS.forEach((d) => { d.issued0 = d.issued; if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); });
+
+  // ---- versions ----------------------------------------------------------------------------------------
+  // Every document keeps the versions it replaced. A monthly one has last month's, and the month
+  // before; a yearly one last year's; one renewed on change, the one before the change. Prototype:
+  // made up from each document's renewal rule and its first issue date, the same every time; one
+  // replaced in this tab goes on top of them.
+  const V = window.CM_VERSIONS;
+  const NO_FILE = ['missing', 'na', 'notrequested', 'notuploaded', 'filemissing'];
+  const vhash = (s) => [...String(s)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 100003, 11);
+  const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  // the earlier ones, newest first: { label, issued, valid, uploaded, replaced, by, ref, conf }
+  const versionsOf = (d) => {
+    if (d.kind || NO_FILE.includes(d.status) || d.status === 'archived') return [];
+    const kept = (d.prev || []).map((v) => Object.assign({ label: `Version of ${v.issued}` }, v));
+    // a company added in this session has only what it uploaded here
+    const first = V.parse(d.issued0); if (ORG || !first) return kept;
+    const r = (d.cat.renewal || '').toLowerCase(), h = vhash(d.code);
+    const monthly = /month/.test(r) && !/6/.test(r);
+    const step = monthly ? 1 : /6|six/.test(r) ? 6 : /3 years/.test(r) ? 36 : /1.2 years/.test(r) ? 18 : /change|revision|amend|plan|client|entry|delivery|transport|assembly|posting|product/.test(r) || !r ? 0 : 12;
+    const n = monthly ? 4 : step ? 2 + (h % 2) : 1;
+    const gap = step || 14 + (h % 18);
+    const who = monthly ? ['Ana Rocha, accountant', 'Ana Rocha, accountant', 'Miguel Ferreira'] : ['Miguel Ferreira', 'Helena Ferreira'];
+    const out = [];
+    let replacedOn = first;
+    for (let k = 1; k <= n; k++) {
+      const issued = V.addM(first, -gap * k);
+      const expires = d.valid === 'No expiry' ? 'No expiry' : monthly ? V.fmt(V.addM(issued, 1)) : V.fmt(V.addM(issued, step || 12));
+      out.push({
+        label: monthly ? `${MONTH_NAMES[issued.getMonth()]} ${issued.getFullYear()}` : `Version of ${V.fmt(issued)}`,
+        issued: V.fmt(issued), valid: expires, uploaded: V.fmt(issued), replaced: V.fmt(replacedOn), by: who[k % who.length],
+        ref: d.ref ? refOf(d.code + k, String(issued.getFullYear())) : '', conf: 86 + (vhash(d.code + k) % 13),
+      });
+      replacedOn = issued;
+    }
+    return kept.concat(out);
+  };
+  // all of them, the current one first (when there's a file)
+  const allVersionsOf = (d) => {
+    const earlier = versionsOf(d);
+    if (d.kind || NO_FILE.includes(d.status) || d.status === 'archived' || !V.parse(d.issued)) return earlier;
+    return [{ current: true, label: 'Current', issued: d.issued, valid: d.valid, uploaded: d.uploaded || d.issued, ref: d.ref, by: d.by, status: d.status }].concat(earlier);
+  };
+  // what a client sees of a document, given when its consents stood (CM_VERSIONS.seen)
+  const seenBy = (d, periods) => V.seen(allVersionsOf(d), periods);
+
   const saveDoc = (code, patch) => {
     const d = DOCS.find((x) => x.code === code && !x.kind); if (!d) return null;
+    // a new file for one that had one: the one it replaces joins its versions
+    if (patch.issued) {
+      patch = Object.assign({}, patch, { uploaded: today() });
+      if (!NO_FILE.includes(d.status) && V.parse(d.issued)) {
+        patch.prev = [{ issued: d.issued, valid: d.valid, uploaded: d.uploaded || d.issued, replaced: today(), by: me, ref: d.ref, conf: d.conf != null ? d.conf : 92 }].concat(d.prev || []);
+      }
+    }
     updates[code] = Object.assign(updates[code] || {}, patch);
     keepUpdates();
     Object.assign(d, patch); d.text = textOf(d);
@@ -473,5 +612,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

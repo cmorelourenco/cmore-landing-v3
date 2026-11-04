@@ -73,7 +73,7 @@ window.CO_PROFILE = (() => {
       consents: [
         { name: 'Mota-Engil', state: 'pending', what: 'civil liability, workers’ compensation, tax clearance', when: 'Asked 2 days ago' },
         { name: 'Sonae MC', state: 'pending', what: 'everything in Insurance', when: 'Asked 6 days ago' },
-        { name: 'CUF', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2026' },
+        { name: 'CUF', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2025' },
       ],
     },
     beatriz: {

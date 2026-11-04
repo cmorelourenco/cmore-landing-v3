@@ -6,9 +6,12 @@
    The three requests the company homepage and its consents card answer (js/co-profile.js) are the
    same ones here: answering either place answers both. Everything else you do here is kept for the
    tab. Only the demo company (Miguel's) has clients yet.
+   Each document keeps its versions (js/doc-model.js): a client sees the one in place when it was
+   given consent and every one uploaded while the consent stood, and keeps those once it's stopped
+   (CM_VERSIONS.seen). A consent remembers when it stood: periods [{ from, to }].
    window.CM_CLIENTS: list(), byId(id), stats(client), setState(consentId, state), CATS, TONE, today(). */
 window.CM_CLIENTS = (() => {
-  const M = window.DOC_MODEL, P = window.CO_PROFILE;
+  const M = window.DOC_MODEL, P = window.CO_PROFILE, V = window.CM_VERSIONS;
   if (!M) return null;
   const OPEN = (window.CM_SOON_OPEN || []).includes('clients');
   const slug = (n) => n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -20,8 +23,8 @@ window.CM_CLIENTS = (() => {
   //   consent: [title, project or null, granted (or asked, when pending), state, codes, on (stopped / declined), profile name (a request the homepage answers too)]
   const RAW = OPEN ? [
     ['CUF', 'Healthcare', 'Lisbon', 'fornecedores@cuf.pt', '2024', [
-      ['Company & legal', 'Hospital CUF Porto, new wing', '4 Sep 2026', 'given', ['CO-01', 'CO-02', 'CO-03', 'CO-06', 'CO-07'], null, 'CUF'],
-      ['Insurance', 'Hospital CUF Porto, new wing', '4 Sep 2026', 'given', ['CO-08', 'CO-10', 'CO-11'], null, 'CUF']]],
+      ['Company & legal', 'Hospital CUF Porto, new wing', '4 Sep 2025', 'given', ['CO-01', 'CO-02', 'CO-03', 'CO-06', 'CO-07'], null, 'CUF'],
+      ['Insurance', 'Hospital CUF Porto, new wing', '4 Sep 2025', 'given', ['CO-08', 'CO-10', 'CO-11'], null, 'CUF']]],
     ['Mota-Engil', 'Construction and engineering', 'Porto', 'compras@mota-engil.pt', '2023', [
       ['Health and safety', 'A4 tunnel works', '10 Feb 2026', 'given', ['CO-12', 'CO-13', 'CO-14', 'UN-11', 'UN-12']],
       ['Insurance and tax', null, ago(2), 'pending', ['CO-10', 'CO-08', 'CO-06'], null, 'Mota-Engil']]],
@@ -39,7 +42,7 @@ window.CM_CLIENTS = (() => {
       ['Company & legal', null, '18 Nov 2024', 'given', ['CO-01', 'CO-02', 'CO-06', 'CO-19']],
       ['Insurance', 'Lidl Maia, new store', '3 Mar 2026', 'given', ['CO-08', 'CO-11']]]],
     ['DST Group', 'Construction', 'Braga', 'procurement@dstsgps.com', '2021', [
-      ['Company & legal', null, '15 Jan 2025', 'stopped', ['CO-01', 'CO-02', 'CO-06'], '30 Sep 2026']]],
+      ['Company & legal', null, '15 Jan 2025', 'stopped', ['CO-01', 'CO-02', 'CO-06'], '20 Aug 2026']]],
   ] : [];
 
   // how a document looks to the client: your status, in their words
@@ -51,7 +54,7 @@ window.CM_CLIENTS = (() => {
   const doc = (code) => {
     const d = M.DOCS.find((x) => x.code === code); if (!d) return null;
     const status = SEEN[d.status] || d.status;
-    return { code, id: d.id, name: d.name, section: d.section, cat: catOf(d), status, tone: TONE[d.status] || 'neu', valid: d.valid && d.valid !== '—' ? d.valid : (status === 'missing' ? 'Not on file' : '—'), requirement: d.requirement };
+    return { src: d, code, id: d.id, name: d.name, section: d.section, cat: catOf(d), status, tone: TONE[d.status] || 'neu', valid: d.valid && d.valid !== '—' ? d.valid : (status === 'missing' ? 'Not on file' : '—'), requirement: d.requirement };
   };
 
   // what you did here, kept for the tab: { consentId: { state, on } }
@@ -63,6 +66,13 @@ window.CM_CLIENTS = (() => {
   const TO_P = { given: 'accepted', pending: 'pending', declined: 'declined', stopped: 'stopped' };
   const profile = () => (P ? P.load() : null);
 
+  // when a consent stood: given opens a period, stopping or declining closes it
+  const move = (periods, state, on) => {
+    const ps = (periods || []).map((p) => Object.assign({}, p)), last = ps[ps.length - 1], open = last && !last.to;
+    if (state === 'given' && !open) ps.push({ from: on, to: null });
+    if ((state === 'stopped' || state === 'declined') && open) last.to = on;
+    return ps;
+  };
   // the homepage holds one state per client: given if any of its consents there is, else the first one's
   const summary = (states) => (states.includes('given') ? 'given' : states.includes('pending') ? 'pending' : states[0]);
   const build = () => {
@@ -72,15 +82,23 @@ window.CM_CLIENTS = (() => {
       // what you did here, consent by consent
       let consents = cs.map(([title, project, granted, state, codes, on, pname], i) => {
         const cid = `${id}-${i}`, o = m[cid];
-        const c = { id: cid, title, project, granted, asked: state === 'pending' ? granted : '', state, on: on || '', profile: pname || '', docs: codes.map(doc).filter(Boolean) };
-        if (o) { c.state = o.state; c.on = o.on; if (o.state === 'given' && state !== 'given') c.granted = o.on; }
+        const periods = state === 'given' ? [{ from: granted, to: null }] : state === 'stopped' ? [{ from: granted, to: on }] : [];
+        const c = { id: cid, title, project, granted, asked: state === 'pending' ? granted : '', state, on: on || '', profile: pname || '', periods, docs: codes.map(doc).filter(Boolean) };
+        if (o) { c.state = o.state; c.on = o.on; c.periods = o.periods || move(periods, o.state, o.on); if (o.state === 'given' && state !== 'given') c.granted = o.on; }
         return c;
       });
       // answered on the homepage since (it no longer matches): that answer, for all of them
       const linked = consents.filter((c) => c.profile), q = linked.length && pc(linked[0].profile);
       if (q && FROM_P[q.state] && FROM_P[q.state] !== summary(linked.map((c) => c.state))) {
-        linked.forEach((c) => { const was = c.state; c.state = FROM_P[q.state]; if (c.state !== was) { c.on = today(); if (c.state === 'given') c.granted = today(); } });
+        linked.forEach((c) => { const was = c.state; c.state = FROM_P[q.state]; if (c.state !== was) { c.on = today(); c.periods = move(c.periods, c.state, c.on); if (c.state === 'given') c.granted = today(); } });
       }
+      // each document, with the versions this client sees of it: under any of its consents that covers it
+      const periodsOf = (code) => consents.filter((k) => k.docs.some((d) => d.code === code)).flatMap((k) => k.periods)
+        .sort((a, b) => (V ? V.parse(a.from) - V.parse(b.from) : 0));
+      consents.forEach((k) => k.docs.forEach((d) => {
+        d.versions = V && M.seenBy ? M.seenBy(d.src, periodsOf(d.code)) : [];
+        d.kept = d.versions.find((v) => v.seen) || null; // the newest they see
+      }));
       return { id, name, sector, city, email, since, consents };
     });
   };
@@ -99,7 +117,7 @@ window.CM_CLIENTS = (() => {
   // share, stop, share again, decline: here, and on the homepage when it's one of its requests
   const setState = (cid, state) => {
     const c = LIST.find((x) => x.consents.some((k) => k.id === cid)), k = c && c.consents.find((x) => x.id === cid); if (!k) return null;
-    const m = mine(); m[cid] = { state, on: today() }; keep(m);
+    const m = mine(); m[cid] = { state, on: today(), periods: move(k.periods, state, today()) }; keep(m);
     // and on the homepage, where it's one of its requests: the client's state as a whole (first, so
     // reading it back below agrees with what was just done)
     const linked = c.consents.filter((x) => x.profile);

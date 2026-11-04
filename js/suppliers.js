@@ -3,6 +3,8 @@
    site…), for all of your projects or for one; while the consent stands, you see those documents —
    their status and expiry, kept current by the supplier. A request you sent and they haven't
    answered yet shows as pending.
+   Each document keeps its versions: you see the one in place when the consent was given and every
+   one uploaded while it stood, and keep those once they remove it (CM_VERSIONS, js/doc-model.js).
    window.CM_SUPPLIERS: list(), byId(id), docsOf(consent), stats(supplier).
    Prototype: made up, the same every time; document names and requirements come from the catalog. */
 window.CM_SUPPLIERS = (() => {
@@ -104,6 +106,30 @@ window.CM_SUPPLIERS = (() => {
     'ESG and sustainability', 'Information security', 'Public contracts', 'Workers on site', 'Equipment on site'];
   const category = (code) => { const c = byCode[code]; return c.category === 'workers' ? 'Workers on site' : c.category === 'equipment' ? 'Equipment on site' : LISTED[code] || c.section.en; };
 
+  // a document's versions at the supplier, newest first: the current one and the three before it,
+  // each renewed when the one before ran out (so the earlier ones read as expired). Prototype: made
+  // up, the same every time. Most were renewed a few months after you got consent, so you see the
+  // one you were shown first, expired, next to the current one; where they removed a consent, one of
+  // its documents was renewed a few days later, so you don't get that one.
+  const V = window.CM_VERSIONS;
+  const versionsAt = (code, id, d, granted, removed) => {
+    if (!V || d.status === 'missing') return [];
+    const r = ((byCode[code] || {}).renewal || '').toLowerCase(), h = hash(code + id), now = new Date();
+    const step = /month/.test(r) && !/6/.test(r) ? 1 : h % 3 === 0 ? 6 : 12;
+    const day = (dt, n) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n);
+    const exp = V.parse(d.valid), from = V.parse(granted);
+    let up = exp ? V.addM(exp, -step) : V.addM(now, -(2 + (h % 5)));
+    // renewed while the consent stood (two in three of them)
+    if (from && h % 3 !== 1) { const later = V.addM(from, 1 + (h % 4)); if (later < now) up = later; }
+    if (removed && h % 2 === 0) { const rm = V.parse(removed); if (rm && day(rm, 3) <= now) up = day(rm, 3); }
+    if (up > now) up = day(now, -7);
+    const out = [{ current: true, label: 'Current', uploaded: V.fmt(up), valid: d.valid === '—' ? '—' : d.valid }];
+    for (let k = 1; k <= 3; k++) {
+      const u = V.addM(up, -step * k);
+      out.push({ label: `Version of ${V.fmt(u)}`, uploaded: V.fmt(u), valid: d.valid === 'No expiry' ? 'No expiry' : V.fmt(V.addM(u, step)) });
+    }
+    return out;
+  };
   const LIST = RAW.map(([name, city, services, workers, since, nipc, email, consents, problems]) => {
     const id = slug(name);
     return {
@@ -112,8 +138,12 @@ window.CM_SUPPLIERS = (() => {
         id: `${id}-${i}`, title: SETS[set][0], codes: SETS[set][1], project: project ? PROJECTS[project] : null, granted, state, removed,
         docs: SETS[set][1].filter((c) => byCode[c]).map((c) => {
           const p = problems[c];
-          return { code: c, name: byCode[c].name.en, section: byCode[c].section.en, cat: category(c), requirement: C.labels.requirement[byCode[c].requirement] || '',
+          const d = { code: c, name: byCode[c].name.en, section: byCode[c].section.en, cat: category(c), requirement: C.labels.requirement[byCode[c].requirement] || '',
             status: p ? p[0] : 'valid', valid: p ? p[1] || '—' : validTo(c, id), note: p ? p[2] : '' };
+          // what you see of it: while the consent stands, from when it was given; once removed, up to then
+          d.versions = V ? V.seen(versionsAt(c, id, d, granted, state === 'removed' ? removed : null), state === 'given' ? [{ from: granted, to: null }] : state === 'removed' ? [{ from: granted, to: removed }] : []) : [];
+          d.kept = d.versions.find((v) => v.seen) || null;
+          return d;
         }),
       })),
     };
