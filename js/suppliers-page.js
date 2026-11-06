@@ -71,7 +71,15 @@
 .sp-head h1 { font-size: clamp(2rem, 3vw, 2.5rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 600; }
 .sp-head p { margin-top: 0.375rem; font-size: 0.9375rem; color: var(--color-ink-muted); }
 .sp-head a { color: var(--color-ink); }
-.sp-head .sp-ask-docs { flex: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.sp-head .sp-ask-docs { flex: none; align-self: flex-end; margin-left: auto; display: inline-flex; align-items: center; gap: 0.5rem; }
+@media (max-width: 34rem) { .sp-head .sp-ask-docs { align-self: flex-start; margin-left: 0; } }
+/* one supplier's page: its name and the breadcrumbs stay in view, under the top bar, as the page scrolls */
+#sup-head.is-sup { max-width: none; }
+@media (min-width: 48rem) {
+  .eco-head.sp-stick { position: sticky; top: 4.5rem; z-index: 9; padding: 1.25rem 0; background: var(--color-off-white, #fafafa); }
+  .eco-head.sp-stick .eco-crumbs { margin-bottom: 1rem; }
+  .eco-head.sp-stick + .co-wrap { padding-top: 1.75rem; }
+}
 .sp-head .sp-ask-docs svg { width: 1rem; height: 1rem; }
 .sp-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .sp-kpi { padding: 1.125rem 1.25rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); }
@@ -290,6 +298,7 @@
     const back = document.querySelector('.eco-crumbs-back'); if (back) { back.href = 'suppliers.html'; back.setAttribute('aria-label', 'Back to My suppliers'); }
     const inv = s.status === 'invited';
     const facts = [s.services.join(', '), s.city, `${inv ? s.invite.idLabel : S.WORDS.id} ${s.nipc}`, s.workers != null ? `${s.workers} people` : '', inv ? `invited on ${s.invite.invited}` : `supplier since ${s.since}`].filter(Boolean).map(esc).join(' &middot; ');
+    if (head) { head.classList.add('is-sup'); const sec = head.closest('.eco-head'); if (sec) sec.classList.add('sp-stick'); }
     if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier &middot; ${stTag(s)}</span><h1>${esc(s.name)}</h1>
         <p>${facts}${s.email ? ` &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : ''}</p></div><button type="button" class="btn btn-primary btn-sm sp-ask-docs" data-sup-docs><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Ask for documents</button></div>`;
     // invited: they haven't joined yet, so nothing is shared; what you asked them for, and a reminder

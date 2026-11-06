@@ -204,6 +204,7 @@
 .gs .intake-screen { padding-top: 2.5rem; }
 #gs-body { width: 100%; display: grid; justify-items: center; }
 .gs-what { display: grid; gap: 0.5rem; margin: 0.25rem 0 0.75rem; padding: 0.875rem; border-radius: 0.625rem; background: var(--color-off-white); text-align: left; }
+.gs-moved { margin: 0.25rem 0 0.75rem; color: var(--color-text-secondary, #555); font-size: 0.875rem; text-align: left; }
 .gs-card.is-unread .gs-what { margin: 0.5rem 0 0.75rem; }
 .gs-wl { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .gs-uh { margin-top: 1.75rem; }
@@ -551,13 +552,16 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (!docs.length) return;
     const A = AREA[area];
     const st = saved.areas[area] = Object.assign({ step: 1, reviewed: false, pending: [], kept: [] }, saved.areas[area] || {});
-    if (!st.pending) st.pending = []; if (!st.kept) st.kept = []; if (!st.later) st.later = []; if (!st.unread) st.unread = [];
+    if (!st.pending) st.pending = []; if (!st.kept) st.kept = []; if (!st.later) st.later = []; if (!st.unread) st.unread = []; if (!st.moved) st.moved = []; if (!st.rank) st.rank = {};
     const U = window.CMUncat, PICK = window.CMDocPick;
     // the step that asks for a document, if any; and the document, from wherever it's asked
     const STEP_KEYS = ['registration', 'company', 'workers', 'equipment'];
     const stepOf = (code) => (docs.some((x) => x.code === code) ? area : STEP_KEYS.find((a) => asks(a).some((x) => x.code === code)) || null);
     const docIn = (code) => { const a = stepOf(code); return a === area ? docs.find((x) => x.code === code) : a ? asks(a).find((x) => x.code === code) : null; };
     const unreadNow = () => (U ? st.unread.map((id) => U.get(id)).filter(Boolean) : []);
+    // the files the person moved to a document this step doesn't ask for: they keep their place in
+    // the review, saying where they went, so nothing vanishes from under them
+    const movedNow = () => st.moved.filter((m) => (m.code === '__u' ? U && U.get(m.uid) : !m.area || (saved.files[m.code] && saved.files[m.code].file === m.name)));
     const laterNow = () => st.later.filter((x) => saved.files[x.code] && saved.files[x.code].file === x.name && !docs.some((d) => d.code === x.code));
     let changedAny = false;
     const FLAGGED = (docs.filter((d) => !/no expiry/i.test(d.expiryRule || '')).pop() || {}).code;
@@ -715,7 +719,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       </article>`;
       }
       return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}${ex ? ' is-expired' : ''}" data-card="${d.code}">
-        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${ex ? '<span class="co-badge b-over">Expired</span>' : f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
+        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${ex ? '<span class="co-badge b-over">Expired</span>' : f.edited ? '<span class="co-badge b-neu">' + DM.corrected() + '</span>' : confTag(f)}</header>
         ${ed && PICK ? `<div class="gs-what"><p class="gs-wl">What it is</p>${PICK.html('gc-' + d.code, d.code, { uncat: true })}<p class="gs-d">Another document moves the file there; Not sure puts it in Uncategorized documents.</p></div>` : ''}
         <dl class="gs-fields">${fields}</dl>
         ${expBlock(d, f)}
@@ -731,7 +735,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     // the files she couldn't place: each with the way to say what it is (they wait in Uncategorized
     // documents, on Documents, until then; nothing here waits on them)
     const unreadCards = () => {
-      const l = unreadNow(); if (!l.length || !PICK) return '';
+      const l = unreadNow().filter((x) => !st.moved.some((m) => m.uid === x.id)); if (!l.length || !PICK) return '';
       return `<p class="gs-lh gs-uh" role="heading" aria-level="2">What I couldn&rsquo;t place <span>${l.length}</span></p>
         <p class="gs-d gs-uw">I couldn&rsquo;t tell which document ${l.length === 1 ? 'this is' : 'these are'}. ${l.length === 1 ? 'It&rsquo;s' : 'They&rsquo;re'} in Uncategorized documents for now. Choose the category, the section and the document, and I file ${l.length === 1 ? 'it' : 'each'} there.</p>
         <div class="gs-cards">${l.map((x) => `<article class="gs-card is-unread" data-card="u:${esc(x.id)}">
@@ -742,35 +746,55 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     // a file put where it belongs, by hand: from a document (code) or Uncategorized ('u:<id>'), to
     // another document of this step or another ('__u' for Uncategorized). Whatever had that place goes
     // to Uncategorized; a document no step asks for goes straight into Documents
-    const refile = (from, to) => {
+    const docName = (c) => (docIn(c) || CAT.docs.find((x) => x.code === c) || { name: { en: c } }).name.en;
+    const movedCard = (m) => {
+      const i = st.moved.indexOf(m), ed = editing === 'm:' + i, u = m.code === '__u', item = u ? U.get(m.uid) : null;
+      const where = u ? 'in Uncategorized documents, until you choose what it is' : m.area ? `filed for the ${esc(AREA[m.area] ? AREA[m.area].title : 'other')} step` : 'filed straight into Documents';
+      const peek = u ? 'u:' + m.uid : m.area ? m.code : '';
+      return `<article class="gs-card is-moved${ed ? ' is-editing' : ''}" data-card="m:${i}">
+        <header><div><h3>${peek ? `<button type="button" class="gs-peek" data-peek="${esc(peek)}">${esc(u ? m.name : docName(m.code))}</button>` : esc(docName(m.code))}</h3><p class="gs-d">${esc(u ? `Uploaded on ${item.at}` : m.name)}</p></div><span class="co-badge b-neu">${DM.corrected()}</span></header>
+        <p class="gs-moved">This step doesn&rsquo;t ask for ${u ? 'this file' : 'this document'}, so it&rsquo;s ${where}. Nothing else needed here.</p>
+        ${ed && PICK ? `<div class="gs-what"><p class="gs-wl">What it is</p>${PICK.html('gm-' + i, u ? '' : m.code, { uncat: !u })}</div>` : ''}
+        <footer><span>${ed ? '' : `${peek ? `<button class="link-btn" type="button" data-peek="${esc(peek)}">Preview</button>` : ''}${m.area || u ? `<button class="link-btn" type="button" data-medit="${i}">Change what it is</button>` : ''}`}</span>
+          <span>${ed ? `<button class="link-btn" type="button" data-cancel>Cancel</button><button class="gs-acc" type="button" data-msave="${i}" disabled>${OK}Move it there</button>` : `<span class="gs-acc is-ok">${OK}Moved</span>`}</span></footer>
+      </article>`;
+    };
+    const refile = (from, to, entry) => {
       const isU = from.startsWith('u:'), uid = isU ? from.slice(2) : null, item = isU && U ? U.get(uid) : null, f = isU ? null : saved.files[from];
       if ((!item && !f) || !to || to === from) return false;
       const name = isU ? item.file : f.file, keys = isU ? ['uncat:' + uid] : [from, '~' + name];
       const carry = Object.fromEntries(FIELDS.map(([k]) => [k, isU ? item[k] : f.edited ? f[k] : '']).filter(([, v]) => v));
+      const mine = !isU && stepOf(from) === area, k = entry ? entry.k : mine && st.rank[from] != null ? st.rank[from] : f ? (lapsed(f) && !f.ok ? -1 : f.conf) : 0;
+      let dest = null;
       if (to === '__u') {
         if (isU || !U) return false;
         const id = U.add(Object.assign({ file: name, from: `${A.title} step` }, Object.fromEntries(FIELDS.map(([k]) => [k, f[k] || '']))));
-        U.copyFile(keys, 'uncat:' + id); delete saved.files[from]; st.unread.push(id);
+        U.copyFile(keys, 'uncat:' + id); delete saved.files[from]; st.unread.push(id); dest = { code: '__u', area: null, uid: id };
       } else {
         const a = stepOf(to), nd = docIn(to);
         if (!nd) {
           const c = CAT.docs.find((x) => x.code === to); if (!c) return false;
           DM.saveDoc(to, { status: 'valid', issued: carry.issued || dt(new Date()), valid: carry.valid || 'No expiry', ref: esc(carry.ref || ''), by: esc(carry.by || issuer(c)), conf: 98, edited: true, note: '' });
+          dest = { code: to, area: null, uid: null };
         } else {
           if (saved.files[to]) refile(to, '__u');
+          if (a === area && (entry || mine)) st.rank[to] = k; // it takes the place of the card it came from
           saved.files[to] = Object.assign(read(nd, { name }), carry, { area: a, checked: true, edited: true, conf: 98, ok: false, mismatch: false, flag: null });
-          if (a !== area) st.later.push({ name, code: to, area: a });
+          if (a !== area) { st.later.push({ name, code: to, area: a }); dest = { code: to, area: a, uid: null }; }
         }
         if (U) U.copyFile(keys, to);
         if (isU) { U.remove(uid); st.unread = st.unread.filter((x) => x !== uid); } else delete saved.files[from];
       }
+      if (entry) { if (dest) Object.assign(entry, dest); else st.moved.splice(st.moved.indexOf(entry), 1); }
+      else if (mine && dest) st.moved.push(Object.assign({ name, k }, dest));
       editing = null; keep(); strip();
-      if (st.step === 2 && !filed().length) goStep(1); else paint();
+      if (st.step === 2 && !filed().length && !movedNow().length) goStep(1); else paint();
       return true;
     };
     const step2 = () => {
-      // the low-confidence ones, the only ones waiting on the user, first
-      const key = (d) => (lapsed(saved.files[d.code]) && !saved.files[d.code].ok ? -1 : saved.files[d.code].conf); // expired first
+      // the low-confidence ones, the only ones waiting on the user, first; each keeps the place it
+      // first had, so one that's changed or accepted doesn't move away from under the person
+      const key = (d) => { if (st.rank[d.code] == null) st.rank[d.code] = lapsed(saved.files[d.code]) && !saved.files[d.code].ok ? -1 : saved.files[d.code].conf; return st.rank[d.code]; }; // expired first
       const list = filed().slice().sort((a, b) => key(a) - key(b)), left = list.filter((d) => !saved.files[d.code].ok).length;
       // one with another company's VAT number isn't in Accept all: it needs its own reason; nor is an expired one
       const vat = list.filter((d) => saved.files[d.code].mismatch && !saved.files[d.code].ok).length;
@@ -784,10 +808,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         <div class="gs-pane">${exN ? `<p class="gs-note" role="status">${exN === 1 ? 'One document has' : `${exN} documents have`} expired. Give ${exN === 1 ? 'it' : 'each'} its new expiry date if still in force, mark the date not applicable, or replace ${exN === 1 ? 'it' : 'them'} with a current version.</p>` : ''}${vat ? `<p class="gs-note" role="status">${vat === 1 ? 'One document has' : `${vat} documents have`} a VAT number that isn&rsquo;t ${called()}&rsquo;s. Upload the right ${vat === 1 ? 'one' : 'ones'}, reject ${vat === 1 ? 'it' : 'them'}, or approve ${vat === 1 ? 'it' : 'each'} with a reason.</p>` : ''}${rejected.length ? `<p class="gs-note" role="status">You rejected ${rejected.map((x) => `<b>${esc(x)}</b>`).join(', ')}. <button class="link-btn" type="button" data-go="1">Upload ${rejected.length === 1 ? 'another file for it' : 'other files for them'}</button></p>` : ''}
           <p class="gs-conf">Low confidence needs you; medium and high are up to you. Open any one to see what I read, field by field, with where I read it.</p>
           <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>
-          <div class="gs-cards">${list.map(card).join('')}</div>
+          <div class="gs-cards">${list.map((d) => [key(d), card(d)]).concat(movedNow().map((m) => [m.k, movedCard(m)])).map((x, i) => x.concat(i)).sort((a, b) => a[0] - b[0] || a[2] - b[2]).map((x) => x[1]).join('')}</div>
           ${list.length > 1 && plain ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}${unreadCards()}</div>
         ${nav('Back to upload', tour ? `<button class="link-btn" type="button" data-close="next">${tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>` : '',
-          `<button class="btn btn-primary" type="button" data-confirm${list.length && !needs && editing == null ? '' : ' disabled'}>Continue</button>`)}
+          `<button class="btn btn-primary" type="button" data-confirm${(list.length || movedNow().length) && !needs && editing == null ? '' : ' disabled'}>Continue</button>`)}
         ${needs ? `<p class="gs-d gs-hint">Check ${needs === 1 ? 'the document' : `the ${needs} documents`} marked low confidence${vat ? ', with a different VAT number' : ''}${exN ? ' or expired' : ''} to continue.</p>` : ''}`;
     };
 
@@ -1011,7 +1035,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         + `<tr class="cdd-cite-row" id="gs-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>`;
       dq('gs-dw-t').textContent = d.name.en;
       dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
-      dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f);
+      dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">' + DM.corrected() + '</span>' : confTag(f);
       // the page as she read it, and the file itself one click away (js/doc-files.js)
       dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-' + d.code, d.code, `I read it as ${esc(d.name.en)}. If that&rsquo;s wrong, choose the right one: its category, then its section, then the document.`) + read;
       const slot = dq('gs-dw-file'), at = peek;
@@ -1033,7 +1057,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     dwEl.addEventListener('click', (e) => {
       const t = (sel) => e.target.closest(sel);
       if (t('[data-dwclose]')) { closePeek(); return; }
-      if (t('[data-dwrefile]')) { const from = peek, to = PICK.value(dwEl); closePeek(); refile(from, to); return; }
+      if (t('[data-dwrefile]')) { const from = peek, to = PICK.value(dwEl); closePeek(); refile(from, to, movedNow().find((m) => (m.code === "__u" ? "u:" + m.uid : m.code) === from)); return; }
       // in place: repainting would reload the file above and move the scroll
       if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; if (open && window.CMFiles.show) window.CMFiles.show(dwEl, +cb.dataset.cite); return; }
       if (t('[data-show]')) { if (!window.CMFiles.show(dwEl, +t('[data-show]').dataset.show)) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
@@ -1045,7 +1069,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
 
     // a document chosen by hand: its File it / Move it there wakes up
     dwEl.addEventListener('dp-change', (e) => { const b = dwEl.querySelector('[data-dwrefile]'); if (b) b.disabled = !e.detail || e.detail === peek || (e.detail === '__u' && String(peek).startsWith('u:')); });
-    wrap.addEventListener('dp-change', (e) => { const c = e.target.closest('[data-card]'), b = c && c.querySelector('[data-sortit]'); if (b) b.disabled = !e.detail || e.detail === '__u'; });
+    wrap.addEventListener('dp-change', (e) => { const c = e.target.closest('[data-card]'), b = c && c.querySelector('[data-sortit]'); if (b) b.disabled = !e.detail || e.detail === '__u'; const mb = c && c.querySelector('[data-msave]'); if (mb) { const m = st.moved[+mb.dataset.msave]; mb.disabled = !e.detail || e.detail === (m && m.code); } });
 
     let shownStep = 0;
     const paint = () => {
@@ -1131,6 +1155,8 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         return;
       }
       if (t('[data-cancel]')) { editing = null; paint(); return; }
+      if (t('[data-medit]')) { editing = 'm:' + code('medit'); paint(); return; }
+      if (t('[data-msave]')) { const m = st.moved[+code('msave')], c = wrap.querySelector(`[data-card="m:${code('msave')}"]`), to = PICK.value(c); if (m && to) refile(m.code === '__u' ? 'u:' + m.uid : m.code, to, m); return; }
       if (t('[data-sortit]')) { const id = code('sortit'), c = wrap.querySelector(`[data-card="u:${CSS.escape(id)}"]`); refile('u:' + id, PICK.value(c)); return; }
       if (t('[data-save]')) {
         const c = code('save'), f = saved.files[c], el = wrap.querySelector(`[data-card="${c}"]`);

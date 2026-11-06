@@ -426,7 +426,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         + (last ? `<button type="button" class="btn btn-primary btn-sm" data-commit${open ? ' disabled' : ''}>Save what you approved</button>` : '<button type="button" class="btn btn-primary btn-sm" data-next>Next</button>');
     };
     // her confidence, or that the user corrected her; the reference she read, or the one typed over it
-    const confOf = (r) => (!r.slot ? '' : r.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : r.how === 'sure' ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>');
+    const confOf = (r) => (!r.slot ? '' : r.edited ? '<span class="co-badge b-neu">' + M.corrected() + '</span>' : r.how === 'sure' ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>');
     const refOf = (s, r) => (r.ref != null ? r.ref : refFor(s, r));
     // the fields the setup shows for each document, in its order; dates kept as everywhere else
     // (17 Jan 2027), given to the date pickers as 2027-01-17
