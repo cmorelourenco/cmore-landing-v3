@@ -73,7 +73,7 @@
 
   const open = (cid) => {
     const g = GROUPS.find((x) => x.key === cid) || GROUPS[0];
-    picked = new Set(g.docs.map((d) => d.code)); note = ''; first = g.key; // the one you clicked, on top back = document.activeElement;
+    picked = new Set(g.docs.map((d) => d.code)); note = ''; first = g.key; back = document.activeElement; // the one you clicked, on top
     dw.hidden = false; document.documentElement.style.overflow = 'hidden'; paint(); body.scrollTop = 0;
     setTimeout(() => dw.classList.add('is-open'), 20);
     setTimeout(() => { const b = body.querySelector(`[data-grp="${CSS.escape(g.key)}"]`); (b || dw.querySelector('.docd-panel')).focus({ preventScroll: true }); }, 340);

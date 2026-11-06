@@ -15,7 +15,13 @@
      3 Complete — how complete the section is. All in: congratulations. Anything missing: add it
                   now, or skip for now.
    What is accepted is what Documents and the homepage show (js/doc-model.js reads it). Files
-   beyond what she asked for are kept too, without a word about it at this stage.
+   beyond what she asked for are sorted: one she recognises as a document another step asks for is
+   filed for that step (and waits there, read); one she can't tell is put in Uncategorized documents
+   (js/doc-sort.js), on Documents, and shown in the review with the way to say what it is.
+   Every file can be corrected by hand: Make changes edits each field she read, and what the document
+   is (its category, then section, then document: CMDocPick); so can the drawer. Choosing another
+   document moves the file there (to another step if it's one of its documents); "Not sure" puts it
+   in Uncategorized documents.
    window.CMGuided.open(area) opens it; js/company-details.js opens it on an empty section.
    A new company's first look at its homepage (?guided after creating it, or the test user's) is an
    onboarding instead (tour(), at the end): ALMA big over the page, then docked at its side, asking
@@ -197,6 +203,12 @@
   const css = `
 .gs .intake-screen { padding-top: 2.5rem; }
 #gs-body { width: 100%; display: grid; justify-items: center; }
+.gs-what { display: grid; gap: 0.5rem; margin: 0.25rem 0 0.75rem; padding: 0.875rem; border-radius: 0.625rem; background: var(--color-off-white); text-align: left; }
+.gs-card.is-unread .gs-what { margin: 0.5rem 0 0.75rem; }
+.gs-wl { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.gs-uh { margin-top: 1.75rem; }
+.gs-uw { margin: 0.25rem 0 0.75rem; text-align: left; }
+.gs-dp-acts { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
 .gs-steps { list-style: none; margin: 0 auto 2.25rem; padding: 0; width: min(100%, 46rem); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); position: relative; }
 .gs-steps::before { content: ""; position: absolute; top: calc(1.375rem - 1px); left: 16.67%; right: 16.67%; height: 2px; border-radius: 2px;
   background: linear-gradient(var(--color-graphite), var(--color-graphite)) left / var(--done, 0%) 100% no-repeat, var(--color-line); transition: background-size .6s var(--ease-brand); }
@@ -539,7 +551,14 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     if (!docs.length) return;
     const A = AREA[area];
     const st = saved.areas[area] = Object.assign({ step: 1, reviewed: false, pending: [], kept: [] }, saved.areas[area] || {});
-    if (!st.pending) st.pending = []; if (!st.kept) st.kept = [];
+    if (!st.pending) st.pending = []; if (!st.kept) st.kept = []; if (!st.later) st.later = []; if (!st.unread) st.unread = [];
+    const U = window.CMUncat, PICK = window.CMDocPick;
+    // the step that asks for a document, if any; and the document, from wherever it's asked
+    const STEP_KEYS = ['registration', 'company', 'workers', 'equipment'];
+    const stepOf = (code) => (docs.some((x) => x.code === code) ? area : STEP_KEYS.find((a) => asks(a).some((x) => x.code === code)) || null);
+    const docIn = (code) => { const a = stepOf(code); return a === area ? docs.find((x) => x.code === code) : a ? asks(a).find((x) => x.code === code) : null; };
+    const unreadNow = () => (U ? st.unread.map((id) => U.get(id)).filter(Boolean) : []);
+    const laterNow = () => st.later.filter((x) => saved.files[x.code] && saved.files[x.code].file === x.name && !docs.some((d) => d.code === x.code));
     let changedAny = false;
     const FLAGGED = (docs.filter((d) => !/no expiry/i.test(d.expiryRule || '')).pop() || {}).code;
     // the company's own tax number: sign-up's, else the one on its tax card
@@ -638,8 +657,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       }).join('');
       const files = st.pending.map((name, i) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Not read yet</span></span><button class="link-btn" type="button" data-unpend="${i}">Remove</button></li>`)
         .concat(read.map((d) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(saved.files[d.code].file)}</span><span class="gs-d">Read as ${esc(d.name.en)}</span></span><span></span></li>`))
+        .concat(laterNow().map((x) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(x.name)}</span><span class="gs-d">Read as ${esc((docIn(x.code) || { name: { en: x.code } }).name.en)} &middot; filed for ${esc(AREA[x.area] ? AREA[x.area].title : 'another')} step</span></span><span></span></li>`))
+        .concat(unreadNow().map((x) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(x.file)}</span><span class="gs-d">I couldn&rsquo;t tell what this is &middot; in Uncategorized documents</span></span><button class="link-btn" type="button" data-peek="u:${esc(x.id)}">Choose what it is</button></li>`))
         .concat(st.kept.map((name) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Kept &middot; not one of the documents asked for here</span></span><span></span></li>`)).join('');
-      const total = np + read.length + st.kept.length;
+      const total = np + read.length + st.kept.length + laterNow().length + unreadNow().length;
       return `${sec}<button class="drop is-small" id="gs-drop" type="button" aria-label="Add files"><span class="alma-media" aria-hidden="true">${alma()}</span>
           <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span>${tour ? '<small>PDF or photo, as many as you have.</small>' : ''}</span></button>
         <p class="says">ALMA</p>
@@ -654,7 +675,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     };
 
     // step 2: what she read, to accept or put right
-    const FIELDS = [['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    const FIELDS = [['ref', 'Reference'], ['by', 'Issued by'], ['country', 'Country'], ['issued', 'Issue date'], ['valid', 'Valid until']];
     // expired: the date read has passed. It needs a new one if it's still in force, or none (the
     // date not applicable), or a current version of the file, before it can be accepted
     const lapsed = (f) => !!f && !f.validNa && !Number.isNaN(Date.parse(f.valid)) && Date.parse(f.valid) < new Date().setHours(0, 0, 0, 0);
@@ -695,6 +716,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       }
       return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}${ex ? ' is-expired' : ''}" data-card="${d.code}">
         <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${ex ? '<span class="co-badge b-over">Expired</span>' : f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f)}</header>
+        ${ed && PICK ? `<div class="gs-what"><p class="gs-wl">What it is</p>${PICK.html('gc-' + d.code, d.code, { uncat: true })}<p class="gs-d">Another document moves the file there; Not sure puts it in Uncategorized documents.</p></div>` : ''}
         <dl class="gs-fields">${fields}</dl>
         ${expBlock(d, f)}
         ${flagged && !ex ? `<p class="gs-why">I couldn&rsquo;t read the expiry date cleanly: the scan is cut off there. I&rsquo;ve put ${esc(f.valid)}; check it against the file.</p>` : ''}
@@ -706,6 +728,46 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     // what must be accepted (or rejected, or replaced) before going on: low confidence, or another
     // company's VAT number
     const mustCheck = (f) => f.conf < 75 || f.mismatch || lapsed(f);
+    // the files she couldn't place: each with the way to say what it is (they wait in Uncategorized
+    // documents, on Documents, until then; nothing here waits on them)
+    const unreadCards = () => {
+      const l = unreadNow(); if (!l.length || !PICK) return '';
+      return `<p class="gs-lh gs-uh" role="heading" aria-level="2">What I couldn&rsquo;t place <span>${l.length}</span></p>
+        <p class="gs-d gs-uw">I couldn&rsquo;t tell which document ${l.length === 1 ? 'this is' : 'these are'}. ${l.length === 1 ? 'It&rsquo;s' : 'They&rsquo;re'} in Uncategorized documents for now. Choose the category, the section and the document, and I file ${l.length === 1 ? 'it' : 'each'} there.</p>
+        <div class="gs-cards">${l.map((x) => `<article class="gs-card is-unread" data-card="u:${esc(x.id)}">
+          <header><div><h3><button type="button" class="gs-peek" data-peek="u:${esc(x.id)}">${esc(x.file)}</button></h3><p class="gs-d">Uploaded on ${esc(x.at)}</p></div><span class="co-badge b-pend">Uncategorized</span></header>
+          <div class="gs-what">${PICK.html('gu-' + x.id, '', {})}</div>
+          <footer><span><button class="link-btn" type="button" data-peek="u:${esc(x.id)}">Preview</button></span><span><button class="gs-acc" type="button" data-sortit="${esc(x.id)}" disabled>${OK}File it</button></span></footer></article>`).join('')}</div>`;
+    };
+    // a file put where it belongs, by hand: from a document (code) or Uncategorized ('u:<id>'), to
+    // another document of this step or another ('__u' for Uncategorized). Whatever had that place goes
+    // to Uncategorized; a document no step asks for goes straight into Documents
+    const refile = (from, to) => {
+      const isU = from.startsWith('u:'), uid = isU ? from.slice(2) : null, item = isU && U ? U.get(uid) : null, f = isU ? null : saved.files[from];
+      if ((!item && !f) || !to || to === from) return false;
+      const name = isU ? item.file : f.file, keys = isU ? ['uncat:' + uid] : [from, '~' + name];
+      const carry = Object.fromEntries(FIELDS.map(([k]) => [k, isU ? item[k] : f.edited ? f[k] : '']).filter(([, v]) => v));
+      if (to === '__u') {
+        if (isU || !U) return false;
+        const id = U.add(Object.assign({ file: name, from: `${A.title} step` }, Object.fromEntries(FIELDS.map(([k]) => [k, f[k] || '']))));
+        U.copyFile(keys, 'uncat:' + id); delete saved.files[from]; st.unread.push(id);
+      } else {
+        const a = stepOf(to), nd = docIn(to);
+        if (!nd) {
+          const c = CAT.docs.find((x) => x.code === to); if (!c) return false;
+          DM.saveDoc(to, { status: 'valid', issued: carry.issued || dt(new Date()), valid: carry.valid || 'No expiry', ref: esc(carry.ref || ''), by: esc(carry.by || issuer(c)), conf: 98, edited: true, note: '' });
+        } else {
+          if (saved.files[to]) refile(to, '__u');
+          saved.files[to] = Object.assign(read(nd, { name }), carry, { area: a, checked: true, edited: true, conf: 98, ok: false, mismatch: false, flag: null });
+          if (a !== area) st.later.push({ name, code: to, area: a });
+        }
+        if (U) U.copyFile(keys, to);
+        if (isU) { U.remove(uid); st.unread = st.unread.filter((x) => x !== uid); } else delete saved.files[from];
+      }
+      editing = null; keep(); strip();
+      if (st.step === 2 && !filed().length) goStep(1); else paint();
+      return true;
+    };
     const step2 = () => {
       // the low-confidence ones, the only ones waiting on the user, first
       const key = (d) => (lapsed(saved.files[d.code]) && !saved.files[d.code].ok ? -1 : saved.files[d.code].conf); // expired first
@@ -723,7 +785,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <p class="gs-conf">Low confidence needs you; medium and high are up to you. Open any one to see what I read, field by field, with where I read it.</p>
           <div class="gs-bar"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>
           <div class="gs-cards">${list.map(card).join('')}</div>
-          ${list.length > 1 && plain ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}</div>
+          ${list.length > 1 && plain ? `<div class="gs-bar gs-bar-end"><span>${list.length - left} of ${list.length} accepted</span>${all}</div>` : ''}${unreadCards()}</div>
         ${nav('Back to upload', tour ? `<button class="link-btn" type="button" data-close="next">${tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>` : '',
           `<button class="btn btn-primary" type="button" data-confirm${list.length && !needs && editing == null ? '' : ' disabled'}>Continue</button>`)}
         ${needs ? `<p class="gs-d gs-hint">Check ${needs === 1 ? 'the document' : `the ${needs} documents`} marked low confidence${vat ? ', with a different VAT number' : ''}${exN ? ' or expired' : ''} to continue.</p>` : ''}`;
@@ -839,10 +901,21 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     // reading: each file added goes to the document it turns out to be; one that isn't among them is kept
     const assign = () => {
       // first the files she recognises by name, then the rest in order; what's left over is kept
-      const openDocs = docs.filter((d) => !saved.files[d.code]), extra = [], later = [];
+      const openDocs = docs.filter((d) => !saved.files[d.code]), later = [], elsewhere = [], unread = [];
+      // another step's documents, not filed yet: a file she recognises as one of them goes there
+      const others = STEP_KEYS.filter((a) => a !== area).flatMap((a) => asks(a).filter((d) => !saved.files[d.code] && !docs.some((x) => x.code === d.code)).map((d) => ({ a, d })));
+      const strong = (name) => { const n = fold(name); let best = null, sc = 0; others.forEach((o) => { const k = WORDS(o.d).filter((w) => n.includes(w)).length; if (k > sc) { sc = k; best = o; } }); return best; };
+      // prototype: a file named as a scan, a photo or unknown is one she can't read
+      const UNREAD = /\b(unreadable|illegible|blurr?y|blurred|misc|unknown|whatsapp|img\s?\d*|scan\s?\d*|photo\s?\d*|ilegivel|desconhecido)\b/i;
+      const stash = (name, key) => { if (!window.CMFiles) return; (held[name] ? Promise.resolve(held[name]) : window.CMFiles.get('~' + name).then((r) => r && r.blob)).then((file) => file && window.CMFiles.put(key, file)); };
       const give = (name, d) => { openDocs.splice(openDocs.indexOf(d), 1); saved.files[d.code] = read(d, { name }); if (window.CMFiles) (held[name] ? Promise.resolve(held[name]) : window.CMFiles.get('~' + name).then((r) => r && r.blob)).then((file) => file && window.CMFiles.put(d.code, file)); };
       st.pending.forEach((name) => { const d = openDocs.length && match({ name }, openDocs); if (d && WORDS(d).some((w) => fold(name).includes(w))) give(name, d); else later.push(name); });
-      later.forEach((name) => { if (openDocs.length) give(name, openDocs[0]); else extra.push(name); });
+      later.forEach((name) => {
+        const o = strong(name);
+        if (o) { others.splice(others.indexOf(o), 1); saved.files[o.d.code] = Object.assign(read(o.d, { name }), { area: o.a }); stash(name, o.d.code); st.later.push({ name, code: o.d.code, area: o.a }); elsewhere.push([name, o.d, o.a]); return; }
+        if (UNREAD.test(String(name).replace(/[_.-]/g, ' ')) || !openDocs.length) { unread.push(name); return; }
+        give(name, openDocs[0]);
+      });
       // the test user (register.html): every batch of files has one with another company's VAT
       // number, so the check always shows. Not the tax card, where the number comes from, and not a
       // single file sent to replace one, so uploading a new document can put it right
@@ -860,14 +933,17 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         if (pick) { Object.assign(saved.files[pick.code], lapse(pick, hash(pick.code + org.id)), { conf: Math.max(saved.files[pick.code].conf, 90) }); st.expSim = true; }
         else if (fresh.some((d) => lapsed(saved.files[d.code]))) st.expSim = true; // one was already
       }
-      st.pending = []; st.kept = st.kept.concat(extra); saved.extra += extra.length;
-      return extra;
+      // what she can't tell: Uncategorized documents, on Documents (kept as before without it)
+      unread.forEach((name) => { if (U) { const id = U.add({ file: name, from: `${A.title} step` }); stash(name, 'uncat:' + id); st.unread.push(id); } else st.kept.push(name); });
+      st.pending = []; saved.extra += elsewhere.length + unread.length;
+      return { elsewhere, unread };
     };
-    const checks = (extra) => unchecked().map((d) => {
+    const checks = (x) => unchecked().map((d) => {
       const f = saved.files[d.code];
       if (f.mismatch) return [`${f.file} → ${d.name.en}`, `Read &middot; its VAT number, ${esc(fmtTax(f.vat))}, isn&rsquo;t ${called()}&rsquo;s. Check it next.`, d.code];
       return [`${f.file} → ${d.name.en}`, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
-    }).concat(extra.map((name) => [name, `Not one of the ${A.title.toLowerCase()} documents I asked for. I&rsquo;ve kept it in your documents.`, null]));
+    }).concat(x.elsewhere.map(([name, d, a]) => [`${name} → ${d.name.en}`, `Read &middot; not one I asked for here, but the ${esc(AREA[a].title)} step asks for it. I&rsquo;ve filed it there.`, null]))
+      .concat(x.unread.map((name) => [name, 'I couldn&rsquo;t tell what this is. It&rsquo;s in Uncategorized documents: tell me what it is when you review.', null]));
     const validating = () => {
       const all = checking.rows.length, done = Math.min(checking.at, all);
       const rows = checking.rows.map(([n, why, code], i) => `<li class="${i < done ? (code ? 'is-ok' : 'is-in') : i === done ? 'is-reading' : ''}"><span class="gs-ic">${i < done ? (code ? OK : FILE) : i === done ? SPIN : ''}</span><span><span class="gs-n">${esc(n)}</span><span class="gs-d">${i < done ? why : i === done ? 'Reading&hellip;' : 'Waiting'}</span></span><span></span></li>`).join('');
@@ -879,9 +955,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     };
     const validate = () => {
       rejected = [];
-      const extra = assign(); keep();
-      if (!unchecked().length && !extra.length) { goStep(filed().length ? 2 : 1); return; }
-      checking = { rows: checks(extra), at: 0 }; editing = null; paint();
+      const x = assign(); keep();
+      if (!unchecked().length && !x.elsewhere.length && !x.unread.length) { goStep(filed().length ? 2 : 1); return; }
+      checking = { rows: checks(x), at: 0 }; editing = null; paint();
       const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
       const tick = () => {
         if (!wrap) return;
@@ -906,7 +982,20 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     const dq = (id) => dwEl.querySelector('#' + id);
     let peek = null, peekBack = null;
     const company = esc(org.name), taxShown = taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
+    const whatCard = (key, cur, lead) => (PICK ? `<section class="cdd-card"><h4 class="eyebrow">What it is</h4><p class="cdd-desc">${lead}</p>${PICK.html(key, cur, { uncat: !!cur })}<div class="gs-dp-acts"><button type="button" class="btn btn-quiet btn-sm" data-dwrefile disabled>${cur ? 'Move it there' : 'File it'}</button></div></section>` : '');
     const paintPeek = () => {
+      if (String(peek).startsWith('u:')) {
+        const x = U && U.get(peek.slice(2)); if (!x) { closePeek(); return; }
+        dq('gs-dw-t').textContent = x.file;
+        dq('gs-dw-sub').textContent = `Uncategorized · uploaded on ${x.at}`;
+        dq('gs-dw-conf').innerHTML = '<span class="co-badge b-pend">Couldn&rsquo;t tell</span>';
+        dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-u', '', 'I couldn&rsquo;t tell which document this is. Choose its category, then its section, then the document, and I file it there.');
+        const slot = dq('gs-dw-file'), at = peek;
+        if (window.CMFiles) window.CMFiles.get('uncat:' + x.id).then((r) => { if (peek === at && slot.isConnected) slot.innerHTML = window.CMFiles.preview(r, { title: x.file, file: x.file, holder: window.CMFiles.plain(company), issuer: '', fields: [] }); });
+        dq('gs-dw-foot').textContent = 'In Uncategorized documents';
+        dq('gs-dw-acts').innerHTML = '';
+        return;
+      }
       const d = docs.find((x) => x.code === peek), f = d && saved.files[d.code];
       if (!f) { closePeek(); return; }
       const flagged = f.flag && !f.edited;
@@ -924,7 +1013,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
       dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">Corrected by you</span>' : confTag(f);
       // the page as she read it, and the file itself one click away (js/doc-files.js)
-      dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + read;
+      dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-' + d.code, d.code, `I read it as ${esc(d.name.en)}. If that&rsquo;s wrong, choose the right one: its category, then its section, then the document.`) + read;
       const slot = dq('gs-dw-file'), at = peek;
       const fill = (html) => { if (peek === at && slot.isConnected) slot.innerHTML = html; };
       if (!window.CMFiles) fill('');
@@ -944,6 +1033,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     dwEl.addEventListener('click', (e) => {
       const t = (sel) => e.target.closest(sel);
       if (t('[data-dwclose]')) { closePeek(); return; }
+      if (t('[data-dwrefile]')) { const from = peek, to = PICK.value(dwEl); closePeek(); refile(from, to); return; }
       // in place: repainting would reload the file above and move the scroll
       if (t('[data-cite]')) { const cb = t('[data-cite]'), row = dwEl.querySelector('#gs-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; if (open && window.CMFiles.show) window.CMFiles.show(dwEl, +cb.dataset.cite); return; }
       if (t('[data-show]')) { if (!window.CMFiles.show(dwEl, +t('[data-show]').dataset.show)) { const fileEl = dwEl.querySelector('#gs-dw-file'); if (fileEl) fileEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); } return; }
@@ -952,6 +1042,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-dwaccept]')) { saved.files[peek].ok = true; keep(); paint(); strip(); closePeek(); return; } // accepted: back to the review, where its card now shows it
       if (t('[data-dwedit]')) { const c = peek; closePeek(); editing = c; paint(); const i = wrap.querySelector(`[data-card="${c}"] .is-flag input`) || wrap.querySelector(`[data-card="${c}"] input`); if (i) i.focus(); }
     });
+
+    // a document chosen by hand: its File it / Move it there wakes up
+    dwEl.addEventListener('dp-change', (e) => { const b = dwEl.querySelector('[data-dwrefile]'); if (b) b.disabled = !e.detail || e.detail === peek || (e.detail === '__u' && String(peek).startsWith('u:')); });
+    wrap.addEventListener('dp-change', (e) => { const c = e.target.closest('[data-card]'), b = c && c.querySelector('[data-sortit]'); if (b) b.disabled = !e.detail || e.detail === '__u'; });
 
     let shownStep = 0;
     const paint = () => {
@@ -1037,6 +1131,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         return;
       }
       if (t('[data-cancel]')) { editing = null; paint(); return; }
+      if (t('[data-sortit]')) { const id = code('sortit'), c = wrap.querySelector(`[data-card="u:${CSS.escape(id)}"]`); refile('u:' + id, PICK.value(c)); return; }
       if (t('[data-save]')) {
         const c = code('save'), f = saved.files[c], el = wrap.querySelector(`[data-card="${c}"]`);
         let changed = false;
@@ -1050,6 +1145,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           f[k] = v; changed = true;
         });
         f.validNa = f.valid === 'Not applicable';
+        // another document chosen: the file, with what was typed, goes there
+        const to = PICK ? PICK.value(el) : '';
+        if (to && to !== c) { if (changed) f.edited = true; if (refile(c, to)) return; }
         // checked by a person: what's there now is what they say, so it reads as sure
         if (changed || f.flag) Object.assign(f, { edited: true, flag: null, conf: 98 });
         f.ok = (!f.mismatch || !!f.vatReason) && !lapsed(f); editing = null; keep(); paint(); strip(); return;

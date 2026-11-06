@@ -571,7 +571,9 @@ window.DOC_MODEL = (() => {
   const saveDoc = (code, patch) => {
     const d = DOCS.find((x) => x.code === code && !x.kind); if (!d) return null;
     // a new file for one that had one: the one it replaces joins its versions
-    if (patch.issued) {
+    // a correction (fix): the same file, its values put right, so no new version
+    const fix = patch.fix; if (fix) { patch = Object.assign({}, patch); delete patch.fix; }
+    if (patch.issued && !fix) {
       patch = Object.assign({}, patch, { uploaded: today() });
       if (!NO_FILE.includes(d.status) && V.parse(d.issued)) {
         patch.prev = [{ issued: d.issued, valid: d.valid, uploaded: d.uploaded || d.issued, replaced: today(), by: me, ref: d.ref, conf: d.conf != null ? d.conf : 92 }].concat(d.prev || []);

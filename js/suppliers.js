@@ -5,7 +5,7 @@
    answered yet shows as pending.
    Each document keeps its versions: you see the one in place when the consent was given and every
    one uploaded while it stood, and keep those once they remove it (CM_VERSIONS, js/doc-model.js).
-   window.CM_SUPPLIERS: list(), byId(id), docsOf(consent), stats(supplier).
+   window.CM_SUPPLIERS: list(), byId(id), docsOf(consent), stats(supplier), addAsk(id, request).
    Prototype: made up, the same every time; document names and requirements come from the catalog. */
 window.CM_SUPPLIERS = (() => {
   const C = window.DOC_CATALOG || { docs: [], labels: { requirement: {} } };
@@ -170,7 +170,26 @@ window.CM_SUPPLIERS = (() => {
   // given you all the documents you asked for), accepted (everything asked for is shared), consent
   // removed (they stopped sharing every consent they'd given you)
   LIST.forEach((s) => { s.status = s.consents.every((c) => c.state === 'removed') ? 'removed' : s.consents.some((c) => c.state === 'pending') ? 'pending' : 'accepted'; });
-  const all = () => added().map(fromInvite).concat(DEMO ? LIST : []);
+  // documents you asked a supplier for later, from their page (js/supplier-docs.js): each request is
+  // a consent waiting for their answer (for an invited one, it joins what the invitation asks for).
+  // Kept for the tab, next to the invitations.
+  const ASK_KEY = ADD_KEY.replace('cm-sup-added', 'cm-sup-asked');
+  const asked = () => { try { return JSON.parse(sessionStorage.getItem(ASK_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const pendDoc = (r, c) => ({ code: c, name: (r.names && r.names[c]) || byCode[c].name.en, section: (r.sections && r.sections[c]) || byCode[c].section.en, cat: category(c),
+    requirement: (r.required || []).includes(c) ? 'Mandatory' : 'Optional', status: 'missing', valid: '—', note: '' });
+  const withAsks = (s) => {
+    const rs = asked()[s.id];
+    if (!rs || !rs.length) return s;
+    if (s.status === 'invited') {
+      const c0 = s.consents[0], have = new Set(c0.codes), more = rs.flatMap((r) => r.docs.filter((c) => byCode[c] && !have.has(c) && have.add(c)).map((c) => pendDoc(r, c)));
+      return Object.assign({}, s, { consents: [Object.assign({}, c0, { codes: [...have], docs: c0.docs.concat(more) })].concat(s.consents.slice(1)) });
+    }
+    const consents = s.consents.concat(rs.map((r) => ({ id: r.id, title: 'Documents you asked for', codes: r.docs, project: r.project ? PROJECTS[r.project] || null : null, granted: r.at, state: 'pending', asked: true, note: r.note,
+      docs: r.docs.filter((c) => byCode[c]).map((c) => pendDoc(r, c)) })));
+    return Object.assign({}, s, { consents, status: consents.some((c) => c.state === 'pending') ? 'pending' : s.status });
+  };
+  const addAsk = (supId, r) => { const a = asked(); (a[supId] = a[supId] || []).push(r); try { sessionStorage.setItem(ASK_KEY, JSON.stringify(a)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-suppliers')); };
+  const all = () => added().map(fromInvite).concat(DEMO ? LIST : []).map(withAsks);
   const SUP_STATUS = { invited: ['Invited', 'b-neu'], pending: ['Pending consent', 'b-pend'], accepted: ['Accepted', 'b-ok'], removed: ['Consent removed', 'b-over'] };
   const addInvite = (a) => { const l = added(); l.unshift(a); try { sessionStorage.setItem(ADD_KEY, JSON.stringify(l)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-suppliers')); };
   // companies already on C-MORE that aren't your suppliers yet, by country and code (digits only).
@@ -203,5 +222,5 @@ window.CM_SUPPLIERS = (() => {
   // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
   const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products' }
     : { id: 'NIPC', scope: 'projects' };
-  return { WORDS, CATS, DEMO, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
+  return { WORDS, CATS, DEMO, PROJECTS, addAsk, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
 })();

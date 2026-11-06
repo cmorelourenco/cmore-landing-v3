@@ -71,6 +71,8 @@
 .sp-head h1 { font-size: clamp(2rem, 3vw, 2.5rem); line-height: 1.08; letter-spacing: -0.025em; font-weight: 600; }
 .sp-head p { margin-top: 0.375rem; font-size: 0.9375rem; color: var(--color-ink-muted); }
 .sp-head a { color: var(--color-ink); }
+.sp-head .sp-ask-docs { flex: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+.sp-head .sp-ask-docs svg { width: 1rem; height: 1rem; }
 .sp-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .sp-kpi { padding: 1.125rem 1.25rem; border: 1px solid var(--color-line); border-radius: 0.875rem; background: var(--color-surface); }
 .sp-kpi span { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--color-ink-muted); }
@@ -132,7 +134,7 @@
   // once they removed a consent: the newest version you were shown, as it stands now
   const keptTag = (d) => (!d.kept ? '<span class="co-badge b-neu">Not shared</span>' : d.kept.current ? tag(d.status) : V.stateOf(d.kept) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-ok">Valid</span>');
   const id = new URLSearchParams(location.search).get('id');
-  const sup = id && S.byId(id);
+  let sup = id && S.byId(id);
   const head = document.getElementById('sup-head'), crumb = document.getElementById('sup-crumb');
 
   // ---- the suppliers, as cards ---------------------------------------------------------------------
@@ -266,7 +268,7 @@
     const For = (c) => (c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`), n = (c) => `${c.docs.length} document${c.docs.length === 1 ? '' : 's'}`;
     if (s.status === 'invited') return [{ at: s.invite.invited, tone: 'neu', what: `You invited ${esc(s.name)}`, sub: `${s.invite.onCmore ? 'To your supplier list' : 'To join C&#8209;MORE'} &middot; ${n(s.consents[0])} asked for` }];
     return s.consents.flatMap((c) => {
-      if (c.state === 'pending') return [{ at: c.granted, tone: 'wait', what: `You asked for ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)} &middot; waiting for their answer` }];
+      if (c.state === 'pending') return [{ at: c.granted, tone: 'wait', what: c.asked ? `You asked for ${n(c)}` : `You asked for ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)} &middot; waiting for their answer` }];
       const given = { at: c.granted, tone: 'ok', what: `Consent given: ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)}` };
       if (c.state === 'removed') return [given, { at: c.removed, tone: 'off', what: `Consent removed: ${esc(c.title)}`, sub: `You no longer see its ${n(c)}` }];
       // a document that ran out under it, on the day it did
@@ -289,7 +291,7 @@
     const inv = s.status === 'invited';
     const facts = [s.services.join(', '), s.city, `${inv ? s.invite.idLabel : S.WORDS.id} ${s.nipc}`, s.workers != null ? `${s.workers} people` : '', inv ? `invited on ${s.invite.invited}` : `supplier since ${s.since}`].filter(Boolean).map(esc).join(' &middot; ');
     if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier &middot; ${stTag(s)}</span><h1>${esc(s.name)}</h1>
-        <p>${facts}${s.email ? ` &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : ''}</p></div></div>`;
+        <p>${facts}${s.email ? ` &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : ''}</p></div><button type="button" class="btn btn-primary btn-sm sp-ask-docs" data-sup-docs><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Ask for documents</button></div>`;
     // invited: they haven't joined yet, so nothing is shared; what you asked them for, and a reminder
     if (inv) {
       const docs = s.consents[0].docs;
@@ -409,7 +411,9 @@
   // a line on top of the consent log, until the page reloads
   const addLog = (ev) => { logged.unshift(ev); const l = document.getElementById('sp-log'); if (l) l.insertAdjacentHTML('afterbegin', `<li><time>${esc(ev.at)}</time><span class="cd-dot is-${ev.tone}" aria-hidden="true"></span><span><b>${ev.what}</b><small>${ev.sub}</small></span></li>`); };
   // a supplier just added (js/supplier-add.js); asking again for consents (js/supplier-ask.js)
-  window.CMSupPage = { refresh: () => { if (!sup) list(); }, sup, addLog, today, nudge: (k) => nudge(k), sentToday: (k) => sentToday(k) };
+  // after you ask them for more documents (js/supplier-docs.js): their page again, with the new request
+  const reload = () => { if (!sup) return; sup = S.byId(id) || sup; window.CMSupPage.sup = sup; const y = scrollY; page(sup); box.querySelectorAll('[data-remind]').forEach((b) => { if (sentToday(b.dataset.remind)) quiet(b); }); scrollTo(0, y); };
+  window.CMSupPage = { refresh: () => { if (!sup) list(); }, reload, sup, addLog, today, nudge: (k) => nudge(k), sentToday: (k) => sentToday(k) };
 
   box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
   box.addEventListener('click', (e) => {

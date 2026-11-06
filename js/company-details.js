@@ -142,6 +142,7 @@
   // what ALMA read from a document, field by field, where the demo knows it
   const valueOf = (d, field) => {
     if (NO_FILE.includes(d.status) && d.status !== 'filemissing') return null;
+    if (d.vals && d.vals[field.name] != null && d.vals[field.name] !== '') return esc(d.vals[field.name]); // typed in by the user (Make changes)
     const n = field.name.toLowerCase();
     if (/(provider|insurer|issuer|lessor|certification body).*tax number/.test(n)) return d.by ? '5' + String(100000000 + hash(d.by) * 977).slice(-8).replace(/(\d{2})(\d{3})(\d{3})/, '$1 $2 $3') : null;
     if (/expiry|valid until|validity|end date|next exam|next inspection/.test(n)) return d.valid !== '—' ? d.valid : null;
@@ -216,7 +217,13 @@
     };
     dq('cdd-page').textContent = hasFile ? (v ? `Earlier version · replaced ${v.replaced}` : 'Current version') : view.status === 'na' ? 'Not applicable to this company' : view.status === 'processing' ? 'ALMA is reading it' : view.status === 'filemissing' ? 'Data typed in, no file yet' : 'No file yet';
     dq('cdd-conf').innerHTML = typeof conf === 'number' ? confCell(conf) : conf === 'reading' ? confCell(conf) : '';
-    const read = fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one. Check it against the file.</span>' : ''}${cites[i] ? `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${i === citeOpen}" aria-controls="cdd-cite-${i}">${i === citeOpen ? 'Hide citation' : 'View citation'}</button>` : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>${cites[i] ? citeHtml(cites[i], i) : ''}`).join('')}</tbody></table></section>` : '';
+    const ed = !v && !!dState.edit && hasFile;
+    const isDate = (x) => /date|expir|valid|until|next exam|next inspection/i.test(x.name) || /date/i.test(x.type || '');
+    const isoOf = (t) => { const n = Date.parse(t); if (Number.isNaN(n)) return ''; const y = new Date(n); return `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`; };
+    // Make changes: every field ALMA read, and what the document is, can be put right
+    const editCard = ed ? `<section class="cdd-card cdd-ed"><h4 class="eyebrow">What it is</h4><p class="cdd-desc">If ALMA read it as the wrong document, choose the right one: its category, then its section, then the document. The file and what you set below go there.</p>${window.CMDocPick ? window.CMDocPick.html('cdd', d.code, { only: (x) => !x.kind }) : ''}</section>
+      <section class="cdd-card cdd-ed"><h4 class="eyebrow">Its details</h4><table class="cd-fields"><tbody>${fields.map((x, i) => { const pv = x.value ? decode(String(x.value).replace(/<[^>]+>/g, '')) : ''; return `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}</span></td><td colspan="2"><input class="cdd-in" data-fld="${i}" ${isDate(x) ? `type="date" value="${isoOf(pv)}"` : `value="${esc(pv)}"`} aria-label="${esc(x.name)}"></td></tr>`; }).join('')}</tbody></table></section>` : '';
+    const read = ed ? editCard : fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one. Check it against the file.</span>' : ''}${cites[i] ? `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${i === citeOpen}" aria-controls="cdd-cite-${i}">${i === citeOpen ? 'Hide citation' : 'View citation'}</button>` : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>${cites[i] ? citeHtml(cites[i], i) : ''}`).join('')}</tbody></table></section>` : '';
     const c = d.cat;
     const facts = [['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && !['on_request', 'optional'].includes(c.requirement) ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
       ['Renewal', esc(c.renewal || '—')], ['Expiry', esc(c.expiryRule || '—')], ['Shared with', c.sharing === 'standard' ? 'Every client you share your profile with' : esc(LBL.sharing[c.sharing])], ['Legal basis', esc(c.legalBasis || '—')]]
@@ -259,12 +266,52 @@
     window.CMFiles && window.CMFiles.closePeek(dw);
     dq('cdd-foot').textContent = v ? `Read-only. Uploaded by ${v.by}; replaced on ${v.replaced}.` : hasFile ? (d.edited ? 'Edited by user: changes to ALMA’s reading are logged and visible to clients.' : `Issued ${d.issued}${d.valid && d.valid !== '—' ? ' · ' + (/^\d/.test(d.valid) ? 'expires ' : '') + d.valid : ''}`) : '';
     dq('cdd-acts').innerHTML = v ? `<button type="button" class="btn btn-quiet btn-sm" data-cdd-cur>Back to current version</button>`
-      : (canNa(d) && d.status !== 'na' && !dState.na ? '<button type="button" class="link-btn" data-na-open>Doesn&rsquo;t apply to us</button>' : '')
+      : ed ? '<button type="button" class="link-btn" data-cdd-edx>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-cdd-eds>Save changes</button>'
+      : (hasFile && d.status !== 'na' ? '<button type="button" class="link-btn" data-cdd-ed>Make changes</button>' : '') + (canNa(d) && d.status !== 'na' && !dState.na ? '<button type="button" class="link-btn" data-na-open>Doesn&rsquo;t apply to us</button>' : '')
       + (d.status === 'na' ? '' : `<button type="button" class="btn btn-quiet btn-sm" data-cdd-up>${hasFile ? 'Upload a new version' : 'Upload it'}</button>`);
     const n = dState.list.length;
     dw.querySelector('.docd-nav').hidden = n < 2 || !!v;
     dq('cdd-count').textContent = `${dState.k + 1} of ${n}`;
     dq('cdd-prev').disabled = dState.k <= 0; dq('cdd-next').disabled = dState.k >= n - 1;
+  };
+  // Make changes, saved: what was typed over what ALMA read (each field, and the dates and reference
+  // the tables show), as a correction of the same file; and, if it's another document, the file and
+  // its values go there and this one is left without
+  const saveEdit = () => {
+    const d = docById(dState.list[dState.k]), MD = window.DOC_MODEL;
+    const fl = d.cat.fields || [], vals = Object.assign({}, d.vals || {}), patch = { fix: true, edited: true };
+    dw.querySelectorAll('[data-fld]').forEach((inp) => {
+      const x = fl[+inp.dataset.fld]; if (!x) return;
+      const was = decode(String(valueOf(d, x) || '').replace(/<[^>]+>/g, ''));
+      const now = inp.type === 'date' ? (inp.value ? (() => { const t = new Date(inp.value + 'T00:00'); return `${t.getDate()} ${MONTHS[t.getMonth()]} ${t.getFullYear()}`; })() : '') : inp.value.trim();
+      if (now === was) return;
+      vals[x.name] = now;
+      const n = x.name.toLowerCase();
+      if (/expiry|valid until|validity|end date|next exam|next inspection/.test(n)) patch.valid = now || '—';
+      else if (/issue date|date of issue|issued on|^date$/.test(n)) patch.issued = now || '—';
+      else if (/(certificate|policy|licence|license|reference|registration|document|report) (no|number)|^number$|reference/.test(n)) patch.ref = esc(now);
+      else if (/issuer|issued by|insurer|certification body|authority|provider/.test(n) && !/tax number/.test(n)) patch.by = esc(now);
+    });
+    patch.vals = vals;
+    // its status follows a new expiry date
+    const exp = Date.parse(patch.valid || d.valid);
+    if (['valid', 'expiring', 'expired', 'attention'].includes(d.status) && !Number.isNaN(exp)) patch.status = exp < Date.now() ? 'expired' : exp - Date.now() < 30 * 864e5 ? 'expiring' : 'valid';
+    else if (d.status === 'attention') patch.status = 'valid';
+    const to = window.CMDocPick ? window.CMDocPick.value(dw) : '';
+    dState.edit = false;
+    if (to && to !== d.code && to !== '__u') {
+      const t = DOCS.find((x) => x.code === to && !x.kind);
+      if (t) {
+        MD.saveDoc(to, Object.assign({}, patch, { status: patch.status || 'valid', issued: patch.issued || d.issued, valid: patch.valid || d.valid, ref: patch.ref || d.ref, by: patch.by || d.by, note: '', conf: 98, uploaded: d.uploaded || today() }));
+        const c = d.cat, none = c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'missing';
+        MD.saveDoc(d.code, { fix: true, status: none, issued: '—', valid: '—', ref: '', by: '', note: '', vals: null, edited: false });
+        if (window.CMUncat) window.CMUncat.copyFile(d.code, to);
+        render(); openDrawer(t.id);
+        return;
+      }
+    }
+    MD.saveDoc(d.code, patch);
+    render(); drawDoc();
   };
   const openDrawer = (id, v = 0, na = false, cite = null) => {
     // the documents on screen, in order, are what Previous / Next walk through
@@ -283,12 +330,15 @@
     setTimeout(() => { dw.hidden = true; }, 300);
     if (dLast && dLast.focus) dLast.focus({ preventScroll: true });
   };
-  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; dState.cite = null; drawDoc(); };
+  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; dState.cite = null; dState.edit = false; drawDoc(); };
   dq('cdd-prev').addEventListener('click', () => stepDoc(-1));
   dq('cdd-next').addEventListener('click', () => stepDoc(1));
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-close]')) { closeDrawer(); return; }
     if (e.target.closest('[data-cdd-cur]')) { dState.v = 0; drawDoc(); return; }
+    if (e.target.closest('[data-cdd-ed]')) { dState.edit = true; dState.na = false; drawDoc(); const i = dw.querySelector('[data-dp-cat]'); if (i) i.focus({ preventScroll: true }); return; }
+    if (e.target.closest('[data-cdd-edx]')) { dState.edit = false; drawDoc(); return; }
+    if (e.target.closest('[data-cdd-eds]')) { saveEdit(); return; }
     const cv = e.target.closest('[data-cdd-ver]'); if (cv) { dState.v = +cv.dataset.cddVer; dState.cite = null; drawDoc(); return; }
     const up = e.target.closest('[data-cdd-up]');
     if (up) { const d = docById(dState.list[dState.k]); if (window.CMUpload) window.CMUpload.open(`doc:${d.id}`, { onSaved: () => { render(); drawDoc(); } }); return; }
@@ -618,6 +668,8 @@
     const onHome = !area && !filtering();
     tools.querySelector('.co-filt').hidden = onHome;
     if (onHome) renderHome(); else renderGroups();
+    // the files ALMA couldn't place (js/doc-sort.js): on the home of Documents, and under Company
+    if (window.CMUncat && !filtering() && (onHome || area === 'company')) groupsEl.insertAdjacentHTML('beforeend', window.CMUncat.section());
 
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
     pills.hidden = !on.length;
@@ -627,6 +679,8 @@
   }
 
   const toTop = () => scrollTo({ top: 0, behavior: 'smooth' });
+  // a file sorted, or one more ALMA couldn't place: the page again (js/doc-sort.js)
+  document.addEventListener('cm-uncat', () => render());
   // the side menu's Documents sections (js/company-switcher.js): here, they open in place
   // and Documents itself, from a section or a document: back to every section, at the top
   document.addEventListener('click', (e) => {

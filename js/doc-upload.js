@@ -399,7 +399,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (oneDoc) return pool.map((s) => opt(s, cur)).join('');
       const by = {}; pool.forEach((s) => { const g = s.who || 'Your company'; (by[g] = by[g] || []).push(s); });
       return Object.entries(by).map(([g, l]) => `<optgroup label="${esc(g)}">${l.map((s) => opt(s, cur)).join('')}</optgroup>`).join('');
-    })();
+    })() + (window.CMUncat ? `<option value="__u"${cur === '__u' ? ' selected' : ''}>Not sure: Uncategorized documents</option>` : '');
 
     // the changes, one area per stage, in the order Documents lists its areas
     const stages = () => { const order = (M.AREAS || []).map((a) => a.key); return [...new Set(reviews.map((v) => v.area))].sort((x, y) => order.indexOf(x) - order.indexOf(y)); };
@@ -430,7 +430,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const refOf = (s, r) => (r.ref != null ? r.ref : refFor(s, r));
     // the fields the setup shows for each document, in its order; dates kept as everywhere else
     // (17 Jan 2027), given to the date pickers as 2027-01-17
-    const FIELDS = [['ref', 'Reference'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    const FIELDS = [['ref', 'Reference'], ['by', 'Issued by'], ['country', 'Country'], ['issued', 'Issue date'], ['valid', 'Valid until']]; // every field she read can be put right
     const DATES = ['issued', 'valid'], NA = ['Not applicable', 'No expiry'];
     const COUNTRY = { PT: 'Portugal', ES: 'Spain', FR: 'France', US: 'United States', BR: 'Brazil', GB: 'United Kingdom', DE: 'Germany' };
     const valsOf = (r) => ({ country: r.country != null ? r.country : COUNTRY[(M.PROFILE || {}).country] || (M.PROFILE || {}).country || '', by: r.by != null ? r.by : plain(M.issuerOf(r.slot.d.cat) || 'The issuing body'),
@@ -537,16 +537,16 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
           return `<section class="cmu-r${ask ? ' is-ask' : ''}${r.editing ? ' is-editing' : ''}${ex ? ' is-expired' : ''}${r.ok ? ' is-ok' : ''}" data-card="${k}" aria-label="${esc(r.file.name)}">
             <div class="cmu-r-h"><div class="cmu-r-t"><h3><button type="button" class="cmu-peek" data-peek="${k}">${esc(s ? label(s) : r.file.name)}</button></h3><p>${s ? esc(r.file.name) : 'Not placed yet'}</p></div>${badge}</div>
             ${r.note ? `<p class="cmu-note">${r.note}</p>` : ''}
-            <label class="cmu-to"><span>${oneDoc && s && s.who ? 'Filed for' : 'Filed as'}</span><select data-to="${k}"${r.editing ? ' disabled' : ''}>${options(s ? s.key : '')}</select></label>
+            <label class="cmu-to"><span>${oneDoc && s && s.who ? 'Filed for' : 'Filed as'}</span><select data-to="${k}"${r.editing ? ' disabled' : ''}>${options(s ? s.key : r.uncat ? '__u' : '')}</select></label>
             ${s ? `<dl class="cmu-fields">${fieldsOf()}</dl>` : ''}${expBlock}
             <footer class="cmu-r-acts"><span>${left}</span><span>${right}</span></footer>
           </section>`;
         }).join('');
         // on: what wasn't accepted goes in as she read it (as the setup's Continue); an expired one, a
         // file without a place, or a card being edited waits for the user
-        const left = on.length - ready.length, nd = reviewOf(results).length, wait = left || exN || editing;
+        const unc = on.filter((r) => !r.slot && r.uncat).length, left = on.length - ready.length - unc, nd = reviewOf(results).length, wait = left || exN || editing;
         const why = editing ? 'Save or cancel your changes first' : left ? `${left} still need${left === 1 ? 's' : ''} a place` : exN ? `${exN} expired: give ${exN === 1 ? 'it' : 'each'} a new date` : '';
-        foot.innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${why}</span><button type="button" class="btn btn-primary btn-sm" data-save${ready.length && !wait ? '' : ' disabled'}>${nd ? `Review ${nd} change${nd === 1 ? '' : 's'}` : ready.length === 1 ? 'Save it' : `Save ${ready.length} documents`}</button>`;
+        foot.innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${why}</span><button type="button" class="btn btn-primary btn-sm" data-save${(ready.length || unc) && !wait ? '' : ' disabled'}>${nd ? `Review ${nd} change${nd === 1 ? '' : 's'}` : ready.length + unc === 1 ? 'Save it' : `Save ${ready.length + unc} files`}</button>`;
       }
     };
     const add = (list) => { const l = [...(list || [])]; if (!l.length) return; files = files.concat(l); step = 1; paint(); };
@@ -608,7 +608,11 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         else M.saveRecord(s.code, s.i, { status: 'valid', exp: r.read.valid });
         if (window.CMFiles) window.CMFiles.put(s.i == null ? s.code : `${s.code}#${s.i}`, r.file);
       });
+      // the ones she couldn't place, and nobody chose for: Uncategorized documents
+      const unc = results.filter((r) => r.on && !r.slot && r.uncat);
+      unc.forEach((r) => { const id = window.CMUncat.add({ file: r.file.name, from: 'Uploaded from Documents' }); if (window.CMFiles) window.CMFiles.put('uncat:' + id, r.file); });
       close();
+      if (!done.length && unc.length) { say(`${unc.length === 1 ? `${esc(unc[0].file.name)} is` : `${unc.length} files are`} in Uncategorized documents. Open ${unc.length === 1 ? 'it' : 'each'} there to say what it is.`, done); return; }
       const whose = [...new Set(done.map((r) => r.slot.who).filter(Boolean))];
       const nCrew = crew.added.length + crew.left.length + Object.keys(crew.roles).length;
       if (kept.size || nCrew) {
@@ -726,6 +730,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (to) {
         // moved by hand: it takes that slot (whatever had it is left without one), and the dates follow it
         const r = results[+to.dataset.to], s = pool.find((x) => x.key === to.value);
+        // not sure what it is: it goes to Uncategorized documents (js/doc-sort.js), to be sorted on Documents
+        if (to.value === '__u') { Object.assign(r, { slot: null, uncat: true, how: 'sure', note: 'It goes to Uncategorized documents. Open it there, on Documents, to say what it is.', ok: false }); paint(); if (peek != null) paintPeek(); return; }
+        r.uncat = false;
         results.forEach((o) => { if (o !== r && o.slot === s) { o.slot = null; o.note = 'Its place went to another file. Choose where this one goes.'; } });
         Object.assign(r, { slot: s, how: 'sure', note: '', read: readDates(s, r.file), ref: null, by: null, country: null, edited: false, ok: false });
         paint(); if (peek != null) paintPeek();
