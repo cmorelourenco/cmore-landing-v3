@@ -209,6 +209,7 @@ window.CMUpload = (() => {
 .cmu-drop b { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
 .cmu-drop span { font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .cmu-drop u { text-decoration: underline; text-underline-offset: 2px; color: var(--color-ink); }
+.cmu-lib { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-top: 0.75rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .cmu-list { display: grid; gap: 0.5rem; }
 .cmu-list h3, .cmu-h { font-size: 0.75rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .cmu-f { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.625rem; font-size: 0.875rem; }
@@ -501,7 +502,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         const now = fs ? `<div class="cmu-now"><span>Now on file</span><b>${stat(fs)} ${fs.exp && fs.exp !== '—' && !NO_FILE.includes(fs.status) ? `<span>${fs.status === 'expired' ? 'on' : 'until'} ${esc(fs.exp)}</span>` : ''}</b></div>`
           : many ? `<div class="cmu-now"><span>${pool.length} document${pool.length === 1 ? '' : 's'} can go here</span><b>${need ? `${need} need${need === 1 ? 's' : ''} a file` : 'All in order'}</b></div>` : '';
         const list = files.length ? `<div class="cmu-list"><h3>Your files &middot; ${files.length}</h3>${files.map((f, k) => `<div class="cmu-f"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${size(f.size)}</small><button type="button" class="cmu-rm" data-rm="${k}" aria-label="Remove ${esc(f.name)}">${XI}</button></div>`).join('')}</div>` : '';
-        body.innerHTML = now + `<div class="cmu-drop" id="cmu-drop" role="button" tabindex="0" aria-label="Add files">${UP}<b>${files.length ? 'Add more files' : `Drop ${fs ? 'the file' : 'files'} here`}</b><span>or <u>browse your device</u> &middot; PDF, scan or photo</span></div>` + list;
+        body.innerHTML = now + `<div class="cmu-drop" id="cmu-drop" role="button" tabindex="0" aria-label="Add files">${UP}<b>${files.length ? 'Add more files' : `Drop ${fs ? 'the file' : 'files'} here`}</b><span>or <u>browse your device</u> &middot; PDF, scan or photo</span></div>`
+          + (window.CMLibrary && window.CMLibrary.has() ? `<div class="cmu-lib"><span>or</span>${window.CMLibrary.button('data-lib')}</div>` : '') + list;
         foot.innerHTML = `<button type="button" class="link-btn" data-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-read${files.length ? '' : ' disabled'}>${files.length > 1 ? `Check ${files.length} files with ALMA` : 'Check it with ALMA'}</button>`;
       } else if (step === 2) {
         body.innerHTML = `<div class="cmu-list"><h3>ALMA is reading</h3>${files.map((f, k) => `<div class="cmu-f ${k < reading ? 'is-done' : k === reading ? 'is-reading' : ''}"><span class="cmu-ic">${k < reading ? OK : k === reading ? SPIN : FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${k < reading ? 'Checked' : k === reading ? 'Reading the name, dates and issuer&hellip;' : 'Waiting'}</small></div>`).join('')}</div>`;
@@ -649,6 +651,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-untuck]')) { tuck(false); return; }
       if (t('[data-x]')) { if (step !== 2 && !tucked) close(); return; }
       if (t('#cmu-drop')) { $('cmu-file').value = ''; $('cmu-file').click(); return; }
+      // from the company's C-MORE library: a copy of a document it already has (js/doc-library.js)
+      if (t('[data-lib]')) { window.CMLibrary.pick({ multiple: !fs }).then((l) => { if (l && l.length) add(fs ? l.slice(0, 1) : l); else el.querySelector('[data-lib]')?.focus(); }); return; }
       if (t('[data-rm]')) { files.splice(+t('[data-rm]').dataset.rm, 1); paint(); return; }
       if (t('[data-read]')) { if (files.length) read(); return; }
       if (t('[data-back]')) { closePeek(); step = 1; if (window.CMAlmaJob) window.CMAlmaJob.clear(); paint(); return; }

@@ -29,6 +29,12 @@ window.CMFiles = (() => {
     tx.objectStore(STORE).put({ name: file.name, type: file.type || '', size: file.size || 0, blob: file, at: Date.now() }, key(code));
     tx.oncomplete = () => res(true); tx.onerror = () => res(false);
   })).catch(() => false));
+  // every file kept for this company, as { code, name, type, size, at, blob } (its C-MORE library, js/doc-library.js)
+  const all = () => soon(db().then((d) => new Promise((res) => {
+    const pre = key(''), out = [], r = d.transaction(STORE).objectStore(STORE).openCursor();
+    r.onsuccess = () => { const c = r.result; if (!c) { res(out); return; } if (typeof c.key === 'string' && c.key.startsWith(pre)) out.push(Object.assign({ code: c.key.slice(pre.length) }, c.value)); c.continue(); };
+    r.onerror = () => res(out);
+  })).catch(() => []), 4000).then((l) => l || []);
   const get = (code) => soon(db().then((d) => new Promise((res) => {
     const r = d.transaction(STORE).objectStore(STORE).get(key(code));
     r.onsuccess = () => res(r.result || null); r.onerror = () => res(null);
@@ -200,5 +206,5 @@ window.CMFiles = (() => {
     setTimeout(() => { if (!el.classList.contains('is-open')) el.hidden = true; }, 300);
   };
 
-  return { put, get, view, missing, sheet, preview, show, plain, fileRow, openPeek, closePeek };
+  return { put, get, all, view, missing, sheet, preview, show, plain, fileRow, openPeek, closePeek };
 })();

@@ -211,6 +211,8 @@
 .gs-wl { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .gs-uh { margin-top: 1.75rem; }
 .gs-uw { margin: 0.25rem 0 0.75rem; text-align: left; }
+.gs-lib { display: flex; justify-content: center; margin: 0.75rem 0 0; }
+.gs-pane > .gs-lib { margin: 0 0 0.75rem; }
 .gs-dp-acts { display: flex; justify-content: flex-end; margin-top: 0.75rem; }
 .gs-steps { list-style: none; margin: 0 auto 2.25rem; padding: 0; width: min(100%, 46rem); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); position: relative; }
 .gs-steps::before { content: ""; position: absolute; top: calc(1.375rem - 1px); left: 16.67%; right: 16.67%; height: 2px; border-radius: 2px;
@@ -551,6 +553,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
   const open = (area, opts = {}) => {
     if (wrap || !AREA[area]) return;
     const docs = asks(area).filter((d) => !(opts.skip || []).includes(d.code));
+    // the company's C-MORE library, next to the device: all of it, whatever step it came from, so a
+    // file can be used again here (a file added in this setup counts before its store has caught up)
+    const libOk = () => !!(window.CMLibrary && (window.CMLibrary.has() || Object.keys(saved.files).length || Object.values(saved.areas || {}).some((a) => a && (a.pending || []).length)));
+    const libBtn = () => (libOk() ? `<p class="gs-lib">${window.CMLibrary.button('data-lib')}</p>` : '');
     if (!docs.length) return;
     const A = AREA[area];
     const st = saved.areas[area] = Object.assign({ step: 1, reviewed: false, pending: [], kept: [] }, saved.areas[area] || {});
@@ -671,10 +677,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           <span class="drop-hint"><span class="wide">Drop them on me</span><span class="narrow">Tap to add</span>${tour ? '<small>PDF or photo, as many as you have.</small>' : ''}</span></button>
         <p class="says">ALMA</p>
         <h1 id="gs-title" tabindex="-1">${total ? `${total} file${total === 1 ? '' : 's'} so far, <span class="soft">add more or carry on.</span>` : `Your ${A.what}, <span class="soft">all at once.</span>`}</h1>
-        <p class="lead">${A.who.replace('WHO', called()).replace('WHERE', where).replace(/\bN\b/, n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>
+        <p class="lead">${A.who.replace('WHO', called()).replace('WHERE', where).replace(/\bN\b/, n)} Drop your files on me, as many as you have. I&rsquo;ll read them and tell you which is which.</p>${libBtn()}
         <div class="gs-pane gs-two">
           <section><p class="gs-lh" role="heading" aria-level="2">What I&rsquo;m asking for <span>${n}</span></p><ul class="gs-list" aria-label="Documents asked for">${asked}</ul></section>
-          <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : '<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>.</p>'}</section>
+          <section><p class="gs-lh" role="heading" aria-level="2">Your files <span>${total}</span></p>${total ? `<ul class="gs-list" aria-label="Your files">${files}</ul>` : `<p class="gs-none">No files yet. Drop them on me above, or <button class="link-btn" type="button" data-browse>choose them on your device</button>${libOk() ? ' or <button class="link-btn" type="button" data-lib>from your C‑MORE library</button>' : ''}.</p>`}</section>
         </div>
         ${nav(backFrom1, `<button class="link-btn" type="button" data-close="${tour ? 'next' : ''}">${tour && tour.next ? 'Skip this step' : 'I&rsquo;ll do it later'}</button>`,
           `<button class="btn btn-primary" type="button" data-go="2"${np || read.length ? '' : ' disabled'}>Upload documents</button>`)}`;
@@ -916,7 +922,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         <p class="lead">${docs.every((d) => d.requirement === 'optional') ? `None of these is required. ${one ? 'One more' : `${missing.length} more`} you could add, whenever you have ${one ? 'it' : 'them'}.` : `${one ? 'One document is' : `${missing.length} documents are`} still missing here.`} Drop ${one ? 'it' : 'them all'} on me and I&rsquo;ll read ${one ? 'it' : 'them'}, or add ${one ? 'it' : 'them one by one'} below.</p>
         <div class="gs-pane"><button class="drop is-small gs-drop-wide" id="gs-drop" type="button" aria-label="Add the missing files"><span class="alma-media" aria-hidden="true">${alma()}</span>
             <span class="drop-hint"><span class="wide">Drop ${one ? 'it' : 'them'} on me</span><span class="narrow">Tap to add</span><small>${one ? 'PDF or photo. I&rsquo;ll read it and check it.' : 'All the missing ones at once. I&rsquo;ll tell you which is which.'}</small></span></button>
-          <ul class="gs-list gs-missing" aria-label="Still missing">${rows}</ul></div>
+          ${libBtn()}<ul class="gs-list gs-missing" aria-label="Still missing">${rows}</ul></div>
         ${nav(backFrom1, `<button class="link-btn" type="button" data-close="next">${tour && tour.next ? `Skip to ${tour.next.toLowerCase()}` : 'Skip for now'}</button>`,
           `<button class="btn btn-primary" type="button" data-more>Add ${one ? 'it' : 'them'} now</button>`)}`;
     };
@@ -1143,6 +1149,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-facts]')) { confirmFacts(); return; }
       if (t('[data-peek]')) { openPeek(code('peek')); return; }
       if (t('#gs-drop') || t('[data-browse]')) { browse(); return; }
+      // from the company's C-MORE library (js/doc-library.js): copies of documents it already has,
+      // taken in as files dropped here are
+      if (t('[data-lib]')) { window.CMLibrary.pick().then((l) => { if (l && l.length && wrap) take(l); }); return; }
       if (t('[data-unpend]')) { st.pending.splice(+code('unpend'), 1); keep(); paint(); return; }
       if (t('[data-one]')) { browse(code('one')); return; }
       if (t('[data-step]')) { const n = +code('step'); if (n === 2 && st.step === 1) validate(); else goStep(n); return; }
