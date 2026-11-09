@@ -71,6 +71,11 @@
       <button type="button" class="link-btn" data-sd-vx="${esc(d.code)}">${picked.length ? 'Clear' : 'Cancel'}</button>
       <small>${on && on.size ? `They&rsquo;re asked for the ${[...on].sort((a, b) => b - a).join(', ')} version${on.size === 1 ? '' : 's'}, and can share ${on.size === 1 ? 'it' : 'each'}, decline, or tell you they don&rsquo;t have one from that year.` : 'Pick one year or more. They can share it, decline, or tell you they don&rsquo;t have one from that year.'}</small></div>`;
   };
+  // a year chosen for a document ticks the document too (one they already share stays as it is)
+  const tick = (code) => {
+    const d = DOCS.find((x) => x.code === code); if (!d || d.off || f.picked.has(code)) return;
+    f.picked.add(code); const b = dw.querySelector(`[data-doc="${CSS.escape(code)}"]`); if (b) b.checked = true;
+  };
   const verList = () => [...f.vers.entries()].filter(([, l]) => l.size).map(([code, l]) => ({ d: DOCS.find((x) => x.code === code), years: [...l].sort((a, b) => b - a) })).filter((x) => x.d);
   const load = () => {
     sup = P.sup;
@@ -169,7 +174,7 @@
     const vo = e.target.closest('[data-sd-vopen]'), yr = e.target.closest('[data-sd-yr]'), vx = e.target.closest('[data-sd-vx]');
     if (vo || yr || vx) {
       const code = vo ? vo.dataset.sdVopen : vx ? vx.dataset.sdVx : yr.dataset.sdYr.split('|')[0];
-      if (vo) { f.vopen.add(code); if (!f.vers.has(code)) f.vers.set(code, new Set([Y])); }
+      if (vo) { f.vopen.add(code); if (!f.vers.has(code)) f.vers.set(code, new Set([Y])); tick(code); }
       if (vx) { f.vopen.delete(code); f.vers.delete(code); }
       if (yr) { const y = +yr.dataset.sdYr.split('|')[1], l = f.vers.get(code) || new Set(); l.has(y) ? l.delete(y) : l.add(y); if (l.size) f.vers.set(code, l); else f.vers.delete(code); }
       const box = dw.querySelector(`[data-sd-v="${CSS.escape(code)}"]`), d = DOCS.find((x) => x.code === code);
@@ -185,7 +190,7 @@
     // a year chosen from the list: added to the ones asked for
     if (t.matches('[data-sd-ysel]')) {
       const code = t.dataset.sdYsel, y = +t.value, d = DOCS.find((x) => x.code === code); if (!y || !d) return;
-      const l = f.vers.get(code) || new Set(); l.add(y); f.vers.set(code, l);
+      const l = f.vers.get(code) || new Set(); l.add(y); f.vers.set(code, l); tick(code);
       const box = dw.querySelector(`[data-sd-v="${CSS.escape(code)}"]`); if (box) box.outerHTML = verUI(d);
       const sel = dw.querySelector(`[data-sd-ysel="${CSS.escape(code)}"]`); if (sel) sel.focus({ preventScroll: true });
       marks(); return;
