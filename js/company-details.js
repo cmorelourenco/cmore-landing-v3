@@ -187,8 +187,12 @@
     const view = v ? Object.assign({}, d, { issued: v.issued, valid: v.valid, ref: v.ref, status: 'archived' }) : d;
     const conf = v ? v.conf : confOf(d);
     const [label, cls] = STATUS[view.status];
-    dq('cdd-title').textContent = d.name + (v ? ` · ${v.label}` : '');
-    dq('cdd-sub').innerHTML = `${esc(d.code || d.archivedCode)} &middot; ${esc(d.requirement || 'Archived')} &middot; <span class="co-badge ${cls}">${v ? 'Earlier version' : label}</span>`;
+    // its name, which the company can always change (not an earlier version's, nor an archived one's)
+    const canRn = !v && !!d.code, renamed = d.name0 && d.name !== d.name0;
+    dq('cdd-title').innerHTML = canRn && dState.rn
+      ? `<span class="cdd-rn"><input class="cdd-in" id="cdd-rn" value="${esc(decode(d.name))}" maxlength="120" aria-label="Document name" autocomplete="off"><button type="button" class="btn btn-primary btn-sm" data-cdd-rns>Save</button><button type="button" class="link-btn" data-cdd-rnx>Cancel</button></span>`
+      : `${esc(decode(d.name))}${v ? ` &middot; ${esc(v.label)}` : ''}${canRn ? `<button type="button" class="cdd-rn-b" data-cdd-rn aria-label="Change the name of ${esc(decode(d.name))}">${PEN}<span>Change name</span></button>` : ''}`;
+    dq('cdd-sub').innerHTML = `${renamed && !dState.rn ? `Originally ${esc(decode(d.name0))} <button type="button" class="link-btn cdd-rn-o" data-cdd-rno>Use it</button> &middot; ` : ''}${esc(d.code || d.archivedCode)} &middot; ${esc(d.requirement || 'Archived')} &middot; <span class="co-badge ${cls}">${v ? 'Earlier version' : label}</span>`;
     const raw = (d.cat.fields || []).map((fl) => valueOf(view, fl));
     const flagAt = !v && d.status === 'attention' ? Math.max(0, raw.findIndex((x) => !x)) : -1;
     const fields = (d.cat.fields || []).map((fl, i) => {
@@ -222,7 +226,7 @@
     const isoOf = (t) => { const n = Date.parse(t); if (Number.isNaN(n)) return ''; const y = new Date(n); return `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`; };
     // Make changes: every field ALMA read, and what the document is, can be put right
     const editCard = ed ? `<section class="cdd-card cdd-ed"><h4 class="eyebrow">What it is</h4><p class="cdd-desc">If ALMA read it as the wrong document, choose the right one: its category, then its section, then the document. The file and what you set below go there.</p>${window.CMDocPick ? window.CMDocPick.html('cdd', d.code, { only: (x) => !x.kind }) : ''}</section>
-      <section class="cdd-card cdd-ed"><h4 class="eyebrow">Its details</h4><table class="cd-fields"><tbody>${fields.map((x, i) => { const pv = x.value ? decode(String(x.value).replace(/<[^>]+>/g, '')) : ''; return `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}</span></td><td colspan="2"><input class="cdd-in" data-fld="${i}" ${isDate(x) ? `type="date" value="${isoOf(pv)}"` : `value="${esc(pv)}"`} aria-label="${esc(x.name)}"></td></tr>`; }).join('')}</tbody></table></section>` : '';
+      <section class="cdd-card cdd-ed"><h4 class="eyebrow">Its details</h4><table class="cd-fields"><tbody><tr><td><span class="n">Document name</span><span class="d">What you call it</span></td><td colspan="2"><input class="cdd-in" id="cdd-nm" value="${esc(decode(d.name))}" placeholder="${esc(decode(d.name0 || d.name))}" maxlength="120" autocomplete="off"></td></tr>${fields.map((x, i) => { const pv = x.value ? decode(String(x.value).replace(/<[^>]+>/g, '')) : ''; return `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}</span></td><td colspan="2"><input class="cdd-in" data-fld="${i}" ${isDate(x) ? `type="date" value="${isoOf(pv)}"` : `value="${esc(pv)}"`} aria-label="${esc(x.name)}"></td></tr>`; }).join('')}</tbody></table></section>` : '';
     const read = ed ? editCard : fields.length && view.status !== 'na' ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type)}${x.shared ? '' : ' &middot; not shared with clients'}</span></td><td>${x.value || `<span class="co-subtle">${hasFile ? 'Not on this document' : 'Read by ALMA on upload'}</span>`}${x.flag ? '<span class="cdd-why">ALMA isn&rsquo;t sure of this one. Check it against the file.</span>' : ''}${cites[i] ? `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="${i === citeOpen}" aria-controls="cdd-cite-${i}">${i === citeOpen ? 'Hide citation' : 'View citation'}</button>` : ''}</td><td>${x.conf ? confCell(x.conf) : ''}</td></tr>${cites[i] ? citeHtml(cites[i], i) : ''}`).join('')}</tbody></table></section>` : '';
     const c = d.cat;
     const facts = [['Requirement', LBL.requirement[c.requirement] + (c.appliesWhen && !['on_request', 'optional'].includes(c.requirement) ? ` &middot; <span class="co-subtle">${esc(c.appliesWhen)}</span>` : '')],
@@ -280,6 +284,8 @@
   const saveEdit = () => {
     const d = docById(dState.list[dState.k]), MD = window.DOC_MODEL;
     const fl = d.cat.fields || [], vals = Object.assign({}, d.vals || {}), patch = { fix: true, edited: true };
+    // its name, if changed: the document's (or the one it goes to's) from now on
+    const nmIn = dw.querySelector('#cdd-nm'), nm = nmIn ? nmIn.value.trim() : null, named = nm != null && nm !== decode(d.name);
     dw.querySelectorAll('[data-fld]').forEach((inp) => {
       const x = fl[+inp.dataset.fld]; if (!x) return;
       const was = decode(String(valueOf(d, x) || '').replace(/<[^>]+>/g, ''));
@@ -306,12 +312,22 @@
         const c = d.cat, none = c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'missing';
         MD.saveDoc(d.code, { fix: true, status: none, issued: '—', valid: '—', ref: '', by: '', note: '', vals: null, edited: false });
         if (window.CMUncat) window.CMUncat.copyFile(d.code, to);
+        if (named && MD.rename) MD.rename(to, nm);
         render(); openDrawer(t.id);
         return;
       }
     }
     MD.saveDoc(d.code, patch);
+    if (named && MD.rename) MD.rename(d.code, nm);
     render(); drawDoc();
+  };
+  // a new name: everywhere the document shows (its rows, the clients who see it); empty, the catalog's
+  const rename = (name) => {
+    const d = docById(dState.list[dState.k]); if (!d || !window.DOC_MODEL.rename) return;
+    window.DOC_MODEL.rename(d.code, name); dState.rn = false;
+    render(); drawDoc();
+    const b = dw.querySelector('[data-cdd-rn]'); if (b) b.focus({ preventScroll: true });
+    if (window.CMAlmaJob && window.CMAlmaJob.toast) window.CMAlmaJob.toast(name.trim() && name.trim() !== decode(d.name0) ? `Renamed to ${esc(name.trim())}.` : `Back to its original name, ${esc(decode(d.name0))}.`);
   };
   const openDrawer = (id, v = 0, na = false, cite = null) => {
     // the documents on screen, in order, are what Previous / Next walk through
@@ -330,7 +346,7 @@
     setTimeout(() => { dw.hidden = true; }, 300);
     if (dLast && dLast.focus) dLast.focus({ preventScroll: true });
   };
-  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; dState.cite = null; dState.edit = false; drawDoc(); };
+  const stepDoc = (s) => { if (!dState) return; const k = dState.k + s; if (k < 0 || k >= dState.list.length) return; dState.k = k; dState.v = 0; dState.na = false; dState.cite = null; dState.edit = false; dState.rn = false; drawDoc(); };
   dq('cdd-prev').addEventListener('click', () => stepDoc(-1));
   dq('cdd-next').addEventListener('click', () => stepDoc(1));
   dw.addEventListener('click', (e) => {
@@ -338,6 +354,10 @@
     if (e.target.closest('[data-cdd-cur]')) { dState.v = 0; drawDoc(); return; }
     if (e.target.closest('[data-cdd-ed]')) { dState.edit = true; dState.na = false; drawDoc(); const i = dw.querySelector('[data-dp-cat]'); if (i) i.focus({ preventScroll: true }); return; }
     if (e.target.closest('[data-cdd-edx]')) { dState.edit = false; drawDoc(); return; }
+    if (e.target.closest('[data-cdd-rn]')) { dState.rn = true; drawDoc(); const i = dq('cdd-rn'); if (i) { i.focus(); i.select(); } return; }
+    if (e.target.closest('[data-cdd-rnx]')) { dState.rn = false; drawDoc(); return; }
+    if (e.target.closest('[data-cdd-rns]')) { rename(dq('cdd-rn').value); return; }
+    if (e.target.closest('[data-cdd-rno]')) { rename(''); return; }
     if (e.target.closest('[data-cdd-eds]')) { saveEdit(); return; }
     const cv = e.target.closest('[data-cdd-ver]'); if (cv) { dState.v = +cv.dataset.cddVer; dState.cite = null; drawDoc(); return; }
     const up = e.target.closest('[data-cdd-up]');
@@ -387,6 +407,8 @@
   document.addEventListener('keydown', (e) => {
     if (dw.hidden) return;
     const cv = e.target.closest && e.target.closest('[data-cdd-ver]'); if (cv && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); cv.click(); return; }
+    if (e.target.id === 'cdd-rn' && e.key === 'Enter') { e.preventDefault(); rename(e.target.value); return; }
+    if (e.target.id === 'cdd-rn' && e.key === 'Escape') { e.stopPropagation(); dState.rn = false; drawDoc(); const b = dw.querySelector('[data-cdd-rn]'); if (b) b.focus(); return; }
     if (e.key === 'Escape') { e.stopPropagation(); closeDrawer(); }
     else if (e.target.closest && e.target.closest('input, textarea')) return;
     else if (e.key === 'ArrowLeft' && !dState.v) stepDoc(-1);
@@ -472,7 +494,7 @@
   const DOC_THEAD = '<thead><tr><th>Document name</th><th>Expiration date</th><th>ALMA confidence</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead>';
   const docTable = (docs) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl">${DOC_THEAD}<tbody>${docs.map(row).join('')}</tbody></table></div>`;
   const GROUP_NOTE = { 'On client request': 'Only needed once a client asks for it. Upload it ahead if you like.', Optional: 'Never required. Worth adding if it helps you win work.', Archived: 'Earlier versions, read-only, kept for audit.' };
-  const group = (cat, docs, raw) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${GROUP_NOTE[raw] ? GROUP_NOTE[raw] + ' &middot; ' : ''}${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docTable(docs)}</div>`;
+  const group = (cat, docs, raw) => `<div class="cd-group"${raw === 'Archived' ? ' data-archived' : ''}><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${cat}</h3><span class="co-muted">${GROUP_NOTE[raw] ? GROUP_NOTE[raw] + ' &middot; ' : ''}${docs.length} document${docs.length === 1 ? '' : 's'}</span></div>${docTable(docs)}</div>`;
 
   // the areas, each a tile with its own count and an alert badge when something there needs you
   const renderHome = () => {
@@ -669,7 +691,8 @@
     tools.querySelector('.co-filt').hidden = onHome;
     if (onHome) renderHome(); else renderGroups();
     // the files ALMA couldn't place (js/doc-sort.js): on the home of Documents, and under Company
-    if (window.CMUncat && !filtering() && (onHome || area === 'company')) groupsEl.insertAdjacentHTML('beforeend', window.CMUncat.section());
+    // they come before the archived documents, which close the list
+    if (window.CMUncat && !filtering() && (onHome || area === 'company')) { const arc = groupsEl.querySelector('[data-archived]'); if (arc) arc.insertAdjacentHTML('beforebegin', window.CMUncat.section()); else groupsEl.insertAdjacentHTML('beforeend', window.CMUncat.section()); }
 
     const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
     pills.hidden = !on.length;

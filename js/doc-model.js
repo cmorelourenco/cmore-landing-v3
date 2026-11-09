@@ -522,7 +522,18 @@ window.DOC_MODEL = (() => {
     naMarks[d.code] = d.orig.status === 'na' ? { undone: true } : undefined; if (!naMarks[d.code]) delete naMarks[d.code]; saveNa();
     Object.assign(d, { status: back, note: d.orig.status === 'na' ? '' : d.orig.note, naBy: '', naOn: '' }); d.text = textOf(d);
   };
-  DOCS.forEach((d) => { d.issued0 = d.issued; if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); });
+  DOCS.forEach((d) => { d.issued0 = d.issued; d.name0 = d.name; if (!d.kind && updates[d.code]) Object.assign(d, updates[d.code]); else if (d.kind && updates[d.code] && updates[d.code].name) d.name = updates[d.code].name; });
+  // a document's name, as the company calls it: every copy of it (a per-worker one too) takes it; an
+  // empty one, or the catalog's, puts the catalog's name back
+  const rename = (code, name) => {
+    const ds = DOCS.filter((x) => x.code === code); if (!code || !ds.length) return null;
+    const n = String(name || '').trim(), orig = ds[0].name0, u = updates[code] = updates[code] || {};
+    if (!n || n === orig) delete u.name; else u.name = n;
+    if (!Object.keys(u).length) delete updates[code];
+    keepUpdates();
+    ds.forEach((x) => { x.name = u.name || orig; x.text = textOf(x); });
+    return ds[0];
+  };
 
   // ---- versions ----------------------------------------------------------------------------------------
   // Every document keeps the versions it replaced. A monthly one has last month's, and the month
@@ -614,5 +625,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

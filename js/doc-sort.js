@@ -96,12 +96,46 @@
 .ucd-fs input { width: 100%; min-width: 0; height: 2.5rem; padding: 0 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); font: inherit; font-size: 0.875rem; color: var(--color-ink); }
 .ucd-fs input:focus { outline: none; border-color: var(--color-graphite); }
 .cdd-in { width: 100%; min-width: 0; height: 2.375rem; padding: 0 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); font: inherit; font-size: 0.875rem; color: var(--color-ink); }
+/* the Documents drawer: renaming a document, in its title */
+/* the name and its pencil on one line, centred on each other; a long name wraps beside it */
+.docd-t h3:has(> .cdd-rn-b) { display: flex; align-items: center; gap: 0.5rem; }
+.cdd-rn-b { flex: none; display: inline-flex; align-items: center; gap: 0.375rem; height: 1.875rem; padding: 0 0.625rem; margin: 0; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); font: inherit; font-size: 0.8125rem; font-weight: 500; line-height: 1; color: var(--color-ink); white-space: nowrap; cursor: pointer; }
+.cdd-rn-b:hover { border-color: var(--color-sand-400); background: var(--color-light-beige); }
+.cdd-rn-b svg { flex: none; width: 0.875rem; height: 0.875rem; }
+.cdd-rn { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.cdd-rn .cdd-in { flex: 1 1 14rem; font-size: 0.9375rem; font-weight: 600; }
+.cdd-rn-o { font-size: inherit; }
 .cdd-in:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 12%, transparent); }
 .ucd-fs .is-wide { grid-column: 1 / -1; }
 .ucd-who { margin-top: 0.75rem; }
 .ucd-msg { font-size: 0.8125rem; color: var(--color-ink-muted); }
 @media (max-width: 40rem) { .ucd-fs { grid-template-columns: 1fr; } }`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+
+  // ---- renaming, in a drawer's title: a pencil beside the name opens it as a field, Save or Enter keeps
+  // it, Cancel or Escape leaves it as it was. Every document drawer has it (window.CMRename)
+  const PEN = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z"/><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z"/></svg>';
+  const rnTitle = (name) => `${esc(name)}<button type="button" class="cdd-rn-b" data-rn aria-label="Change the name of ${esc(name)}">${PEN}<span>Change name</span></button>`;
+  const rnWire = (root, onSave) => {
+    const back = (h) => { h.innerHTML = h.dataset.was || ''; const b = h.querySelector('[data-rn]'); if (b) b.focus(); };
+    root.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-rn]');
+      if (b) {
+        // the name (its text, not the button's words), and the title as it was, for Cancel
+        const h = b.closest('h3'), cur = [...h.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim(); h.dataset.was = h.innerHTML;
+        h.innerHTML = `<span class="cdd-rn"><input class="cdd-in" data-rn-in value="${esc(cur)}" maxlength="120" aria-label="Document name" autocomplete="off"><button type="button" class="btn btn-primary btn-sm" data-rn-s>Save</button><button type="button" class="link-btn" data-rn-x>Cancel</button></span>`;
+        const i = h.querySelector('input'); i.focus(); i.select(); return;
+      }
+      if (e.target.closest('[data-rn-s]')) { onSave(e.target.closest('h3').querySelector('[data-rn-in]').value.trim()); return; }
+      if (e.target.closest('[data-rn-x]')) back(e.target.closest('h3'));
+    });
+    // first, so Escape here doesn't close the drawer too
+    root.addEventListener('keydown', (e) => {
+      const i = e.target.closest && e.target.closest('[data-rn-in]'); if (!i) return;
+      if (e.key === 'Enter') { e.preventDefault(); onSave(i.value.trim()); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); back(i.closest('h3')); }
+    }, true);
+  };
 
   // ---- Uncategorized documents: the store -------------------------------------------------------------
   const KEY = 'cm-uncat' + (DM.ORG ? '-' + DM.ORG.id : '') + (DM.PERSONA === 'beatriz' ? '-beatriz' : '');
@@ -112,6 +146,21 @@
   const add = (item) => { const l = load(), id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); l.unshift(Object.assign({ id, at: DM.today(), by: '', ref: '', issued: '', valid: '', country: '' }, item)); save(l); return id; };
   const update = (id, patch) => { const l = load(), x = l.find((y) => y.id === id); if (x) { Object.assign(x, patch); save(l); } return x; };
   const remove = (id) => save(load().filter((x) => x.id !== id));
+  // prototype only: Miguel's own company starts each session (each log in) with a few files ALMA
+  // couldn't place, to sort on Documents. Once per session, so the ones he files stay filed
+  const SEED_KEY = KEY + '-seeded';
+  const signedIn = (() => { try { return !!JSON.parse(sessionStorage.getItem('cm-person') || 'null'); } catch (e) { return false; } })();
+  if (DM.PERSONA === 'miguel' && !DM.ORG && signedIn && !sessionStorage.getItem(SEED_KEY)) {
+    try {
+      sessionStorage.setItem(SEED_KEY, '1');
+      const l = load(), seed = [
+        { file: 'IMG_20261103_094512.jpg', at: '3 Nov 2026', from: 'Sent to ALMA by WhatsApp' },
+        { file: 'scan0042.pdf', at: '29 Oct 2026', from: 'Uploaded to ALMA' },
+        { file: 'Documento digitalizado (2).pdf', at: '21 Oct 2026', from: 'Uploaded to ALMA' },
+      ].map((x, i) => Object.assign({ id: 'seed' + i, by: '', ref: '', issued: '', valid: '', country: '' }, x));
+      sessionStorage.setItem(KEY, JSON.stringify(l.concat(seed.filter((x) => !l.some((y) => y.id === x.id)))));
+    } catch (e) {}
+  }
   // a file kept under one name in this browser, kept under another too (js/doc-files.js)
   const copyFile = (from, to) => (window.CMFiles ? [].concat(from).reduce((p, k) => p.then((r) => r || window.CMFiles.get(k)), Promise.resolve(null)).then((r) => r && r.blob && window.CMFiles.put(to, r.blob instanceof File ? r.blob : new File([r.blob], r.name || 'file', { type: r.type || '' }))) : Promise.resolve(false));
 
@@ -122,12 +171,12 @@
     const l = load(); if (!l.length) return '';
     return `<section class="ucs" aria-labelledby="ucs-h"><div class="ucs-h"><h2 id="ucs-h">Uncategorized documents</h2><span class="co-badge b-pend">${l.length} to sort</span></div>
       <p>Files ALMA couldn&rsquo;t place. Open one and tell her what it is: choose its category, its section and the document, and check its details. She files it there.</p>
-      <ul class="ucs-l">${l.map((x) => `<li><button type="button" data-uncat="${esc(x.id)}">${FILE}<span><b>${esc(x.file)}</b><small>Uploaded on ${esc(x.at)}${x.from ? ` &middot; ${esc(x.from)}` : ''}</small></span><span class="co-badge b-neu">Uncategorized</span>${CHEV}</button></li>`).join('')}</ul></section>`;
+      <ul class="ucs-l">${l.map((x) => `<li><button type="button" data-uncat="${esc(x.id)}">${FILE}<span><b>${esc(x.name || x.file)}</b><small>${x.name ? `${esc(x.file)} &middot; ` : ''}Uploaded on ${esc(x.at)}${x.from ? ` &middot; ${esc(x.from)}` : ''}</small></span><span class="co-badge b-neu">Uncategorized</span>${CHEV}</button></li>`).join('')}</ul></section>`;
   };
   const M = DM.MONTHS;
   const isoOf = (v) => { const t = Date.parse(v); if (Number.isNaN(t)) return ''; const x = new Date(t); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
   const fromIso = (v) => { if (!v) return ''; const x = new Date(v + 'T00:00'); return `${x.getDate()} ${M[x.getMonth()]} ${x.getFullYear()}`; };
-  const DETAILS = [['ref', 'Reference'], ['by', 'Issued by'], ['issued', 'Issue date', 1], ['valid', 'Valid until', 1], ['country', 'Country']];
+  const DETAILS = [['name', 'Document name'], ['ref', 'Reference'], ['by', 'Issued by'], ['issued', 'Issue date', 1], ['valid', 'Valid until', 1], ['country', 'Country']];
   const XI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   let dw = null, cur = null, done = null, back = null;
   const build = () => {
@@ -138,9 +187,15 @@
         <footer class="docd-foot"><span id="ucd-foot"></span><span class="cdd-acts"><button type="button" class="link-btn" data-uc-del>Delete file</button><button type="button" class="btn btn-quiet btn-sm" data-uc-keep>Save details</button><button type="button" class="btn btn-primary btn-sm" data-uc-file disabled>File it</button></span></footer>
       </aside>`;
     document.body.appendChild(dw);
+    // its name: what it's called in the list now, and the document's name once it's filed
+    rnWire(dw, (name) => {
+      const x = update(cur, { name }); if (!x) return;
+      paintHead(); const i = dw.querySelector('[name="uc-name"]'); if (i) i.value = name;
+      const b = dw.querySelector('[data-rn]'); if (b) b.focus();
+    });
     dw.addEventListener('click', (e) => {
       if (e.target.closest('[data-uc-x]')) { close(); return; }
-      if (e.target.closest('[data-cmf-peek]') && window.CMFiles) { const x = get(cur); window.CMFiles.get('uncat:' + cur).then((r) => window.CMFiles.openPeek(dw, { title: x.file, sub: 'Uncategorized', code: 'uncat:' + cur, spec: { title: x.file, file: x.file, holder: plain(DM.D.company || ''), issuer: x.by, fields: [] } })); return; }
+      if (e.target.closest('[data-cmf-peek]') && window.CMFiles) { const x = get(cur); window.CMFiles.get('uncat:' + cur).then((r) => window.CMFiles.openPeek(dw, { title: x.name || x.file, sub: 'Uncategorized', code: 'uncat:' + cur, spec: { title: x.file, file: x.file, holder: plain(DM.D.company || ''), issuer: x.by, fields: [] } })); return; }
       if (e.target.closest('[data-uc-keep]')) { update(cur, details()); toast('Details saved. It stays in Uncategorized documents until you choose what it is.'); close(); return; }
       if (e.target.closest('[data-uc-del]')) { const x = get(cur); remove(cur); toast(`${x.file} deleted.`); close(); return; }
       if (e.target.closest('[data-uc-file]')) fileIt();
@@ -161,15 +216,20 @@
     const code = value(dw), d = code && code !== '__u' ? docOf(code) : null, who = dw.querySelector('[data-uc-who]');
     const ok = !!d && (!d.kind || (who && who.value !== ''));
     const b = dw.querySelector('[data-uc-file]'); b.disabled = !ok; b.textContent = d ? `File it as ${plain(d.name)}` : 'File it';
+    const nm = dw.querySelector('[name="uc-name"]'); if (nm) nm.placeholder = d ? `As the document: ${plain(d.name)}` : 'What you call it';
     dw.querySelector('#ucd-foot').textContent = code === '__u' ? 'It stays in Uncategorized documents' : d ? '' : 'Choose what it is to file it';
+  };
+  const paintHead = () => {
+    const x = get(cur);
+    dw.querySelector('#ucd-t').innerHTML = rnTitle(x.name || x.file);
+    dw.querySelector('#ucd-sub').textContent = `${x.name ? x.file + ' · ' : ''}Uncategorized · uploaded on ${x.at}${x.from ? ` · ${x.from}` : ''}`;
   };
   const paint = () => {
     const x = get(cur);
-    dw.querySelector('#ucd-t').textContent = x.file;
-    dw.querySelector('#ucd-sub').textContent = `Uncategorized · uploaded on ${x.at}${x.from ? ` · ${x.from}` : ''}`;
+    paintHead();
     dw.querySelector('#ucd-body').innerHTML = `${window.CMFiles ? `<div class="cmf-slot">${window.CMFiles.fileRow(x.file, 'The file you uploaded')}</div>` : ''}
       <section class="cdd-card"><h4 class="eyebrow">What it is</h4><p class="cdd-desc">ALMA couldn&rsquo;t tell which document this is. Choose its category, then its section, then the document.</p>${html('ucd', x.code || '', { uncat: true })}<div class="ucd-who" id="ucd-who"></div></section>
-      <section class="cdd-card"><h4 class="eyebrow">Its details</h4><div class="ucd-fs">${DETAILS.map(([k, l, date]) => `<label${k === 'by' ? ' class="is-wide"' : ''}><span>${l}</span><input name="uc-${k}" ${date ? `type="date" value="${isoOf(x[k])}"` : `value="${esc(x[k])}"`}></label>`).join('')}</div></section>`;
+      <section class="cdd-card"><h4 class="eyebrow">Its details</h4><div class="ucd-fs">${DETAILS.map(([k, l, date]) => `<label${k === 'by' || k === 'name' ? ' class="is-wide"' : ''}><span>${l}</span><input name="uc-${k}" ${date ? `type="date" value="${isoOf(x[k])}"` : `value="${esc(x[k] || '')}"`}${k === 'name' ? ' maxlength="120" autocomplete="off"' : ''}></label>`).join('')}</div></section>`;
     paintWho();
   };
   const open = (id, onDone) => {
@@ -205,12 +265,15 @@
       DM.saveDoc(code, { status: 'valid', issued, valid, note: '', ref: esc(f.ref), by: esc(f.by), conf: 98, edited: true });
       copyFile('uncat:' + cur, code);
     }
+    // the name given it: the document's name from now on
+    if (f.name && f.name !== plain(d.name) && DM.rename) DM.rename(code, f.name);
     remove(cur);
-    toast(`${x.file} filed as ${plain(d.name)}.`);
+    toast(`${x.name || x.file} filed as ${plain(d.name)}.`);
     close();
   };
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-uncat]'); if (b) { e.preventDefault(); open(b.dataset.uncat, () => document.dispatchEvent(new CustomEvent('cm-uncat'))); } });
 
   window.CMDocPick = { html, value, docOf, ALL };
+  window.CMRename = { title: rnTitle, wire: rnWire };
   window.CMUncat = { list, get, add, update, remove, copyFile, section, open, close };
 })();

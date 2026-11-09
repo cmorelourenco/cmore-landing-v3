@@ -137,6 +137,16 @@
 .cl-acts svg { width: 1rem; height: 1rem; vertical-align: -0.1875rem; margin-right: 0.375rem; }
 .cl-stop { color: var(--color-critical, #b3261e) !important; border-color: color-mix(in oklab, var(--color-critical, #b3261e) 35%, var(--color-line)) !important; }
 .cl-stop:hover { background: var(--color-critical-subtle, #fbe9e7) !important; }
+/* sharing, a document at a time or a whole consent at once */
+.cl-c-sw { width: 5.5rem; }
+.sp-tbl .cl-sw-c { text-align: right; padding-right: 1.25rem; white-space: nowrap; }
+.sp-tbl tr.is-off .n { color: var(--color-ink-muted); }
+.cl-swall { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); white-space: nowrap; }
+/* on is green: shared */
+.sp-tbl .co-sw[aria-checked="true"] { background: var(--color-ok, #a6d8a0); }
+.co-sw.is-mixed { background: color-mix(in oklab, var(--color-ok, #a6d8a0) 50%, var(--color-sand-400)); }
+.co-sw.is-mixed i { margin-left: calc(50% - 0.625rem); }
+@media (max-width: 40rem) { .cl-c-sw { width: 4rem; } .sp-tbl .cl-sw-c { padding-right: 0.75rem; } }
 .cl-fix { font-weight: 500; color: var(--color-ink); text-decoration: underline; text-decoration-color: var(--color-coral); text-underline-offset: 0.2em; }
 .cl-dlg .dlg-card { max-width: 30rem; }
 .cl-dlg .dlg-head { align-items: flex-start; text-align: left; padding: 1.75rem 3.5rem 0.75rem 1.75rem; }
@@ -170,14 +180,14 @@
     const cols = [...new Set(shown.flatMap((c) => c.consents.flatMap((k) => k.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
     const cell = (c, a) => {
       const of = (...s) => c.consents.filter((k) => s.includes(k.state)).flatMap((k) => k.docs).filter((d) => d.cat === a);
-      const docs = [...new Map(of('given').map((d) => [d.code, d])).values()];
+      const docs = [...new Map(of('given').filter((d) => !d.off).map((d) => [d.code, d])).values()];
       const td = (cls, say) => `<td class="c"><span class="cd-dot is-${cls}" title="${esc(a)}: ${say}"></span><span class="sr-only">${esc(a)}: ${say}</span></td>`;
       if (docs.length) {
         const worst = docs.reduce((w, d) => (RANKS[d.tone] > RANKS[w] ? d.tone : w), 'ok'), k = docs.filter((d) => d.tone !== 'ok').length;
         return td(worst, k ? `they see ${k} of ${docs.length} ${worst === 'bad' ? 'missing or expired' : 'expiring or in review'}` : `they see ${docs.length} document${docs.length === 1 ? '' : 's'}, all valid`);
       }
       if (of('pending').length) return td('wait', 'they asked, waiting for your answer');
-      if (of('stopped', 'declined').length) return td('off', 'you stopped sharing');
+      if (of('stopped', 'declined').length || of('given').length) return td('off', 'you stopped sharing');
       return '<td class="c"><span class="cd-dash" title="Not shared">&mdash;</span></td>';
     };
     const rows = shown.map((c) => `<tr class="sp-row" data-cl="${esc(c.id)}" tabindex="0" role="link" aria-label="Open ${esc(c.name)}"><td><span class="n">${esc(c.name)}</span><span class="d">${esc([c.sector, c.city].join(' · '))}</span></td>${cols.map((a) => cell(c, a)).join('')}<td class="sp-mx-o">${badge(overall(c))}</td></tr>`).join('');
@@ -219,7 +229,8 @@
     const given = { at: k.granted, tone: 'ok', what: `You gave consent: ${esc(k.title)}`, sub: `${For(k)} &middot; ${n(k)}` };
     if (k.state === 'stopped') return asked.concat([given, { at: k.on, tone: 'off', what: `You stopped sharing ${esc(k.title)}`, sub: 'They keep what they were shown until then; nothing you upload after reaches them' }]);
     // what ran out while they could see it
-    return asked.concat([given], k.docs.filter((d) => d.status === 'expired' && when(d.valid)).map((d) => ({ at: d.valid, tone: 'bad', what: `${esc(d.name)} expired`, sub: `They see it as expired, under ${esc(k.title)}` })));
+    const offs = k.docs.filter((d) => d.off).map((d) => ({ at: d.off, tone: 'off', what: `You stopped sharing ${esc(d.name)}`, sub: `Under ${esc(k.title)}; they keep the version they saw, and nothing newer reaches them` }));
+    return asked.concat([given], offs, k.docs.filter((d) => d.status === 'expired' && !d.off && when(d.valid)).map((d) => ({ at: d.valid, tone: 'bad', what: `${esc(d.name)} expired`, sub: `They see it as expired, under ${esc(k.title)}` })));
   });
   const log = (c) => {
     const seen = new Set(), all = events(c).sort((a, b) => when(b.at) - when(a.at)).filter((e) => { const k = e.at + e.what; if (seen.has(k)) return false; seen.add(k); return true; });
@@ -231,21 +242,32 @@
   // each document's versions, and which of them this client sees (js/doc-model.js, CM_VERSIONS)
   const V = window.CM_VERSIONS, vOpen = new Set();
   const vKey = (k, d) => `${k.id}|${d.code}`;
-  const vRow = (k, d) => (V && vOpen.has(vKey(k, d)) ? `<tr class="cmv-tr"><td colspan="4">${V.list(d.versions, { owner: true, cur: tag(d), they: k.state === 'given' ? 'They see it' : 'They keep it' })}</td></tr>` : '');
-  const vBtn = (k, d) => (V && d.versions ? V.button(vKey(k, d), d.versions, { owner: true, open: vOpen.has(vKey(k, d)), verb: k.state === 'given' ? 'Sees' : 'Keeps' }) : '');
+  const vRow = (k, d) => (V && vOpen.has(vKey(k, d)) ? `<tr class="cmv-tr"><td colspan="${k.state === 'given' ? 5 : 4}">${V.list(d.versions, { owner: true, cur: tag(d), they: k.state === 'given' && !d.off ? 'They see it' : 'They keep it' })}</td></tr>` : '');
+  const vBtn = (k, d) => (V && d.versions ? V.button(vKey(k, d), d.versions, { owner: true, open: vOpen.has(vKey(k, d)), verb: k.state === 'given' && !d.off ? 'Sees' : 'Keeps' }) : '');
   // a consent they no longer have: what they keep of each document, the newest version they saw
   const keptOf = (d) => (d.kept ? { st: d.kept.current ? tag(d) : V.stateOf(d.kept) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-neu">Replaced</span>', valid: d.kept.valid, say: d.kept.current ? 'The current version' : `${esc(d.kept.label)}` } : null);
+  // a switch to share it or not, one document at a time, under a consent you've given
+  const sw = (k, d) => `<td class="cl-sw-c"><button class="co-sw" type="button" role="switch" aria-checked="${!d.off}" data-sw-doc="${esc(k.id)}|${esc(d.code)}" aria-label="Share ${esc(d.name)} with them"><i></i></button></td>`;
   const rowsOf = (k, exp = true) => k.docs.map((d) => {
+    if (k.state === 'given' && d.off) {
+      const kp = keptOf(d);
+      return `<tr class="is-off"><td><span class="n">${esc(d.name)}</span><span class="d">Not shared since ${esc(d.off)}${kp ? ` &middot; they keep: ${kp.say.replace(/^The/, 'the')}` : ''}</span>${vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td><span class="co-badge b-neu">Not shared</span>${exp ? `<span class="cl-exp-s">&mdash;</span>` : ''}</td>${exp ? '<td class="c cl-exp-c">&mdash;</td>' : ''}${sw(k, d)}</tr>${vRow(k, d)}`;
+    }
     const kp = k.state === 'stopped' ? keptOf(d) : null, gone = k.state === 'stopped' || k.state === 'declined';
     const st = gone ? (kp ? kp.st : '<span class="co-badge b-neu">Not shared</span>') : tag(d), valid = gone ? (kp ? kp.valid : '—') : d.valid;
     const sub = gone ? (kp ? `They keep: ${kp.say}` : 'They never saw it') : `${esc(d.code)} &middot; ${esc(d.section)}${d.tone === 'bad' ? ' &middot; <a class="cl-fix" href="company-details.html">Fix in Documents</a>' : ''}`;
-    return `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${sub}</span>${k.state === 'pending' || k.state === 'declined' ? '' : vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td>${st}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}</tr>${k.state === 'pending' || k.state === 'declined' ? '' : vRow(k, d)}`;
+    return `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${sub}</span>${k.state === 'pending' || k.state === 'declined' ? '' : vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td>${st}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}${k.state === 'given' ? sw(k, d) : ''}</tr>${k.state === 'pending' || k.state === 'declined' ? '' : vRow(k, d)}`;
   }).join('');
-  const table = (k, title, b) => `<table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp"></colgroup><thead>
-      <tr class="sp-ch"><td colspan="4"><div class="cl-ch"><div><h3>${esc(k.title)}</h3><p>${title}</p></div>${b}</div></td></tr>
-      <tr><th>Document</th><th class="hide-s">Requirement</th><th>${k.state === 'given' ? 'They see' : k.state === 'stopped' ? 'They keep' : 'Status'}</th><th class="c cl-exp-c">Expiry date</th></tr></thead><tbody>${rowsOf(k)}</tbody></table>`;
-  const given = (k) => `<article class="sp-consent" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; given on ${esc(k.granted)} &middot; ${n(k)}`, '<span class="co-badge b-ok">Sharing</span>')}
-      <div class="cl-acts"><span>When you renew one of these, they see the new one, and keep the earlier ones they&rsquo;ve seen.</span><span><button type="button" class="btn co-btn-ghost co-btn-sm cl-stop" data-stop="${esc(k.id)}">Stop sharing</button></span></div></article>`;
+  const table = (k, title, b) => { const g = k.state === 'given'; return `<table class="sp-tbl${g ? ' cl-given' : ''}"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp">${g ? '<col class="cl-c-sw">' : ''}</colgroup><thead>
+      <tr class="sp-ch"><td colspan="${g ? 5 : 4}"><div class="cl-ch"><div><h3>${esc(k.title)}</h3><p>${title}</p></div>${b}</div></td></tr>
+      <tr><th>Document</th><th class="hide-s">Requirement</th><th>${g ? 'They see' : k.state === 'stopped' ? 'They keep' : 'Status'}</th><th class="c cl-exp-c">Expiry date</th>${g ? '<th class="cl-sw-c">Shared</th>' : ''}</tr></thead><tbody>${rowsOf(k)}</tbody></table>`; };
+  // the whole consent at once: on when every document is shared, off when none is
+  const swAll = (k) => {
+    const on = k.docs.filter((d) => !d.off).length, all = on === k.docs.length;
+    return `<span class="cl-swall"><span>${all ? 'Sharing all' : on ? `Sharing ${on} of ${k.docs.length}` : 'Sharing none'}</span><button class="co-sw${!all && on ? ' is-mixed' : ''}" type="button" role="switch" aria-checked="${all ? 'true' : on ? 'mixed' : 'false'}" data-sw-all="${esc(k.id)}" aria-label="${all ? 'Stop sharing all of' : 'Share all of'} ${esc(k.title)}"><i></i></button></span>`;
+  };
+  const given = (k) => `<article class="sp-consent" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; given on ${esc(k.granted)} &middot; ${n(k)}`, swAll(k))}
+      <div class="cl-acts"><span>When you renew one of these, they see the new one. Switch one off and they keep the version they&rsquo;ve seen, but nothing newer reaches them.</span></div></article>`;
   const asked = (k) => `<article class="sp-consent is-pending" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; asked on ${esc(k.asked)} &middot; ${n(k)}`, '<span class="co-badge b-pend">Waiting for your answer</span>')}
       <div class="cl-acts"><span>${CLOCK}Nothing is shared until you say yes. Then they see the current version of each, as it is today, and every one you upload after.</span><span><button type="button" class="link-btn" data-decline="${esc(k.id)}">Decline</button><button type="button" class="btn btn-primary btn-sm" data-share="${esc(k.id)}">Share these ${n(k)}</button></span></div></article>`;
   // stopped: they keep what they were shown until then (each document's newest version they saw),
@@ -273,7 +295,7 @@
         <div class="sp-kpi"><span>Consents</span><b>${k.given}</b><small>${k.pending ? `${k.pending} waiting for your answer` : k.stopped ? `${k.stopped} stopped` : 'All answered'}</small></div>
       </div>
       ${W.length ? `<section class="sp-sec" aria-labelledby="cl-ask"><h2 id="cl-ask">Waiting for your answer</h2><p>What ${esc(c.name)} has asked to see. This is how it looks today: share it, or decline.</p>${W.map(asked).join('')}</section>` : ''}
-      <section class="sp-sec" aria-labelledby="cl-given"><h2 id="cl-given">What you share with them</h2><p>The documents ${esc(c.name)} can see, and how they look to them right now. Stop sharing any of these whenever you like.</p>
+      <section class="sp-sec" aria-labelledby="cl-given"><h2 id="cl-given">What you share with them</h2><p>The documents ${esc(c.name)} can see, and how they look to them right now. Switch any of them off whenever you like, one at a time or a whole consent at once.</p>
         ${G.length ? G.map(given).join('') : `<div class="co-card sp-none">You don&rsquo;t share anything with ${esc(c.name)} right now.</div>`}</section>
       ${O.length ? `<section class="sp-sec" aria-labelledby="cl-gone"><h2 id="cl-gone">No longer shared</h2><p>Consents you stopped or declined. ${esc(c.name)} can ask again, or you can share them again.</p>${O.map(gone).join('')}</section>` : ''}
       ${log(c)}`;
@@ -321,6 +343,18 @@
     if (vb) { const key = vb.dataset.vers; vOpen.has(key) ? vOpen.delete(key) : vOpen.add(key); const y = scrollY; paint(); scrollTo(0, y); const b = box.querySelector(`[data-vers="${CSS.escape(key)}"]`); if (b) b.focus({ preventScroll: true }); return; }
     const r = e.target.closest('[data-cl]'); if (r) { go(r); return; }
     const s = e.target.closest('[data-stop]'); if (s) { ask(s.dataset.stop); return; }
+    // the switches: no question first, since one more click puts it back
+    const sd = e.target.closest('[data-sw-doc]'), sa = e.target.closest('[data-sw-all]');
+    if (sd || sa) {
+      const cid = sd ? sd.dataset.swDoc.split('|')[0] : sa.dataset.swAll, k = C.list().flatMap((c) => c.consents).find((x) => x.id === cid); if (!k) return;
+      const d = sd && k.docs.find((x) => x.code === sd.dataset.swDoc.split('|')[1]);
+      const share = sd ? !!d.off : k.docs.some((x) => x.off), codes = sd ? [d.code] : k.docs.filter((x) => !!x.off === share).map((x) => x.code);
+      const y = scrollY, c = C.setDocs(cid, codes, share); paint(); scrollTo(0, y);
+      const again = box.querySelector(sd ? `[data-sw-doc="${CSS.escape(sd.dataset.swDoc)}"]` : `[data-sw-all="${CSS.escape(cid)}"]`); if (again) again.focus({ preventScroll: true });
+      const what = sd ? esc(d.name) : codes.length === k.docs.length ? `all of ${esc(k.title)}` : `${codes.length} more of ${esc(k.title)}`;
+      toast(share ? `${esc(c.name)} can see ${what} again.` : `You stopped sharing ${what} with ${esc(c.name)}. They keep the version${codes.length === 1 ? '' : 's'} they saw.`);
+      return;
+    }
     const sh = e.target.closest('[data-share]');
     if (sh) { const k = C.list().flatMap((c) => c.consents).find((x) => x.id === sh.dataset.share), c = C.setState(k.id, 'given'); paint(); toast(`${esc(c.name)} can now see ${esc(k.title)}: ${k.docs.length} document${k.docs.length === 1 ? '' : 's'}.`); return; }
     const d = e.target.closest('[data-decline]');

@@ -31,6 +31,8 @@
    Prototype: nothing is uploaded; what was read and accepted is kept for this tab, per company. */
 (() => {
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
+  // a document's name: the company's own, if it renamed it (DOC_MODEL.rename), else the catalog's
+  const dn = (d) => { const m = DM && DM.DOCS && DM.DOCS.find((x) => x.code === d.code && x.name0); return m && m.name !== m.name0 ? m.name : d.name.en; };
   // not open at launch (js/company-switcher.js styles the badge)
   const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) });
   const soon = (k) => (SOON.areas.includes(k) ? ' ' + SOON.badge : '');
@@ -115,7 +117,7 @@
     if (!box) return;
     const facts = asks('registration').filter((d) => (saved.files[d.code] || {}).ok).map((d) => {
       const f = saved.files[d.code];
-      const v = d.code === 'CO-02' ? `<b>NIPC</b> ${esc(String(f.ref).replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'))}` : d.code === 'CO-01' ? `<b>Registered</b> in ${esc(where)}` : d.code === 'CO-06' ? '<b>No tax debts</b>' : d.code === 'CO-07' ? '<b>No social security debts</b>' : d.code === 'UN-01' ? '<b>In good standing</b>' : `<b>${esc(d.name.en)}</b> ${esc(f.ref)}`;
+      const v = d.code === 'CO-02' ? `<b>NIPC</b> ${esc(String(f.ref).replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3'))}` : d.code === 'CO-01' ? `<b>Registered</b> in ${esc(where)}` : d.code === 'CO-06' ? '<b>No tax debts</b>' : d.code === 'CO-07' ? '<b>No social security debts</b>' : d.code === 'UN-01' ? '<b>In good standing</b>' : `<b>${esc(dn(d))}</b> ${esc(f.ref)}`;
       return `<span class="gs-fact">${OK}${v}</span>`;
     });
     if (!facts.length) return;
@@ -156,7 +158,7 @@
     const sec = tbl.closest('.co-sec');
     sec.querySelector('.co-h-l').textContent = 'Your documents';
     sec.querySelector('.co-sec-head .co-muted').textContent = 'What you’ve uploaded, soonest to expire first. Drop more on ALMA and they join the list.';
-    tbl.tBodies[0].innerHTML = rows.map(({ d, a, f, opt }) => `<tr data-code="${d.code}" tabindex="0" role="link"><td><span class="n">${e(d.name.en)}</span><span class="d">${e(f.file)}${opt ? ' &middot; Optional' : ''}</span></td><td>Your company</td><td class="c">${AREA[a].title}</td><td class="c">${e(f.valid === 'No expiry' ? '—' : f.valid)}</td><td class="c"><span class="co-badge ${soon(f) ? 'b-pend">Expiring' : 'b-ok">Valid'}</span></td></tr>`).join('');
+    tbl.tBodies[0].innerHTML = rows.map(({ d, a, f, opt }) => `<tr data-code="${d.code}" tabindex="0" role="link"><td><span class="n">${e(dn(d))}</span><span class="d">${e(f.file)}${opt ? ' &middot; Optional' : ''}</span></td><td>Your company</td><td class="c">${AREA[a].title}</td><td class="c">${e(f.valid === 'No expiry' ? '—' : f.valid)}</td><td class="c"><span class="co-badge ${soon(f) ? 'b-pend">Expiring' : 'b-ok">Valid'}</span></td></tr>`).join('');
     const go = (r) => { location.href = `company-details.html?open=${encodeURIComponent(r.dataset.code)}`; };
     tbl.tBodies[0].onclick = (ev) => { const r = ev.target.closest('tr[data-code]'); if (r) go(r); };
     tbl.tBodies[0].onkeydown = (ev) => { const r = ev.target.closest('tr[data-code]'); if (r && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); go(r); } };
@@ -191,7 +193,7 @@
   const monthsOf = (d) => ({ 'CO-06': 3, 'CO-07': 4 }[d.code] || (/month/i.test(d.renewal || '') && !/6/.test(d.renewal || '') ? 1 : 12));
   // which document a file is: by the words in its name, else the next one still open
   const fold = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-  const WORDS = (d) => fold([d.name.en, local(d), d.code].join(' ')).split(/[^a-z0-9]+/)
+  const WORDS = (d) => fold([dn(d), local(d), d.code].join(' ')).split(/[^a-z0-9]+/)
     .filter((w) => w.length > 3 && !/certificate|certidao|company|declaracao|clearance|record/.test(w));
   const match = (file, open) => {
     const n = fold(file.name);
@@ -657,10 +659,10 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         const head = docs.length > 8 && (i === 0 || docs[i - 1].section.en !== d.section.en) ? `<li class="gs-grp">${esc(d.section.en)}</li>` : '';
         // a requirement, not a to-do: no box to tick, the catalog's requirement instead; and just its
         // name (what it's called locally, or which file it was read from, isn't needed here)
-        return `${head}<li class="gs-req"><span><span class="gs-n">${esc(d.name.en)}</span></span><span class="co-badge ${d.requirement === 'mandatory' ? 'b-info' : 'b-neu'}">${esc(DM.LBL.requirement[d.requirement] || '')}</span></li>`;
+        return `${head}<li class="gs-req"><span><span class="gs-n">${esc(dn(d))}</span></span><span class="co-badge ${d.requirement === 'mandatory' ? 'b-info' : 'b-neu'}">${esc(DM.LBL.requirement[d.requirement] || '')}</span></li>`;
       }).join('');
       const files = st.pending.map((name, i) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Not read yet</span></span><button class="link-btn" type="button" data-unpend="${i}">Remove</button></li>`)
-        .concat(read.map((d) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(saved.files[d.code].file)}</span><span class="gs-d">Read as ${esc(d.name.en)}</span></span><span></span></li>`))
+        .concat(read.map((d) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(saved.files[d.code].file)}</span><span class="gs-d">Read as ${esc(dn(d))}</span></span><span></span></li>`))
         .concat(laterNow().map((x) => `<li class="is-in"><span class="gs-ic">${FILE}</span><span><span class="gs-n">${esc(x.name)}</span><span class="gs-d">Read as ${esc((docIn(x.code) || { name: { en: x.code } }).name.en)} &middot; filed for ${esc(AREA[x.area] ? AREA[x.area].title : 'another')} step</span></span><span></span></li>`))
         .concat(unreadNow().map((x) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(x.file)}</span><span class="gs-d">I couldn&rsquo;t tell what this is &middot; in Uncategorized documents</span></span><button class="link-btn" type="button" data-peek="u:${esc(x.id)}">Choose what it is</button></li>`))
         .concat(st.kept.map((name) => `<li><span class="gs-ic is-file">${FILE}</span><span><span class="gs-n">${esc(name)}</span><span class="gs-d">Kept &middot; not one of the documents asked for here</span></span><span></span></li>`)).join('');
@@ -708,7 +710,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (f.mismatch && !ed) {
         const who = called(), own = ownTax(), why = whyDraft[d.code] != null ? whyDraft[d.code] : f.vatReason || '';
         return `<article class="gs-card is-vat${f.ok ? ' is-ok' : ''}" data-card="${d.code}">
-        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.ok ? '<span class="co-badge b-neu">Approved by you</span>' : '<span class="co-badge b-over">Different VAT number</span>'}</header>
+        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(dn(d))}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${f.ok ? '<span class="co-badge b-neu">Approved by you</span>' : '<span class="co-badge b-over">Different VAT number</span>'}</header>
         <dl class="gs-fields"><div class="is-flag"><dt>VAT number</dt><dd>${esc(fmtTax(f.vat))}</dd></div>${own ? `<div><dt>${esc(who.replace(/^./, (c) => c.toUpperCase()))}&rsquo;s</dt><dd>${esc(fmtTax(own))}</dd></div>` : ''}${fields}</dl>
         ${f.ok ? `<p class="gs-vat-ok">Approved with a different VAT number. Your reason: &ldquo;${esc(f.vatReason)}&rdquo;</p>`
           : `<p class="gs-why">This document is for VAT number <b>${esc(fmtTax(f.vat))}</b>${own ? `, not ${who}&rsquo;s (${esc(fmtTax(own))})` : ', not the one on your other documents'}. Upload the right one, or reject it. If it does belong here, approve it and say why.</p>
@@ -719,7 +721,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       </article>`;
       }
       return `<article class="gs-card${f.ok ? ' is-ok' : ''}${ed ? ' is-editing' : ''}${ex ? ' is-expired' : ''}" data-card="${d.code}">
-        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(d.name.en)}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${ex ? '<span class="co-badge b-over">Expired</span>' : f.edited ? '<span class="co-badge b-neu">' + DM.corrected() + '</span>' : confTag(f)}</header>
+        <header><div><h3><button type="button" class="gs-peek" data-peek="${d.code}">${esc(dn(d))}</button></h3><p class="gs-d">${esc(f.file)}${local(d) ? ' &middot; ' + esc(local(d)) : ''}</p></div>${ex ? '<span class="co-badge b-over">Expired</span>' : f.edited ? '<span class="co-badge b-neu">' + DM.corrected() + '</span>' : confTag(f)}</header>
         ${ed && PICK ? `<div class="gs-what"><p class="gs-wl">What it is</p>${PICK.html('gc-' + d.code, d.code, { uncat: true })}<p class="gs-d">Another document moves the file there; Not sure puts it in Uncategorized documents.</p></div>` : ''}
         <dl class="gs-fields">${fields}</dl>
         ${expBlock(d, f)}
@@ -739,7 +741,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       return `<p class="gs-lh gs-uh" role="heading" aria-level="2">What I couldn&rsquo;t place <span>${l.length}</span></p>
         <p class="gs-d gs-uw">I couldn&rsquo;t tell which document ${l.length === 1 ? 'this is' : 'these are'}. ${l.length === 1 ? 'It&rsquo;s' : 'They&rsquo;re'} in Uncategorized documents for now. Choose the category, the section and the document, and I file ${l.length === 1 ? 'it' : 'each'} there.</p>
         <div class="gs-cards">${l.map((x) => `<article class="gs-card is-unread" data-card="u:${esc(x.id)}">
-          <header><div><h3><button type="button" class="gs-peek" data-peek="u:${esc(x.id)}">${esc(x.file)}</button></h3><p class="gs-d">Uploaded on ${esc(x.at)}</p></div><span class="co-badge b-pend">Uncategorized</span></header>
+          <header><div><h3><button type="button" class="gs-peek" data-peek="u:${esc(x.id)}">${esc(x.name || x.file)}</button></h3><p class="gs-d">Uploaded on ${esc(x.at)}</p></div><span class="co-badge b-pend">Uncategorized</span></header>
           <div class="gs-what">${PICK.html('gu-' + x.id, '', {})}</div>
           <footer><span><button class="link-btn" type="button" data-peek="u:${esc(x.id)}">Preview</button></span><span><button class="gs-acc" type="button" data-sortit="${esc(x.id)}" disabled>${OK}File it</button></span></footer></article>`).join('')}</div>`;
     };
@@ -828,7 +830,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       const accepted = docs.filter((d) => (saved.files[d.code] || {}).ok);
       // the registry certificate (elsewhere, the first registration document that isn't the tax card)
       const cert = okF('CO-01') || (profile.country !== 'PT' ? accepted.find((d) => d.code !== 'CO-02') : null), card = okF('CO-02');
-      const nm = (d) => local(d) || d.name.en;
+      const nm = (d) => local(d) || dn(d);
       if (base.country) src.country = 'sign-up';
       if (base.tax) src.tax = 'sign-up';
       else if (card) { p.tax = String(saved.files['CO-02'].ref).replace(/\s/g, ''); src.tax = nm(card); }
@@ -906,7 +908,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
           ${nav(backFrom1, tour && tour.next ? '<button class="link-btn" type="button" data-close="end">Skip for now</button>' : '',
             `<button class="btn btn-primary" type="button" data-close="next">${tour ? (tour.next ? `Next: ${tour.next}` : 'Go to my company') : opts.doneLabel || (document.querySelector('#empty') ? 'Go to my company' : `Go to ${A.title}`)}</button>`)}`;
       }
-      const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(d.name.en)}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
+      const rows = missing.map((d) => `<li><span class="gs-ic"></span><span><span class="gs-n">${esc(dn(d))}</span></span><button class="link-btn" type="button" data-one="${d.code}">Add</button></li>`).join('');
       const one = missing.length === 1;
       return `${sec}<div class="gs-meter" style="--p:${p}"><div><b>${p}%</b><span>complete</span></div></div>
         <p class="says">ALMA</p>
@@ -964,9 +966,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     };
     const checks = (x) => unchecked().map((d) => {
       const f = saved.files[d.code];
-      if (f.mismatch) return [`${f.file} → ${d.name.en}`, `Read &middot; its VAT number, ${esc(fmtTax(f.vat))}, isn&rsquo;t ${called()}&rsquo;s. Check it next.`, d.code];
-      return [`${f.file} → ${d.name.en}`, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
-    }).concat(x.elsewhere.map(([name, d, a]) => [`${name} → ${d.name.en}`, `Read &middot; not one I asked for here, but the ${esc(AREA[a].title)} step asks for it. I&rsquo;ve filed it there.`, null]))
+      if (f.mismatch) return [`${f.file} → ${dn(d)}`, `Read &middot; its VAT number, ${esc(fmtTax(f.vat))}, isn&rsquo;t ${called()}&rsquo;s. Check it next.`, d.code];
+      return [`${f.file} → ${dn(d)}`, `Read &middot; ${CODE_LABEL[d.code] ? CODE_LABEL[d.code].replace(/^./, (c) => c.toUpperCase()) : 'Reference'} ${esc(f.ref)} confirmed with ${esc(f.by)}`, d.code];
+    }).concat(x.elsewhere.map(([name, d, a]) => [`${name} → ${dn(d)}`, `Read &middot; not one I asked for here, but the ${esc(AREA[a].title)} step asks for it. I&rsquo;ve filed it there.`, null]))
       .concat(x.unread.map((name) => [name, 'I couldn&rsquo;t tell what this is. It&rsquo;s in Uncategorized documents: tell me what it is when you review.', null]));
     const validating = () => {
       const all = checking.rows.length, done = Math.min(checking.at, all);
@@ -1005,13 +1007,21 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     document.body.appendChild(dwEl);
     const dq = (id) => dwEl.querySelector('#' + id);
     let peek = null, peekBack = null;
+    // its name, from the pencil in the title: a document's is the company's name for it from now on
+    // (everywhere it shows); one in Uncategorized keeps it until it's filed
+    if (window.CMRename) window.CMRename.wire(dwEl, (name) => {
+      if (String(peek).startsWith('u:')) { if (U) U.update(peek.slice(2), { name }); }
+      else if (DM.rename) DM.rename(peek, name);
+      paintPeek(); paint();
+      const b = dwEl.querySelector('[data-rn]'); if (b) b.focus();
+    });
     const company = esc(org.name), taxShown = taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
     const whatCard = (key, cur, lead) => (PICK ? `<section class="cdd-card"><h4 class="eyebrow">What it is</h4><p class="cdd-desc">${lead}</p>${PICK.html(key, cur, { uncat: !!cur })}<div class="gs-dp-acts"><button type="button" class="btn btn-quiet btn-sm" data-dwrefile disabled>${cur ? 'Move it there' : 'File it'}</button></div></section>` : '');
     const paintPeek = () => {
       if (String(peek).startsWith('u:')) {
         const x = U && U.get(peek.slice(2)); if (!x) { closePeek(); return; }
-        dq('gs-dw-t').textContent = x.file;
-        dq('gs-dw-sub').textContent = `Uncategorized · uploaded on ${x.at}`;
+        dq('gs-dw-t').innerHTML = window.CMRename ? window.CMRename.title(x.name || x.file) : esc(x.name || x.file);
+        dq('gs-dw-sub').textContent = `${x.name ? x.file + ' · ' : ''}Uncategorized · uploaded on ${x.at}`;
         dq('gs-dw-conf').innerHTML = '<span class="co-badge b-pend">Couldn&rsquo;t tell</span>';
         dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-u', '', 'I couldn&rsquo;t tell which document this is. Choose its category, then its section, then the document, and I file it there.');
         const slot = dq('gs-dw-file'), at = peek;
@@ -1033,18 +1043,18 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         + `<td>${tag(conf(fl, i))}</td></tr>`
         // the citation: a row of its own under the field's, the table's full width, opened in place
         + `<tr class="cdd-cite-row" id="gs-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>`;
-      dq('gs-dw-t').textContent = d.name.en;
+      dq('gs-dw-t').innerHTML = window.CMRename ? window.CMRename.title(dn(d)) : esc(dn(d));
       dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
       dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">' + DM.corrected() + '</span>' : confTag(f);
       // the page as she read it, and the file itself one click away (js/doc-files.js)
-      dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-' + d.code, d.code, `I read it as ${esc(d.name.en)}. If that&rsquo;s wrong, choose the right one: its category, then its section, then the document.`) + read;
+      dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-' + d.code, d.code, `I read it as ${esc(dn(d))}. If that&rsquo;s wrong, choose the right one: its category, then its section, then the document.`) + read;
       const slot = dq('gs-dw-file'), at = peek;
       const fill = (html) => { if (peek === at && slot.isConnected) slot.innerHTML = html; };
       if (!window.CMFiles) fill('');
       else {
         // the page with each value she read highlighted, numbered as the citations below (js/doc-files.js)
         const P = window.CMFiles.plain, byRow = rows.find(([n]) => /issued by/i.test(n));
-        const spec = { title: d.name.en, file: f.file, holder: P(company), issuer: byRow ? P(byRow[1]) : '', fields: rows.map(([n, v, fl], i) => ({ name: P(n), value: fl ? '' : P(String(v).replace(/<span class="co-badge[^>]*>.*?<\/span>/g, '')), flag: fl, i })) };
+        const spec = { title: dn(d), file: f.file, holder: P(company), issuer: byRow ? P(byRow[1]) : '', fields: rows.map(([n, v, fl], i) => ({ name: P(n), value: fl ? '' : P(String(v).replace(/<span class="co-badge[^>]*>.*?<\/span>/g, '')), flag: fl, i })) };
         window.CMFiles.get(d.code).then((r) => r || window.CMFiles.get('~' + f.file)).then((r) => fill(window.CMFiles.preview(r, spec)));
       }
       dq('gs-dw-foot').textContent = f.ok ? 'Accepted' : 'Not accepted yet';
@@ -1181,7 +1191,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (t('[data-reject]')) {
         // not this document, or not read right: the reading goes, and the document is asked for again
         const c = code('reject'), d = docs.find((x) => x.code === c);
-        rejected.push(d.name.en); delete saved.files[c]; keep(); strip();
+        rejected.push(dn(d)); delete saved.files[c]; keep(); strip();
         if (!filed().length) goStep(1); else paint(); return;
       }
       if (t('[data-remove]')) { delete saved.files[code('remove')]; keep(); if (!filed().length) goStep(1); else paint(); return; }

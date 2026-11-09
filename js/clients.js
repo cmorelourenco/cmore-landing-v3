@@ -61,6 +61,10 @@ window.CM_CLIENTS = (() => {
   const KEY = 'cm-clients' + (document.documentElement.dataset.persona === 'beatriz' ? '-beatriz' : '');
   const mine = () => { try { return JSON.parse(sessionStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   const keep = (m) => { try { sessionStorage.setItem(KEY, JSON.stringify(m)); } catch (e) {} };
+  // documents you switched off under a consent you keep: { consentId: { code: the day you did } }
+  const OFF_KEY = KEY + '-off';
+  const offs = () => { try { return JSON.parse(sessionStorage.getItem(OFF_KEY)) || {}; } catch (e) { return {}; } };
+  const keepOff = (m) => { try { sessionStorage.setItem(OFF_KEY, JSON.stringify(m)); } catch (e) {} };
   // the homepage's requests: their state there is the state here
   const FROM_P = { accepted: 'given', pending: 'pending', declined: 'declined', stopped: 'stopped' };
   const TO_P = { given: 'accepted', pending: 'pending', declined: 'declined', stopped: 'stopped' };
@@ -76,7 +80,7 @@ window.CM_CLIENTS = (() => {
   // the homepage holds one state per client: given if any of its consents there is, else the first one's
   const summary = (states) => (states.includes('given') ? 'given' : states.includes('pending') ? 'pending' : states[0]);
   const build = () => {
-    const m = mine(), pr = profile(), pc = (n) => pr && pr.consents.find((x) => x.name === n);
+    const m = mine(), pr = profile(), pc = (n) => pr && pr.consents.find((x) => x.name === n), off = offs();
     return RAW.map(([name, sector, city, email, since, cs]) => {
       const id = slug(name);
       // what you did here, consent by consent
@@ -84,6 +88,7 @@ window.CM_CLIENTS = (() => {
         const cid = `${id}-${i}`, o = m[cid];
         const periods = state === 'given' ? [{ from: granted, to: null }] : state === 'stopped' ? [{ from: granted, to: on }] : [];
         const c = { id: cid, title, project, granted, asked: state === 'pending' ? granted : '', state, on: on || '', profile: pname || '', periods, docs: codes.map(doc).filter(Boolean) };
+        c.docs.forEach((d) => { d.off = (off[cid] && off[cid][d.code]) || ''; });
         if (o) { c.state = o.state; c.on = o.on; c.periods = o.periods || move(periods, o.state, o.on); if (o.state === 'given' && state !== 'given') c.granted = o.on; }
         return c;
       });
@@ -108,16 +113,18 @@ window.CM_CLIENTS = (() => {
 
   // where a client stands, and the documents it sees (once each, under however many consents)
   const stats = (c) => {
-    const seen = [...new Map(c.consents.filter((x) => x.state === 'given').flatMap((x) => x.docs).map((d) => [d.code, d])).values()];
+    const on = (x) => x.state === 'given' && x.docs.some((d) => !d.off);
+    const seen = [...new Map(c.consents.filter((x) => x.state === 'given').flatMap((x) => x.docs).filter((d) => !d.off).map((d) => [d.code, d])).values()];
     const n = (t) => seen.filter((d) => d.tone === t).length;
     return { shared: seen.length, ok: n('ok'), soon: n('pend'), bad: n('bad'), pct: seen.length ? Math.round((n('ok') / seen.length) * 100) : 0,
-      given: c.consents.filter((x) => x.state === 'given').length, pending: c.consents.filter((x) => x.state === 'pending').length, stopped: c.consents.filter((x) => x.state === 'stopped' || x.state === 'declined').length };
+      given: c.consents.filter(on).length, pending: c.consents.filter((x) => x.state === 'pending').length, stopped: c.consents.filter((x) => x.state === 'stopped' || x.state === 'declined').length };
   };
 
   // share, stop, share again, decline: here, and on the homepage when it's one of its requests
   const setState = (cid, state) => {
     const c = LIST.find((x) => x.consents.some((k) => k.id === cid)), k = c && c.consents.find((x) => x.id === cid); if (!k) return null;
     const m = mine(); m[cid] = { state, on: today(), periods: move(k.periods, state, today()) }; keep(m);
+    if (state === 'given') { const o = offs(); if (o[cid]) { delete o[cid]; keepOff(o); } } // shared again: all of it
     // and on the homepage, where it's one of its requests: the client's state as a whole (first, so
     // reading it back below agrees with what was just done)
     const linked = c.consents.filter((x) => x.profile);
@@ -130,5 +137,17 @@ window.CM_CLIENTS = (() => {
     return byId(c.id);
   };
 
-  return { list, byId, stats, setState, CATS, TONE, today, slug, OPEN };
+  // one document, or several, switched off or back on under a consent that stays: they keep the
+  // version they saw of one switched off, and nothing newer reaches them
+  const setDocs = (cid, codes, share) => {
+    const c = LIST.find((x) => x.consents.some((k) => k.id === cid)); if (!c) return null;
+    const o = offs(), m = o[cid] || {};
+    [].concat(codes).forEach((code) => { if (share) delete m[code]; else if (!m[code]) m[code] = today(); });
+    if (Object.keys(m).length) o[cid] = m; else delete o[cid];
+    keepOff(o); LIST = build();
+    document.dispatchEvent(new CustomEvent('cm-clients'));
+    return byId(c.id);
+  };
+
+  return { list, byId, stats, setState, setDocs, CATS, TONE, today, slug, OPEN };
 })();

@@ -1,6 +1,7 @@
 /* Help & feedback: the side menu's entry, and the drawer it opens (in from the right, as the
-   setup's). Ask a question, report a bug or share an idea: a subject, the area it's about (every
-   page and its sections), up to 3000 characters, and screenshots. Prototype: nothing is sent. */
+   setup's). Ask a question or report a bug: a subject, the area it's about (every page and its
+   sections), up to 3000 characters, and screenshots. Share feedback: a score from 1 to 10, and a
+   comment, needed only for a score below 5. Prototype: nothing is sent. */
 (() => {
   const foot = document.querySelector('.sn-foot');
   if (!foot || document.getElementById('hf')) return;
@@ -76,6 +77,16 @@
 .hf-count.is-full { color: var(--color-critical); }
 .hf-err { font-size: 0.8125rem; color: var(--color-critical); }
 .hf-err:empty { display: none; }
+/* feedback: 1 to 10, one row of ten */
+.hf-scale { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 0.375rem; }
+.hf-scale label { position: relative; display: grid; place-items: center; height: 2.75rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); cursor: pointer; transition: background-color .15s, border-color .15s; }
+.hf-scale input { position: absolute; opacity: 0; pointer-events: none; }
+.hf-scale label:hover { border-color: var(--color-sand-400); background: var(--color-light-beige); }
+.hf-scale label:has(input:checked) { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
+.hf-scale label:has(input:focus-visible) { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+.hf-scale-k { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.hf-need { font-weight: 400; color: var(--color-critical); }
+@media (max-width: 30rem) { .hf-scale { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .hf-kinds { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem; padding: 0.25rem; border-radius: 0.75rem; background: var(--color-light-beige); }
 .hf-kinds label { position: relative; display: grid; place-items: center; min-height: 2.5rem; padding: 0.375rem 0.5rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-muted); text-align: center; cursor: pointer; transition: background-color .15s, color .15s, box-shadow .15s; }
 .hf-kinds input { position: absolute; opacity: 0; pointer-events: none; }
@@ -133,15 +144,40 @@
   document.body.appendChild(el);
   const form = el.querySelector('form'), body = el.querySelector('.hf-body'), footer = el.querySelector('.hf-foot');
 
-  let shots = [], kind = 'help', back = null, sent = false;
+  let shots = [], kind = 'help', back = null, sent = false, score = 0;
+  const LOW = 5; // below this, a comment is needed
   const opts = () => AREAS.map(([g, subs]) => `<optgroup label="${esc(g)}">${subs.map((s) => { const v = `${g} › ${s}`; return `<option value="${esc(v)}"${v === HERE ? ' selected' : ''}>${esc(subs.length === 1 ? g : s)}</option>`; }).join('')}</optgroup>`).join('');
   const k = () => KINDS.find((x) => x[0] === kind);
 
+  const kinds = () => `<fieldset class="hf-f"><legend>What can we help with?</legend>
+        <div class="hf-kinds">${KINDS.map(([v, l]) => `<label><input type="radio" name="hf-kind" value="${v}"${v === kind ? ' checked' : ''}>${l}</label>`).join('')}</div></fieldset>`;
+  // feedback: a score, and a comment that's optional unless the score is low
+  const needWhy = () => score > 0 && score < LOW;
+  function paintFeedback() {
+    body.innerHTML = kinds() + `
+      <fieldset class="hf-f"><legend>How would you rate C&#8209;MORE so far?</legend>
+        <div class="hf-scale" role="radiogroup" aria-describedby="hf-score-err">${Array.from({ length: 10 }, (_, i) => `<label><input type="radio" name="hf-score" value="${i + 1}"${score === i + 1 ? ' checked' : ''}><span>${i + 1}</span></label>`).join('')}</div>
+        <div class="hf-scale-k" aria-hidden="true"><span>1 &middot; Not at all happy</span><span>10 &middot; Very happy</span></div>
+        <p class="hf-err" id="hf-score-err"></p></fieldset>
+      <div class="hf-f"><label for="hf-desc" id="hf-desc-l"></label>
+        <textarea class="input" id="hf-desc" maxlength="${MAX}" aria-describedby="hf-desc-count hf-desc-err"></textarea>
+        <div class="hf-row"><p class="hf-err" id="hf-desc-err"></p><span class="hf-count" id="hf-desc-count" aria-live="polite">0 / ${MAX.toLocaleString('en')}</span></div></div>`;
+    footer.innerHTML = `<p class="hf-foot-l" id="hf-why"></p>
+      <button type="button" class="btn btn-quiet" data-hf-close>Cancel</button><button type="submit" class="btn btn-primary" aria-describedby="hf-why">Send</button>`;
+    paintWhy(); ready();
+  }
+  // the comment's label and hint follow the score
+  function paintWhy() {
+    const l = body.querySelector('#hf-desc-l'), t = body.querySelector('#hf-desc'); if (!l || !t) return;
+    l.innerHTML = needWhy() ? 'What went wrong? <span class="hf-need">Needed for a score below 5</span>' : 'Anything you&rsquo;d like to add? <span class="hf-opt">(optional)</span>';
+    t.placeholder = needWhy() ? 'Tell us what disappointed you, so we can put it right.' : score >= 9 ? 'What do you like most?' : 'What would make C‑MORE work better for you?';
+    if (!needWhy()) { t.classList.remove('is-bad'); t.removeAttribute('aria-invalid'); body.querySelector('#hf-desc-err').textContent = ''; }
+  }
+
   function paintForm() {
     sent = false;
-    body.innerHTML = `
-      <fieldset class="hf-f"><legend>What can we help with?</legend>
-        <div class="hf-kinds">${KINDS.map(([v, l]) => `<label><input type="radio" name="hf-kind" value="${v}"${v === kind ? ' checked' : ''}>${l}</label>`).join('')}</div></fieldset>
+    if (kind === 'idea') { paintFeedback(); return; }
+    body.innerHTML = kinds() + `
       <div class="hf-f"><label for="hf-subject">Subject</label><input class="input" id="hf-subject" maxlength="120" autocomplete="off" placeholder="${esc(k()[2])}" aria-describedby="hf-subject-err"><p class="hf-err" id="hf-subject-err"></p></div>
       <div class="hf-f"><label for="hf-area">Area</label>
         <select class="input" id="hf-area" aria-describedby="hf-area-err"><option value=""${HERE ? '' : ' selected'} disabled>Choose where it happens</option>${opts()}</select><p class="hf-err" id="hf-area-err"></p></div>
@@ -189,12 +225,25 @@
   function ready() {
     const b = footer.querySelector('[type="submit"]'), why = footer.querySelector('#hf-why'); if (!b) return;
     const v = (id) => !!body.querySelector(id).value.trim();
+    if (kind === 'idea') {
+      const m = !score ? 'Choose a score to send.' : needWhy() && !v('#hf-desc') ? 'Tell us what went wrong to send.' : '';
+      b.disabled = !!m; why.textContent = m; return;
+    }
     const miss = [!v('#hf-subject') && 'a subject', !v('#hf-area') && 'an area', !v('#hf-desc') && 'a description'].filter(Boolean);
     b.disabled = miss.length > 0;
     why.textContent = miss.length ? `Add ${miss.length > 1 ? `${miss.slice(0, -1).join(', ')} and ${miss[miss.length - 1]}` : miss[0]} to send.` : '';
   }
 
   function check() {
+    if (kind === 'idea') {
+      const se = body.querySelector('#hf-score-err'), t = body.querySelector('#hf-desc');
+      se.textContent = score ? '' : 'Choose a score from 1 to 10.';
+      const bad = needWhy() && !t.value.trim();
+      t.classList.toggle('is-bad', bad); t.setAttribute('aria-invalid', String(bad));
+      body.querySelector('#hf-desc-err').textContent = bad ? 'For a score below 5, tell us what went wrong.' : '';
+      if (!score) body.querySelector('[name="hf-score"]').focus(); else if (bad) t.focus();
+      return !!score && !bad;
+    }
     const f = [['#hf-subject', 'Add a subject.'], ['#hf-area', 'Choose the area it&rsquo;s about.'], ['#hf-desc', 'Tell us a little more.']];
     let first = null;
     f.forEach(([id, msg]) => {
@@ -208,6 +257,17 @@
   }
 
   function paintDone() {
+    if (kind === 'idea') {
+      const said = body.querySelector('#hf-desc').value.trim();
+      sent = true;
+      body.innerHTML = `<div class="hf-done" role="status"><span class="hf-done-tick">${TICK}</span>
+      <h3>Thanks for your feedback</h3><p>${needWhy() ? `We&rsquo;re sorry it fell short. Someone from our team will get back to you at <b>${esc(mail)}</b>.` : 'A person on our team reads every one.'}</p>
+      <dl class="hf-sum"><dt>Your score</dt><dd>${score} out of 10</dd>${said ? `<dt>Your comment</dt><dd>${esc(said.length > 160 ? said.slice(0, 160) + '…' : said)}</dd>` : ''}</dl></div>`;
+      footer.innerHTML = `<button type="button" class="btn btn-quiet" data-hf-again>Send another</button><button type="button" class="btn btn-primary" data-hf-close>Done</button>`;
+      score = 0;
+      footer.querySelector('[data-hf-close]').focus();
+      return;
+    }
     const subject = body.querySelector('#hf-subject').value.trim(), area = body.querySelector('#hf-area').value, n = shots.length;
     const ref = `HF-${String(Date.now()).slice(-5)}`;
     sent = true;
@@ -227,7 +287,7 @@
     if (sent || !body.innerHTML) paintForm();
     el.hidden = false; document.documentElement.style.overflow = 'hidden';
     void el.offsetWidth; el.classList.add('is-open'); // laid out first, so it slides in
-    setTimeout(() => { const s = body.querySelector('#hf-subject'); (s || form).focus({ preventScroll: true }); }, 320);
+    setTimeout(() => { const s = body.querySelector('#hf-subject, [name="hf-score"]'); (s || form).focus({ preventScroll: true }); }, 320);
   }
   function close() {
     el.classList.remove('is-open'); document.documentElement.style.overflow = '';
@@ -242,7 +302,7 @@
   el.addEventListener('click', (e) => {
     const t = e.target;
     if (t.closest('[data-hf-close]')) { close(); return; }
-    if (t.closest('[data-hf-again]')) { paintForm(); body.querySelector('#hf-subject').focus(); return; }
+    if (t.closest('[data-hf-again]')) { paintForm(); const f = body.querySelector('#hf-subject, [name="hf-score"]'); if (f) f.focus(); return; }
     if (t.closest('#hf-drop, [data-hf-add]')) { body.querySelector('#hf-file').click(); return; }
     const rm = t.closest('[data-hf-rm]');
     if (rm) { const [s] = shots.splice(+rm.dataset.hfRm, 1); URL.revokeObjectURL(s.url); body.querySelector('#hf-shot-err').textContent = ''; paintShots(); (body.querySelector('.hf-add, .hf-shot-v') || body.querySelector('#hf-drop')).focus(); return; }
@@ -261,7 +321,14 @@
   });
   el.addEventListener('change', (e) => {
     ready();
-    if (e.target.name === 'hf-kind') { kind = e.target.value; body.querySelector('#hf-subject').placeholder = k()[2]; body.querySelector('#hf-desc').placeholder = k()[3]; }
+    if (e.target.name === 'hf-kind') {
+      const was = kind, d = body.querySelector('#hf-desc'), text = d ? d.value : '';
+      kind = e.target.value;
+      // feedback has a form of its own; between the other two, only the hints change
+      if (was === 'idea' || kind === 'idea') { const s = body.querySelector('#hf-subject'), a = body.querySelector('#hf-area'), sv = s && s.value, av = a && a.value; paintForm(); const d2 = body.querySelector('#hf-desc'); if (d2) d2.value = text; const s2 = body.querySelector('#hf-subject'), a2 = body.querySelector('#hf-area'); if (s2 && sv) s2.value = sv; if (a2 && av) a2.value = av; count(); ready(); body.querySelector(`[name="hf-kind"][value="${kind}"]`).focus(); }
+      else { body.querySelector('#hf-subject').placeholder = k()[2]; body.querySelector('#hf-desc').placeholder = k()[3]; }
+    }
+    if (e.target.name === 'hf-score') { score = +e.target.value; body.querySelector('#hf-score-err').textContent = ''; paintWhy(); ready(); }
     if (e.target.id === 'hf-file') { take(e.target.files); e.target.value = ''; }
     if (e.target.id === 'hf-area' && e.target.value) { e.target.classList.remove('is-bad'); body.querySelector('#hf-area-err').textContent = ''; }
   });
