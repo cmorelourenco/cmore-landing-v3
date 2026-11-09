@@ -6,7 +6,7 @@
       you've asked for and they haven't answered yet, is there but can't be ticked. Mandatory ones
       you don't have yet come ticked.
       Any document, even one they already share, can also be asked for as it was in an earlier year
-      (Ask for a version by year, this year's chosen to start with): they share it, decline it, or say they don't have one from then.
+      (Ask for a version by year): they share it, decline it, or say they don't have one from then.
    2. Review and send: what's asked for, for which of your projects (products, for Beatriz), and a
       note. The request then waits for their answer on their page, as a consent you asked for (for a
       supplier you've only invited, it joins what the invitation asks for). Kept for the tab
@@ -31,8 +31,9 @@
 .sd-ver { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem; margin: -0.25rem 0 0.625rem 2.625rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .sd-ver .link-btn { font-size: 0.8125rem; }
 .sd-ver > b { margin-right: 0.25rem; font-weight: 500; color: var(--color-ink); }
-.sd-yr { display: inline-flex; align-items: center; gap: 0.125rem; height: 1.75rem; padding: 0 0.25rem 0 0.625rem; border-radius: 999px; background: var(--color-graphite); font-size: 0.8125rem; font-weight: 500; color: var(--color-off-white); font-variant-numeric: tabular-nums; }
-.sd-yr button { width: 1.375rem; height: 1.375rem; display: grid; place-items: center; border: 0; border-radius: 999px; background: none; font: inherit; font-size: 1rem; line-height: 1; color: inherit; cursor: pointer; opacity: .75; }
+.sd-yr { display: inline-flex; align-items: center; gap: 0.125rem; height: 1.75rem; padding: 0 0.25rem 0 0.625rem; line-height: 1; border-radius: 999px; background: var(--color-graphite); font-size: 0.8125rem; font-weight: 500; color: var(--color-off-white); font-variant-numeric: tabular-nums; }
+.sd-yr button { width: 1.25rem; height: 1.25rem; display: grid; place-items: center; padding: 0; border: 0; border-radius: 999px; background: none; color: inherit; cursor: pointer; opacity: .75; }
+.sd-yr button svg { width: 0.75rem; height: 0.75rem; display: block; }
 .sd-yr button:hover { opacity: 1; background: rgba(255, 255, 255, .15); }
 .sd-ysel { height: 1.75rem; padding: 0 1.75rem 0 0.625rem; border: 1px solid var(--color-line); border-radius: 999px; background: var(--color-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23555'%3E%3Cpath d='M5.5 7.5 10 12l4.5-4.5'/%3E%3C/svg%3E") no-repeat right 0.5rem center / 0.875rem; -webkit-appearance: none; appearance: none; font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink); cursor: pointer; }
 .sd-ysel:hover, .sd-ysel:focus { border-color: var(--color-graphite); outline: none; }
@@ -59,14 +60,14 @@
   const askable = (l) => l.filter((d) => !d.off);
   // earlier versions, by year: any document can be asked for as it was in another year, even one
   // they already share with you (that one's current version)
-  // any year back to 1990, newest first, this year's included (and chosen when the picker opens)
+  // any year back to 1990, newest first, this year's included
   const Y = new Date().getFullYear(), YEARS = Array.from({ length: Y - 1990 + 1 }, (_, k) => Y - k);
   const verN = () => [...f.vers.values()].reduce((t, l) => t + l.size, 0);
   const verUI = (d) => {
     const on = f.vers.get(d.code);
     if (!on && !f.vopen.has(d.code)) return `<div class="sd-ver" data-sd-v="${esc(d.code)}"><button type="button" class="link-btn" data-sd-vopen="${esc(d.code)}">Ask for a version by year</button></div>`;
     const picked = on ? [...on].sort((a, b) => b - a) : [];
-    return `<div class="sd-ver" data-sd-v="${esc(d.code)}" role="group" aria-label="Earlier versions of ${esc(d.name)}"><b>Version from</b>${picked.map((y) => `<span class="sd-yr is-on">${y}<button type="button" data-sd-yr="${esc(d.code)}|${y}" aria-label="Remove ${y}">&times;</button></span>`).join('')}
+    return `<div class="sd-ver" data-sd-v="${esc(d.code)}" role="group" aria-label="Earlier versions of ${esc(d.name)}"><b>Version from</b>${picked.map((y) => `<span class="sd-yr is-on">${y}<button type="button" data-sd-yr="${esc(d.code)}|${y}" aria-label="Remove ${y}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7 7 17"/></svg></button></span>`).join('')}
       <select class="sd-ysel" data-sd-ysel="${esc(d.code)}" aria-label="Add a year for ${esc(d.name)}"><option value="">${picked.length ? 'Add another year' : 'Choose a year'}</option>${YEARS.filter((y) => !picked.includes(y)).map((y) => `<option value="${y}">${y}</option>`).join('')}</select>
       <button type="button" class="link-btn" data-sd-vx="${esc(d.code)}">${picked.length ? 'Clear' : 'Cancel'}</button>
       <small>${on && on.size ? `They&rsquo;re asked for the ${[...on].sort((a, b) => b - a).join(', ')} version${on.size === 1 ? '' : 's'}, and can share ${on.size === 1 ? 'it' : 'each'}, decline, or tell you they don&rsquo;t have one from that year.` : 'Pick one year or more. They can share it, decline, or tell you they don&rsquo;t have one from that year.'}</small></div>`;
@@ -174,7 +175,7 @@
     const vo = e.target.closest('[data-sd-vopen]'), yr = e.target.closest('[data-sd-yr]'), vx = e.target.closest('[data-sd-vx]');
     if (vo || yr || vx) {
       const code = vo ? vo.dataset.sdVopen : vx ? vx.dataset.sdVx : yr.dataset.sdYr.split('|')[0];
-      if (vo) { f.vopen.add(code); if (!f.vers.has(code)) f.vers.set(code, new Set([Y])); tick(code); }
+      if (vo) f.vopen.add(code);
       if (vx) { f.vopen.delete(code); f.vers.delete(code); }
       if (yr) { const y = +yr.dataset.sdYr.split('|')[1], l = f.vers.get(code) || new Set(); l.has(y) ? l.delete(y) : l.add(y); if (l.size) f.vers.set(code, l); else f.vers.delete(code); }
       const box = dw.querySelector(`[data-sd-v="${CSS.escape(code)}"]`), d = DOCS.find((x) => x.code === code);
