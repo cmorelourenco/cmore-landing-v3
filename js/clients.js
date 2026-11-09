@@ -21,15 +21,16 @@ window.CM_CLIENTS = (() => {
 
   // [name, sector, city, contact, client since, consents]
   //   consent: [title, project or null, granted (or asked, when pending), state, codes, on (stopped / declined), profile name (a request the homepage answers too)]
+  //   a code with a year ('CO-06@2024') asks for that year's version of it, as well as or instead of the current one
   const RAW = OPEN ? [
     ['CUF', 'Healthcare', 'Lisbon', 'fornecedores@cuf.pt', '2024', [
       ['Company & legal', 'Hospital CUF Porto, new wing', '4 Sep 2025', 'given', ['CO-01', 'CO-02', 'CO-03', 'CO-06', 'CO-07'], null, 'CUF'],
       ['Insurance', 'Hospital CUF Porto, new wing', '4 Sep 2025', 'given', ['CO-08', 'CO-10', 'CO-11'], null, 'CUF']]],
     ['Mota-Engil', 'Construction and engineering', 'Porto', 'compras@mota-engil.pt', '2023', [
       ['Health and safety', 'A4 tunnel works', '10 Feb 2026', 'given', ['CO-12', 'CO-13', 'CO-14', 'UN-11', 'UN-12']],
-      ['Insurance and tax', null, ago(2), 'pending', ['CO-10', 'CO-08', 'CO-06'], null, 'Mota-Engil']]],
+      ['Insurance and tax', null, ago(2), 'pending', ['CO-10', 'CO-08', 'CO-06', 'CO-06@2024', 'CO-10@2022'], null, 'Mota-Engil']]],
     ['Sonae MC', 'Retail', 'Maia', 'suppliers@sonaemc.com', '2025', [
-      ['Insurance', null, ago(6), 'pending', ['CO-08', 'CO-10', 'CO-11', 'UN-27'], null, 'Sonae MC']]],
+      ['Insurance', null, ago(6), 'pending', ['CO-08', 'CO-10', 'CO-11', 'UN-27', 'CO-11@2025'], null, 'Sonae MC']]],
     ['Teixeira Duarte', 'Construction', 'Lisbon', 'subempreiteiros@teixeiraduarte.pt', '2022', [
       ['Company & legal', null, '12 Mar 2026', 'given', ['CO-01', 'CO-02', 'CO-06', 'CO-19']],
       ['Workers on site', 'Metro do Porto, Linha Rubi', '2 May 2026', 'given', ['WK-01', 'WK-11', 'WK-12', 'WK-15']]]],
@@ -62,6 +63,17 @@ window.CM_CLIENTS = (() => {
   const mine = () => { try { return JSON.parse(sessionStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   const keep = (m) => { try { sessionStorage.setItem(KEY, JSON.stringify(m)); } catch (e) {} };
   // documents you switched off under a consent you keep: { consentId: { code: the day you did } }
+  // what you answered to an earlier version they asked for: { consentId: { 'CO-08@2025': 'yes' | 'no' | 'none' } }
+  const VER_KEY = KEY + '-ver';
+  const vans = () => { try { return JSON.parse(sessionStorage.getItem(VER_KEY)) || {}; } catch (e) { return {}; } };
+  const keepVans = (m) => { try { sessionStorage.setItem(VER_KEY, JSON.stringify(m)); } catch (e) {} };
+  // an earlier version, by year ('CO-08@2025'): the one of yours issued that year, if you have it
+  const yearOf = (t) => { const d = V && V.parse(t); return d ? d.getFullYear() : +String(t || '').split(' ').pop() || null; };
+  const verOf = (key, ans) => {
+    const [code, y] = key.split('@'), d = M.DOCS.find((x) => x.code === code); if (!d) return null;
+    const all = M.allVersionsOf ? M.allVersionsOf(d) : [], have = all.find((v) => yearOf(v.issued) === +y) || null;
+    return { key, code, year: +y, src: d, name: d.name, section: d.section, requirement: d.requirement, have, answer: ans || '' };
+  };
   const OFF_KEY = KEY + '-off';
   const offs = () => { try { return JSON.parse(sessionStorage.getItem(OFF_KEY)) || {}; } catch (e) { return {}; } };
   const keepOff = (m) => { try { sessionStorage.setItem(OFF_KEY, JSON.stringify(m)); } catch (e) {} };
@@ -80,14 +92,16 @@ window.CM_CLIENTS = (() => {
   // the homepage holds one state per client: given if any of its consents there is, else the first one's
   const summary = (states) => (states.includes('given') ? 'given' : states.includes('pending') ? 'pending' : states[0]);
   const build = () => {
-    const m = mine(), pr = profile(), pc = (n) => pr && pr.consents.find((x) => x.name === n), off = offs();
+    const m = mine(), pr = profile(), pc = (n) => pr && pr.consents.find((x) => x.name === n), off = offs(), va = vans();
     return RAW.map(([name, sector, city, email, since, cs]) => {
       const id = slug(name);
       // what you did here, consent by consent
       let consents = cs.map(([title, project, granted, state, codes, on, pname], i) => {
         const cid = `${id}-${i}`, o = m[cid];
         const periods = state === 'given' ? [{ from: granted, to: null }] : state === 'stopped' ? [{ from: granted, to: on }] : [];
-        const c = { id: cid, title, project, granted, asked: state === 'pending' ? granted : '', state, on: on || '', profile: pname || '', periods, docs: codes.map(doc).filter(Boolean) };
+        const c = { id: cid, title, project, granted, asked: state === 'pending' ? granted : '', state, on: on || '', profile: pname || '', periods, docs: codes.filter((x) => !x.includes('@')).map(doc).filter(Boolean),
+          // earlier versions they asked for, by year: answered one by one (share, decline, don't have it)
+          vers: codes.filter((x) => x.includes('@')).map((x) => verOf(x, va[cid] && va[cid][x])).filter(Boolean) };
         c.docs.forEach((d) => { d.off = (off[cid] && off[cid][d.code]) || ''; });
         if (o) { c.state = o.state; c.on = o.on; c.periods = o.periods || move(periods, o.state, o.on); if (o.state === 'given' && state !== 'given') c.granted = o.on; }
         return c;
@@ -149,5 +163,15 @@ window.CM_CLIENTS = (() => {
     return byId(c.id);
   };
 
-  return { list, byId, stats, setState, setDocs, CATS, TONE, today, slug, OPEN };
+  // an earlier version they asked for: share it, decline it, or say you don't have one from that year
+  const setVer = (cid, key, answer) => {
+    const c = LIST.find((x) => x.consents.some((k) => k.id === cid)); if (!c) return null;
+    const m = vans(), a = m[cid] || {};
+    if (answer) a[key] = answer; else delete a[key];
+    m[cid] = a; keepVans(m); LIST = build();
+    document.dispatchEvent(new CustomEvent('cm-clients'));
+    return byId(c.id);
+  };
+
+  return { list, byId, stats, setState, setDocs, setVer, yearOf, CATS, TONE, today, slug, OPEN };
 })();

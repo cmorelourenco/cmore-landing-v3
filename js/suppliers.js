@@ -177,15 +177,17 @@ window.CM_SUPPLIERS = (() => {
   const asked = () => { try { return JSON.parse(sessionStorage.getItem(ASK_KEY) || '{}') || {}; } catch (e) { return {}; } };
   const pendDoc = (r, c) => ({ code: c, name: (r.names && r.names[c]) || byCode[c].name.en, section: (r.sections && r.sections[c]) || byCode[c].section.en, cat: category(c),
     requirement: (r.required || []).includes(c) ? 'Mandatory' : 'Optional', status: 'missing', valid: '—', note: '' });
+  // the earlier versions a request asks for, by year: [{ code, year, name, section }]
+  const versOf = (r) => Object.entries(r.versions || {}).filter(([c]) => byCode[c]).flatMap(([c, ys]) => ys.map((y) => ({ code: c, year: y, name: (r.names && r.names[c]) || byCode[c].name.en, section: (r.sections && r.sections[c]) || byCode[c].section.en })));
   const withAsks = (s) => {
     const rs = asked()[s.id];
     if (!rs || !rs.length) return s;
     if (s.status === 'invited') {
       const c0 = s.consents[0], have = new Set(c0.codes), more = rs.flatMap((r) => r.docs.filter((c) => byCode[c] && !have.has(c) && have.add(c)).map((c) => pendDoc(r, c)));
-      return Object.assign({}, s, { consents: [Object.assign({}, c0, { codes: [...have], docs: c0.docs.concat(more) })].concat(s.consents.slice(1)) });
+      return Object.assign({}, s, { consents: [Object.assign({}, c0, { codes: [...have], docs: c0.docs.concat(more), vers: (c0.vers || []).concat(rs.flatMap(versOf)) })].concat(s.consents.slice(1)) });
     }
     const consents = s.consents.concat(rs.map((r) => ({ id: r.id, title: 'Documents you asked for', codes: r.docs, project: r.project ? PROJECTS[r.project] || null : null, granted: r.at, state: 'pending', asked: true, note: r.note,
-      docs: r.docs.filter((c) => byCode[c]).map((c) => pendDoc(r, c)) })));
+      docs: r.docs.filter((c) => byCode[c]).map((c) => pendDoc(r, c)), vers: versOf(r) })));
     return Object.assign({}, s, { consents, status: consents.some((c) => c.state === 'pending') ? 'pending' : s.status });
   };
   const addAsk = (supId, r) => { const a = asked(); (a[supId] = a[supId] || []).push(r); try { sessionStorage.setItem(ASK_KEY, JSON.stringify(a)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-suppliers')); };

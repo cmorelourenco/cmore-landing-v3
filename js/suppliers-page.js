@@ -273,10 +273,10 @@
   const today = () => { const t = new Date(); return `${t.getDate()} ${MON[t.getMonth()]} ${t.getFullYear()}`; };
   const logged = []; // what you do on this page (a reminder, asking again): on top, until the page reloads
   const events = (s) => {
-    const For = (c) => (c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`), n = (c) => `${c.docs.length} document${c.docs.length === 1 ? '' : 's'}`;
+    const For = (c) => (c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`), n = (c) => { const v = (c.vers || []).length; return [c.docs.length || !v ? `${c.docs.length} document${c.docs.length === 1 ? '' : 's'}` : '', v ? `${v} version${v === 1 ? '' : 's'} by year` : ''].filter(Boolean).join(' and '); };
     if (s.status === 'invited') return [{ at: s.invite.invited, tone: 'neu', what: `You invited ${esc(s.name)}`, sub: `${s.invite.onCmore ? 'To your supplier list' : 'To join C&#8209;MORE'} &middot; ${n(s.consents[0])} asked for` }];
     return s.consents.flatMap((c) => {
-      if (c.state === 'pending') return [{ at: c.granted, tone: 'wait', what: c.asked ? `You asked for ${n(c)}` : `You asked for ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)} &middot; waiting for their answer` }];
+      if (c.state === 'pending') return [{ at: c.granted, tone: 'wait', what: c.asked ? `You asked for ${n(c)}` : `You asked for ${esc(c.title)}`, sub: `${For(c)} &middot; waiting for their answer` }];
       const given = { at: c.granted, tone: 'ok', what: `Consent given: ${esc(c.title)}`, sub: `${For(c)} &middot; ${n(c)}` };
       if (c.state === 'removed') return [given, { at: c.removed, tone: 'off', what: `Consent removed: ${esc(c.title)}`, sub: `You no longer see its ${n(c)}` }];
       // a document that ran out under it, on the day it did
@@ -309,7 +309,7 @@
         <article class="sp-consent is-pending">
           <header class="sp-consent-h"><div><h3>Documents you asked for</h3><p>For all your ${S.WORDS.scope} &middot; asked on ${esc(s.invite.invited)} &middot; ${docs.length} document${docs.length === 1 ? '' : 's'}</p></div><span class="co-badge b-neu">Invited</span></header>
           <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"></colgroup><thead><tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th></tr></thead>
-            <tbody>${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}</span></td><td class="hide-s">${esc(d.requirement)}</td><td><span class="co-badge b-neu">Not shared yet</span></td></tr>`).join('')}</tbody></table>
+            <tbody>${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}</span></td><td class="hide-s">${esc(d.requirement)}</td><td><span class="co-badge b-neu">Not shared yet</span></td></tr>`).join('')}${(s.consents[0].vers || []).map((v) => `<tr><td><span class="n">${esc(v.name)} &middot; ${v.year} version</span><span class="d">${esc(v.code)} &middot; ${esc(v.section)} &middot; they share it, decline, or say they don&rsquo;t have one from ${v.year}</span></td><td class="hide-s">By year</td><td><span class="co-badge b-neu">Not answered yet</span></td></tr>`).join('')}</tbody></table>
           <div class="sp-wait"><span>${CLOCK}You&rsquo;ll see each one as soon as they share it.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(s.id)}">Send a reminder</button></div>
         </article></section>${log(s)}`;
       return;
@@ -325,7 +325,7 @@
       </article>`;
     const ask = (c) => `<article class="sp-consent is-pending" data-ask="${esc(c.id)}">
         <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; you asked on ${esc(c.granted)}</p></div><span class="co-badge b-pend">Waiting for their answer</span></header>
-        <div class="sp-wait"><span>${CLOCK}Until they say yes you can&rsquo;t see: ${c.docs.map((d) => esc(d.name)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}">Send a reminder</button></div>
+        <div class="sp-wait"><span>${CLOCK}Until they answer you can&rsquo;t see: ${c.docs.map((d) => esc(d.name)).concat((c.vers || []).map((v) => `${esc(v.name)} (${v.year} version)`)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}">Send a reminder</button></div>
       </article>`;
     // one they stopped sharing: you keep what they'd shared until then, nothing newer; and asking again
     const gone = (c) => `<article class="sp-consent is-removed">

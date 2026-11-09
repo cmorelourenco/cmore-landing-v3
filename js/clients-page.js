@@ -132,6 +132,18 @@
 /* on a phone there's no room for its own column: the expiry sits under what they see */
 .cl-exp-s { display: none; }
 @media (max-width: 40rem) { .sp-tbl .cl-exp-c { display: none; } .sp-tbl col.sp-c-exp { width: 0; } .sp-tbl col.sp-c-st { width: auto; } .cl-exp-s { display: block; margin-top: 0.375rem; font-size: 0.8125rem; } }
+.cl-yr { display: inline-flex; align-items: center; height: 1.25rem; margin-left: 0.375rem; padding: 0 0.4375rem; border-radius: 0.3125rem; background: var(--color-mid-beige); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.02em; color: var(--color-ink); vertical-align: 1px; white-space: nowrap; }
+.cl-ver td { background: color-mix(in oklab, var(--color-mid-beige) 30%, transparent); }
+.cl-ans { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.5rem; margin-top: 0.625rem; }
+.cl-ans > span { flex-basis: 100%; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink); }
+.cl-ans button { display: inline-flex; align-items: center; height: 1.875rem; padding: 0 0.75rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface); font: inherit; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink); cursor: pointer; }
+.cl-ans button:hover:not(:disabled) { border-color: var(--color-graphite); }
+.cl-ans button.is-yes { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
+.cl-ans button.is-yes:hover:not(:disabled) { opacity: .9; }
+.cl-ans button:disabled, .cl-ans button.is-yes:disabled { background: var(--color-surface); color: var(--color-sand-400); border-color: var(--color-line); cursor: not-allowed; opacity: 1; }
+.cl-ans small { flex-basis: 100%; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.cl-chg { margin-left: 0.5rem; font-size: 0.8125rem; }
+.cl-need { color: var(--color-ink); font-weight: 500; }
 .cl-acts { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.875rem 1.25rem; border-top: 1px solid var(--color-mid-beige); font-size: 0.875rem; color: var(--color-ink-muted); }
 .cl-acts > span:last-child { display: flex; align-items: center; gap: 0.75rem; }
 .cl-acts svg { width: 1rem; height: 1rem; vertical-align: -0.1875rem; margin-right: 0.375rem; }
@@ -163,7 +175,7 @@
   const id = new URLSearchParams(location.search).get('id');
   const head = document.getElementById('cl-head'), crumb = document.getElementById('cl-crumb');
   const For = (k) => (k.project ? `For ${esc(k.project)}` : 'For all your work with them');
-  const n = (k) => `${k.docs.length} document${k.docs.length === 1 ? '' : 's'}`;
+  const n = (k) => `${k.docs.length} document${k.docs.length === 1 ? '' : 's'}${(k.vers || []).length ? ` + ${k.vers.length} earlier version${k.vers.length === 1 ? '' : 's'}` : ''}`;
 
   // where a client stands: what it's waiting on from you first, then what it sees in red
   const overall = (c) => { const k = C.stats(c); return k.pending ? ['Waiting for your answer', 'b-pend'] : !k.given ? ['Not sharing', 'b-neu'] : k.bad ? ['Sees something missing', 'b-over'] : k.soon ? ['Expiring or in review', 'b-pend'] : ['All in order', 'b-ok']; };
@@ -258,9 +270,24 @@
     const sub = gone ? (kp ? `They keep: ${kp.say}` : 'They never saw it') : `${esc(d.code)} &middot; ${esc(d.section)}${d.tone === 'bad' ? ' &middot; <a class="cl-fix" href="company-details.html">Fix in Documents</a>' : ''}`;
     return `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${sub}</span>${k.state === 'pending' || k.state === 'declined' ? '' : vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td>${st}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}${k.state === 'given' ? sw(k, d) : ''}</tr>${k.state === 'pending' || k.state === 'declined' ? '' : vRow(k, d)}`;
   }).join('');
+  // an earlier version they asked for, by year: what you have from that year, and your answer to it —
+  // share it, decline it, or say you don't have one from that year
+  const ANS = { yes: ['Shared', 'b-ok'], no: ['Declined', 'b-neu'], none: ['You don&rsquo;t have it', 'b-neu'] };
+  const ansTag = (k, v) => (!v.answer ? '<span class="co-badge b-pend">Your answer needed</span>'
+    : v.answer === 'yes' && k.state === 'pending' ? '<span class="co-badge b-ok">You&rsquo;ll share it</span>' : `<span class="co-badge ${ANS[v.answer][1]}">${ANS[v.answer][0]}</span>`);
+  const verRows = (k, exp = true) => (k.state === 'stopped' || k.state === 'declined' ? [] : k.vers || []).map((v) => {
+    const id = `${esc(k.id)}|${esc(v.key)}`, h = v.have;
+    const sub = h ? `Yours: ${h.current ? 'the current one, ' : ''}issued ${esc(h.issued)}${h.valid && h.valid !== '—' ? ` &middot; valid until ${esc(h.valid)}` : ''}` : `There&rsquo;s no ${v.year} version in your Documents`;
+    const ask = `<div class="cl-ans" role="group" aria-label="Your answer for the ${v.year} version of ${esc(v.name)}"><span>They&rsquo;re asking for the ${v.year} version.</span>
+        <button type="button" class="is-yes" data-ver-ans="${id}|yes"${h ? '' : ' disabled title="You have no ' + v.year + ' version to share"'}>Share it</button><button type="button" data-ver-ans="${id}|no">Decline</button><button type="button" data-ver-ans="${id}|none">I don&rsquo;t have it from ${v.year}</button>
+        ${h ? '' : `<small>Have it on paper or in a folder? <a href="company-details.html">Upload it in Documents</a> and share it from here.</small>`}</div>`;
+    const chg = v.answer ? `<button type="button" class="link-btn cl-chg" data-ver-ans="${id}|">Change</button>` : '';
+    const valid = h && (v.answer === 'yes' || !v.answer) ? h.valid : '—';
+    return `<tr class="cl-ver"><td><span class="n">${esc(v.name)}<span class="cl-yr">${v.year} version</span></span><span class="d">${sub}${chg}</span>${v.answer ? '' : ask}</td><td class="hide-s">${esc(v.requirement || '')}</td><td>${ansTag(k, v)}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}${k.state === 'given' ? '<td class="cl-sw-c"></td>' : ''}</tr>`;
+  }).join('');
   const table = (k, title, b) => { const g = k.state === 'given'; return `<table class="sp-tbl${g ? ' cl-given' : ''}"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp">${g ? '<col class="cl-c-sw">' : ''}</colgroup><thead>
       <tr class="sp-ch"><td colspan="${g ? 5 : 4}"><div class="cl-ch"><div><h3>${esc(k.title)}</h3><p>${title}</p></div>${b}</div></td></tr>
-      <tr><th>Document</th><th class="hide-s">Requirement</th><th>${g ? 'They see' : k.state === 'stopped' ? 'They keep' : 'Status'}</th><th class="c cl-exp-c">Expiry date</th>${g ? '<th class="cl-sw-c">Shared</th>' : ''}</tr></thead><tbody>${rowsOf(k)}</tbody></table>`; };
+      <tr><th>Document</th><th class="hide-s">Requirement</th><th>${g ? 'They see' : k.state === 'stopped' ? 'They keep' : 'Status'}</th><th class="c cl-exp-c">Expiry date</th>${g ? '<th class="cl-sw-c">Shared</th>' : ''}</tr></thead><tbody>${rowsOf(k)}${verRows(k)}</tbody></table>`; };
   // the whole consent at once: on when every document is shared, off when none is
   const swAll = (k) => {
     const on = k.docs.filter((d) => !d.off).length, all = on === k.docs.length;
@@ -269,7 +296,12 @@
   const given = (k) => `<article class="sp-consent" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; given on ${esc(k.granted)} &middot; ${n(k)}`, swAll(k))}
       <div class="cl-acts"><span>When you renew one of these, they see the new one. Switch one off and they keep the version they&rsquo;ve seen, but nothing newer reaches them.</span></div></article>`;
   const asked = (k) => `<article class="sp-consent is-pending" data-k="${esc(k.id)}">${table(k, `${For(k)} &middot; asked on ${esc(k.asked)} &middot; ${n(k)}`, '<span class="co-badge b-pend">Waiting for your answer</span>')}
-      <div class="cl-acts"><span>${CLOCK}Nothing is shared until you say yes. Then they see the current version of each, as it is today, and every one you upload after.</span><span><button type="button" class="link-btn" data-decline="${esc(k.id)}">Decline</button><button type="button" class="btn btn-primary btn-sm" data-share="${esc(k.id)}">Share these ${n(k)}</button></span></div></article>`;
+      <div class="cl-acts">${(() => {
+        const vs = k.vers || [], left = vs.filter((v) => !v.answer).length, yes = vs.filter((v) => v.answer === 'yes').length, tot = k.docs.length + yes;
+        const label = tot ? `Share ${tot === 1 ? 'this' : 'these'} ${tot} document${tot === 1 ? '' : 's'}` : 'Send your answers';
+        const say = left ? `<span class="cl-need">Answer the earlier version${left === 1 ? '' : 's'} they asked for first (${left} left).</span>` : `<span>${CLOCK}Nothing is shared until you say yes. Then they see the current version of each, as it is today, and every one you upload after${yes ? `, plus the earlier version${yes === 1 ? '' : 's'} you chose to share` : ''}.</span>`;
+        return `${say}<span><button type="button" class="link-btn" data-decline="${esc(k.id)}">Decline all</button><button type="button" class="btn btn-primary btn-sm" data-share="${esc(k.id)}"${left ? ' disabled' : ''}>${label}</button></span>`;
+      })()}</div></article>`;
   // stopped: they keep what they were shown until then (each document's newest version they saw),
   // and see nothing uploaded after; declined: they never saw any of it
   const gone = (k) => {
@@ -355,8 +387,20 @@
       toast(share ? `${esc(c.name)} can see ${what} again.` : `You stopped sharing ${what} with ${esc(c.name)}. They keep the version${codes.length === 1 ? '' : 's'} they saw.`);
       return;
     }
+    // an earlier version: shared, declined, not had from that year; or (empty) back to the question
+    const va = e.target.closest('[data-ver-ans]');
+    if (va) {
+      const [cid, key, ans] = va.dataset.verAns.split('|'), k = C.list().flatMap((c) => c.consents).find((x) => x.id === cid), v = k && (k.vers || []).find((x) => x.key === key); if (!v) return;
+      const y = scrollY, c = C.setVer(cid, key, ans); paint(); scrollTo(0, y);
+      const row = [...box.querySelectorAll('[data-ver-ans]')].find((b) => b.dataset.verAns.startsWith(`${cid}|${key}|`)); if (row) row.focus({ preventScroll: true });
+      const what = `the ${v.year} version of ${esc(v.name)}`, given = k.state === 'given';
+      if (ans) toast(ans === 'yes' ? (given ? `${esc(c.name)} can now see ${what}.` : `You&rsquo;ll share ${what} when you share this request.`)
+        : ans === 'no' ? `You declined ${what}. ${given ? 'They' : 'Once you answer, they'}&rsquo;ll see you said no.`
+        : `${esc(c.name)} will see you don&rsquo;t have ${what}.`);
+      return;
+    }
     const sh = e.target.closest('[data-share]');
-    if (sh) { const k = C.list().flatMap((c) => c.consents).find((x) => x.id === sh.dataset.share), c = C.setState(k.id, 'given'); paint(); toast(`${esc(c.name)} can now see ${esc(k.title)}: ${k.docs.length} document${k.docs.length === 1 ? '' : 's'}.`); return; }
+    if (sh) { const k = C.list().flatMap((c) => c.consents).find((x) => x.id === sh.dataset.share), c = C.setState(k.id, 'given'); paint(); const yes = (k.vers || []).filter((v) => v.answer === 'yes').length, tot = k.docs.length + yes; toast(`${esc(c.name)} can now see ${esc(k.title)}: ${tot} document${tot === 1 ? '' : 's'}${yes ? `, ${yes} of them an earlier version` : ''}.`); return; }
     const d = e.target.closest('[data-decline]');
     if (d) { const k = C.list().flatMap((c) => c.consents).find((x) => x.id === d.dataset.decline), c = C.setState(k.id, 'declined'); paint(); toast(`You declined ${esc(c.name)}&rsquo;s request for ${esc(k.title)}.`); }
   });
