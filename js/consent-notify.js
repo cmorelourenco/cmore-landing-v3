@@ -99,7 +99,9 @@ window.CMConsents = (() => {
       const names = wait.map((c) => nb(c.name));
       d.textContent = !names.length ? 'You’ve answered every client who asked.' : `${names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0]} asked to see your documents.`;
     }
+    // only the ones accepted, and only while something still waits for you: all answered, no tag
     const ok = k.querySelector('#co-k-cons-ok b'); if (ok) { const a = all.filter((c) => c.state === 'accepted').length; ok.textContent = a; ok.parentElement.classList.toggle('is-zero', !a); }
+    const chips = k.querySelector('.co-k-chips'); if (chips) chips.hidden = !wait.length;
   };
 
   // give or decline: the profile keeps it (the company page's row and My clients follow)
