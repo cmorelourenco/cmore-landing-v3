@@ -31,6 +31,8 @@
   // where the page numbers go: after the table, or after the box it sits alone in (a scroller, a card)
   const anchorOf = (t) => { let a = t; while (a.parentElement && a.parentElement.children.length === 1 && !a.parentElement.matches('body, main, td, section, article')) a = a.parentElement; return a; };
 
+  // after a page change: scroll by however far the element moved, at once, so it's where it was
+  const keepAt = (el, was) => { const d = el.getBoundingClientRect().top - was; if (Math.abs(d) > 0.5) scrollTo({ top: scrollY + d, behavior: 'instant' }); };
   let busy = false;
   const apply = (t) => {
     const body = t.tBodies[0]; if (!body) return;
@@ -59,15 +61,25 @@
       anchorOf(t).after(nav); t.pgNav = nav;
       nav.addEventListener('click', (e) => {
         const b = e.target.closest('[data-pg]'); if (!b || b.disabled) return;
+        // the page numbers stay where they were on screen: no jump to the table's top, and a shorter
+        // last page doesn't pull them out from under the pointer
+        const was = nav.getBoundingClientRect().top;
         const k = keyOf(t); pages.set(k, Object.assign({}, pages.get(k), { page: +b.dataset.pg })); run(t);
-        const top = t.getBoundingClientRect().top; if (top < 80) t.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        keepAt(nav, was);
         const again = nav.querySelector(`[data-pg="${b.dataset.pg}"]:not(.pg-arrow)`) || nav.querySelector('[aria-current]'); if (again) again.focus({ preventScroll: true });
       });
     }
     nav.hidden = false;
-    nav.innerHTML = `<span class="pg-btns"><button type="button" class="pg-arrow" data-pg="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Previous page"><span aria-hidden="true">&larr;</span><span class="pg-w"> Previous</span></button>`
+    const html = `<span class="pg-btns"><button type="button" class="pg-arrow" data-pg="${page - 1}"${page === 1 ? ' disabled' : ''} aria-label="Previous page"><span aria-hidden="true">&larr;</span><span class="pg-w"> Previous</span></button>`
       + Array.from({ length: n }, (_, k) => `<button type="button" data-pg="${k + 1}"${k + 1 === page ? ' aria-current="page"' : ''} aria-label="Page ${k + 1}">${k + 1}</button>`).join('')
       + `<button type="button" class="pg-arrow" data-pg="${page + 1}"${page === n ? ' disabled' : ''} aria-label="Next page"><span class="pg-w">Next </span><span aria-hidden="true">&rarr;</span></button></span>`;
+    // a redraw that changes nothing leaves the buttons (and the focus on one) alone; one that does
+    // puts the focus back on the same button
+    if (nav.pgHtml === html) return;
+    const had = nav.contains(document.activeElement) && document.activeElement.closest('[data-pg]');
+    const sel = had && (had.classList.contains('pg-arrow') ? `.pg-arrow[aria-label="${had.getAttribute('aria-label')}"]` : `[data-pg="${had.dataset.pg}"]:not(.pg-arrow)`);
+    nav.innerHTML = html; nav.pgHtml = html;
+    if (sel) { let b = nav.querySelector(sel); if (!b || b.disabled) b = nav.querySelector('[aria-current]'); if (b) b.focus({ preventScroll: true }); }
   };
   const run = (only) => {
     busy = true;
@@ -84,5 +96,5 @@
   });
   const start = () => { run(); mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'style'] }); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  window.CMTablePager = { refresh: () => run() };
+  window.CMTablePager = { refresh: () => run(), keepAt };
 })();

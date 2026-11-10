@@ -33,7 +33,8 @@ window.CM_CLIENTS = (() => {
       ['Insurance', null, ago(6), 'pending', ['CO-08', 'CO-10', 'CO-11', 'UN-27', 'CO-11@2025'], null, 'Sonae MC']]],
     ['Teixeira Duarte', 'Construction', 'Lisbon', 'subempreiteiros@teixeiraduarte.pt', '2022', [
       ['Company & legal', null, '12 Mar 2026', 'given', ['CO-01', 'CO-02', 'CO-06', 'CO-19']],
-      ['Workers on site', 'Metro do Porto, Linha Rubi', '2 May 2026', 'given', ['WK-01', 'WK-11', 'WK-12', 'WK-15']]]],
+      ['Workers on site', 'Metro do Porto, Linha Rubi', '2 May 2026', 'given', ['WK-01', 'WK-11', 'WK-12', 'WK-15']],
+      ['ISO 9001 certificate', null, ago(0), 'pending', ['CO-21'], null, 'Teixeira Duarte']]],
     ['Casais', 'Construction', 'Braga', 'qualidade@casais.pt', '2025', [
       ['Licences and certifications', null, '20 Jun 2025', 'given', ['CO-03', 'CO-05', 'CO-21']],
       ['Equipment on site', 'Braga stadium roof', '1 Aug 2026', 'given', ['EQ-01', 'EQ-03', 'EQ-04']]]],

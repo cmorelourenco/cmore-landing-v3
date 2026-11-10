@@ -91,6 +91,23 @@
     const k = fl.findIndex((f) => /expiry|valid until|validity|end date|next exam|next inspection/i.test(f.name) && valueOf(d, f));
     return k;
   };
+  // a client waiting for your consent to see it (js/consent-notify.js): a mark on its row, and a card
+  // at the top of its drawer; asked for on its own, you answer there; with others, on the consents
+  const CN = window.CMConsents;
+  const asksOf = (d) => (CN && d.code ? CN.forDoc(d.code) : []);
+  const askTag = (d) => { const a = asksOf(d); return a.length ? `<span class="cd-ask" title="${esc(a.map((c) => c.name).join(', '))} ${a.length === 1 ? 'is' : 'are'} waiting for your consent">Consent asked</span>` : ''; };
+  const askDone = new Map(); // answered in this drawer: id -> the request, as answered
+  const askCard = (d) => {
+    const cards = asksOf(d).map((c) => {
+      const one = CN.single(c), n = CN.count(c);
+      return `<section class="cdd-card cdd-ask" data-ask="${esc(c.id)}"><h4 class="eyebrow">Consent asked</h4><p class="cdd-ask-t">${esc(CN.nb(c.name))} asks to see ${one ? 'this document' : `this and ${n - 1} other document${n === 2 ? '' : 's'}`}</p>
+        <p class="cdd-desc">${esc(c.when || '')}. ${one ? 'If you say yes, they see it as it is now, and each new version while your consent stands. Nothing is shared until you do.' : `They asked for ${esc(c.what)}. You answer the whole request in one go, from your consents.`}</p>
+        <div class="cdd-ask-acts">${one ? '<button type="button" class="btn btn-primary btn-sm" data-ask-yes>Give consent</button><button type="button" class="btn btn-quiet btn-sm" data-ask-no>Decline</button>' : `<a class="btn btn-primary btn-sm" href="${CN.hrefOf(c)}">Answer in Consents</a>`}</div></section>`;
+    });
+    const done = [...askDone.values()].filter((c) => (c.codes || []).includes(d.code)).map((c) => `<section class="cdd-card cdd-ask is-done" tabindex="-1" data-ask-done><h4 class="eyebrow">Consent ${c.state === 'accepted' ? 'given' : 'declined'}</h4><p class="cdd-ask-t">${c.state === 'accepted' ? `${esc(CN.nb(c.name))} can see this document` : `${esc(CN.nb(c.name))} won&rsquo;t see this document`}</p>
+      <p class="cdd-desc">${c.state === 'accepted' ? 'From today, along with each new version while your consent stands. You can stop sharing at any time from your consents.' : 'We let them know. If they ask again, you&rsquo;ll get a new notification.'}</p></section>`);
+    return cards.join('') + done.join('');
+  };
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
     const hasRoster = !!(d.kind && d.roster.length);
@@ -118,7 +135,7 @@
     const noteRow = d.note ? `<tr class="cd-note-tr${d.status === 'na' ? ' is-na' : ''}${isOpen ? ' is-open' : ''}" data-note-for="${d.id}"><td colspan="5"><span class="cd-note-l">${d.note ? `<span class="cd-note-t" title="${esc(plain(d.note))}">${who}<span class="cd-note-s">&middot;</span>${d.note}</span>` : ''}${citeQ}</span></td></tr>` : '';
     const ed = d.edited ? `<span class="cd-edited" title="Edited by user: a change to ALMA&rsquo;s reading, logged and visible to clients">${PEN}<span class="sr-only">Edited by user</span></span>` : '';
     return `<tr class="cd-row is-rosterable${d.status === 'archived' ? ' is-archived' : ''}${isOpen ? ' is-open' : ''}${noteRow ? ' has-note' : ''}"${attrs}>` +
-      `<td><span class="n">${esc(d.name)}${alert}${ed}</span><span class="d">${meta}</span>${!hasRoster && nv > 1 ? `<button type="button" class="cmv-btn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}">${nv} versions${CHEV_D}</button>` : ''}</td>` +
+      `<td><span class="n">${esc(d.name)}${alert}${ed}${askTag(d)}</span><span class="d">${meta}</span>${!hasRoster && nv > 1 ? `<button type="button" class="cmv-btn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}">${nv} versions${CHEV_D}</button>` : ''}</td>` +
       `<td>${d.valid === '—' ? dash : window.DOC_MODEL.expHtml(d.valid)}</td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
@@ -253,7 +270,7 @@
     const V = window.CM_VERSIONS, all = V && hasFile || v ? window.DOC_MODEL.allVersionsOf(d) : [];
     const versions = all.length > 1 ? `<section class="cdd-card"><h4 class="eyebrow">Versions</h4><p class="cdd-desc">Every version stays here, valid or expired. Clients keep the ones they were shown, even after you stop sharing.</p>
       <ul class="cmv">${all.map((x, k) => `<li class="cmv-i is-link${k === vk ? ' is-on' : ''}" data-cdd-ver="${k}" role="button" tabindex="0" aria-current="${k === vk}"><span class="cmv-t"><b>${x.current ? 'Current' : esc(x.label)}${k === vk ? ' <small class="cmv-here">Showing</small>' : ''}</b><small>Uploaded ${esc(x.uploaded || x.issued)} &middot; ${x.valid === 'No expiry' ? 'no expiry' : !V.parse(x.valid) ? 'no expiry date yet' : x.current ? `expiry date ${esc(x.valid)}` : `${V.stateOf(x) === 'expired' ? 'expired' : 'valid until'} ${esc(x.valid)}`}</small></span><span class="cmv-s">${x.current ? `<span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>` : V.stateOf(x) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-neu">Replaced</span>'}</span></li>`).join('')}</ul></section>` : '';
-    dq('cdd-body').innerHTML = naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + versions + about;
+    dq('cdd-body').innerHTML = (v ? '' : askCard(d)) + naForm + naCard + (hasFile ? '<div class="cmf-slot" id="cdd-file"></div>' : none) + read + versions + about;
     dq('cdd-body').scrollTop = 0;
     // the page with each value ALMA read highlighted, numbered as the citations: Preview opens it in a
     // drawer of its own beside this one, as the setup's (js/doc-files.js)
@@ -368,8 +385,7 @@
     if (cb) {
       const fig = dw.querySelector('#cdd-cite-' + cb.dataset.cite), open = fig.hidden;
       fig.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation';
-      // and the preview opens beside, at that value, highlighted
-      if (open && dState.pv) window.CMFiles.openPeek(dw, dState.pv, +cb.dataset.cite);
+      // only the passage: the preview opens with its "Show on the page"
       return;
     }
     const sh = e.target.closest('[data-cite-show]');
@@ -380,6 +396,13 @@
     }
     if (e.target.closest('[data-cmf-peek]')) {
       if (dState.pv) window.CMFiles.openPeek(dw, dState.pv);
+      return;
+    }
+    const ay = e.target.closest('[data-ask-yes], [data-ask-no]');
+    if (ay && CN) {
+      const c = CN.answer(ay.closest('[data-ask]').dataset.ask, ay.hasAttribute('data-ask-yes')); if (!c) return;
+      askDone.set(c.id, c); render(); drawDoc();
+      const done = dw.querySelector('[data-ask-done]'); if (done) done.focus({ preventScroll: true });
       return;
     }
     if (e.target.closest('[data-na-undo]')) { undoNa(docById(dState.list[dState.k])); dState.na = false; render(); drawDoc(); return; }

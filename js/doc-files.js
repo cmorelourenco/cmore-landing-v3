@@ -185,7 +185,12 @@ window.CMFiles = (() => {
   };
   let peekAt = 0;
   const openPeek = (host, o, i) => {
-    const el = peekOf(host), at = ++peekAt, wasOpen = el.classList.contains('is-open');
+    const el = peekOf(host), wasOpen = el.classList.contains('is-open');
+    // already showing this file: no reload, straight to that value
+    const id = (o.code || '') + '|' + (o.title || '') + '|' + ((o.spec && o.spec.file) || '');
+    if (wasOpen && el.dataset.pk === id && el.querySelector('[data-cmf]')) { if (i != null) show(el, i); return; }
+    el.dataset.pk = id;
+    const at = ++peekAt;
     el.querySelector('[data-pk-t]').textContent = o.title || 'Preview';
     el.querySelector('[data-pk-sub]').textContent = o.sub || o.spec.file || '';
     const body = el.querySelector('[data-pk-body]');

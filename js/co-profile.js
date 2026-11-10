@@ -71,8 +71,11 @@ window.CO_PROFILE = (() => {
       email: 'geral@ferreiraconstrucoes.pt', cc: '+351', phone: '22 600 4180', website: 'ferreiraconstrucoes.pt',
       logo: 'images/ferreira-logo.webp',
       consents: [
-        { name: 'Mota-Engil', state: 'pending', what: 'civil liability, workers’ compensation, tax clearance', when: 'Asked 2 days ago' },
-        { name: 'Sonae MC', state: 'pending', what: 'everything in Insurance', when: 'Asked 6 days ago' },
+        // a request that came as a notification (js/consent-notify.js): what it's called there (ask),
+        // and the documents it covers (codes); one document opens that document, more the consents
+        { name: 'Teixeira Duarte', id: 'teixeira-duarte-iso', state: 'pending', what: 'ISO 9001 certificate', when: 'Asked today', ask: 'your ISO 9001 certificate', codes: ['CO-21'] },
+        { name: 'Mota-Engil', id: 'mota-engil-ins', state: 'pending', what: 'civil liability, workers’ compensation, tax clearance', when: 'Asked 2 days ago', ask: 'your insurance', codes: ['CO-10', 'CO-08', 'CO-06'] },
+        { name: 'Sonae MC', id: 'sonae-mc-ins', state: 'pending', what: 'everything in Insurance', when: 'Asked 6 days ago', ask: 'your insurance', codes: ['CO-08', 'CO-10', 'CO-11'] },
         { name: 'CUF', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 4 Sep 2025' },
       ],
     },
@@ -84,8 +87,8 @@ window.CO_PROFILE = (() => {
       email: 'info@veridianharvest.com', cc: '+1', phone: '(504) 555-0192', website: 'veridianharvest.com',
       logo: 'images/veridian-logo.svg',
       consents: [
-        { name: 'Rotterdam Roasters BV', state: 'pending', what: 'EUDR due diligence statements, geolocation data', when: 'Asked 3 days ago' },
-        { name: 'Café Direct Hamburg GmbH', state: 'pending', what: 'supplier code of conduct, deforestation risk assessments', when: 'Asked 5 days ago' },
+        { name: 'Rotterdam Roasters BV', id: 'rotterdam-eudr', state: 'pending', what: 'EUDR due diligence statements, geolocation data', when: 'Asked 3 days ago', ask: 'your EUDR statements', short: 'Rotterdam Roasters', n: 2 },
+        { name: 'Café Direct Hamburg GmbH', id: 'cafe-direct-risk', state: 'pending', what: 'supplier code of conduct, deforestation risk assessments', when: 'Asked 5 days ago', ask: 'your risk assessments', short: 'Café Direct Hamburg', n: 2 },
         { name: 'Belgian Cocoa Works NV', state: 'accepted', what: 'Product overview, carbon footprint reports', when: 'Since 12 Aug 2026' },
       ],
     },
@@ -142,7 +145,10 @@ window.CO_PROFILE = (() => {
   const derive = (p) => Object.assign(acts(p), { activity: label(SECTORS, p.sector), people: label(EMPLOYEES, p.employees) });
   const load = () => {
     const d = JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)), saved = all()[who()] || {};
-    return derive(Object.assign(d, saved, { consents: saved.consents || d.consents }));
+    // what you answered is kept; a request that came after you last saved joins, in its place
+    const consents = saved.consents ? d.consents.map((c) => Object.assign({}, c, saved.consents.find((x) => x.name === c.name) || {}, { id: c.id, ask: c.ask, codes: c.codes }))
+      .concat(saved.consents.filter((x) => !d.consents.some((c) => c.name === x.name))) : d.consents;
+    return derive(Object.assign(d, saved, { consents }));
   };
   // saved: the side menu's company chip follows (js/company-switcher.js)
   const save = (p) => {
