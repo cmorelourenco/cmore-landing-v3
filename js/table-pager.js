@@ -29,7 +29,9 @@
   // a filter); one listing a different number of rows starts at page 1 anyway
   const keyOf = (t) => location.pathname + location.search + '|' + (t.dataset.paged || [...document.querySelectorAll(PAGED)].filter((x) => !x.matches(SKIP)).indexOf(t));
   // where the page numbers go: after the table, or after the box it sits alone in (a scroller, a card)
-  const anchorOf = (t) => { let a = t; while (a.parentElement && a.parentElement.children.length === 1 && !a.parentElement.matches('body, main, td, section, article')) a = a.parentElement; return a; };
+  // and below the table's legend (its key, the notes on it), so the page numbers come last
+  const LEGEND = '[class*="legend"], [data-pg-legend]';
+  const anchorOf = (t) => { let a = t; while (a.parentElement && a.parentElement.children.length === 1 && !a.parentElement.matches('body, main, td, section, article')) a = a.parentElement; while (a.nextElementSibling && a.nextElementSibling.matches(LEGEND)) a = a.nextElementSibling; return a; };
 
   // after a page change: scroll by however far the element moved, at once, so it's where it was
   const keepAt = (el, was) => { const d = el.getBoundingClientRect().top - was; if (Math.abs(d) > 0.5) scrollTo({ top: scrollY + d, behavior: 'instant' }); };

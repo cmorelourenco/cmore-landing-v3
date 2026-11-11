@@ -44,8 +44,17 @@ html :is(.co-k-chip, .co-badge, .chip, .m-tag) b { color: inherit; }
 /* a dashed tag of your own (Team): no fill, the grey's words */
 html .tm-tag.is-own { color: var(--tag-grey-fg); }
 
-/* counters keep the bubble, in the red */
+/* counters keep the bubble, in the red; in dark a brighter, fuller red with white figures
+   (4.5:1, and 3:1 against the card, so the bubble itself stands out) */
 html :is(.cd-row-alert, .cd-area-alert) { background: var(--tag-red-bg); color: var(--tag-red-fg); }
+html[data-theme="dark"] :is(.cd-row-alert, .cd-area-alert) { background: #d93b42; color: #ffffff; }
+/* the figure in the middle of its bubble: a digit has no descender, so centring the line leaves it
+   high; trimmed to the figures' own height it sits in the middle (a pixel's nudge where that's not
+   supported) */
+html :is(.cd-row-alert, .cd-area-alert, .sn-count, .bell-count) { line-height: 1; font-variant-numeric: tabular-nums; padding-top: 1px; }
+@supports (text-box: trim-both cap alphabetic) {
+  html :is(.cd-row-alert, .cd-area-alert, .sn-count, .bell-count) { text-box: trim-both cap alphabetic; padding-top: 0; }
+}
 
 /* the archive modal's warning mark: the yellow */
 html .cd-arch-ico { background: var(--tag-yellow-bg); color: var(--tag-yellow-fg); }
