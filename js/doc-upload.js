@@ -36,6 +36,16 @@ window.CMUpload = (() => {
   const recSlot = (d, r) => ({ key: `${d.code}#${r.i}`, code: d.code, i: r.i, d, name: plain(d.name), who: plain(M.recordName(d.kind, r.i)), status: r.status, exp: r.exp });
   const live = (d) => d.status !== 'archived' && d.status !== 'na';
   const rosterSlots = (d) => (d.roster || []).map((r) => recSlot(d, r));
+  // two kinds of file that aren't documents the company is asked for, but that ALMA files all the
+  // same: a worker's identity document (citizen card, passport), which is what makes them a worker
+  // here (the name and number on it), and the site's worker register (Registo de trabalhadores),
+  // which names everyone. Only for a company with a worker list.
+  const crewHere = () => !!(M.saveCrew && M.saveId && M.PERSONA === 'miguel' && !M.ORG && (M.PERSON || []).length);
+  const ID_D = { code: 'ID', name: 'Identity document', section: 'Identity', area: 'workers', kind: 'workers', cat: { usuallyIssuedBy: 'Rep\u00fablica Portuguesa', titles: 'Cart\u00e3o de cidad\u00e3o; Citizen card; Passport; Passaporte; Bilhete de identidade; Identity card', fields: [], renewal: '', expiryRule: '' } };
+  const REG_D = { code: 'WK-REG', name: 'Worker register', section: 'For all workers', area: 'workers', kind: null, issued: '—', valid: '—', ref: '', cat: { titles: 'Registo de trabalhadores; Worker register; Lista de trabalhadores; Worker list; Roster', fields: [{ name: 'Workers listed (name, ID document, SS no.)' }], renewal: 'Monthly', expiryRule: 'No expiry' } };
+  const idSlot = (i) => { const p = M.PERSON[i], on = M.idOf(i); return { key: `ID#${i}`, code: 'ID', i, d: ID_D, name: 'Identity document', who: plain(p.name), status: on && on.file ? 'valid' : 'notuploaded', exp: on && on.file ? on.valid : '—' }; };
+  const regSlot = () => { const r = M.register(); return { key: 'WK-REG', code: 'WK-REG', i: null, d: Object.assign({}, REG_D, { status: r ? 'valid' : 'notuploaded', cat: Object.assign({}, REG_D.cat, { usuallyIssuedBy: plain(M.D.company || '') }) }), name: 'Worker register', who: '', status: r ? 'valid' : 'notuploaded', exp: '—' }; };
+  const activeWorkers = () => (M.PERSON || []).map((p, i) => ({ p, i })).filter((x) => !x.p.left);
   const resolve = (spec) => {
     const [t, a, b] = String(spec).split(':');
     const D = M.DOCS.filter(live);
@@ -46,6 +56,11 @@ window.CMUpload = (() => {
       const pool = [docSlot(d)].concat(D.filter((x) => !x.kind && x !== d && x.area === d.area).map(docSlot));
       return { pool, focus: d.code, title: `${NO_FILE.includes(d.status) ? 'Upload' : 'Replace'} ${plain(d.name)}`, lead: 'ALMA reads it and checks it is this document, for your company, and still valid.' };
     }
+    if (t === 'rec' && a === 'ID') {
+      const i = +b; if (!crewHere() || !M.PERSON[i] || M.PERSON[i].left) return null;
+      const sl = idSlot(i);
+      return { pool: [sl], focus: sl.key, title: `Identity document · ${sl.who}`, lead: `Their citizen card or passport. ALMA checks the name and number on it are ${sl.who}&rsquo;s.` };
+    }
     if (t === 'rec') {
       const d = M.DOCS.find((x) => x.code === a && x.kind); if (!d) return null;
       const i = +b, r = d.roster.find((x) => x.i === i); if (!r) return null;
@@ -54,14 +69,17 @@ window.CMUpload = (() => {
     }
     if (t === 'who') {
       const i = +b, pool = D.filter((x) => x.kind === a).flatMap((d) => d.roster.filter((r) => r.i === i).map((r) => recSlot(d, r)));
+      if (a === 'workers' && crewHere() && M.PERSON[i] && !M.PERSON[i].left) pool.unshift(idSlot(i));
       const who = plain(M.recordName(a, i));
       return { pool, focus: null, title: `Documents for ${who}`, lead: `Any of ${who}&rsquo;s documents. ALMA works out which one each file is.` };
     }
     if (t === 'area') {
       const pool = D.filter((x) => x.area === a && x.kind).flatMap(rosterSlots);
+      if (a === 'workers' && crewHere()) { pool.push(...activeWorkers().map((x) => idSlot(x.i))); pool.unshift(regSlot()); }
       return { pool, focus: null, title: `Upload documents for your ${M.NOUN[a] ? M.NOUN[a][1] : 'records'}`, lead: `For any of your ${M.NOUN[a] ? M.NOUN[a][1] : 'records'}. ALMA works out which document each file is, and whose name is on it.` };
     }
     const pool = D.flatMap((d) => (d.kind ? rosterSlots(d) : [docSlot(d)]));
+    if (crewHere()) { pool.push(...activeWorkers().map((x) => idSlot(x.i))); pool.push(regSlot()); }
     return { pool, focus: null, title: 'Upload documents', lead: 'Any of your documents. ALMA works out which one each file is, and who it is for.' };
   };
   const can = (spec) => { const r = resolve(spec); return !!(r && r.pool.length); };
@@ -78,7 +96,8 @@ window.CMUpload = (() => {
   const docScore = (sl, fw) => docWords(sl).filter((w) => fw.w.has(w) || (w.length > 5 && fw.n.includes(w))).length
     + 0.5 * fold(sl.name).split(/[^a-z0-9]+/).filter((w) => STOP.has(w) && fw.w.has(w)).length
     + (MONTH_RE.test(fw.n.replace(/[^a-z]+/g, ' ')) && monthsOf(sl.d) === 1 ? 1 : 0)
-    + (fw.n.replace(/[^a-z0-9]/g, '').includes(fold(sl.code).replace(/[^a-z0-9]/g, '')) ? 3 : 0);
+    // its code on the file (WK-11): a short one (ID) only as a word of its own
+    + (fold(sl.code).replace(/[^a-z0-9]/g, '').length > 3 && fw.n.replace(/[^a-z0-9]/g, '').includes(fold(sl.code).replace(/[^a-z0-9]/g, '')) ? 3 : 0);
   // a name counts as on the file when both its first and last names are, or a surname that is no one else's
   const named = (who, fw, everyone) => {
     const ws = nameWords(who); if (!ws.length) return 0;
@@ -92,6 +111,15 @@ window.CMUpload = (() => {
   const fmt = (dt) => `${dt.getDate()} ${M.MONTHS[dt.getMonth()]} ${dt.getFullYear()}`;
   const readDates = (sl, f) => {
     const h = hash(sl.key + f.name), now = new Date(), m = monthsOf(sl.d);
+    // an identity document: valid until the date on it (the one ALMA read for someone new), issued years before
+    if (sl.code === 'ID') {
+      const v = sl.fresh ? sl.fresh.valid : (M.PERSON[sl.i] || { id: [] }).id[2], t = Date.parse(v);
+      if (Number.isNaN(t)) return { issued: fmt(now), valid: '—' };
+      // a citizen card runs ten years (a passport five): issued that long before, and never after today
+      let iss = new Date(t); iss.setFullYear(iss.getFullYear() - (sl.fresh && sl.fresh.type === 'Passport' ? 5 : 10));
+      if (iss > now) { iss = new Date(now); iss.setDate(now.getDate() - 30 - (h % 300)); }
+      return { issued: fmt(iss), valid: fmt(new Date(t)) };
+    }
     let issued = new Date(now); issued.setDate(now.getDate() - (m <= 1 ? 2 + (h % 10) : 5 + (h % 40)));
     // a past year in the file's name (an older copy, say) is when it was issued
     const y = +((f.name.match(/(?:^|\D)(20\d\d)(?:\D|$)/) || [])[1] || 0);
@@ -104,7 +132,7 @@ window.CMUpload = (() => {
   // ---- what changes: a file against the one on file, a worker list against the crew --------------
   const isList = (d) => (d.cat.fields || []).some((f) => /workers (covered|listed)/i.test(f.name));
   const when = (t) => { const v = Date.parse(t); return Number.isNaN(v) ? null : v; };
-  const refFor = (s, r) => M.refOf(s.code + r.file.name, r.read.issued);
+  const refFor = (s, r) => (s.code === 'ID' ? (s.fresh ? s.fresh.no : plain((M.PERSON[s.i] || { id: ['', ''] }).id[1])) : M.refOf(s.code + r.file.name, r.read.issued));
   const fileDiff = (r) => {
     const s = r.slot;
     if (NO_FILE.includes(s.status) || s.status === 'processing') return null; // nothing on file to differ from
@@ -120,7 +148,7 @@ window.CMUpload = (() => {
   // a worker list, read against the crew on file: two who joined, one who left, one whose job
   // changed. Prototype: every list of the same month says the same; the next one moves on.
   const JOIN = [['Ana Ribeiro', 'Laborer'], ['Joana Matos', 'Electrician'], ['In&ecirc;s Couto', 'Surveyor'], ['Rafael Mendes', 'Carpenter'], ['Tom&aacute;s Vieira', 'Laborer'], ['Marco Leite', 'Welder']];
-  const crewDiff = () => {
+  const crewDiff = (noJoin) => {
     const here = (M.PERSON || []).map((p, i) => ({ p, i })).filter((x) => !x.p.left && !x.p.isNew);
     if (!here.length || !M.saveCrew) return [];
     const n = M.crew.added.length + M.crew.left.length;
@@ -128,31 +156,96 @@ window.CMUpload = (() => {
     const joins = JOIN.filter(([nm]) => !taken.has(fold(plain(nm)))).slice(0, 2);
     const lab = here.filter((x) => /laborer/i.test(x.p.role));
     const leaver = lab[(3 + n) % lab.length], moved = lab.filter((x) => x !== leaver)[(1 + n) % Math.max(1, lab.length - 1)];
-    const out = joins.map(([name, role]) => ({ type: 'join', name, role }));
+    const out = noJoin ? [] : joins.map(([name, role]) => ({ type: 'join', name, role }));
     if (leaver) out.push({ type: 'leave', i: leaver.i, name: leaver.p.name, role: leaver.p.role });
     if (moved) out.push({ type: 'role', i: moved.i, name: moved.p.name, from: moved.p.role, to: 'Mason' });
     return out.map((c) => Object.assign(c, { decision: null }));
   };
   // one card per file that differs; a worker list's crew changes go with the first list only
-  const reviewOf = (results) => {
+  const reviewOf = (results, noJoin) => {
     let crewDone = false;
     return results.filter((r) => r.on && r.slot).map((r) => {
       const fields = fileDiff(r);
-      const crew = !crewDone && isList(r.slot.d) ? crewDiff() : [];
+      const crew = !crewDone && isList(r.slot.d) ? crewDiff(noJoin) : [];
       if (crew.length) crewDone = true;
       if (!fields && !crew.length) return null;
       return { r, area: r.slot.d.area, fields, crew, decision: fields ? null : 'ok' };
     }).filter(Boolean);
   };
 
+  // ---- who is on each file: the name and ID number ALMA reads, against the worker list -----------
+  // The first thing she reads (before which document it is): a file for one worker names them, with
+  // their citizen card or passport number; a worker list or register names everyone on it. Each name
+  // is matched to the worker list by its ID number, or by name; a name that isn't on it is someone
+  // new, for the user to add (or not) before anything is filed.
+  // Prototype: she reads the name off the file's name ("Citizen card - Ana Ribeiro.pdf", a number on
+  // file in it matches by number); a list names everyone on file, and two new people.
+  const ID_RE = /\b(cc|cartao|cidadao|citizen|passport|passaporte|bilhete|identidade|identity|id)\b/;
+  const NOT_NAME = new Set(['scan', 'copy', 'copia', 'frente', 'verso', 'front', 'back', 'rev', 'nif', 'niss', 'doc', 'docs', 'final', 'signed', 'assinado', 'assinada', 'worker', 'workers', 'trabalhador', 'trabalhadora', 'trabalhadores', 'card', 'cartao', 'cidadao', 'citizen', 'passport', 'passaporte', 'bilhete', 'identidade', 'identity', 'register', 'registo', 'lista', 'list', 'cc', 'bi', 'id', 'pt', 'en', 'new', 'novo', 'nova', 'xls', 'xlsx', 'pdf']);
+  const PARTICLE = new Set(['de', 'da', 'do', 'das', 'dos', 'e']);
+  let vocab = null;
+  const vocabOf = () => vocab || (vocab = new Set(M.DOCS.flatMap((d) => words([plain(d.name), d.cat.titles || '', d.section || ''].join(' '))).concat(words(`${ID_D.cat.titles} ${REG_D.cat.titles}`))));
+  const nameIn = (f) => {
+    const V = vocabOf();
+    const keep = f.name.replace(/\.[a-z0-9]{2,5}$/i, '').split(/[^\p{L}]+/u).filter((t) => { const w = fold(t); return w.length >= 2 && !PARTICLE.has(w) && !STOP.has(w) && !V.has(w) && !NOT_NAME.has(w) && !MONTH_RE.test(w); });
+    return keep.length >= 2 && keep.length <= 4 ? keep.map((t) => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()).join(' ') : '';
+  };
+  const digits = (t) => String(t).replace(/\D/g, '');
+  // the number on someone new's document, as one reads (a citizen card's, a passport's)
+  const newId = (name, type) => {
+    const h = hash(fold(name)), y = new Date().getFullYear();
+    if (type === 'Passport') return ['Passport', 'CB' + String(100000 + (h * 7) % 899999), fmt(new Date(y + 2 + h % 4, h % 12, 1 + h % 27))];
+    return ['Citizen card', `${String(10000000 + (h * 7919) % 89999999).slice(0, 8)} ${h % 10} ZZ${h % 9}`, fmt(new Date(y + 3 + h % 6, (h * 5) % 12, 1 + h % 27))];
+  };
+  const identify = (files, pool) => {
+    const people = [], byKey = {}, here = activeWorkers(), everyone = here.map((x) => plain(x.p.name));
+    const kinds = [...new Map(pool.concat(regSlot()).map((sl) => [sl.code, sl])).values()];
+    const get = (key, make) => byKey[key] || (byKey[key] = people[people.push(Object.assign(make(), { key, files: [], lists: [], decision: null })) - 1]);
+    const known = (x) => get('w' + x.i, () => ({ i: x.i, name: plain(x.p.name), type: plain(x.p.id[0]), no: plain(x.p.id[1]), valid: x.p.id[2], role: plain(x.p.role) }));
+    const fresh = (name, type, role, from) => { const q = get('n' + fold(name), () => { const [t, no, valid] = newId(name, type); return { i: null, name, type: t, no, valid, role: '' }; }); if (role && !q.role) { q.role = role; q.roleFrom = from || ''; } return q; };
+    const taken = new Set((M.WORKERS || []).map((w) => fold(plain(w[0]))));
+    const per = files.map((f, k) => {
+      const fw = fileWords(f);
+      const top = kinds.map((sl) => [sl, docScore(sl, fw)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])[0];
+      // a list: everyone on it
+      if (top && isList(top[0].d)) {
+        // (but not who the list shows has left: that's a change to approve, after the review)
+        const gone = new Set(crewDiff(true).filter((c) => c.type === 'leave').map((c) => c.i));
+        const all = here.filter((x) => !gone.has(x.i)).map(known).concat(JOIN.filter(([nm]) => !taken.has(fold(plain(nm)))).slice(0, 2).map(([nm, role]) => fresh(plain(nm), 'Citizen card', role, f.name)));
+        all.forEach((q) => q.lists.push(k));
+        return { list: true, people: all };
+      }
+      const byNo = here.find((x) => { const n = digits(x.p.id[1]).slice(0, 8); return n.length >= 6 && digits(f.name).includes(n); });
+      const best = here.map((x) => [x, named(plain(x.p.name), fw, everyone)]).filter(([, n]) => n).sort((a, b) => b[1] - a[1])[0];
+      // a surname alone is a match only when the file names no one else: "Marta Gonçalves Leal" is
+      // someone new, not Rui Gonçalves
+      const other = best && best[1] < 2 ? nameIn(f) : '';
+      const hit = byNo || (best && !(other && fold(other.split(' ')[0]) !== fold(plain(best[0].p.name).split(' ')[0])) ? best[0] : null);
+      if (hit) { const q = known(hit); q.files.push(k); if (byNo) q.by = 'number'; return { people: [q] }; }
+      // a name that isn't on the list, on an identity document or a worker's own document
+      const nm = nameIn(f), theirs = ID_RE.test(fw.n.replace(/[^a-z0-9]+/g, ' ')) || (top && top[0].d.kind === 'workers');
+      if (nm && theirs && !taken.has(fold(nm))) { const q = fresh(nm, /passport|passaporte/.test(fw.n) ? 'Passport' : 'Citizen card'); q.files.push(k); return { people: [q] }; }
+      return { people: [] };
+    });
+    return { people, per };
+  };
+  // someone new, once added: their identity document, and what every worker is asked for
+  const freshSlots = (q) => [{ key: `ID#${q.ni}`, code: 'ID', i: q.ni, d: ID_D, name: 'Identity document', who: q.name, status: 'notuploaded', exp: '—', fresh: q }]
+    .concat(M.DOCS.filter((d) => d.kind === 'workers' && d.roster && (d.req === 'mandatory' || d.req === 'if_applicable') && d.roster.length >= activeWorkers().length)
+      .map((d) => ({ key: `${d.code}#${q.ni}`, code: d.code, i: q.ni, d, name: plain(d.name), who: q.name, status: 'missing', exp: '—', fresh: q })));
+
   // each file to a slot: whose name is on it first, then which document it reads as, then where it
   // was dropped; what's left goes to what most needs a file. No two files take the same slot.
-  const place = (pool, focus, files) => {
+  // picks: who the user confirmed each file is for (the people step): { who }, a list ({ list }), or
+  // someone they didn't add or said it isn't ({ off: why }), for them to place by hand
+  const place = (pool, focus, files, picks) => {
     const used = new Set(), everyone = [...new Set(pool.map((s) => s.who).filter(Boolean))];
     const need = (s) => (M.RANK[s.status] || 0);
-    return files.map((f) => {
+    return files.map((f, k) => {
+      const pk = picks && picks[k];
+      if (pk && pk.off) return { file: f, slot: null, how: 'nobody', note: pk.off, on: true, read: null, conf: 80 };
       const fw = fileWords(f), free = pool.filter((s) => !used.has(s.key));
-      const people = everyone.map((w) => [w, named(w, fw, everyone)]).filter(([, n]) => n).sort((x, y) => y[1] - x[1]);
+      const people = pk && pk.who ? [[pk.who, 2]] : pk && pk.list ? [] : everyone.map((w) => [w, named(w, fw, everyone)]).filter(([, n]) => n).sort((x, y) => y[1] - x[1]);
       const person = people.length ? people[0][0] : null;
       const scored = free.map((s) => [s, docScore(s, fw)]);
       const best = (list) => list.sort((x, y) => y[1] - x[1] || need(y[0]) - need(x[0]))[0];
@@ -275,6 +368,39 @@ window.CMUpload = (() => {
 .cmu-crew li > span:nth-child(2) { flex: 1; min-width: 0; color: var(--color-ink); }
 .cmu-crew li small { color: var(--color-ink-subtle); }
 .cmu-crew .cmu-sign { flex: none; display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; font-weight: 700; font-size: 0.875rem; }
+.cmu-ps { display: grid; gap: 0.5rem; }
+.cmu-ps + .cmu-ps { margin-top: 0.5rem; }
+.cmu-ps-h { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.cmu-ps-p { font-size: 0.8125rem; line-height: 1.5; color: var(--color-ink-subtle); }
+.cmu-pl { display: grid; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.cmu-p { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border: 1px solid var(--color-line); border-radius: 0.625rem; font-size: 0.875rem; }
+.cmu-p.is-off .cmu-p-t, .cmu-p.is-off .cmu-av { opacity: .5; }
+.cmu-av { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 999px; background: var(--color-light-beige); font-size: 0.75rem; font-weight: 600; color: var(--color-ink-subtle); }
+.cmu-av.is-new { background: var(--tag-blue-bg, #e2e8f4); color: var(--tag-blue-fg, #3d5381); }
+.cmu-p-t { flex: 1; min-width: 0; display: grid; gap: 0.125rem; }
+.cmu-p-t b { font-weight: 600; color: var(--color-ink); }
+.cmu-p-t small { overflow-wrap: anywhere; color: var(--color-ink-subtle); }
+.cmu-role { display: grid; gap: 0.25rem; margin-top: 0.5rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-role > label { font-weight: 500; color: var(--color-ink); }
+.cmu-role > small { font-size: 0.75rem; }
+.cmu-cb { position: relative; width: min(16rem, 100%); }
+.cmu-cb input { width: 100%; height: 2.25rem; padding: 0 2rem 0 0.625rem; border: 1px solid var(--color-line-strong, var(--color-line)); border-radius: 0.375rem; background: var(--color-surface, #fff); font: inherit; font-size: 0.875rem; color: var(--color-ink); }
+.cmu-cb input::placeholder { color: var(--color-ink-subtle); }
+.cmu-cb input:focus { outline: none; border-color: var(--color-graphite); }
+.cmu-cb-ic { position: absolute; right: 0.625rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-ink-subtle); pointer-events: none; }
+.cmu-cb-l { position: absolute; z-index: 3; left: 0; right: 0; top: calc(100% + 4px); max-height: 15rem; overflow: auto; margin: 0; padding: 0.25rem; list-style: none; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface, #fff); box-shadow: 0 12px 32px -12px rgba(36, 36, 36, .3); }
+.cmu-cb-l[hidden] { display: none; }
+.cmu-cb-g { padding: 0.5rem 0.5rem 0.25rem; font-size: 0.6875rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-subtle); }
+.cmu-cb-l [role="option"] { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.4375rem 0.5rem; border-radius: 0.375rem; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
+.cmu-cb-l [role="option"] small { color: var(--color-ink-subtle); }
+.cmu-cb-l [role="option"].is-on, .cmu-cb-l [role="option"]:hover { background: var(--color-light-beige); }
+.cmu-cb-l [role="option"][aria-selected="true"] { font-weight: 600; }
+.cmu-cb-l mark { background: none; color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.cmu-cb-none { padding: 0.5rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-more { justify-self: start; font-size: 0.8125rem; }
+.cmu-who { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
+.cmu-who small { margin-left: auto; font-size: 0.8125rem; font-weight: 400; color: var(--color-ink-subtle); }
+@media (max-width: 560px) { .cmu-p { flex-wrap: wrap; } .cmu-p-t { flex: 1 1 calc(100% - 2.75rem); } .cmu-p .cmu-dec { margin-left: 2.75rem; } }
 .cmu-sign.is-join { background: var(--color-positive-subtle, #e7f2e4); color: var(--color-positive, #3d7a2c); }
 .cmu-sign.is-leave { background: var(--color-critical-subtle, #fbe9e7); color: var(--color-critical, #b3261e); }
 .cmu-sign.is-role { background: var(--color-informative-subtle, #e6eef8); color: var(--color-informative, #2f5c8a); }
@@ -376,7 +502,11 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
 
   const open = (spec, opts = {}) => {
     const R0 = resolve(spec); if (!R0 || !R0.pool.length) return false;
-    const { pool, focus } = R0;
+    let { pool } = R0; const { focus } = R0;
+    // who ALMA found on the files (identify), once read; the new people the user adds go on the list
+    // after anything already added, in the order they're shown
+    const crewCtx = crewHere() && pool.some((sl) => sl.d.area === 'workers');
+    let found = null, showAll = false, sorted = 0;
     const fs = focus && pool.find((s) => s.key === focus);
     let files = [...(opts.files || [])], step = 1, results = [], reading = 0, reviews = [], stage = 0;
     // a job picked up from another page opens at once with its files' names; the files follow
@@ -433,8 +563,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // (17 Jan 2027), given to the date pickers as 2027-01-17
     const FIELDS = [['ref', 'Reference'], ['by', 'Issued by'], ['country', 'Country'], ['issued', 'Issue date'], ['valid', 'Valid until']]; // every field she read can be put right
     const DATES = ['issued', 'valid'], NA = ['Not applicable', 'No expiry'];
+    const issuerFor = (sl) => { const on = sl.i == null && sl.d.by ? plain(sl.d.by) : '', cat = plain(M.issuerOf(sl.d.cat) || ''); return on || (cat && !/\bof [A-Z]{2}-\d/.test(cat) ? cat : 'The issuing body'); };
+    const labOf = (s, f, l) => (s && s.code === 'ID' && f === 'ref' ? 'Document number' : l);
     const COUNTRY = { PT: 'Portugal', ES: 'Spain', FR: 'France', US: 'United States', BR: 'Brazil', GB: 'United Kingdom', DE: 'Germany' };
-    const valsOf = (r) => ({ country: r.country != null ? r.country : COUNTRY[(M.PROFILE || {}).country] || (M.PROFILE || {}).country || '', by: r.by != null ? r.by : plain(M.issuerOf(r.slot.d.cat) || 'The issuing body'),
+    const valsOf = (r) => ({ country: r.country != null ? r.country : COUNTRY[(M.PROFILE || {}).country] || (M.PROFILE || {}).country || '', by: r.by != null ? r.by : issuerFor(r.slot),
       ref: refOf(r.slot, r), issued: r.read.issued, valid: r.read.valid });
     const isoOf = (v) => { const t = Date.parse(v); if (Number.isNaN(t)) return ''; const x = new Date(t); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
     const fromIso = (v) => fmt(new Date(v + 'T00:00'));
@@ -462,11 +594,11 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       q('cmu-dw-conf').innerHTML = s && lapsedR(r) ? '<span class="co-badge b-over">Expired</span>' : confOf(r);
       const kv = (k, v) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`;
       const v = s ? valsOf(r) : {};
-      const read = s ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><dl class="pd-facts cdd-facts">${kv(s.who ? 'Name on it' : 'Holder', esc(s.who || plain(M.D.company || 'Your company')))}${FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => kv(l, esc(v[f]))).join('')}</dl></section>`
+      const read = s ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><dl class="pd-facts cdd-facts">${kv(s.who ? 'Name on it' : 'Holder', esc(s.who || plain(M.D.company || 'Your company')))}${FIELDS.filter(([f]) => f !== 'ref' || s.i == null || s.code === 'ID').map(([f, l]) => kv(labOf(s, f, l), esc(v[f]))).join('')}</dl></section>`
         : `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><p class="cdd-desc">She couldn&rsquo;t tell which document this is. Choose where it goes in the drawer.</p></section>`;
       // the page with each value she read highlighted, the file as uploaded one click away (js/doc-files.js)
       const rec = { name: r.file.name, type: r.file.type, size: r.file.size, blob: r.file };
-      const spec = s ? { title: plain(label(s)), file: r.file.name, issuer: v.by && !/^(Not applicable|No expiry)$/.test(v.by) ? v.by : '', fields: [{ name: s.who ? 'Name on it' : 'Holder', value: s.who || plain(M.D.company || 'Your company') }].concat(FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => ({ name: l, value: v[f] }))) } : null;
+      const spec = s ? { title: plain(label(s)), file: r.file.name, issuer: v.by && !/^(Not applicable|No expiry)$/.test(v.by) ? v.by : '', fields: [{ name: s.who ? 'Name on it' : 'Holder', value: s.who || plain(M.D.company || 'Your company') }].concat(FIELDS.filter(([f]) => f !== 'ref' || s.i == null || s.code === 'ID').map(([f, l]) => ({ name: labOf(s, f, l), value: v[f] }))) } : null;
       q('cmu-dw-body').innerHTML = (window.CMFiles ? (spec && window.CMFiles.preview ? window.CMFiles.preview(rec, spec) : window.CMFiles.view(rec)) : '') + read;
       // as the setup's: whether it's accepted, Make changes, Accept
       q('cmu-dw-foot').textContent = !r.on ? 'Left out' : !s ? 'Needs a place' : r.ok ? 'Accepted' : 'Not accepted yet';
@@ -495,7 +627,13 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const body = $('cmu-body'), foot = $('cmu-foot');
       panel.classList.toggle('is-wide', step === 4);
       if (step === 4) { changes(); return; }
+      if (step === 'who') { whoStep(); return; }
       head('ALMA', R0.title, R0.lead);
+      if (step === 'sort') {
+        body.innerHTML = `<div class="cmu-list"><h3>Filing each one for its worker</h3>${results.map((r, k) => { const sl = r.slot, ok = k < sorted, now = k === sorted; return `<div class="cmu-f ${ok ? 'is-done' : now ? 'is-reading' : ''}"><span class="cmu-ic">${ok ? OK : now ? SPIN : FILE}</span><span class="cmu-n">${esc(r.file.name)}</span><small>${ok ? (sl ? esc(sl.who ? `${sl.who} · ${sl.name}` : sl.name) : 'Needs a place') : now ? 'Reading its fields&hellip;' : 'Waiting'}</small></div>`; }).join('')}</div>`;
+        foot.innerHTML = '<span class="cmu-foot-l">Putting each document in its worker&rsquo;s file, under its type.</span>';
+        return;
+      }
       if (step === 1) {
         const many = pool.length > 1 && !fs;
         const need = pool.filter((s) => M.RANK[s.status] > 0).length;
@@ -512,22 +650,29 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       } else {
         // as the setup's review (js/guided-upload.js): how many are accepted, Accept all; expired first
         const on = results.filter((r) => r.on), ready = on.filter((r) => r.slot);
-        const order = results.map((r, k) => k).sort((a, b) => (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
+        const grouped = !!(found && found.asked), gk = (r) => (!r.slot ? '\uffff' : r.slot.who || '');
+        const order = results.map((r, k) => k).sort((a, b) => (grouped ? gk(results[a]).localeCompare(gk(results[b])) : 0) || (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
+        let lastG = null;
+        const whoHead = (k) => {
+          if (!grouped) return ''; const r = results[k], g = gk(r); if (g === lastG) return ''; lastG = g;
+          const n = order.filter((j) => gk(results[j]) === g).length, fr = r.slot && r.slot.fresh;
+          return `<h3 class="cmu-who">${esc(!r.slot ? 'Not placed yet' : g || plain(M.D.company || 'Your company'))}${fr ? ' <span class="co-badge b-info">New worker</span>' : ''}<small>${n} file${n === 1 ? '' : 's'}</small></h3>`;
+        };
         const acc = ready.filter((r) => r.ok).length, exN = ready.filter((r) => lapsedR(r) && !r.ok).length, editing = results.some((r) => r.editing);
         const all = editing || !ready.length ? '' : ready.some((r) => !r.ok && !lapsedR(r)) ? `<button class="cmu-acc" type="button" data-accept-all>${TICK}Accept ${exN ? 'the rest' : 'all'}</button>` : acc === ready.length ? '<button class="cmu-acc" type="button" data-unaccept-all>Unaccept all</button>' : '';
         const bar = ready.length ? `${exN ? `<p class="cmu-note" role="status">${exN === 1 ? 'One document has' : `${exN} documents have`} expired. Give ${exN === 1 ? 'it' : 'each'} its new expiry date if still in force, mark the date not applicable, or replace ${exN === 1 ? 'it' : 'them'} with a current version.</p>` : ''}
           <div class="cmu-bar"><span>${acc} of ${ready.length} accepted</span>${all}</div>` : '';
-        body.innerHTML = bar + order.map((k) => {
+        body.innerHTML = bar + order.map((k) => whoHead(k) + (() => {
           const r = results[k], s = r.slot, ask = r.on && !s, ex = s && lapsedR(r), v = s ? valsOf(r) : {};
           // left out (rejected): it says so, and can come back
           if (!r.on) return `<section class="cmu-r is-off" data-card="${k}" aria-label="${esc(r.file.name)}"><div class="cmu-r-h"><div class="cmu-r-t"><h3>${esc(s ? label(s) : r.file.name)}</h3><p>${esc(r.file.name)} &middot; left out, nothing is saved from it</p></div><button type="button" class="link-btn" data-undo-rej="${k}">Undo</button></div></section>`;
           // the fields, as in the setup: read as she read them, or (Make changes) as fields, the dates
           // with a date picker that can also be not applicable
-          const fieldsOf = () => FIELDS.filter(([f]) => f !== 'ref' || s.i == null).map(([f, l]) => {
+          const fieldsOf = () => FIELDS.filter(([f]) => f !== 'ref' || s.i == null || s.code === 'ID').map(([f, l]) => {
             const flag = ex && f === 'valid', na = DATES.includes(f) && NA.includes(v[f]);
             const input = !DATES.includes(f) ? `<input name="${f}" value="${esc(v[f])}" aria-label="${l}">`
               : `<input type="date" name="${f}" value="${na ? '' : isoOf(v[f])}" aria-label="${l}"${na ? ' disabled' : ''}><label class="cmu-fna"><input type="checkbox" data-fna="${f}"${na ? ' checked' : ''}>Not applicable</label>`;
-            return `<div${flag ? ' class="is-flag"' : ''}><dt>${l}</dt><dd>${r.editing ? input : esc(v[f])}</dd></div>`;
+            return `<div${flag ? ' class="is-flag"' : ''}><dt>${labOf(s, f, l)}</dt><dd>${r.editing ? input : esc(v[f])}</dd></div>`;
           }).join('');
           const expBlock = !ex || r.editing ? '' : `<p class="cmu-why">This document expired on <b>${esc(v.valid)}</b>. If it&rsquo;s still in force, give it its new expiry date. If it has none, mark the date not applicable. Or replace it with a current version.</p>
             <div class="cmu-exp"><label>New expiry date<input type="date" data-newexp="${k}" value="${isoOf(v.valid)}"></label><label class="cmu-exp-na"><input type="checkbox" data-expna="${k}">Expiry date not applicable</label></div>`;
@@ -543,10 +688,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
             ${s ? `<dl class="cmu-fields">${fieldsOf()}</dl>` : ''}${expBlock}
             <footer class="cmu-r-acts"><span>${left}</span><span>${right}</span></footer>
           </section>`;
-        }).join('');
+        })()).join('');
         // on: what wasn't accepted goes in as she read it (as the setup's Continue); an expired one, a
         // file without a place, or a card being edited waits for the user
-        const unc = on.filter((r) => !r.slot && r.uncat).length, left = on.length - ready.length - unc, nd = reviewOf(results).length, wait = left || exN || editing;
+        const unc = on.filter((r) => !r.slot && r.uncat).length, left = on.length - ready.length - unc, nd = reviewOf(results, !!(found && found.people.length)).length, wait = left || exN || editing;
         const why = editing ? 'Save or cancel your changes first' : left ? `${left} still need${left === 1 ? 's' : ''} a place` : exN ? `${exN} expired: give ${exN === 1 ? 'it' : 'each'} a new date` : '';
         foot.innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${why}</span><button type="button" class="btn btn-primary btn-sm" data-save${(ready.length || unc) && !wait ? '' : ' disabled'}>${nd ? `Review ${nd} change${nd === 1 ? '' : 's'}` : ready.length + unc === 1 ? 'Save it' : `Save ${ready.length + unc} files`}</button>`;
       }
@@ -582,12 +727,17 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         if (!el.isConnected || step !== 2) return;
         reading = at();
         if (reading >= files.length) {
-          results = place(pool, focus, files); step = 3; paint();
+          // who is on them first: anyone new, or a list, is for the user to confirm before she files
+          found = crewCtx ? identify(files, R0.pool) : null;
+          const ask = !!(found && found.people.some((q) => q.i == null || !(fs && fs.who === q.name) || q.lists.length));
+          if (found) found.asked = ask;
+          if (found && !ask) found.people.forEach((q) => { q.decision = 'ok'; });
+          if (ask) { step = 'who'; showAll = false; paint(); } else fileThem(true);
           if (tucked) {
             rail();
             const n = results.filter((x) => x.on).length;
-            if (!job.told) toast(J ? J.doneMsg(n) : 'ALMA has read your files.', ['Review', () => tuck(false)]);
-          } else el.querySelector('select, [data-save]')?.focus({ preventScroll: true });
+            if (!job.told) toast(ask ? `ALMA found ${found.people.length === 1 ? 'someone' : `${found.people.length} people`} in your files. Confirm who they are, and she files the documents.` : J ? J.doneMsg(n) : 'ALMA has read your files.', ['Review', () => tuck(false)]);
+          } else el.querySelector('[data-pgo], select, [data-save]')?.focus({ preventScroll: true });
           job.told = true; if (J) J.save(job);
           return;
         }
@@ -595,6 +745,83 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         setTimeout(tick, Math.max(60, job.start + (reading + 1) * job.per - Date.now() + 30));
       };
       setTimeout(tick, Math.max(60, job.start + (reading + 1) * job.per - Date.now() + 30));
+    };
+    // ---- who's in the files: new to the worker list (Add / Don't add), or already on it (Confirm / Not them)
+    const initials = (n) => n.split(' ').filter(Boolean).map((w) => w[0]).filter((c, j, a) => j === 0 || j === a.length - 1).join('').toUpperCase();
+    const ROLES = () => [...new Set((M.WORKERS || []).map((w) => plain(w[1])).filter((r) => r && !/not set/i.test(r)))].sort();
+    // ---- a job category: free text (the catalog's Worker profile), so a search box, not a list to
+    // scroll: the categories your workers already have first, then the usual ones in construction,
+    // and whatever is typed, as it's typed. One read from a list or register comes filled in.
+    const STD_ROLES = ['Foreman', 'Site manager', 'Site engineer', 'Laborer', 'Mason', 'Carpenter', 'Formwork carpenter', 'Steel fixer', 'Electrician', 'Plumber', 'Painter', 'Plasterer', 'Tiler', 'Roofer', 'Scaffolder', 'Welder', 'Metalworker', 'Glazier', 'Insulation installer', 'Crane operator', 'Machine operator', 'Truck driver', 'Rigger', 'Surveyor', 'Safety officer', 'Quality technician', 'Warehouse keeper'];
+    const CHEV_D = '<svg class="cmu-cb-ic" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>';
+    const roleBox = (q) => `<span class="cmu-role"><label for="cmu-cbi-${q.key}">Job category</label><span class="cmu-cb"><input id="cmu-cbi-${q.key}" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="cmu-cbl-${q.key}" autocomplete="off" spellcheck="false" placeholder="Search or type one, or set it later" value="${esc(q.role)}" data-prole="${q.key}">${CHEV_D}<ul class="cmu-cb-l" id="cmu-cbl-${q.key}" role="listbox" aria-label="Job categories" hidden></ul></span>${q.roleFrom ? `<small>Read from ${esc(q.roleFrom)}</small>` : ''}</span>`;
+    const cbList = (inp) => {
+      const ul = inp.parentElement.querySelector('.cmu-cb-l'), v = inp.value.trim(), f = fold(v), mine = ROLES();
+      const other = STD_ROLES.filter((r) => !mine.some((m) => fold(m) === fold(r)));
+      const hit = (r) => !f || fold(r).includes(f), a = mine.filter(hit), b = other.filter(hit);
+      const used = (r) => (M.WORKERS || []).filter((w) => fold(plain(w[1])) === fold(r)).length;
+      const mark = (r) => { const at = f ? fold(r).indexOf(f) : -1; return at < 0 ? esc(r) : `${esc(r.slice(0, at))}<mark>${esc(r.slice(at, at + v.length))}</mark>${esc(r.slice(at + v.length))}`; };
+      let n = 0;
+      const opt = (r, sub, label) => `<li role="option" id="${ul.id}-${n++}" data-cbv="${esc(r)}" aria-selected="${fold(r) === fold(inp.dataset.was || '')}"><span>${label || mark(r)}</span>${sub ? `<small>${sub}</small>` : ''}</li>`;
+      const exact = mine.concat(other).some((r) => fold(r) === f);
+      ul.innerHTML = (a.length ? `<li class="cmu-cb-g" role="presentation">On your worker list</li>${a.map((r) => opt(r, `${used(r)} worker${used(r) === 1 ? '' : 's'}`)).join('')}` : '')
+        + (b.length ? `<li class="cmu-cb-g" role="presentation">Other job categories</li>${b.map((r) => opt(r)).join('')}` : '')
+        + (v && !exact ? opt(v, 'new category', `Add &ldquo;${esc(v)}&rdquo;`) : '')
+        + (!a.length && !b.length && !v ? '<li class="cmu-cb-none" role="presentation">No categories yet: type one.</li>' : '');
+      ul.hidden = false; inp.setAttribute('aria-expanded', 'true'); cbMove(inp, 0);
+    };
+    const cbMove = (inp, to) => {
+      const opts = [...inp.parentElement.querySelectorAll('[role="option"]')]; opts.forEach((o) => o.classList.remove('is-on'));
+      if (!opts.length) { inp.removeAttribute('aria-activedescendant'); return; }
+      const k = (to + opts.length) % opts.length, o = opts[k]; o.classList.add('is-on'); inp.setAttribute('aria-activedescendant', o.id); inp.dataset.at = k; o.scrollIntoView({ block: 'nearest' });
+    };
+    const cbShut = (inp) => { const ul = inp.parentElement.querySelector('.cmu-cb-l'); ul.hidden = true; inp.setAttribute('aria-expanded', 'false'); inp.removeAttribute('aria-activedescendant'); };
+    // set by hand: no longer what the register said
+    const cbSet = (inp, v) => { const q = found.people.find((x) => x.key === inp.dataset.prole); if (q.roleFrom && fold(v) !== fold(q.role)) { q.roleFrom = ''; inp.closest('.cmu-role').querySelector(':scope > small')?.remove(); } q.role = v; };
+    const cbPick = (inp, v) => { inp.value = v; cbSet(inp, v); inp.dataset.was = v; cbShut(inp); };
+    const whoStep = () => {
+      const P = found.people, nw = P.filter((q) => q.i == null), ex = P.filter((q) => q.i != null), roles = ROLES();
+      head('ALMA &middot; Who&rsquo;s in your files', `${P.length === 1 ? 'One person' : `${P.length} people`} in your files`, 'I read the name and the ID document number on each file, and checked them against your worker list. Confirm who they are, and I&rsquo;ll file each document in its worker&rsquo;s file, under its type.');
+      const where = (q) => { const l = [...new Set(q.files.concat(q.lists))]; return l.length === 1 ? `in ${esc(files[l[0]].name)}` : `in ${l.length} files`; };
+      const pdec = (q, yes, no) => `<span class="cmu-dec" role="group" aria-label="${esc(q.name)}"><button type="button" data-pdec="${q.key}" data-v="ok" aria-pressed="${q.decision === 'ok'}">${yes}</button><button type="button" data-pdec="${q.key}" data-v="no" aria-pressed="${q.decision === 'no'}">${no}</button></span>`;
+      const rowN = (q) => `<li class="cmu-p${q.decision === 'no' ? ' is-off' : ''}"><span class="cmu-av is-new" aria-hidden="true">${esc(initials(q.name))}</span><span class="cmu-p-t"><b>${esc(q.name)}</b><small>${esc(q.type)} &middot; ${esc(q.no)} &middot; ${where(q)}</small>${q.decision === 'ok' ? roleBox(q) : ''}</span>${pdec(q, 'Add', 'Don&rsquo;t add')}</li>`;
+      const rowE = (q) => `<li class="cmu-p${q.decision === 'no' ? ' is-off' : ''}"><span class="cmu-av" aria-hidden="true">${esc(initials(q.name))}</span><span class="cmu-p-t"><b>${esc(q.name)}</b><small>${esc(q.role)} &middot; ${q.by === 'number' ? `matched by ${esc(q.type.toLowerCase())} number` : `${esc(q.type)} ${esc(q.no)}`} &middot; ${where(q)}</small></span>${pdec(q, 'Confirm', 'Not them')}</li>`;
+      const bulk = (g, n) => (n > 1 ? `<button type="button" class="link-btn" data-pall="${g}">${g === 'n' ? 'Add all' : 'Confirm all'}</button>` : '');
+      const lim = ex.length > 8 && !showAll ? 6 : ex.length;
+      $('cmu-body').innerHTML = (nw.length ? `<section class="cmu-ps" aria-labelledby="cmu-ps-n"><div class="cmu-ps-h"><h3 class="cmu-h" id="cmu-ps-n">New to your worker list &middot; ${nw.length}</h3>${bulk('n', nw.length)}</div>
+          <p class="cmu-ps-p">${nw.length === 1 ? 'This name isn&rsquo;t' : 'These names aren&rsquo;t'} on your worker list. Add ${nw.length === 1 ? 'them' : 'each one'} and I&rsquo;ll create ${nw.length === 1 ? 'their worker file' : 'a worker file for each'} with the name and ID document I read, and file ${nw.length === 1 ? 'their' : 'each one&rsquo;s'} documents in it.</p>
+          <ul class="cmu-pl">${nw.map(rowN).join('')}</ul></section>` : '')
+        + (ex.length ? `<section class="cmu-ps" aria-labelledby="cmu-ps-e"><div class="cmu-ps-h"><h3 class="cmu-h" id="cmu-ps-e">Already on your list &middot; ${ex.length}</h3>${bulk('e', ex.length)}</div>
+          <p class="cmu-ps-p">Matched to your workers by their ID document number, or by name. Confirm it&rsquo;s them.</p>
+          <ul class="cmu-pl">${ex.slice(0, lim).map(rowE).join('')}</ul>${lim < ex.length ? `<button type="button" class="link-btn cmu-more" data-pmore>Show all ${ex.length}</button>` : ''}</section>` : '');
+      const open = P.filter((q) => !q.decision).length, nAdd = nw.filter((q) => q.decision === 'ok').length;
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${open ? `${open} still to confirm` : nAdd ? `${nAdd} new worker${nAdd === 1 ? '' : 's'} to add` : 'Everyone confirmed'}</span><button type="button" class="btn btn-primary btn-sm" data-pgo${open ? ' disabled' : ''}>${nAdd ? `Add ${nAdd === 1 ? 'them' : nAdd} and file the documents` : 'File the documents'}</button>`;
+    };
+    // the documents to their people: someone new gets their place on the list (and their documents'
+    // slots); each file then goes to its worker, under its type, and she reads its fields
+    const fileThem = (now) => {
+      const base = (M.WORKERS || []).length;
+      const fresh = found ? found.people.filter((q) => q.i == null && q.decision === 'ok') : [];
+      fresh.forEach((q, k) => { q.ni = base + k; });
+      pool = R0.pool.concat(fresh.flatMap(freshSlots));
+      const picks = found ? found.per.map((x) => {
+        if (x.list) return { list: true };
+        const q = x.people[0]; if (!q) return null;
+        if (q.decision === 'ok') return { who: q.name };
+        return { off: q.i == null ? `It names ${esc(q.name)}, who you didn&rsquo;t add to your worker list. Choose where it goes, or leave it out.` : `You said this isn&rsquo;t ${esc(q.name)}. Choose whose it is, or leave it out.` };
+      }) : null;
+      results = place(pool, focus, files, picks);
+      results.forEach((r) => { if (r.slot && r.slot.fresh && r.slot.code === 'ID' && r.slot.fresh.type === 'Passport') Object.assign(r, { by: 'Issuing country\u2019s passport office', country: 'Not read: check it' }); });
+      // a list: who it names, now that they're confirmed
+      if (found) found.per.forEach((x, k) => {
+        if (!x.list || !results[k].slot) return;
+        const on = x.people.filter((q) => q.decision === 'ok'), nn = on.filter((q) => q.i == null).length;
+        results[k].note = `It names ${on.length} worker${on.length === 1 ? '' : 's'}: ${on.length - nn} on your list${nn ? `, and ${nn} you&rsquo;re adding` : ''}. I&rsquo;ve noted it in each one&rsquo;s file.`;
+      });
+      if (now || matchMedia('(prefers-reduced-motion: reduce)').matches) { step = 3; paint(); return; }
+      step = 'sort'; sorted = 0; paint();
+      const go = () => { if (!el.isConnected || step !== 'sort') return; sorted += 1; if (sorted >= results.length) { step = 3; paint(); el.querySelector('select, [data-save]')?.focus({ preventScroll: true }); return; } paint(); setTimeout(go, 420); };
+      setTimeout(go, 420);
     };
     const save = () => {
       // what was rejected stays as it was; the rest is filed
@@ -604,9 +831,18 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       reviews.filter((v) => v.decision !== 'no').forEach((v) => v.crew.filter((c) => c.decision === 'ok').forEach((c) => {
         if (c.type === 'join') crew.added.push([c.name, c.role]); else if (c.type === 'leave') crew.left.push(c.i); else crew.roles[c.i] = c.to;
       }));
-      done.forEach((r) => {
-        const s = r.slot;
-        if (s.i == null) M.saveDoc(s.code, { status: 'valid', issued: r.read.issued, valid: r.read.valid, note: '', ref: refOf(s, r), by: r.by != null ? r.by : M.issuerOf(s.d.cat), conf: r.edited ? 98 : r.conf, edited: !!r.edited });
+      // the new people the user added, at the end of the list, with the ID ALMA read
+      const fresh = found ? found.people.filter((q) => q.i == null && q.decision === 'ok') : [];
+      fresh.forEach((q) => crew.added.push([q.name, q.role || '', q.type, q.no, q.valid, M.today()]));
+      done.forEach((r, j) => {
+        const s = r.slot, at = s.fresh ? s.fresh.ni : s.i, k = results.indexOf(r);
+        // who a list names: the workers it covers, as each one's file shows it
+        const x = found && found.per[k];
+        if (x && x.list) M.saveList(s.code, x.people.filter((q) => q.decision === 'ok').map((q) => (q.i == null ? q.ni : q.i)));
+        if (s.code === 'ID') { M.saveId(at, { type: s.fresh ? s.fresh.type : plain(M.PERSON[at].id[0]), no: refOf(s, r), valid: r.read.valid, file: r.file.name, on: M.today() }); if (window.CMFiles) window.CMFiles.put(`ID#${at}`, r.file); return; }
+        if (s.code === 'WK-REG') { M.saveRegister({ file: r.file.name, on: M.today(), n: x && x.list ? x.people.filter((q) => q.decision === 'ok').length : 0 }); if (window.CMFiles) window.CMFiles.put('WK-REG', r.file); return; }
+        if (s.fresh) { M.saveLater(s.code, at, { status: 'valid', exp: r.read.valid }); if (window.CMFiles) window.CMFiles.put(`${s.code}#${at}`, r.file); return; }
+        if (s.i == null) M.saveDoc(s.code, { status: 'valid', issued: r.read.issued, valid: r.read.valid, note: '', ref: refOf(s, r), by: r.by != null ? r.by : issuerFor(s), conf: r.edited ? 98 : r.conf, edited: !!r.edited });
         else M.saveRecord(s.code, s.i, { status: 'valid', exp: r.read.valid });
         if (window.CMFiles) window.CMFiles.put(s.i == null ? s.code : `${s.code}#${s.i}`, r.file);
       });
@@ -620,7 +856,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (kept.size || nCrew) {
         const parts = [done.length ? `${done.length} document${done.length === 1 ? '' : 's'} saved` : 'Nothing replaced'];
         if (kept.size) parts.push(`${kept.size} kept as ${kept.size === 1 ? 'it was' : 'they were'}`);
-        if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} joined`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`].filter(Boolean).join(', ')})`);
+        if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} added`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`].filter(Boolean).join(', ')})`);
         const msg = parts.join(' &middot; ') + '.';
         // the crew is part of how the pages are drawn: they come back with it, and the message after
         if (nCrew) { M.saveCrew(crew); try { sessionStorage.setItem('cm-upload-toast', msg); } catch (e) {} location.reload(); return; }
@@ -643,13 +879,13 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       setTimeout(() => el.remove(), 300);
       if (last && last.focus && last.isConnected) last.focus({ preventScroll: true });
     };
-    const onKey = (e) => { if (e.key !== 'Escape' || step === 2 || tucked) return; e.stopPropagation(); if (peek != null) closePeek(); else close(); };
+    const onKey = (e) => { if (e.key !== 'Escape' || step === 2 || step === 'sort' || tucked) return; if (e.target.closest && e.target.closest('[data-prole][aria-expanded="true"]')) return; /* the job list closes first */ e.stopPropagation(); if (peek != null) closePeek(); else close(); };
     document.addEventListener('keydown', onKey, true);
     el.addEventListener('click', (e) => {
       const t = (s) => e.target.closest(s);
       if (t('[data-tuck]')) { tuck(true); return; }
       if (t('[data-untuck]')) { tuck(false); return; }
-      if (t('[data-x]')) { if (step !== 2 && !tucked) close(); return; }
+      if (t('[data-x]')) { if (step !== 2 && step !== 'sort' && !tucked) close(); return; }
       if (t('#cmu-drop')) { $('cmu-file').value = ''; $('cmu-file').click(); return; }
       // from the company's C-MORE library: a copy of a document it already has (js/doc-library.js)
       if (t('[data-lib]')) { window.CMLibrary.pick({ multiple: !fs }).then((l) => { if (l && l.length) add(fs ? l.slice(0, 1) : l); else el.querySelector('[data-lib]')?.focus(); }); return; }
@@ -686,7 +922,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-save]')) {
         closePeek();
         // anything that differs from what's on file waits for the user's approval
-        reviews = reviewOf(results); stage = 0;
+        reviews = reviewOf(results, !!(found && found.people.length)); stage = 0;
         if (reviews.length) { step = 4; paint(); panel.scrollTop = 0; $('cmu-body').scrollTop = 0; } else save();
         return;
       }
@@ -703,10 +939,25 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-next]')) { stage = Math.min(stage + 1, stages().length - 1); paint(); $('cmu-body').scrollTop = 0; return; }
       if (t('[data-prev]')) { if (stage) { stage -= 1; } else step = 3; paint(); $('cmu-body').scrollTop = 0; return; }
       if (t('[data-commit]')) { save(); return; }
+      if (t('[data-pdec]')) { const b = t('[data-pdec]'), q = found.people.find((x) => x.key === b.dataset.pdec); q.decision = b.dataset.v; const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector(`[data-pdec="${q.key}"][data-v="${q.decision}"]`)?.focus({ preventScroll: true }); return; }
+      if (t('[data-pall]')) { const g = t('[data-pall]').dataset.pall; found.people.filter((q) => (g === 'n') === (q.i == null)).forEach((q) => { q.decision = 'ok'; }); paint(); return; }
+      if (t('[data-pmore]')) { showAll = true; paint(); return; }
+      if (t('[data-pgo]')) { fileThem(false); $('cmu-body').scrollTop = 0; return; }
       // anywhere else on a card: its preview, as in the setup
       const card = t('.cmu-r[data-card]');
       if (card && !card.classList.contains('is-editing') && !card.classList.contains('is-off') && !t('button, a, input, select, textarea, label')) openPeek(+card.dataset.card);
     });
+    el.addEventListener('focusin', (e) => { const i = e.target.closest('[data-prole]'); if (i) { i.dataset.was = i.value; cbList(i); } });
+    el.addEventListener('input', (e) => { const i = e.target.closest('[data-prole]'); if (i) cbList(i); });
+    el.addEventListener('focusout', (e) => { const i = e.target.closest('[data-prole]'); if (i) { cbSet(i, i.value.trim()); cbShut(i); } });
+    el.addEventListener('mousedown', (e) => { const o = e.target.closest('.cmu-cb-l [role="option"]'); if (!o) return; e.preventDefault(); cbPick(o.closest('.cmu-cb').querySelector('input'), o.dataset.cbv); });
+    el.addEventListener('keydown', (e) => {
+      const i = e.target.closest('[data-prole]'); if (!i) return;
+      const ul = i.parentElement.querySelector('.cmu-cb-l');
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (ul.hidden) cbList(i); else cbMove(i, +(i.dataset.at || 0) + (e.key === 'ArrowDown' ? 1 : -1)); return; }
+      if (e.key === 'Enter') { e.preventDefault(); const o = !ul.hidden && ul.querySelector('[role="option"].is-on'); cbPick(i, o ? o.dataset.cbv : i.value.trim()); return; }
+      if (e.key === 'Escape' && !ul.hidden) { e.preventDefault(); e.stopPropagation(); i.value = i.dataset.was || ''; cbShut(i); }
+    }, true);
     el.addEventListener('keydown', (e) => { if (e.target.id === 'cmu-drop' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.click(); } });
     // an expired one: its new date, kept when you leave the field or press Enter (a date field reports
     // every step as it's typed); or its expiry date not applicable
@@ -719,6 +970,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     el.addEventListener('keydown', (e) => { const i = e.target.closest('[data-newexp]'); if (i && e.key === 'Enter') { e.preventDefault(); newDate(i); } });
     el.addEventListener('change', (e) => {
       if (e.target.id === 'cmu-file') { add(e.target.files); return; }
+      const pr = e.target.closest('[data-prole]'); if (pr) { cbSet(pr, pr.value.trim()); return; }
       const fna = e.target.closest('[data-fna]');
       if (fna) {
         // the box empties and locks the date; untick it and the date it had comes back

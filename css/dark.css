@@ -1,0 +1,93 @@
+/* Dark mode, for the whole app: a deep grey ground (#222222, never black), cards a clear step
+   lighter (#2d2d2d), and ink light enough to read at a glance: body text is near-white and even
+   the quietest text stays above 7:1 on the cards (WCAG AAA for small text).
+   The pages draw with the brand's primitives (off-white, the beiges, graphite) as much as with
+   the semantic tokens, so both are turned over here: what was the lightest is now the darkest,
+   graphite ink becomes off-white, and the coral stays the one accent. Status colours lift to
+   stay readable on grey; their soft fills are deep versions of each.
+   On when html has data-theme="dark" (js/theme.js: the side menu's Dark mode switch). */
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* the ramp, turned over: page, card, ground (hover, selected), chip, line */
+  --color-off-white: #222222;      /* the page */
+  --color-surface: #2d2d2d;        /* cards, menus, drawers, the side menu */
+  --color-light-beige: #363636;    /* strips, hovers, the selected row: a step up from the card */
+  --color-mid-beige: #3d3d3d;      /* chips, neutral badges */
+  --color-dark-beige: #464646;     /* hairlines */
+  --color-sand-400: #6b6b68;
+  --color-sand-500: #a3a29c;
+  --color-sand-600: #c2c1bb;       /* the quiet ink: 8:1 on the cards */
+  --color-surface-sunken: #1c1c1c;
+
+  /* ink: near-white, and the brand blue lifted to a light blue */
+  --color-graphite: #f5f5f3;
+  --color-blue: #c2cce0;
+  --color-mid-blue: #d3d9e6;
+
+  /* the accent stays; on coral, the page's grey */
+  --color-coral-tint: color-mix(in oklab, var(--color-coral) 24%, #222222);
+  --color-coral-soft: color-mix(in oklab, var(--color-coral) 55%, #222222);
+  --color-activation-foreground: #222222;
+
+  /* status: light enough for grey; each soft fill a clear, saturated step up from the card
+     (about 1.5:1 against it), so a badge reads as a shape, not a tint */
+  --color-positive: #a6dd94;
+  --color-caution: #f5c46e;
+  --color-critical: #ffa39a;
+  --color-informative: #bccbea;
+  --color-positive-subtle: #35562a;
+  --color-caution-subtle: #5e4517;
+  --color-critical-subtle: #77332c;
+  --color-informative-subtle: #3a4d75;
+  --color-ok: #79b866;
+
+  --color-line: #444444;
+  --color-line-strong: #5a5a5a;
+}
+
+/* the page itself, and the web behind it */
+html[data-theme="dark"], html[data-theme="dark"] body { background: #222222 !important; }
+html[data-theme="dark"] .mesh__web { opacity: 0.06; }
+
+/* the wordmark is graphite: off-white on the dark */
+html[data-theme="dark"] .brand img, html[data-theme="dark"] img[src$="cmore-logo.svg"] { filter: invert(1) brightness(1.6); }
+
+/* shadows read as light on grey: deeper, softer */
+html[data-theme="dark"] .co-card, html[data-theme="dark"] .cdd-card { box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+html[data-theme="dark"] .dlg-scrim, html[data-theme="dark"] .docd-scrim { background: rgba(20, 20, 20, .6); }
+
+/* buttons on coral keep graphite text; dark buttons (now off-white) take graphite text */
+html[data-theme="dark"] .btn-primary, html[data-theme="dark"] .co-btn-primary { color: #222222; }
+html[data-theme="dark"] .dlg .btn-primary:not(:disabled):not([aria-disabled="true"]) { color: #222222; }
+
+/* the switch's knob is the surface colour: keep it light on both tracks */
+html[data-theme="dark"] .co-sw i { background: #f5f5f3; }
+html[data-theme="dark"] .co-sw[aria-checked="true"] { background: var(--color-coral); }
+
+/* focus rings: off-white */
+html[data-theme="dark"] :focus-visible { outline-color: #f5f5f3; }
+
+/* the generated report (PDF) stays paper-white, as printed */
+html[data-theme="dark"] .rp-page, html[data-theme="dark"] [data-report] { color-scheme: light; }
+
+/* the side menu's Dark mode switch (js/theme.js) */
+.sn-theme { width: 100%; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.sn-theme .sn-tsw { margin-left: auto; flex: none; width: 2rem; height: 1.125rem; border-radius: 9999px; padding: 2px; display: flex; background: var(--color-sand-400); transition: background-color .2s var(--ease-brand, ease); }
+.sn-theme .sn-tsw i { width: calc(1.125rem - 4px); height: calc(1.125rem - 4px); border-radius: 50%; background: #fafafa; transition: margin-left .2s var(--ease-brand, ease); }
+.sn-theme[aria-checked="true"] .sn-tsw { background: var(--color-coral); }
+.sn-theme[aria-checked="true"] .sn-tsw i { margin-left: calc(100% - 1.125rem + 4px); }
+html[data-sn="rail"] .sn-theme .sn-tsw { display: none; }
+.sn-theme .sn-moon { display: none; }
+.sn-theme[aria-checked="true"] .sn-moon { display: block; }
+.sn-theme[aria-checked="true"] .sn-sun { display: none; }
+
+/* switching: at once, not a fade of every colour (js/theme.js adds it for a moment) */
+html.cm-theme-now *, html.cm-theme-now *::before, html.cm-theme-now *::after { transition: none !important; }
+
+/* primary buttons: off-white with dark words, as the dialogs' buttons already turn over. Coral on
+   grey reads as a warning next to the status colours, so here it stays the accent (the bars, the
+   current page, the figures) and the action is the brightest thing on the page */
+html[data-theme="dark"] .btn-primary:not(:disabled):not([aria-disabled="true"]) { background: #f5f5f3; border-color: #f5f5f3; color: #222222; box-shadow: none; }
+html[data-theme="dark"] .btn-primary:not(:disabled):not([aria-disabled="true"]):hover { background: #ffffff; border-color: #ffffff; color: #222222; box-shadow: 0 0 0 3px rgba(245, 245, 243, .14); }
+

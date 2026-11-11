@@ -1,0 +1,51 @@
+/* Tags, one system for the whole app: the status badges in tables, the count chips on cards, and
+   the small labels beside a name. Six colours, each with one fill and one text colour, in light
+   and in dark — no second red, no second grey:
+     grey    neutral, not uploaded, processing, coming soon, a plain label
+     yellow  pending, expiring, in review, medium confidence, missing (still to come)
+     orange  needs attention, needs you
+     red     expired, missing (overdue), not compliant, consent removed
+     green   valid, accepted, all in order, done
+     blue    information: ongoing, consent asked, sent, archived, a justification
+   One shape: squared, 6px corners (the table badges'). Counters (a number in a bubble: the bell,
+   a row's alert count) stay round, as counts.
+   Loaded after each page's own styles; the selectors start at html so they also win over the
+   styles scripts add later. Text on every fill is 5.5:1 or more, light and dark. */
+:root {
+  --tag-grey-bg: #e9e7e2;   --tag-grey-fg: #585753;
+  --tag-yellow-bg: #fbeab0; --tag-yellow-fg: #6b4f00;
+  --tag-orange-bg: #fde2cf; --tag-orange-fg: #9a3f08;
+  --tag-red-bg: #fbdedb;    --tag-red-fg: #a3221b;
+  --tag-green-bg: #e0efd6;  --tag-green-fg: #336824;
+  --tag-blue-bg: #e2e8f4;   --tag-blue-fg: #3d5381;
+  --tag-radius: 0.375rem;
+}
+html[data-theme="dark"] {
+  --tag-grey-bg: #5c5c5c;   --tag-grey-fg: #f5f5f3;
+  --tag-yellow-bg: #e9bc2c; --tag-yellow-fg: #2a2000;
+  --tag-orange-bg: #9a5026; --tag-orange-fg: #fff2e8;
+  --tag-red-bg: #b0323b;    --tag-red-fg: #fff0f0;
+  --tag-green-bg: #467a35;  --tag-green-fg: #f0fbea;
+  --tag-blue-bg: #4f6799;   --tag-blue-fg: #eef3ff;
+}
+
+/* the shape */
+html :is(.co-badge, .co-k-chip, .cd-ask, .eco-tag, .esgq-proto, .pd-just, .tm-tag, .eco-svc, .cm-soon, .m-tag, .chip, .pd-seal) { border-radius: var(--tag-radius); }
+html :is(.co-k-chip, .cd-ask, .eco-tag, .m-tag) { font-weight: 600; }
+
+/* the colours */
+html :is(.b-neu, .co-k-chip.is-zero, .esgq-proto, .tm-tag:not(.is-all):not(.is-own), .eco-svc, .cm-soon, .m-tag.neu, .pd-seal:not(.is-on)) { background: var(--tag-grey-bg); color: var(--tag-grey-fg); }
+html :is(.b-pend, .co-k-miss:not(.is-zero), .chip.is-mid, .m-tag.warn) { background: var(--tag-yellow-bg); color: var(--tag-yellow-fg); }
+html :is(.b-warn, .chip.is-needs, .m-tag.alma) { background: var(--tag-orange-bg); color: var(--tag-orange-fg); }
+html :is(.b-over, .co-k-exp:not(.is-zero), .chip.is-bad, .chip.is-low, .m-tag.bad, .sa-grp-h.sk-grp-h .co-badge) { background: var(--tag-red-bg); color: var(--tag-red-fg); }
+html :is(.b-ok, .co-k-ok:not(.is-zero), .chip.is-ok, .eco-tag:not(.is-sent), .tm-tag.is-all, .m-tag.ok) { background: var(--tag-green-bg); color: var(--tag-green-fg); }
+html :is(.b-info, .cd-ask, .pd-just, .chip.is-you, .eco-tag.is-sent, .b-arch, .pd-seal.is-on) { background: var(--tag-blue-bg); color: var(--tag-blue-fg); }
+html :is(.co-k-chip, .co-badge, .chip, .m-tag) b { color: inherit; }
+/* a dashed tag of your own (Team): no fill, the grey's words */
+html .tm-tag.is-own { color: var(--tag-grey-fg); }
+
+/* counters keep the bubble, in the red */
+html :is(.cd-row-alert, .cd-area-alert) { background: var(--tag-red-bg); color: var(--tag-red-fg); }
+
+/* the archive modal's warning mark: the yellow */
+html .cd-arch-ico { background: var(--tag-yellow-bg); color: var(--tag-yellow-fg); }

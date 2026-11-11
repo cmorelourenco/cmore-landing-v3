@@ -8,16 +8,16 @@
 .acct-btn { cursor: pointer; border: 0; }
 .acct.is-open .acct-btn { background-color: #e9e7e2; }
 .acct-menu { position: absolute; right: 0; top: calc(100% + 0.375rem); z-index: 80; min-width: 15rem; margin: 0; padding: 0.375rem; list-style: none;
-  background: #ffffff; border: 1px solid #e0ded7; border-radius: 0.75rem;
+  background: var(--color-surface, #ffffff); border: 1px solid var(--color-line, #e0ded7); border-radius: 0.75rem;
   box-shadow: 0 12px 32px rgba(52, 52, 52, 0.12), 0 2px 6px rgba(52, 52, 52, 0.06);
   opacity: 0; transform: translateY(-4px); pointer-events: none; visibility: hidden;
   transition: opacity .16s ease, transform .2s cubic-bezier(0.22, 1, 0.36, 1), visibility .2s; }
 .acct.is-open .acct-menu { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
 .acct-menu a { display: flex; align-items: center; gap: 0.75rem; padding: 0.625rem 0.75rem; border-radius: 0.5rem; text-decoration: none;
-  font-size: 0.9375rem; font-weight: 500; line-height: 1.3; color: #343434; outline: none; }
-.acct-menu a:hover, .acct-menu a:focus-visible { background: #f2f1ed; color: #343434; }
-.acct-menu a svg { flex: none; width: 1.125rem; height: 1.125rem; color: #6e6e6a; }
-.acct-menu a small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; font-weight: 400; color: #6e6e6a; }
+  font-size: 0.9375rem; font-weight: 500; line-height: 1.3; color: var(--color-ink, #343434); outline: none; }
+.acct-menu a:hover, .acct-menu a:focus-visible { background: var(--color-light-beige, #f2f1ed); color: var(--color-ink, #343434); }
+.acct-menu a svg { flex: none; width: 1.125rem; height: 1.125rem; color: var(--color-ink-subtle, #6e6e6a); }
+.acct-menu a small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; font-weight: 400; color: var(--color-ink-subtle, #6e6e6a); }
 .acct-menu .sep { height: 1px; margin: 0.375rem 0.25rem; background: #e9e7e2; }
 @media (prefers-reduced-motion: reduce) { .acct-menu { transition: none; } }`;
   const style = document.createElement('style');

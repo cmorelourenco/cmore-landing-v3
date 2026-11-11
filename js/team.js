@@ -4,7 +4,7 @@
      Owners and admins manage people, roles and groups. A manager invites users, only into groups
      they are in themselves, and removes the users who are only in those groups. A user can't open
      this page.
-   "Preview as" shows the whole app as someone else on the team would see it (js/access.js).
+   "Preview as" (our test user only) shows the whole app as someone else on the team would see it (js/access.js).
    Prototype: nothing is emailed. */
 (() => {
   const box = document.getElementById('team-body'), gbox = document.getElementById('groups-body'), perm = document.getElementById('perm-body');
@@ -538,7 +538,7 @@
     const h = box.querySelector('.tm-ph h3'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); }
   });
 
-  const previewBar = (t) => manages(teamOf(cur.id).members.find((m) => m.you).role) ? `<div class="tm-as"><span>See the app as someone else on the team would: only the pages they can open.</span><label for="tm-as">Preview as <select class="input" id="tm-as">${t.members.map((m) => `<option value="${m.you ? 'you' : esc(m.email)}"${(m.you ? 'you' : m.email) === as ? ' selected' : ''}>${m.you ? 'You' : esc(m.name)} &middot; ${ROLES[m.role][0]}${grouped(m.role) && (m.groups || []).length ? ' (' + m.groups.map((g) => gName(t, g)).filter(Boolean).map(esc).join(', ') + ')' : ''}</option>`).join('')}</select></label></div>` : '';
+  const previewBar = (t) => A.CAN_PREVIEW && manages(teamOf(cur.id).members.find((m) => m.you).role) ? `<div class="tm-as"><span>See the app as someone else on the team would: only the pages they can open.</span><label for="tm-as">Preview as <select class="input" id="tm-as">${t.members.map((m) => `<option value="${m.you ? 'you' : esc(m.email)}"${(m.you ? 'you' : m.email) === as ? ' selected' : ''}>${m.you ? 'You' : esc(m.name)} &middot; ${ROLES[m.role][0]}${grouped(m.role) && (m.groups || []).length ? ' (' + m.groups.map((g) => gName(t, g)).filter(Boolean).map(esc).join(', ') + ')' : ''}</option>`).join('')}</select></label></div>` : '';
   const pickedRole = () => { const r = box.querySelector('[name="tm-role"]:checked') || box.querySelector('input[type="hidden"][name="tm-role"]'); return r ? r.value : null; };
   const showScope = () => {
     const r = pickedRole();

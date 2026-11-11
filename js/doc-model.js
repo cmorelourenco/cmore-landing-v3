@@ -126,7 +126,9 @@ window.DOC_MODEL = (() => {
   const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {}, archived: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {}, archived: {} }; } })();
   const CREW_BASE = WORKERS.length;
   if (PERSONA === 'miguel') {
-    crew.added.forEach(([n, r]) => WORKERS.push([n, r]));
+    // a worker added from their documents: [name, job, ID type, ID number, ID valid until, added on];
+    // their job may be set later
+    crew.added.forEach(([n, r]) => WORKERS.push([n, r || 'Job not set yet']));
     Object.entries(crew.roles).forEach(([i, r]) => { if (WORKERS[i]) WORKERS[i][1] = r; });
   }
   const saveCrew = (patch) => {
@@ -137,6 +139,28 @@ window.DOC_MODEL = (() => {
     if (patch.unarchive != null) delete crew.archived[patch.unarchive];
     try { sessionStorage.setItem(CREW_KEY, JSON.stringify(crew)); } catch (e) {}
   };
+  // ---- what ALMA read about each worker from the files themselves (js/doc-upload.js) ------------
+  // their identity document (citizen card, passport): { type, no, valid, file, on }, by worker
+  const IDS_KEY = 'cm-worker-ids' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const ids = (() => { try { return JSON.parse(sessionStorage.getItem(IDS_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const saveId = (i, patch) => { ids[i] = Object.assign(ids[i] || {}, patch); try { sessionStorage.setItem(IDS_KEY, JSON.stringify(ids)); } catch (e) {} };
+  const idOf = (i) => ids[i] || null;
+  // who a document for all workers names (the payroll insurance, the social security declaration,
+  // the emergency designations): by document, the workers on it. Until a new one is read, the ones on
+  // file name everyone who was on the list before (not who joined since); the designations, seven
+  const LISTS_KEY = 'cm-wk-lists' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const lists = (() => { try { return JSON.parse(sessionStorage.getItem(LISTS_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const saveList = (code, who) => { lists[code] = who; try { sessionStorage.setItem(LISTS_KEY, JSON.stringify(lists)); } catch (e) {} };
+  const DESIGNATED = { 0: 'first aid', 7: 'first aid', 16: 'first aid', 23: 'first aid', 1: 'firefighting and evacuation', 10: 'firefighting and evacuation', 20: 'firefighting and evacuation' };
+  const listedOn = (code, i) => {
+    if (lists[code]) return lists[code].includes(i);
+    if (code === 'WK-03') return DESIGNATED[i] != null;
+    return i < CREW_BASE;
+  };
+  // the worker register a site keeps (Registo de trabalhadores): the last one ALMA read, { file, on, n }
+  const REG_KEY = 'cm-wk-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const register = () => { try { return JSON.parse(sessionStorage.getItem(REG_KEY) || 'null'); } catch (e) { return null; } };
+  const saveRegister = (r) => { try { sessionStorage.setItem(REG_KEY, JSON.stringify(r)); } catch (e) {} };
   const EQUIPMENT = [
     ['Excavator &middot; CAT 320', 'EQ&#8209;014'], ['Tower crane &middot; Liebherr 1060', 'EQ&#8209;002'],
     ['Scissor lift &middot; Genie GS&#8209;1932', 'EQ&#8209;021'], ['Welding set &middot; Lincoln 210', 'EQ&#8209;033'],
@@ -166,7 +190,8 @@ window.DOC_MODEL = (() => {
   const nif = (i) => { const d = String(2 + (i % 3)) + String(31000000 + i * 271937).slice(-7); const s = [...d].reduce((a, c, k) => a + c * (9 - k), 0) % 11; return d + (s < 2 ? 0 : 11 - s); };
   const PERSON = WORKERS.map(([name, role], i) => {
     const non = NONEU[i];
-    return {
+    const add = i >= CREW_BASE ? crew.added[i - CREW_BASE] || [] : [], read = ids[i];
+    const p = {
       name, role, nationalityName: non ? non[0] : (i === 12 ? 'Spanish' : 'Portuguese'), nationality: non ? non[1] : (i === 12 ? 'ES' : 'PT'),
       birth: `${3 + (i * 7) % 25} ${MONTHS[(i * 5) % 12]} ${1968 + (i * 13) % 34}`,
       address: STREETS[i % STREETS.length].replace(/^(\D+)(\d+)/, (m, s, n) => s + (+n + i * 3)),
@@ -182,6 +207,13 @@ window.DOC_MODEL = (() => {
       // what the rules read (doc-rules.js FACTS)
       specialRisk: SPECIAL_RISK.includes(i), certifiedOperator: OPERATORS.includes(i), employmentType: i % 6 === 5 ? 'fixed_term' : 'permanent',
     };
+    // added from their documents: the ID ALMA read, the day they were added; an ID read since, over it
+    if (add[2]) { p.id = [add[2], add[3], add[4]]; p.since = add[5] || p.since; p.employment = 'Permanent contract'; p.sites = [0]; }
+    // a passport, not a citizen card: where they're from is still to check (not taken as Portuguese)
+    if (add[2] === 'Passport') p.passportOnly = true;
+    if (add.length && !add[1]) p.roleUnset = true;
+    if (read && read.no) p.id = [read.type || p.id[0], read.no, read.valid || p.id[2]];
+    return p;
   });
   // each machine's profile (the catalog's Equipment profile form)
   const RENTALS = { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
@@ -614,6 +646,9 @@ window.DOC_MODEL = (() => {
     d.status = worstOf(d.roster.map((x) => x.status)); d.text = textOf(d);
     return d;
   };
+  // a worker's copy for someone not on the list yet (added in the same save): kept, and read with
+  // the rest when the page is drawn again with them on it
+  const saveLater = (code, i, patch) => { updates[`${code}#${i}`] = Object.assign(updates[`${code}#${i}`] || {}, patch); keepUpdates(); };
   // the documents that need the company now, most urgent first
   const URGENCY = ['expired', 'rejected', 'missing', 'attention', 'filemissing', 'expiring', 'processing'];
   // a document expiring within two weeks comes straight after the expired ones
@@ -633,5 +668,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { saveId, idOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

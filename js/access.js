@@ -13,7 +13,7 @@
    nobody's groups can give: Team management (owners, admins, managers) and Settings (owners,
    admins). The company overview, notifications and your Profile are everyone's.
 
-   "Preview as" (from Team management) shows every page as someone else on the team would see it:
+   "Preview as" (from Team management, for our test user only) shows every page as someone else on the team would see it:
    the side menu drops what they can't open, and a page they can't open says so. It is kept for
    this tab, with a bar at the bottom to leave it.
    Prototype: the team lives in this browser and is forgotten on log out (js/company-switcher.js). */
@@ -133,9 +133,11 @@ window.CMAccess = (() => {
   const orgId = () => get(sessionStorage, 'cm-org', null) || get(localStorage, 'cm-last-org-' + persona, null) || 'home';
 
   // who's looking: you, or the person you're previewing as (in this company)
-  const previewing = () => { const a = get(sessionStorage, AS_KEY, null); return a && a.org === orgId() ? a.email : null; };
+  // only for our test user (test@c-more.test): nobody else needs it any more, and an old preview is ignored
+  const CAN_PREVIEW = /^test@c-more\.test$/i.test((get(sessionStorage, 'cm-person', null) || {}).email || '');
+  const previewing = () => { if (!CAN_PREVIEW) return null; const a = get(sessionStorage, AS_KEY, null); return a && a.org === orgId() ? a.email : null; };
   const viewer = (t = teamOf(orgId())) => { const e = previewing(); return (e && t.members.find((m) => m.email === e)) || t.members.find((m) => m.you) || t.members[0]; };
-  const preview = (email) => { if (email) set(sessionStorage, AS_KEY, { org: orgId(), email }); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } };
+  const preview = (email) => { if (!CAN_PREVIEW) return; if (email) set(sessionStorage, AS_KEY, { org: orgId(), email }); else { try { sessionStorage.removeItem(AS_KEY); } catch (e) {} } };
   // what gives someone access: their groups, and what was given to them alone (m.access, the same
   // shape as a group: { content, scope }), on top
   const sourcesOf = (t, m) => (m.groups || []).map((id) => t.groups.find((g) => g.id === id)).filter(Boolean).concat(m.access && (m.access.content || []).length ? [m.access] : []);
@@ -207,5 +209,5 @@ window.CMAccess = (() => {
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply); else apply();
 
-  return { ROLES, ORDER, GRANTS, grouped, manages, PAGES, PAGE_NAME, PARTS, PART_NAME, PART_NOUN, DEFAULT_GROUPS, teamOf, save, orgId, viewer, preview, previewing, sourcesOf, pagesOf, scopeOf, sees, can };
+  return { ROLES, ORDER, GRANTS, grouped, manages, PAGES, PAGE_NAME, PARTS, PART_NAME, PART_NOUN, DEFAULT_GROUPS, teamOf, save, orgId, viewer, preview, previewing, CAN_PREVIEW, sourcesOf, pagesOf, scopeOf, sees, can };
 })();

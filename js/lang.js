@@ -22,23 +22,23 @@
   const css = `
 .lang { position: relative; flex: none; font-family: inherit; }
 .lang-btn { display: inline-flex; align-items: center; gap: 0.375rem; height: 2.25rem; padding: 0 0.625rem; border: 0; border-radius: 9999px;
-  background: transparent; color: #343434; font: inherit; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.02em; cursor: pointer;
+  background: transparent; color: var(--color-ink, #343434); font: inherit; font-size: 0.875rem; font-weight: 500; letter-spacing: 0.02em; cursor: pointer;
   transition: background-color .14s cubic-bezier(0.22, 1, 0.36, 1); }
 .lang-btn:hover, .lang.is-open .lang-btn { background: #e9e7e2; }
-.lang-btn:focus-visible { outline: 2px solid #343434; outline-offset: 2px; }
+.lang-btn:focus-visible { outline: 2px solid var(--color-graphite, #343434); outline-offset: 2px; }
 .lang-btn svg { flex: none; }
 .lang-btn .chev { transition: transform .2s cubic-bezier(0.22, 1, 0.36, 1); }
 .lang.is-open .lang-btn .chev { transform: rotate(180deg); }
 .lang-menu { position: absolute; right: 0; top: calc(100% + 0.375rem); z-index: 80; min-width: 12rem; margin: 0; padding: 0.375rem; list-style: none;
-  background: #ffffff; border: 1px solid #e0ded7; border-radius: 0.75rem;
+  background: var(--color-surface, #ffffff); border: 1px solid var(--color-line, #e0ded7); border-radius: 0.75rem;
   box-shadow: 0 12px 32px rgba(52, 52, 52, 0.12), 0 2px 6px rgba(52, 52, 52, 0.06);
   opacity: 0; transform: translateY(-4px); pointer-events: none; visibility: hidden;
   transition: opacity .16s ease, transform .2s cubic-bezier(0.22, 1, 0.36, 1), visibility .2s; }
 .lang.is-open .lang-menu { opacity: 1; transform: none; pointer-events: auto; visibility: visible; }
 .lang-menu li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.5rem 0.625rem; border-radius: 0.5rem;
-  font-size: 0.9375rem; line-height: 1.3; color: #343434; cursor: pointer; outline: none; }
-.lang-menu li .c { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: #6e6e6a; }
-.lang-menu li:hover, .lang-menu li:focus-visible, .lang-menu li.is-active { background: #f2f1ed; }
+  font-size: 0.9375rem; line-height: 1.3; color: var(--color-ink, #343434); cursor: pointer; outline: none; }
+.lang-menu li .c { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--color-ink-subtle, #6e6e6a); }
+.lang-menu li:hover, .lang-menu li:focus-visible, .lang-menu li.is-active { background: var(--color-light-beige, #f2f1ed); }
 .lang-menu li[aria-selected="true"] { font-weight: 600; }
 .lang-menu li[aria-selected="true"] .c { color: #f44e29; }
 @media (prefers-reduced-motion: reduce) { .lang-btn .chev, .lang-menu { transition: none; } }

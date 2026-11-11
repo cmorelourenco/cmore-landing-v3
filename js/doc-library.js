@@ -33,7 +33,14 @@ window.CMLibrary = (() => {
       return d ? { title: plain(d.name), area: d.area, note: hit[1].ok ? 'Filed in the setup' : 'Read in the setup', base: plain(d.name) } : { title: name, area: '', note: 'Uploaded in the setup', base: '' };
     }
     if (c.startsWith('uncat:')) { const x = window.CMUncat && window.CMUncat.get(c.slice(6)); return { title: x ? x.name || x.file : r.name, area: '__u', note: x ? 'In Uncategorized documents' : 'Uploaded', base: '' }; }
-    const [code, i] = c.split('#'), d = docOf(code); if (!d) return null;
+    const [code, i] = c.split('#');
+    // a worker's identity document, the worker register (js/doc-upload.js); a record that isn't here
+    // in this session (another tab's), left out
+    const recOk = (kind, k) => !!(({ workers: D.WORKERS, equipment: D.EQUIPMENT, products: D.PRODUCTS }[kind] || [])[k]);
+    if (code === 'ID') { if (!recOk('workers', +i)) return null; const who = plain(D.recordName('workers', +i)); return { title: 'Identity document', who, area: 'workers', note: 'Filed in Documents', base: `Identity document - ${who}` }; }
+    if (code === 'WK-REG') return { title: 'Worker register', area: 'workers', note: 'Filed in Documents', base: 'Worker register' };
+    const d = docOf(code); if (!d) return null;
+    if (i != null && d.kind && !recOk(d.kind, +i)) return null;
     if (i != null && d.kind) { const who = plain(D.recordName(d.kind, +i)); return { title: plain(d.name), who, area: d.area, note: 'Filed in Documents', base: `${plain(d.name)} - ${who}` }; }
     return { title: plain(d.name), area: d.area, note: 'Filed in Documents', base: plain(d.name) };
   };
