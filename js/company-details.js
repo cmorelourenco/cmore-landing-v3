@@ -541,7 +541,8 @@
     })).join('');
     // an area of a company added in this session, with nothing uploaded to it yet
     const empty = area && !filtering() && !DATA.some((d) => d.area === area);
-    groupsEl.innerHTML = list.length ? (area && !filtering() ? matrix(area) : '') + html : empty ? areaEmpty(area) : none();
+    // Workers ends with the archived ones, as Company ends with its archived documents
+    groupsEl.innerHTML = (list.length ? (area && !filtering() ? matrix(area) : '') + html : empty ? areaEmpty(area) : none()) + (area === 'workers' && !filtering() ? archivedTable() : '');
   };
 
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
@@ -572,9 +573,23 @@
       <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${key !== 'products' ? `<span>Open a ${NOUN[key][0]} for ${key === 'workers' ? 'their' : 'its'} profile and documents; a dot uploads or replaces that one.</span>` : ''}</p></div>`;
   };
 
-  // the documents of one worker or machine: every per-record document that covers them
+  // Archived workers: archived from their own page (the switch there), off the list and every site,
+  // their documents kept read-only. A row opens the worker, where Unarchive brings them back.
+  const archivedTable = () => {
+    const list = PERSON.map((p, i) => ({ p, i })).filter((x) => x.p.archived)
+      .sort((a, b) => (Date.parse(b.p.archived) || 0) - (Date.parse(a.p.archived) || 0));
+    const kept = (i) => recordDocs('workers', i).length;
+    const rows = list.map(({ p, i }) => `<tr class="cd-row is-rosterable" data-worker="${i}" tabindex="0" role="link" aria-label="Open ${p.name}, archived"><td><span class="n">${p.name}</span><span class="d">${p.role}</span></td><td class="c">${esc(p.archived)}</td><td class="c">${kept(i)} kept, read&#8209;only</td><td><span class="co-badge b-arch">Archived</span><span class="cd-row-open" aria-hidden="true">${CHEV_R}</span></td></tr>`).join('');
+    return `<div class="cd-group" data-archived-workers><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Archived workers</h3><span class="co-muted">${list.length} worker${list.length === 1 ? '' : 's'}</span></div>
+      ${list.length ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-arch-tbl" data-paged="wk-archived"><thead><tr><th>Worker</th><th class="c">Archived on</th><th class="c">Documents</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="cd-legend"><span>Archived workers are off your worker list and every site. Open one to see their details, or to unarchive them.</span></p>`
+      : `<div class="co-card cd-none cd-arch-none"><b class="co-row-n">No archived workers</b><span class="co-subtle">When someone leaves, open them and switch on Archive worker. Their documents are kept here, read&#8209;only.</span></div>`}</div>`;
+  };
+
+  // the documents of one worker or machine: every per-record document that covers them (an archived
+  // worker's, as they were kept)
   const recordDocs = (kind, i) => DOCS.filter((d) => d.kind === kind && d.roster).map((d) => {
-    const r = d.roster.find((x) => x.i === i); return r ? { code: d.code, name: d.name, req: d.requirement, status: r.status, exp: r.exp, spec: `rec:${d.code}:${i}` } : null;
+    const r = d.roster.find((x) => x.i === i) || (d.kept || []).find((x) => x.i === i); return r ? { code: d.code, name: d.name, req: d.requirement, status: r.status, exp: r.exp, spec: `rec:${d.code}:${i}` } : null;
   }).filter(Boolean);
   const kv = (k, v) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`;
   const docRow = (d) => { const [l, c] = STATUS[d.status]; return `<tr${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.code} &middot; ${d.req}</span></td><td class="c">${d.status === 'missing' ? '&mdash;' : d.exp}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed">${d.spec ? UPB(d.spec, !NO_FILE.includes(d.status), d.name) : ''}</td></tr>`; };
@@ -584,16 +599,20 @@
   // one worker: their profile, whether they may work here, their documents, and their sites.
   // Personal data is Restricted: a client sees it only while this worker is on one of its sites.
   const renderWorker = (i) => {
-    const p = PERSON[i];
-    const per = recordDocs('workers', i);
+    const p = PERSON[i], gone = !!p.archived;
+    const per = recordDocs('workers', i).map((d) => (gone ? Object.assign(d, { spec: '' }) : d)); // kept read-only
     const month = DOCS.filter((d) => d.level === 'all_workers' && d.req !== 'optional').map((d) => ({ code: d.code, name: d.name, req: 'Covers every worker', status: d.status, exp: d.valid, spec: d.status === 'na' ? '' : `doc:${d.id}` }));
-    const [wl, wc] = STATUS[worstOf(per.map((d) => d.status))];
+    const [wl, wc] = gone ? ['Archived', 'b-arch'] : STATUS[worstOf(per.map((d) => d.status))];
+    // archiving: a switch beside their name; on, it asks first (the modal below); off, they're back
+    const sw = `<span class="cd-arch-sw"><span id="cd-arch-l-${i}">Archive worker</span><button type="button" class="co-sw" role="switch" aria-checked="${gone}" aria-labelledby="cd-arch-l-${i}" data-archive="${i}"><i></i></button></span>`;
+    const gonebar = gone ? `<div class="cd-arch-bar" role="status"><span><b>Archived on ${esc(p.archived)}.</b> Off your worker list and every site: clients no longer see their data, and ALMA doesn&rsquo;t ask for their documents. What was on file is kept, read&#8209;only.</span><button type="button" class="btn btn-primary btn-sm" data-unarchive="${i}">Unarchive worker</button></div>` : '';
     const right = p.permit
       ? `<span class="co-badge ${STATUS[p.permit.status][1]}">${p.permit.status === 'valid' ? 'Valid permit' : 'Permit expiring'}</span> <span class="co-subtle">${p.permit.type} &middot; ${p.permit.no} &middot; until ${p.permit.until}</span>`
       : `<span class="co-badge b-ok">No permit needed</span> <span class="co-subtle">${p.nationalityName} citizen${p.nationality !== 'PT' ? ', EU' : ''}</span>`;
     groupsEl.innerHTML = `<div class="cd-detail cd-worker">
-      <div class="cd-area-head"><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment.toLowerCase()} since ${p.since} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
-      <p class="cd-restricted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>Restricted personal data. Clients see it only while ${p.name.split(' ')[0]} is on one of their sites.</p>
+      <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment.toLowerCase()} since ${p.since} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
+      ${gonebar}
+      ${gone ? '' : `<p class="cd-restricted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>Restricted personal data. Clients see it only while ${p.name.split(' ')[0]} is on one of their sites.</p>`}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Worker profile</h3><span class="co-muted">Data only, no file</span></div>
         <div class="co-card cd-card-pad"><dl class="pd-grid">
           ${kv('Full name', p.name)}${kv('Job category', p.role)}${kv('Nationality', p.nationalityName)}
@@ -603,8 +622,8 @@
           ${kv('Right to work in Portugal', right)}
         </dl></div></div>
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Their documents</h3><span class="co-muted">${per.length} document${per.length === 1 ? '' : 's'}</span></div>${docsCard(per)}</div>
-      ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Monthly cover</h3><span class="co-muted">September</span></div>${docsCard(month)}</div>` : ''}
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">On site</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(p.sites)}</div>
+      ${month.length && !gone ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Monthly cover</h3><span class="co-muted">September</span></div>${docsCard(month)}</div>` : ''}
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${gone ? 'Was on site' : 'On site'}</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(p.sites)}</div>
     </div>`;
   };
 
@@ -751,7 +770,51 @@
     render(); toTop();
   });
 
+  // ---- archiving a worker: a word first, then the page again from the model -------------------------
+  const ARX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  let archDlg = null, archLast = null;
+  const archShut = () => { archDlg.hidden = true; document.documentElement.classList.remove('dlg-open'); if (archLast && archLast.isConnected) archLast.focus({ preventScroll: true }); };
+  const askArchive = (i) => {
+    const p = PERSON[i], n = recordDocs('workers', i).length;
+    if (!archDlg) {
+      archDlg = document.createElement('div'); archDlg.className = 'dlg cd-arch-dlg'; archDlg.hidden = true;
+      archDlg.innerHTML = `<div class="dlg-scrim" data-ax></div><div class="dlg-card" role="alertdialog" aria-modal="true" aria-labelledby="cd-arch-t" aria-describedby="cd-arch-p">
+        <button type="button" class="dlg-x" data-ax aria-label="Close">${ARX}</button>
+        <div class="dlg-head"><span class="cd-arch-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span><h2 id="cd-arch-t"></h2><p id="cd-arch-p"></p></div>
+        <div class="dlg-body"><ul class="cd-arch-list" id="cd-arch-list"></ul></div>
+        <div class="dlg-foot"><button type="button" class="btn btn-quiet" data-ax>Cancel</button><button type="button" class="btn btn-primary cd-arch-go" id="cd-arch-go">Archive worker</button></div></div>`;
+      document.body.appendChild(archDlg);
+      archDlg.addEventListener('click', (e) => { if (e.target.closest('[data-ax]')) archShut(); });
+      archDlg.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); archShut(); } });
+      archDlg.querySelector('#cd-arch-go').addEventListener('click', () => {
+        const k = +archDlg.dataset.i, q = PERSON[k];
+        window.DOC_MODEL.saveCrew({ archive: [k, window.DOC_MODEL.today()] });
+        // the page again from the model, on the same worker, now archived
+        try { sessionStorage.setItem('cm-upload-toast', `${q.name} is archived. They&rsquo;re in Archived workers, at the end of Workers, with their documents.`); } catch (e) {}
+        location.href = `company-details.html?area=workers&worker=${k}`;
+      });
+    }
+    archDlg.dataset.i = i; archLast = document.activeElement;
+    archDlg.querySelector('#cd-arch-t').innerHTML = `Archive ${p.name}?`;
+    archDlg.querySelector('#cd-arch-p').textContent = 'Do this when someone no longer works for you. They come off your worker list and off every site you have them on.';
+    archDlg.querySelector('#cd-arch-list').innerHTML = [
+      `Clients on ${p.sites.length === 1 ? 'their site' : `their ${p.sites.length} sites`} stop seeing their personal data.`,
+      'ALMA stops asking for their documents, and they no longer count in your compliance.',
+      `Their ${n} document${n === 1 ? ' is' : 's are'} kept, read&#8209;only.`,
+      'You can unarchive them at any time from Archived workers.'].map((t) => `<li>${t}</li>`).join('');
+    archDlg.hidden = false; document.documentElement.classList.add('dlg-open');
+    setTimeout(() => archDlg.querySelector('[data-ax].btn').focus(), 30);
+  };
+  const unarchive = (i) => {
+    window.DOC_MODEL.saveCrew({ unarchive: i });
+    try { sessionStorage.setItem('cm-upload-toast', `${PERSON[i].name} is back on your worker list. ALMA asks for their documents again.`); } catch (e) {}
+    location.href = `company-details.html?area=workers&worker=${i}`;
+  };
+
   groupsEl.addEventListener('click', (e) => {
+    const sw = e.target.closest('[data-archive]');
+    if (sw) { const i = +sw.dataset.archive; if (sw.getAttribute('aria-checked') === 'true') unarchive(i); else askArchive(i); return; }
+    const ua = e.target.closest('[data-unarchive]'); if (ua) { unarchive(+ua.dataset.unarchive); return; }
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
     const al = e.target.closest('[data-alma-area]'); if (al) { askALMA(al.dataset.almaArea); return; }
     const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); toTop(); return; }
@@ -886,11 +949,15 @@
   const openArea = new URLSearchParams(location.search).get('area');
   if (openArea && AREAS.some((a) => a.key === openArea)) area = openArea;
   const openDoc = openCode && DOCS.find((d) => d.code === openCode);
+  const qs = new URLSearchParams(location.search), openWk = qs.get('worker'), toArch = qs.has('archived');
+  if (openWk != null && PERSON[+openWk]) { area = 'workers'; worker = +openWk; }
+  if (openWk != null || toArch) { qs.delete('worker'); qs.delete('archived'); window.history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash); }
   if (openDoc) {
     area = openDoc.area;
     if (openDoc.kind && openDoc.roster.length) { detail = openDoc.id; resetDetailFilter(); }
   }
   render();
+  if (toArch) { const a = groupsEl.querySelector('[data-archived-workers]'); if (a) setTimeout(() => scrollTo({ top: a.getBoundingClientRect().top + scrollY - 96 }), 60); }
   if (openDoc && detail === null) {
     const arrived = groupsEl.querySelector(`[data-row-id="${openDoc.id}"]`);
     if (arrived) { arrived.scrollIntoView({ block: 'center' }); arrived.classList.add('is-arrived'); setTimeout(() => openDrawer(openDoc.id), 450); }

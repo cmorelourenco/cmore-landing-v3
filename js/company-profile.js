@@ -37,7 +37,7 @@
       e.preventDefault();
       const v = now(f);
       const bad = f.dataset.cp ? CO_PROFILE.check(v) : (Object.keys(v).map((k) => [CHECK[k] && CHECK[k](v[k]), k]).find(([m]) => m) || null);
-      if (bad) { const i = f.querySelector(`[data-k="${bad[1]}"]`); if (i) { i.classList.add('is-bad'); i.focus(); } err.textContent = bad[0]; return; }
+      if (bad) { const i = f.dataset.cp ? CO_PROFILE.fieldOf(f, bad[1]) : f.querySelector(`[data-k="${bad[1]}"]`); if (i) { i.classList.add('is-bad'); i.focus(); } err.textContent = bad[0]; return; }
       Object.assign(p, v);
       CO_PROFILE.save(p); p = CO_PROFILE.load();
       if (f.dataset.cp) draw(f); sync(); paintLogo();

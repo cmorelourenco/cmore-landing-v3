@@ -28,6 +28,31 @@ window.HOME_DOCS = (() => {
   const supplierRows = [...tbl.tBodies[0].rows].filter((r) => !r.dataset.code).map((r) => r.outerHTML).join('');
   const go = (code) => { location.href = `company-details.html?open=${encodeURIComponent(code)}`; };
 
+  // Profile completion is the setup's (js/guided-upload.js, for a new company). The demo company's
+  // setup is done: what it asked for is its registration documents (CM_COMPANY_DOCS.mandatory) and the
+  // company-wide mandatory documents of Workers and Equipment (one file each, not person by person,
+  // which is Documents' business), each in once it's on file; and a subsector for every sector,
+  // which is mandatory (js/co-profile.js). { all, done, pct, docsLeft: [{ area, d }], noSub }
+  const ON_FILE = (d) => !!d && !['missing', 'notuploaded'].includes(d.status);
+  const demoCompletion = () => {
+    const reg = (window.CM_COMPANY_DOCS && M.PROFILE ? window.CM_COMPANY_DOCS.mandatory(M.PROFILE.country) : []).map((c) => M.DOCS.find((d) => d.code === c.code)).filter(Boolean);
+    const wide = M.DOCS.filter((d) => ['workers', 'equipment'].includes(d.area) && !d.kind && /^Mandatory/.test(d.requirement || ''));
+    const docs = reg.map((d) => ({ area: 'registration', d })).concat(wide.map((d) => ({ area: d.area, d })));
+    const docsLeft = docs.filter((x) => !ON_FILE(x.d));
+    const P = window.CO_PROFILE, pr = P && P.subsMissing ? P.load() : null;
+    const noSub = pr ? (pr.sectors ? P.subsMissing(pr) : ['']) : [];
+    const all = docs.length + (pr ? 1 : 0), done = all - docsLeft.length - (noSub.length ? 1 : 0);
+    return { all, done, pct: all ? Math.round((done / all) * 100) : 100, docsLeft, noSub };
+  };
+  const TITLE = { registration: 'Registration', company: 'Company', workers: 'Workers', equipment: 'Equipment' };
+  const leftLine = (c) => {
+    if (window.CMGuided && window.CMGuided.leftLine) return window.CMGuided.leftLine(c);
+    if (c.pct === 100) return 'every document asked of you is in, and your profile is complete.';
+    const P = window.CO_PROFILE, l = c.docsLeft;
+    const sub = !c.noSub.length ? '' : c.noSub[0] ? `choose a subsector for ${c.noSub.map((k) => P.label(P.SECTORS, k)).join(' and ')}` : 'choose your sector and subsector';
+    const docs = l.length ? `${l.length} document${l.length === 1 ? '' : 's'} left: ${[...new Set(l.map((x) => x.area))].map((a) => `${l.filter((x) => x.area === a).length} in ${TITLE[a]}`).join(', ')}` : '';
+    return [sub, docs].filter(Boolean).join(', and ') + '.';
+  };
   const render = () => {
     const need = M.needing();
     // the table: the most urgent first, the suppliers' own after them
@@ -50,13 +75,24 @@ window.HOME_DOCS = (() => {
       const others = [...document.querySelectorAll('#filled .co-k')].filter((k) => k !== card).reduce((n, k) => n + (+(k.querySelector('.co-k-n') || {}).textContent || 0), 0);
       const head = $('co-k-head-n'); if (head) head.textContent = `${need.length + others} things`;
     }
-    // profile completion: the share of documents asked of the company that are in order
-    const asked = M.DOCS.filter(M.counted), ok = asked.filter(M.isOk).length;
-    const pct = asked.length ? Math.round((ok / asked.length) * 100) : 0;
+    // profile completion: the setup's, what it asks for and a subsector for each sector (js/guided-upload.js,
+    // which draws it again once it's loaded); until then, the documents asked for that are on file
+    const G = window.CMGuided && window.CMGuided.completion ? window.CMGuided : null;
+    const c = G ? G.completion() : demoCompletion();
+    const pct = c.pct;
     const meter = $('co-meter');
-    if (meter) { meter.firstElementChild.style.width = pct + '%'; meter.setAttribute('aria-valuenow', String(pct)); }
+    if (meter) { meter.firstElementChild.style.width = pct + '%'; meter.firstElementChild.style.background = pct === 100 ? 'var(--color-ok, #a6d8a0)' : ''; meter.setAttribute('aria-valuenow', String(pct)); }
     if ($('co-pct')) $('co-pct').textContent = pct + '%';
-    if ($('co-left')) $('co-left').textContent = need.length ? ` · ${need.length} document${need.length === 1 ? '' : 's'} to sort out, starting with the ${need[0].name.toLowerCase().replace(/^h&s/, 'H&S')}.` : ' · every document in order.';
+    if ($('co-left')) $('co-left').textContent = ' · ' + leftLine(c);
+    // Finish company profile: ALMA on the first section with a document left; or the subsector; or done
+    const fin = document.querySelector('#filled .co-strip .co-wrap > a');
+    if (fin) {
+      const a2 = fin.cloneNode(false); a2.removeAttribute('onclick');
+      if (c.pct === 100) { a2.href = 'company-details.html'; a2.textContent = 'View documents'; }
+      else if (c.docsLeft.length) { a2.href = '#'; a2.textContent = 'Finish company profile'; const area = c.docsLeft[0].area; a2.addEventListener('click', (e) => { e.preventDefault(); if (G) G.open(area); else go(c.docsLeft[0].d.code); }); }
+      else { a2.href = 'company-profile.html?need=sub#activity'; a2.textContent = 'Finish company profile'; }
+      fin.replaceWith(a2);
+    }
   };
   tbl.tBodies[0].addEventListener('click', (e) => { const r = e.target.closest('tr[data-code]'); if (r) go(r.dataset.code); });
   tbl.tBodies[0].addEventListener('keydown', (e) => { const r = e.target.closest('tr[data-code]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(r.dataset.code); } });

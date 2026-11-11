@@ -121,7 +121,9 @@ window.DOC_MODEL = (() => {
   // joined (added at the end, so everyone else keeps their documents), who left, whose job changed.
   // Kept for this tab.
   const CREW_KEY = 'cm-crew' + (PERSONA === 'beatriz' ? '-beatriz' : '');
-  const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {} }; } })();
+  // archived: archived by hand from a worker's page (js/company-details.js), { worker: the day }:
+  // off the list like one who left, their documents kept read-only, and back with Unarchive
+  const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {}, archived: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {}, archived: {} }; } })();
   const CREW_BASE = WORKERS.length;
   if (PERSONA === 'miguel') {
     crew.added.forEach(([n, r]) => WORKERS.push([n, r]));
@@ -131,6 +133,8 @@ window.DOC_MODEL = (() => {
     crew.added = crew.added.concat(patch.added || []);
     crew.left = [...new Set(crew.left.concat(patch.left || []))];
     Object.assign(crew.roles, patch.roles || {});
+    if (patch.archive) crew.archived[patch.archive[0]] = patch.archive[1];
+    if (patch.unarchive != null) delete crew.archived[patch.unarchive];
     try { sessionStorage.setItem(CREW_KEY, JSON.stringify(crew)); } catch (e) {}
   };
   const EQUIPMENT = [
@@ -174,7 +178,7 @@ window.DOC_MODEL = (() => {
       permit: non ? { type: non[2], no: non[3], until: non[4], status: non[5] } : null,
       sites: [[0], [0, 2], [1], [0], [0], [2], [1], [0, 1, 2], [2], [0], [1], [0], [2], [1], [0], [2], [1], [0], [1], [0], [2], [0], [2], [0, 1]][i] || [0],
       // joined from an approved worker list (no documents yet), or no longer on it
-      isNew: i >= CREW_BASE, left: crew.left.includes(i),
+      isNew: i >= CREW_BASE, left: crew.left.includes(i) || !!crew.archived[i], archived: crew.archived[i] || '',
       // what the rules read (doc-rules.js FACTS)
       specialRisk: SPECIAL_RISK.includes(i), certifiedOperator: OPERATORS.includes(i), employmentType: i % 6 === 5 ? 'fixed_term' : 'permanent',
     };
@@ -412,10 +416,13 @@ window.DOC_MODEL = (() => {
     if (kind) {
       // one per worker, machine or product: the rules say which records it covers
       const all = D.records[kind].map((r, i) => Object.assign({ i }, r));
-      let covers = R.subjectsFor(c, all, PROFILE).filter((r) => !r.left).map((r) => r.i);
+      const subj = R.subjectsFor(c, all, PROFILE);
+      let covers = subj.filter((r) => !r.left).map((r) => r.i);
+      // an archived worker's, kept read-only (not asked for, not counted)
+      let held = subj.filter((r) => r.archived).map((r) => r.i);
       const pr = D.perRecord[c.code] || {};
-      if (c.requirement === 'on_request') covers = covers.filter((i) => (pr.requested || []).includes(i));
-      if (c.requirement === 'optional') covers = covers.filter((i) => (pr.have || []).includes(i));
+      if (c.requirement === 'on_request') { covers = covers.filter((i) => (pr.requested || []).includes(i)); held = held.filter((i) => (pr.requested || []).includes(i)); }
+      if (c.requirement === 'optional') { covers = covers.filter((i) => (pr.have || []).includes(i)); held = held.filter((i) => (pr.have || []).includes(i)); }
       const upOf = (i) => updates[`${c.code}#${i}`];
       const statusOf = (i) => { if (upOf(i)) return upOf(i).status; if (all[i] && all[i].isNew) return 'missing'; const o = (pr.over || {})[i]; if (o) return o[0]; return pr.def ? pr.def[0] : 'missing'; };
       const expOf = (i) => { if (upOf(i)) return upOf(i).exp; if (all[i] && all[i].isNew) return '—'; const o = (pr.over || {})[i]; if (o) return o[1] || '—'; return pr.def ? pr.def[1](i) : '—'; };
@@ -423,7 +430,8 @@ window.DOC_MODEL = (() => {
       const status = roster.length ? worstOf(roster.map((r) => r.status))
         : c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'na';
       const note = !roster.length && status === 'na' ? `None of your ${NOUN[kind][1]} need it.` : '';
-      doc = Object.assign(base, { kind, roster, status, issued: '—', valid: '—', note, ref: '', by: issuerOf(c), edited: false });
+      const kept = held.map((i) => ({ i, status: statusOf(i), exp: expOf(i) }));
+      doc = Object.assign(base, { kind, roster, kept, status, issued: '—', valid: '—', note, ref: '', by: issuerOf(c), edited: false });
     } else {
       const status = st ? st[0] : c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'missing';
       const extra = (st && st[4]) || {};

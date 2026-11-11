@@ -66,7 +66,7 @@ window.CO_PROFILE = (() => {
     miguel: {
       country: 'Portugal', tax: '514228930', name: 'Ferreira Construções, Lda.', trading: 'Ferreira Construções', form: 'private', formOther: '',
       hqElsewhere: '', hqCountry: '', street: 'Rua do Freixo 1071', postcode: '4300-219', city: 'Porto', region: 'Porto',
-      sector: 'F', sectors2: '', cae: ['41200 · Construction of residential and non-residential buildings', '43210 · Electrical installation'], exports: 'no',
+      sector: 'F', sectors2: '', subsectors: '', cae: ['41200 · Construction of residential and non-residential buildings', '43210 · Electrical installation'], exports: 'no',
       employees: '10-49', employeesYear: YEARS[1], revenue: '2-10', revenueYear: YEARS[1], currency: 'EUR', structure: 'independent', parentOrg: '', parentCountry: '', parentVat: '',
       email: 'geral@ferreiraconstrucoes.pt', cc: '+351', phone: '22 600 4180', website: 'ferreiraconstrucoes.pt',
       logo: 'images/ferreira-logo.webp',
@@ -134,6 +134,10 @@ window.CO_PROFILE = (() => {
   // Older profiles had one primary sector and secondary ones: they're all its sectors now, and the
   // subsectors start from its activity codes. sector and sectors2 stay, for what still reads them.
   const split = (v) => [...new Set(String(v || '').split(',').filter(Boolean))];
+  // the sectors that have no subsector yet
+  const subsMissing = (p) => split(p.sectors).filter((k) => !split(p.subsectors).some((d) => sectorOfCode(d) === k));
+  // a field a check names: one of the form's, or a sector's list of subsectors ('sub:F')
+  const fieldOf = (root, k) => (/^sub:/.test(k) ? root.querySelector(`.cpf-sec[data-sec="${k.slice(4)}"] [data-sub-add]`) : root.querySelector(`[data-k="${k}"]`));
   const subsOfCae = (cae, secs) => [...new Set((cae || []).map((c) => String(c).slice(0, 2)))].filter((d) => SUBSECTORS.some(([k]) => k === d) && secs.includes(sectorOfCode(d)));
   const acts = (p) => {
     if (p.sectors == null) p.sectors = split([p.sector].concat(split(p.sectors2)).join(',')).join(',');
@@ -216,6 +220,11 @@ window.CO_PROFILE = (() => {
 .cpf-sec-x:hover, .cpf-sec-x:focus-visible { background: var(--color-light-beige); color: var(--color-ink); }
 .cpf-sec-x svg { width: 0.75rem; height: 0.75rem; }
 .cpf-sec .cpf-sub-add { font-size: 0.875rem; }
+.cpf-sec.is-need { border-color: color-mix(in oklab, var(--color-caution) 45%, var(--color-line)); }
+.cpf-need { font-size: 0.8125rem; color: var(--color-caution); font-weight: 500; }
+.cpf-sec .cpf-sub-add.is-bad { border-color: var(--color-critical); }
+.cpf-sec.is-asked { animation: cpf-arrive 2.6s var(--ease-brand, ease); }
+@keyframes cpf-arrive { 0%, 60% { box-shadow: 0 0 0 0.375rem var(--color-light-beige); } 100% { box-shadow: 0 0 0 0.375rem transparent; } }
 .cpf-chip svg { width: 0.75rem; height: 0.75rem; }
 .cpf-codes { list-style: none; margin: 0; padding: 0; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-surface); }
 .cpf-codes li { padding: 0.625rem 0.875rem; font-size: 0.9375rem; color: var(--color-ink); }
@@ -240,9 +249,9 @@ window.CO_PROFILE = (() => {
     const secs = split(sectors), subs = split(subsectors);
     const card = (k) => {
       const name = label(SECTORS, k), mine = subs.filter((d) => sectorOfCode(d) === k), left = SUBSECTORS.filter(([d]) => sectorOfCode(d) === k && !mine.includes(d));
-      return `<li class="cpf-sec"><div class="cpf-sec-h"><b>${esc(name)}</b><button type="button" class="cpf-sec-x" data-unsec="${k}" aria-label="Remove ${esc(name)}">${X_I}</button></div>
+      return `<li class="cpf-sec${mine.length ? '' : ' is-need'}" data-sec="${k}"><div class="cpf-sec-h"><b>${esc(name)}</b><button type="button" class="cpf-sec-x" data-unsec="${k}" aria-label="Remove ${esc(name)}">${X_I}</button></div>
         <div class="cpf-chips">${mine.map((d) => `<span class="cpf-chip">${esc(label(SUBSECTORS, d))}<button type="button" data-unsub="${d}" aria-label="Remove ${esc(label(SUBSECTORS, d))}">${X_I}</button></span>`).join('')}</div>
-        ${left.length ? `<select class="input cpf-sub-add" data-sub-add aria-label="Add a subsector of ${esc(name)}"><option value="">${mine.length ? 'Add another subsector' : 'Add a subsector'} (optional)</option>${left.map(([d, l]) => `<option value="${d}">${esc(l)}</option>`).join('')}</select>` : ''}</li>`;
+        ${left.length ? `<select class="input cpf-sub-add" data-sub-add aria-label="Add a subsector of ${esc(name)}"><option value="">${mine.length ? 'Add another subsector' : 'Choose a subsector'}</option>${left.map(([d, l]) => `<option value="${d}">${esc(l)}</option>`).join('')}</select>` : ''}${mine.length ? '' : '<span class="cpf-need">Choose at least one: your profile can&rsquo;t be completed without it.</span>'}</li>`;
     };
     const rest = SECTORS.filter(([k]) => !secs.includes(k));
     return `${secs.length ? `<ul class="cpf-secs">${secs.map(card).join('')}</ul>` : ''}
@@ -343,6 +352,8 @@ window.CO_PROFILE = (() => {
       || (has('form') && v.form === 'other' && !v.formOther ? ['Say which legal form it is.', 'formOther'] : null)
       || (has('hqElsewhere') && v.hqElsewhere && !v.hqCountry ? ['Choose the country its headquarters are in.', 'hqCountry'] : null)
       || need('sectors', 'Choose the sector the company works in.')
+      // every sector needs at least one subsector: without it the profile can't be completed
+      || (has('subsectors') && v.sectors ? ((m) => (m.length ? [`Choose at least one subsector for ${label(SECTORS, m[0])}.`, 'sub:' + m[0]] : null))(subsMissing(v)) : null)
       || need('employees', 'Choose how many people work for the company.')
       || need('revenue', 'Choose the company’s annual revenue.')
       || (strict ? need('structure', 'Say whether the company is part of a group.') : null)
@@ -447,5 +458,5 @@ window.CO_PROFILE = (() => {
   };
 
   return { load, save, line, today, BADGE, SAY, WHEN, applyToCompanyPage, defaults: () => JSON.parse(JSON.stringify(DEFAULTS[who()] || BLANK)),
-    SECTIONS, section, wire, collect, value, check, isEU, sectorOfCode, subsOfCae, label, formLabel, revenueLabel, FORMS, SECTORS, SUBSECTORS, EMPLOYEES, initials };
+    SECTIONS, section, wire, collect, value, check, subsMissing, fieldOf, isEU, sectorOfCode, subsOfCae, label, formLabel, revenueLabel, FORMS, SECTORS, SUBSECTORS, EMPLOYEES, initials };
 })();

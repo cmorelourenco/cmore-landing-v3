@@ -86,6 +86,17 @@
   // first section with something missing.
   // Registration is what's mandatory of the company itself; the Company step's documents are all optional
   const counted = () => ['registration'].concat(profile.employees > 0 ? ['workers'] : [], profile.equipmentCount ? ['equipment'] : []).filter((a) => !SOON.areas.includes(a)).flatMap((a) => asks(a).map((d) => Object.assign({ area: a }, { d }))); // what's optional doesn't count against it
+  // Profile completion, on both homepages: each document the setup asks for, in once ALMA's check
+  // accepted it or it's on file (the demo company's, in DOC_MODEL), and a subsector for every sector
+  // (it's mandatory: js/co-profile.js). { all, done, pct, docsLeft, noSub }
+  const completion = () => {
+    const docs = counted(), onFile = (code) => { const m = DM.DOCS.find((d) => d.code === code); return !!m && !['missing', 'notuploaded'].includes(m.status); };
+    const docsLeft = docs.filter((x) => !(saved.files[x.d.code] || {}).ok && !onFile(x.d.code));
+    const P = window.CO_PROFILE, pr = P && P.subsMissing ? P.load() : null;
+    const noSub = pr ? (pr.sectors ? P.subsMissing(pr) : ['']) : [];
+    const all = docs.length + (pr ? 1 : 0), done = all - docsLeft.length - (noSub.length ? 1 : 0);
+    return { all, done, pct: all ? Math.round((done / all) * 100) : 100, docsLeft, noSub };
+  };
   // the optional ones accepted: on the homepage's Documents card and table, but not in its completion
   const extras = () => asks('company').filter((d) => (saved.files[d.code] || {}).ok).map((d) => ({ area: 'company', d, opt: true }));
   // the homepage follows along while ALMA asks, docked beside it: each part she changes (the strip,
@@ -127,18 +138,26 @@
       <span class="gs-facts">${facts.join('')}</span>
       <span class="co-subtle" style="font-size:0.9375rem">${left ? `${left} more registration document${left === 1 ? '' : 's'} and this is complete.` : done ? esc(CO_PROFILE.line(CO_PROFILE.load())) : 'Next, check who the company is, as these documents say.'}</span>`;
   };
-  const paintStrip = (box, all, ok) => {
-    const p = Math.round((ok.length / all.length) * 100), left = all.filter((x) => !ok.includes(x));
+  const paintStrip = (box) => {
+    const c = completion(), p = c.pct, left = c.docsLeft;
     const meter = box.querySelector('.co-meter'), bar = meter.firstElementChild;
     bar.style.width = p + '%'; bar.style.background = p === 100 ? 'var(--color-ok, #a6d8a0)' : '';
     meter.setAttribute('aria-valuenow', String(p));
-    const bySec = [...new Set(left.map((x) => x.area))].map((a) => `${left.filter((x) => x.area === a).length} in ${AREA[a].title}`).join(', ');
-    box.querySelector('.co-strip-l > span:last-child').innerHTML = `<b>${p}%</b><span class="co-strip-more"> &middot; ${p === 100 ? 'every document asked of you is in, checked and in your Documents.' : `${left.length} document${left.length === 1 ? '' : 's'} left: ${bySec}.`}</span>`;
+    box.querySelector('.co-strip-l > span:last-child').innerHTML = `<b>${p}%</b><span class="co-strip-more"> &middot; ${esc(leftLine(c))}</span>`;
     const old = box.querySelector('.co-wrap > a'), a = old.cloneNode(false);
     a.removeAttribute('data-ce-start');
     if (p === 100) { a.href = 'company-details.html'; a.textContent = 'View documents'; }
+    else if (!left.length) { a.href = 'company-profile.html?need=sub#activity'; a.textContent = 'Finish company profile'; } // only the subsector left
     else { a.href = '#'; a.textContent = 'Finish company profile'; a.addEventListener('click', (e) => { e.preventDefault(); if (!tour({ again: true })) open(left[0].area); }); }
     old.replaceWith(a);
+  };
+  // what's left, in a line: the subsector, then the documents by section
+  const leftLine = (c) => {
+    if (c.pct === 100) return 'every document asked of you is in, and your profile is complete.';
+    const P = window.CO_PROFILE, l = c.docsLeft;
+    const sub = !c.noSub.length ? '' : c.noSub[0] ? `choose a subsector for ${c.noSub.map((k) => P.label(P.SECTORS, k)).join(' and ')}` : 'choose your sector and subsector';
+    const docs = l.length ? `${l.length} document${l.length === 1 ? '' : 's'} left: ${[...new Set(l.map((x) => x.area))].map((a) => `${l.filter((x) => x.area === a).length} in ${AREA[a].title}`).join(', ')}` : '';
+    return [sub, docs].filter(Boolean).join(', and ') + '.';
   };
   const home = (ok) => {
     const card = document.querySelector('#empty .co-k[data-go="docs"]'), tbl = document.querySelector('#empty .co-docs-tbl');
@@ -881,7 +900,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
       if (bad) {
         factsErr = bad; draft = v; paint();
         // what's wrong, under the field itself
-        const i = $('gs-facts').querySelector(`[data-k="${bad[1]}"]`);
+        const i = CO_PROFILE.fieldOf ? CO_PROFILE.fieldOf($('gs-facts'), bad[1]) : $('gs-facts').querySelector(`[data-k="${bad[1]}"]`);
         if (i) { i.classList.add('is-bad'); (i.closest('.cpf-f') || i.parentNode).insertAdjacentHTML('beforeend', `<p class="gs-err" role="alert">${esc(bad[0])}</p>`); i.focus(); i.scrollIntoView({ block: 'center' }); }
         return;
       }
@@ -1588,7 +1607,9 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     return true;
   };
 
-  window.CMGuided = { open, asks, has, AREA, tour };
+  window.CMGuided = { open, asks, has, AREA, tour, completion, leftLine };
+  // the company homepage drew its strip before this was here: again, from the setup
+  if (window.HOME_DOCS) window.HOME_DOCS.render();
   // a new company's homepage, the first time and until its setup is done or skipped
   const arrive = () => { const t = saved.tour; if (t && t.ended) return; tour({ intro: !t }); };
   if (/[?&]guided\b/.test(location.search)) {
