@@ -678,15 +678,21 @@
     };
     const quals = per.filter((d) => catOf(d) === 'training' && !NO_FILE.includes(d.status));
     // their documents, under what they're for; a section with nothing asked of them says so
-    const catsCard = `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl cd-wk-cats" data-unpaged><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead>${byCat(per).map(([k, l, list]) => `<tbody data-cat="${k}"><tr class="cd-cat-r"><th colspan="4" scope="rowgroup">${l}</th></tr>${list.length ? list.map(docRow).join('') : `<tr class="cd-cat-none"><td colspan="4">Nothing asked of them</td></tr>`}</tbody>`).join('')}</table></div>`;
+    // their documents, as the company's: one table per category (its name and how many), the
+    // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
+    const wkRow = (d) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na';
+      return `<tr class="cd-row"${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
+    const wkTable = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map(wkRow).join('')}</tbody></table></div>`;
+    const docGroups = byCat(per).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${wkTable(list)}</div>`).join('');
     // archiving: a switch beside their name; on, it asks first (the modal below); off, they're back
     const sw = `<span class="cd-arch-sw"><span id="cd-arch-l-${i}">Archive worker</span><button type="button" class="co-sw" role="switch" aria-checked="${gone}" aria-labelledby="cd-arch-l-${i}" data-archive="${i}"><i></i></button></span>`;
     const gonebar = gone ? `<div class="cd-arch-bar" role="status"><span><b>Archived on ${esc(p.archived)}.</b> Off your worker list and every site, and ALMA doesn&rsquo;t ask for their documents. For audits, what was on file is kept, read&#8209;only: you, and the clients you shared them with, can still see it.</span><button type="button" class="btn btn-primary btn-sm" data-unarchive="${i}">Unarchive worker</button></div>` : '';
-    const right = p.passportOnly
-      ? '<span class="co-badge b-pend">To check</span> <span class="co-subtle">Their nationality isn&rsquo;t on file yet. From outside the EU, they need a residence permit.</span>'
-      : p.permit
-      ? `<span class="co-badge ${STATUS[p.permit.status][1]}">${p.permit.status === 'valid' ? 'Valid permit' : 'Permit expiring'}</span> <span class="co-subtle">${p.permit.type} &middot; ${p.permit.no} &middot; until ${p.permit.until}</span>`
-      : `<span class="co-badge b-ok">No permit needed</span> <span class="co-subtle">${p.nationalityName} citizen${p.nationality !== 'PT' ? ', EU' : ''}</span>`;
+    // their right to work: its state, and where they're from (no more than that)
+    const fromOf = () => { try { if (p.nationality && /^[A-Z]{2}$/.test(p.nationality)) return new Intl.DisplayNames(['en'], { type: 'region' }).of(p.nationality); } catch (e) {} return ''; };
+    const from = p.passportOnly && !p.nationalityRead ? '' : fromOf();
+    const right = `${p.passportOnly && !p.nationalityRead ? '<span class="co-badge b-pend">To check</span>'
+      : p.permit ? `<span class="co-badge ${STATUS[p.permit.status][1]}">${p.permit.status === 'valid' ? 'Valid permit' : 'Permit expiring'}</span>`
+      : '<span class="co-badge b-ok">Can work</span>'} <span class="co-subtle">${from ? `From ${esc(from)}` : 'Where they&rsquo;re from isn&rsquo;t on file yet'}</span>`;
     groupsEl.innerHTML = `<div class="cd-detail cd-worker">
       <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment.toLowerCase()} since ${p.since} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
       ${gonebar}
@@ -697,12 +703,12 @@
           ${kv('Birth date', p.birth)}${kv('Tax number', p.tax)}${kv('Social security number', p.ss)}
           ${kv('Home address', p.address)}${kv('Employment', `${p.employment}, since ${p.since}`)}
           ${kv('Identification', `${p.id[0]} &middot; ${p.id[1]}<br><span class="co-subtle">valid until ${p.id[2]}${idf && idf.file ? ' &middot; read by ALMA from their document' : ''}</span>`)}
-          ${kv('Right to work in Portugal', right)}
+          ${kv('Right to work', right)}
           ${kv('Health', said('WK-11', 'Fit for work'))}${kv('Training and qualifications', quals.length ? quals.map((d) => `${esc(d.name)}${d.status === 'valid' ? '' : ` <span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>`}`).join('<br>') : '<span class="co-subtle">None on file</span>')}
           ${kv('Personal protective equipment', said('WK-15', 'Delivered'))}${kv('Driving', said('DRV', 'Licence valid'))}${kv('Other', docOf('CRM') && !NO_FILE.includes(docOf('CRM').status) ? `Criminal record certificate<br>${said('CRM', 'Valid')}` : '<span class="co-subtle">Nothing on file</span>')}
         </dl></div></div>
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Their documents</h3><span class="co-muted">${((n) => `${n} document${n === 1 ? '' : 's'}`)(per.filter((d) => d.status !== 'notuploaded').length)}</span></div>${catsCard}</div>
-      ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Company documents that name them</h3><span class="co-muted">For all workers &middot; what each one says about ${p.name.split(' ')[0]}</span></div>${docsCard(month)}</div>` : ''}
+      ${docGroups}
+      ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Company documents that name them</h3><span class="co-muted">For all workers &middot; what each one says about ${p.name.split(' ')[0]}</span></div>${wkTable(month.map((d) => Object.assign({}, d, { exp: d.exp })))}</div>` : ''}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${gone ? 'Was on site' : 'On site'}</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(p.sites)}</div>
     </div>`;
   };
