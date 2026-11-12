@@ -175,6 +175,17 @@ window.DOC_MODEL = (() => {
     ['Generator &middot; Atlas Copco QAS60', 'EQ&#8209;028'], ['Light tower &middot; Allmand Maxi&#8209;Lite', 'EQ&#8209;035'],
     ['Compressor &middot; Ingersoll Rand 185', 'EQ&#8209;019'], ['Laser level &middot; Leica Rugby 640', 'EQ&#8209;044'],
   ];
+  // machines added from an equipment register ALMA read (js/doc-upload.js): { type, brand, model,
+  // serial, year, ref, owned, on }, at the end of the list, with what the register said of them
+  const EQ_BASE = EQUIPMENT.length;
+  const EQ_KEY = 'cm-eq-added' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const eqAdded = (() => { try { return JSON.parse(sessionStorage.getItem(EQ_KEY) || '[]') || []; } catch (e) { return []; } })();
+  if (PERSONA !== 'beatriz') eqAdded.forEach((m) => EQUIPMENT.push([`${m.type} &middot; ${m.brand} ${m.model}`.trim(), m.ref || 'New']));
+  const saveMachines = (list) => { try { sessionStorage.setItem(EQ_KEY, JSON.stringify(eqAdded.concat(list))); } catch (e) {} };
+  // the equipment register (Registo de equipamentos): the last one ALMA read, { file, on, n }
+  const EQREG_KEY = 'cm-eq-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const eqRegister = () => { try { return JSON.parse(sessionStorage.getItem(EQREG_KEY) || 'null'); } catch (e) { return null; } };
+  const saveEqRegister = (r) => { try { sessionStorage.setItem(EQREG_KEY, JSON.stringify(r)); } catch (e) {} };
   // the products a company supplies, one per row in Products (none for this demo company)
   // Beatriz's products (the same ones as on her company page and product sheets)
   const PRODUCTS = PERSONA === 'beatriz' ? [
@@ -241,9 +252,18 @@ window.DOC_MODEL = (() => {
       yearBuilt: [2019, 2016, 2021, 2020, 1991, 2022, 2018, 2017, 2020, 2021, 2019, 2023][i],
       owned: RENTALS[i] || 'Owned', certified: operators.length > 0, operators,
       measuring: i === 11,
+      // what the equipment list's optional documents are about (js/equipment-docs.js)
+      road: i === 6 || i === 7, lifting: /crane|lift|backhoe/i.test(type), pressure: /compressor/i.test(type),
+      portableElectrical: /welding|light tower|laser|generator/i.test(type), fallArrest: false, scaffold: false,
       sites: [[0], [0], [2], [0, 1], [0], [1], [1], [0, 2], [2], [1], [0], [2]][i],
       hours: i === 11 ? null : 1240 + i * 913,
     };
+  }).map((m, i) => {
+    // one added from a register: what it said of it, and not on a site yet
+    const a = i >= EQ_BASE ? eqAdded[i - EQ_BASE] : null;
+    if (!a) return m;
+    return Object.assign(m, { type: a.type, brand: a.brand, model: a.model, serial: a.serial, yearBuilt: +a.year || m.yearBuilt, ref: a.ref || 'New', owned: a.owned || 'Owned', certified: false, operators: [], sites: [0], hours: null, isNew: true, since: a.on,
+      measuring: /level|laser|measur/i.test(a.type), road: /truck|dumper|tractor/i.test(a.type), lifting: /crane|lift|loader|hoist|forklift/i.test(a.type), pressure: /compressor/i.test(a.type), portableElectrical: /welding|cutter|bender|generator|light tower|laser/i.test(a.type) });
   });
 
   // Each document's state: [status, issued, expires, note, { ref, by, edited }]. A document
@@ -445,6 +465,7 @@ window.DOC_MODEL = (() => {
     .filter(({ doc: c }) => c.category !== 'company' || (!optOf[c.code] && (c.requirement === 'mandatory' || filedHere(c.code))))
     .concat(OPT.map((d) => ({ doc: d, ask: false }))); // in the list's order
   const REGS = new Set(ORG ? companyMandatory(PROFILE.country).map((d) => d.code) : []);
+  if (window.CM_EQUIPMENT_FACTS && R.FACTS) Object.assign(R.FACTS, window.CM_EQUIPMENT_FACTS);
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
     const area = c.category;
@@ -469,9 +490,10 @@ window.DOC_MODEL = (() => {
       if (c.requirement === 'on_request') { covers = covers.filter((i) => (pr.requested || []).includes(i)); held = held.filter((i) => (pr.requested || []).includes(i)); }
       // an optional one: a worker's is there for everyone, not uploaded until they have one (a
       // machine's or a product's, only where there is one)
-      const optAll = c.requirement === 'optional' && kind === 'workers', has = (i) => (pr.have || []).includes(i) || !!updates[`${c.code}#${i}`];
+      const optAll = c.requirement === 'optional' && (kind === 'workers' || kind === 'equipment'), has = (i) => (pr.have || []).includes(i) || !!updates[`${c.code}#${i}`];
       if (c.requirement === 'optional' && !optAll) { covers = covers.filter((i) => (pr.have || []).includes(i)); held = held.filter((i) => (pr.have || []).includes(i)); }
       if (optAll) held = held.filter(has);
+      if (optAll && !covers.length && !held.length) return; // none of them is one it's about
       const upOf = (i) => updates[`${c.code}#${i}`];
       const statusOf = (i) => { if (upOf(i)) return upOf(i).status; if (optAll && !has(i)) return 'notuploaded'; if (all[i] && all[i].isNew) return 'missing'; const o = (pr.over || {})[i]; if (o) return o[0]; return pr.def ? pr.def[0] : 'missing'; };
       const expOf = (i) => { if (upOf(i)) return upOf(i).exp; if (optAll && !has(i)) return '—'; if (all[i] && all[i].isNew) return '—'; const o = (pr.over || {})[i]; if (o) return o[1] || '—'; return pr.def ? pr.def[1](i) : '—'; };
@@ -495,7 +517,7 @@ window.DOC_MODEL = (() => {
     // covers everywhere else — unless nobody has asked for it yet, or it is optional (the company's
     // optional ones keep their section from the list, next to the required ones of that section)
     doc.group = doc.status === 'notrequested' ? 'On client request' : area === 'company' ? doc.section
-      : c.requirement === 'optional' && c.level !== 'per_worker' ? 'Optional' : BY_LEVEL[c.level] || doc.section;
+      : c.requirement === 'optional' && !['per_worker', 'per_equipment'].includes(c.level) ? 'Optional' : BY_LEVEL[c.level] || doc.section;
     DOCS.push(doc);
   });
   // replaced versions, kept read-only for audit
@@ -686,5 +708,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

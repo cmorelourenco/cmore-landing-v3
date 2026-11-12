@@ -537,7 +537,7 @@
     const scope = area ? [area] : AREAS.map((a) => a.key);
     const list = DATA.filter((d) => keep(d) && scope.includes(d.area));
     // Workers: no Optional or Archived document tables (a search still finds those documents)
-    const hide = (key, g) => key === 'workers' && area === 'workers' && !filtering() && (g === 'Optional' || g === 'Archived');
+    const hide = (key, g) => (key === 'workers' || key === 'equipment') && area === key && !filtering() && (g === 'Optional' || g === 'Archived');
     const html = scope.flatMap((key) => GROUPS_OF(key).filter((g) => !hide(key, g)).map((g) => {
       const docs = list.filter((d) => d.area === key && d.group === g);
       return docs.length ? group(area ? g : docs[0].groupLabel, docs, g) : '';
@@ -551,7 +551,7 @@
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
   // per-record document asked of any of them, a dot for its status (a dash where it isn't)
   const SHORT = { 'WK-11': 'Fitness', 'WK-12': 'Special risk', 'WK-13': 'Operator', 'WK-14': 'Training', 'WK-15': 'Delivery record', 'WK-16': 'Residence permit', 'WK-17': 'A1', 'WD-01': 'AIMA application', 'WD-02': 'Work permit', 'WD-03': 'Contract', 'WD-04': 'SS number', 'WD-05': 'Tax number', 'WD-06': 'OSHA card', 'WD-07': 'Trade licence', 'WD-08': 'Welder (ISO 9606)', 'WD-09': 'First aid', 'WD-10': 'NCA (Kenya)', 'WD-11': 'Driver CPC',
-    'EQ-01': 'EC conformity', 'EQ-02': 'Pre&#8209;1995 cert.', 'EQ-03': 'Inspection', 'EQ-04': 'Maintenance', 'EQ-05': 'Manual', 'EQ-06': 'Calibration', 'EQ-07': 'Insurance',
+    'EQ-01': 'EC conformity', 'EQ-02': 'Pre&#8209;1995 cert.', 'EQ-03': 'Inspection', 'EQ-04': 'Maintenance', 'EQ-05': 'Manual', 'EQ-06': 'Calibration', 'EQ-07': 'Insurance', 'EQ-21': 'Technical sheet', 'EQ-22': 'Lifting exam', 'EQ-23': 'Pressure inspection', 'EQ-24': 'Electrical test', 'EQ-25': 'Fall arrest', 'EQ-26': 'ATEX', 'EQ-27': 'Scaffold', 'EQ-28': 'Registration', 'EQ-29': 'Road inspection', 'EQ-30': 'Motor insurance',
     'PR-01': 'DoP', 'PR-02': 'Constancy', 'PR-03': 'Technical sheet', 'PR-04': 'Safety sheet', 'PR-05': 'EU DoC', 'PR-06': 'EPD', 'PR-07': 'REACH', 'PR-08': 'Certification', 'UN-29': 'UL', 'UN-30': 'Prop 65' };
   // a worker's documents, by what they're for: the columns of the matrix and the sections of their
   // page, in this order. Identity is their ID document (not in the catalog: ALMA files it from an
@@ -563,7 +563,18 @@
   const catOf = (d) => WK_CAT[d.code] || SEC_CAT[d.section || (d.cat && d.cat.section && d.cat.section.en)] || (DOCS.find((x) => x.code === d.code) && SEC_CAT[DOCS.find((x) => x.code === d.code).section]) || (/driv/i.test(d.name || '') ? 'driving' : 'other');
   // (within one, the list's order: the driving licence before the driver CPC)
   const LEAD = ['ID', 'DRV'];
-  const byCat = (list) => WK_CATS.map(([k, l, sh]) => [k, l, list.filter((d) => catOf(d) === k).sort((x, y) => (LEAD.includes(y.code) ? 1 : 0) - (LEAD.includes(x.code) ? 1 : 0)), sh || l]);
+  // a machine's documents, the same way (js/equipment-docs.js)
+  const EQ_CATS = [['conformity', 'Conformity'], ['documentation', 'Documentation'], ['inspections', 'Inspections'], ['maintenance', 'Maintenance'], ['calibration', 'Calibration'], ['specific', 'Specific equipment'], ['insurance', 'Insurance']];
+  const EQ_SEC = { 'Conformity': 'conformity', 'Documentation': 'documentation', 'Inspections': 'inspections', 'Maintenance': 'maintenance', 'Calibration': 'calibration', 'Specific equipment': 'specific', 'Insurance': 'insurance' };
+  const eqCatOf = (d) => { const sec = d.section || (d.cat && d.cat.section && d.cat.section.en) || ((DOCS.find((x) => x.code === d.code) || {}).section); return EQ_SEC[sec] || 'specific'; };
+  const byCat = (list, kind) => (kind === 'equipment' ? EQ_CATS.map(([k, l]) => [k, l, list.filter((d) => eqCatOf(d) === k), l])
+    : WK_CATS.map(([k, l, sh]) => [k, l, list.filter((d) => catOf(d) === k).sort((x, y) => (LEAD.includes(y.code) ? 1 : 0) - (LEAD.includes(x.code) ? 1 : 0)), sh || l]));
+  // a record's documents, as the company's: one table per category (its name and how many), the
+  // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
+  const catRow = (d, i) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na';
+    return `<tr class="cd-row"${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
+  const catTable = (rows, i) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map((d) => catRow(d, i)).join('')}</tbody></table></div>`;
+  const catGroups = (per, kind, i) => byCat(per, kind).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${catTable(list, i)}</div>`).join('');
   // their identity document: its status by the date it's valid until, once there's a file of it;
   // until then their ID is on file as data only, not uploaded
   const idRow = (i) => {
@@ -586,11 +597,12 @@
     let cols = DOCS.filter((d) => d.area === key && d.kind === key && d.roster.length);
     if (cols.length < 2) return '';
     // workers: in their categories, their ID first
-    const wk = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
+    const wk = key === 'workers' || key === 'equipment', people = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
     const XCOLS = M.saveExtra ? Object.keys(EXTRA).map((code) => ({ code, name: EXTRA[code][0], isX: true })) : [];
     // workers: one column per category, its dot the worst of the documents in it asked of them
     const CAT_COL = { identity: 'Identity', right: 'Right to work', health: 'Health', training: 'Training and qualifications', ppe: 'PPE', driving: 'Driving license', other: 'Other' };
-    if (wk) cols = byCat([ID_COL, ...cols, ...XCOLS]).map(([k, , list]) => ({ cat: k, name: CAT_COL[k], docs: list }));
+    if (people) cols = byCat([ID_COL, ...cols, ...XCOLS]).map(([k, , list]) => ({ cat: k, name: CAT_COL[k], docs: list }));
+    else if (wk) cols = byCat(cols, 'equipment').map(([k, l, list]) => ({ cat: k, name: l, docs: list }));
     const docSt = (d, i) => { if (d.isId) return idRow(i).status; if (d.isX) return extraRow(d.code, i).status; const r = d.roster.find((x) => x.i === i); return r ? r.status : null; };
     const catCell = (c, i) => {
       const asked = c.docs.map((d) => [d, docSt(d, i)]).filter(([, st]) => st);
@@ -598,7 +610,7 @@
       const real = asked.filter(([, st]) => st !== 'notuploaded');
       const st = real.length ? worstOf(real.map(([, x]) => x)) : 'notuploaded';
       const one = asked.length === 1 ? asked[0][0] : null;
-      return { st, spec: one ? `rec:${one.code}:${i}` : `who:workers:${i}`, tip: asked.map(([d, x]) => `${d.isId ? 'ID' : d.isX ? EXTRA[d.code][1] : SHORT[d.code] || d.name}: ${STATUS[x][0]}`).join(' &middot; ') };
+      return { st, spec: one ? `rec:${one.code}:${i}` : `who:${key}:${i}`, tip: asked.map(([d, x]) => `${d.isId ? 'ID' : d.isX ? EXTRA[d.code][1] : SHORT[d.code] || d.name}: ${STATUS[x][0]}`).join(' &middot; ') };
     };
     const recs = D.records[key];
     const label = { workers: 'By worker', equipment: 'By machine', products: 'By product' }[key];
@@ -680,10 +692,7 @@
     // their documents, under what they're for; a section with nothing asked of them says so
     // their documents, as the company's: one table per category (its name and how many), the
     // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
-    const wkRow = (d) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na';
-      return `<tr class="cd-row"${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
-    const wkTable = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map(wkRow).join('')}</tbody></table></div>`;
-    const docGroups = byCat(per).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${wkTable(list)}</div>`).join('');
+    const docGroups = catGroups(per, 'workers', i);
     // archiving: a switch beside their name; on, it asks first (the modal below); off, they're back
     const sw = `<span class="cd-arch-sw"><span id="cd-arch-l-${i}">Archive worker</span><button type="button" class="co-sw" role="switch" aria-checked="${gone}" aria-labelledby="cd-arch-l-${i}" data-archive="${i}"><i></i></button></span>`;
     const gonebar = gone ? `<div class="cd-arch-bar" role="status"><span><b>Archived on ${esc(p.archived)}.</b> Off your worker list and every site, and ALMA doesn&rsquo;t ask for their documents. For audits, what was on file is kept, read&#8209;only: you, and the clients you shared them with, can still see it.</span><button type="button" class="btn btn-primary btn-sm" data-unarchive="${i}">Unarchive worker</button></div>` : '';
@@ -708,7 +717,7 @@
           ${kv('Personal protective equipment', said('WK-15', 'Delivered'))}${kv('Driving', said('DRV', 'Licence valid'))}${kv('Other', docOf('CRM') && !NO_FILE.includes(docOf('CRM').status) ? `Criminal record certificate<br>${said('CRM', 'Valid')}` : '<span class="co-subtle">Nothing on file</span>')}
         </dl></div></div>
       ${docGroups}
-      ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Company documents that name them</h3><span class="co-muted">For all workers &middot; what each one says about ${p.name.split(' ')[0]}</span></div>${wkTable(month.map((d) => Object.assign({}, d, { exp: d.exp })))}</div>` : ''}
+      ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Company documents that name them</h3><span class="co-muted">For all workers &middot; what each one says about ${p.name.split(' ')[0]}</span></div>${catTable(month, i)}</div>` : ''}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${gone ? 'Was on site' : 'On site'}</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(p.sites)}</div>
     </div>`;
   };
@@ -719,11 +728,19 @@
     const per = recordDocs('equipment', i);
     const [wl, wc] = STATUS[worstOf(per.map((d) => d.status))];
     const next = per.find((d) => d.code === 'EQ-03'), maint = per.find((d) => d.code === 'EQ-04');
+    // what its documents say, by category, for the profile (in date, until when, or not on file)
+    const onFile = (d) => d && !NO_FILE.includes(d.status);
+    const sayM = (list, none) => {
+      const got = list.filter(onFile); if (!list.length) return '<span class="co-subtle">Not asked of it</span>';
+      if (!got.length) return `<span class="co-subtle">${none || 'Not on file'}</span>`;
+      return got.map((d) => { const [l, c] = STATUS[d.status]; return `${esc(d.name)} <span class="co-badge ${c}">${l}</span>${d.exp && !/^(—|No expiry|Until replaced)$/.test(d.exp) ? ` <span class="co-subtle">until ${d.exp}</span>` : ''}`; }).join('<br>');
+    };
+    const inCat = (k) => per.filter((d) => eqCatOf(d) === k);
     const op = DOCS.find((d) => d.code === 'WK-13');
     const opRow = (w) => { const r = op && op.roster.find((x) => x.i === w); const [l, c] = STATUS[r ? r.status : 'missing'];
       return `<tr class="cd-row is-rosterable" data-worker="${w}" tabindex="0" role="link" aria-label="Open ${WORKERS[w][0]}"><td><span class="n">${WORKERS[w][0]}</span><span class="d">${WORKERS[w][1]}</span></td><td class="c">${r ? r.exp : '&mdash;'}</td><td><span class="co-badge ${c}">${r ? 'Operator certificate ' + l.toLowerCase() : 'No certificate on file'}</span></td></tr>`; };
     groupsEl.innerHTML = `<div class="cd-detail cd-worker cd-machine">
-      <div class="cd-area-head"><h2 class="co-h-l">${m.type} <span class="soft">&middot; ${m.brand === 'Ferreira (in&#8209;house)' ? m.model : m.brand + ' ' + m.model}</span></h2><p class="co-muted">${m.ref} &middot; built ${m.yearBuilt} &middot; ${m.owned.toLowerCase().replace(/&middot;.*$/, '').trim()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
+      <div class="cd-area-head"><h2 class="co-h-l">${m.type} <span class="soft">&middot; ${m.brand === 'Ferreira (in&#8209;house)' ? m.model : m.brand + ' ' + m.model}</span></h2><p class="co-muted">${m.ref} &middot; built ${m.yearBuilt} &middot; ${m.owned.toLowerCase().replace(/(&middot;|·).*$/, '').trim()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
       ${next && next.status === 'attention' ? `<p class="cd-restricted cd-attn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Periodic inspection due ${next.exp}. Book it, and drop the report on ALMA when it is done.</p>` : ''}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Equipment profile</h3><span class="co-muted">Data only, no file</span></div>
         <div class="co-card cd-card-pad"><dl class="pd-grid">
@@ -732,10 +749,12 @@
           ${kv('Owned or rented', m.owned)}${kv('Internal code', m.ref)}${kv('Hours on the clock', m.hours ? m.hours.toLocaleString('en-US') + ' h' : '<span class="co-subtle">Not metered</span>')}
           ${kv('Requires certified operator', m.certified ? '<span class="co-badge b-pend">Yes</span> <span class="co-subtle">operators named below</span>' : '<span class="co-badge b-neu">No</span>')}
           ${kv('Next inspection', next ? next.exp : '&mdash;')}${kv('Next maintenance', maint ? maint.exp : '&mdash;')}
+          ${kv('Conformity', sayM(inCat('conformity')))}${kv('Documentation', sayM(inCat('documentation')))}${kv('Calibration', sayM(inCat('calibration')))}
+          ${kv('Specific equipment', sayM(inCat('specific'), 'Nothing on file'))}${kv('Insurance', sayM(inCat('insurance')))}
         </dl></div></div>
       ${m.certified ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Who may operate it</h3><span class="co-muted">${m.operators.length} operator${m.operators.length === 1 ? '' : 's'} &middot; WK&#8209;13</span></div>
         <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Worker</th><th class="c">Certificate expires</th><th>Status</th></tr></thead><tbody>${m.operators.map(opRow).join('')}</tbody></table></div></div>` : ''}
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Its documents</h3><span class="co-muted">${per.length} document${per.length === 1 ? '' : 's'}</span></div>${docsCard(per)}</div>
+      ${catGroups(per, 'equipment', i)}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">On site</h3><span class="co-muted">${m.sites.length} site${m.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(m.sites)}</div>
     </div>`;
   };
