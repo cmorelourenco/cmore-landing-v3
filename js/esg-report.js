@@ -252,7 +252,7 @@ window.ESG_REPORT = (() => {
   const planPage = (A, D) => {
     const col = (g, k, title) => { const a = D.sc.actions.filter((x) => x.group === g);
       return `<div style="border-radius:18px;background:${C[k].soft};padding:22px 22px 14px"><div style="font-size:13px;font-weight:600;letter-spacing:1px;color:${C[k].main};text-transform:uppercase;margin-bottom:12px">${title}</div>
-        ${a.length ? a.map((x) => `<div class="rp-li" style="padding:6px 0;border-top:1px solid #ffffff"><i style="background:${C[k].main}"></i><span>${esc(x.text)}${x.partial ? ` <span style="color:#a8690a;font-size:12px">· improve</span>` : ''}</span></div>`).join('') : '<div style="font-size:14px;color:#6e6e6a;padding:6px 0">Nothing to act on here. Keep it up.</div>'}</div>`; };
+        ${a.length ? a.map((x) => `<div class="rp-li" style="padding:6px 0;border-top:1px solid #ffffff"><i style="background:${C[k].main}"></i><span>${esc(x.text)}${x.partial ? ` <span style="color:#e7b04a;font-size:12px">· improve</span>` : ''}</span></div>`).join('') : '<div style="font-size:14px;color:#6e6e6a;padding:6px 0">Nothing to act on here. Keep it up.</div>'}</div>`; };
     return page(A, 'gen', `<div style="position:absolute;left:66px;top:50px;right:66px">
       <div class="rp-h" style="font-size:40px;color:#96958e">Action plan</div>
       <p style="font-size:13.5px;line-height:1.6;color:#6e6e6a;margin:14px 0 26px;max-width:780px">One action for every gap, grouped the way clients look at ESG.</p>

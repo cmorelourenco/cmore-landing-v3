@@ -537,7 +537,8 @@
     const scope = area ? [area] : AREAS.map((a) => a.key);
     const list = DATA.filter((d) => keep(d) && scope.includes(d.area));
     // Workers: no Optional or Archived document tables (a search still finds those documents)
-    const hide = (key, g) => (key === 'workers' || key === 'equipment') && area === key && !filtering() && (g === 'Optional' || g === 'Archived');
+    // (nor the per-record documents as a list: the matrix above shows them, record by record)
+    const hide = (key, g) => (key === 'workers' || key === 'equipment') && area === key && !filtering() && (g === 'Optional' || g === 'Archived' || g === 'For each worker' || g === 'For each machine');
     const html = scope.flatMap((key) => GROUPS_OF(key).filter((g) => !hide(key, g)).map((g) => {
       const docs = list.filter((d) => d.area === key && d.group === g);
       return docs.length ? group(area ? g : docs[0].groupLabel, docs, g) : '';
@@ -627,7 +628,7 @@
         : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span></td></tr>`;
     }).join('');
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
-    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${window.CMUpload ? `<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="area:${key}">Upload documents</button>` : ''}</div>
+    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span></div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix${wk ? ' cd-matrix-cats' : ''}"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c">${wk ? d.name : SHORT[d.code] || esc(d.name)}</th>`).join('')}<th>Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}${wk ? '<span><span class="cd-dot is-neu"></span>Not uploaded</span>' : ''}<span><span class="cd-dash">&mdash;</span>Not asked of them</span></p></div>`;
   };
@@ -686,7 +687,7 @@
       const d = docOf(code); if (!d) return '<span class="co-subtle">Not asked of them</span>';
       if (NO_FILE.includes(d.status)) return '<span class="co-subtle">Not on file</span>';
       const [l, c] = STATUS[d.status];
-      return `<span class="co-badge ${c}">${d.status === 'valid' ? ok : l}</span> <span class="co-subtle">${/^(—|No expiry|Until replaced)$/.test(d.exp) ? d.exp : `until ${d.exp}`}</span>`;
+      return `<span class="co-badge ${c}">${d.status === 'valid' ? ok : l}</span>`;
     };
     const quals = per.filter((d) => catOf(d) === 'training' && !NO_FILE.includes(d.status));
     // their documents, under what they're for; a section with nothing asked of them says so
@@ -697,11 +698,9 @@
     const sw = `<span class="cd-arch-sw"><span id="cd-arch-l-${i}">Archive worker</span><button type="button" class="co-sw" role="switch" aria-checked="${gone}" aria-labelledby="cd-arch-l-${i}" data-archive="${i}"><i></i></button></span>`;
     const gonebar = gone ? `<div class="cd-arch-bar" role="status"><span><b>Archived on ${esc(p.archived)}.</b> Off your worker list and every site, and ALMA doesn&rsquo;t ask for their documents. For audits, what was on file is kept, read&#8209;only: you, and the clients you shared them with, can still see it.</span><button type="button" class="btn btn-primary btn-sm" data-unarchive="${i}">Unarchive worker</button></div>` : '';
     // their right to work: its state, and where they're from (no more than that)
-    const fromOf = () => { try { if (p.nationality && /^[A-Z]{2}$/.test(p.nationality)) return new Intl.DisplayNames(['en'], { type: 'region' }).of(p.nationality); } catch (e) {} return ''; };
-    const from = p.passportOnly && !p.nationalityRead ? '' : fromOf();
     const right = `${p.passportOnly && !p.nationalityRead ? '<span class="co-badge b-pend">To check</span>'
       : p.permit ? `<span class="co-badge ${STATUS[p.permit.status][1]}">${p.permit.status === 'valid' ? 'Valid permit' : 'Permit expiring'}</span>`
-      : '<span class="co-badge b-ok">Can work</span>'} <span class="co-subtle">${from ? `From ${esc(from)}` : 'Where they&rsquo;re from isn&rsquo;t on file yet'}</span>`;
+      : '<span class="co-badge b-ok">Can work</span>'}`;
     groupsEl.innerHTML = `<div class="cd-detail cd-worker">
       <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment.toLowerCase()} since ${p.since} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
       ${gonebar}
