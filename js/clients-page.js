@@ -9,7 +9,6 @@
   if (!C || !box) return;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('') || n.slice(0, 2).toUpperCase();
-  const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
   const CLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
   const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const css = `
@@ -218,7 +217,7 @@
       : `<span class="sp-meter"><span class="sp-meter-t"><span>${k.pending ? 'Nothing shared yet' : 'No longer sharing documents'}</span></span><i><span style="width:0"></span></i></span>`;
     const chips = [badge(o), k.pending && k.given ? `<span class="co-badge b-pend">${k.pending} request${k.pending === 1 ? '' : 's'} waiting</span>` : '', k.bad && o[0] !== 'Sees something missing' ? `<span class="co-badge b-over">${k.bad} missing or expired</span>` : ''].filter(Boolean).join('');
     return `<li><a class="sp-card${!k.given && !k.pending ? ' is-removed' : ''}" href="clients.html?id=${esc(c.id)}">${idHtml}${meter}<span class="sp-chips">${chips}</span>
-      <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; client since ${esc(c.since)}</span>${CHEV}</span></a></li>`;
+      <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; client since ${esc(c.since)}</span></span></a></li>`;
   };
   const list = () => {
     const is = { attention: (c) => C.stats(c).bad > 0, waiting: (c) => C.stats(c).pending > 0, stopped: (c) => C.stats(c).stopped > 0 };

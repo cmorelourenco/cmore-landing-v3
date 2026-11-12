@@ -8,7 +8,6 @@
   if (!S || (!box && !home && !fresh)) return;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('');
-  const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
   const CLOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
   const css = `
 .sp-tools { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1rem; margin-bottom: 1.25rem; }
@@ -157,7 +156,7 @@
       return `<li><a class="sp-card is-invited" href="suppliers.html?id=${esc(s.id)}">${id}
       <span class="sp-meter"><span class="sp-meter-t"><span>${s.invite.onCmore ? 'To your supplier list' : 'To join C&#8209;MORE'}</span><b>${n} asked for</b></span><i><span style="width:0"></span></i></span>
       <span class="sp-chips">${stTag(s)}</span>
-      <span class="sp-foot"><span>Invited on ${esc(s.invite.invited)} &middot; ${esc(s.email || s.invite.countryName)}</span>${CHEV}</span>
+      <span class="sp-foot"><span>Invited on ${esc(s.invite.invited)} &middot; ${esc(s.email || s.invite.countryName)}</span></span>
     </a></li>`;
     }
     // consent removed: they stopped sharing, so there's nothing to see; when, and since when they supply you
@@ -165,7 +164,7 @@
       return `<li><a class="sp-card is-removed" href="suppliers.html?id=${esc(s.id)}">${id}
       <span class="sp-meter"><span class="sp-meter-t"><span>No longer sharing documents</span></span><i><span style="width:0"></span></i></span>
       <span class="sp-chips">${stTag(s)}</span>
-      <span class="sp-foot"><span>Consent removed on ${esc(s.consents[0].removed)} &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
+      <span class="sp-foot"><span>Consent removed on ${esc(s.consents[0].removed)} &middot; supplier since ${esc(s.since)}</span></span>
     </a></li>`;
     }
     // where they stand first, then what needs chasing
@@ -173,7 +172,7 @@
     return `<li><a class="sp-card" href="suppliers.html?id=${esc(s.id)}">${id}
       ${k.shared ? `<span class="sp-meter${warn ? ' is-warn' : ''}"><span class="sp-meter-t"><span>Documents in order</span><b>${k.ok} of ${k.shared}</b></span><i><span style="width:${k.pct}%"></span></i></span>` : '<span class="sp-meter"><span class="sp-meter-t"><span>No documents shared yet</span></span><i><span style="width:0"></span></i></span>'}
       <span class="sp-chips">${chips}</span>
-      <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; supplier since ${esc(s.since)}</span>${CHEV}</span>
+      <span class="sp-foot"><span>${k.given} consent${k.given === 1 ? '' : 's'} given &middot; supplier since ${esc(s.since)}</span></span>
     </a></li>`;
   };
   // at a glance: a row per supplier, a column per kind of document (as the invite groups them), the worst status in each

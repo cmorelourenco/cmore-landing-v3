@@ -118,7 +118,7 @@
     // the Versions column: how many there are (the current one and those it replaced), and a
     // dropdown that lists them under the row; a per-record document keeps its roster instead
     const nv = hasRoster || NO_FILE.includes(d.status) || d.status === 'processing' ? 0 : versionsOf(d).length + 1;
-    const opener = hasRoster ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>`
+    const opener = hasRoster ? ''
       : nv ? `<button type="button" class="cd-vbtn${isOpen ? ' is-open' : ''}" data-expand="${d.id}" aria-expanded="${isOpen}" aria-label="${nv} version${nv === 1 ? '' : 's'} of ${esc(d.name)}">${nv} version${nv === 1 ? '' : 's'}${CHEV_D}</button>` : dash;
     // a file for it: Upload or Replace on the row, or dropped onto the row (js/doc-upload.js)
     const canUp = d.status !== 'archived' && d.status !== 'na' && !!window.CMUpload;
@@ -471,7 +471,7 @@
     const table = list.length
       ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl cd-roster-tbl"><thead><tr><th>${NOUN[kind][0][0].toUpperCase() + NOUN[kind][0].slice(1)}</th><th>Status</th><th>ALMA confidence</th><th>Reference no.</th><th>Issued by</th><th class="c">Expiry date</th><th></th></tr></thead><tbody>${list.map((it) => {
         const [label, cls] = STATUS[it.status]; const has = it.status !== 'missing';
-        return `<tr class="cd-row${go(it) ? ' is-rosterable' : ''}"${go(it)}${go(it) ? ' tabindex="0" role="link"' : ''} data-drop="rec:${doc.code}:${it.i}"><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td><span class="co-badge ${cls}">${label}</span></td><td>${has ? confCell(it.status === 'attention' ? 61 : 86 + (hash(doc.code + it.i) % 14)) : dash}</td><td class="cd-ref">${has ? refOf(doc.code + it.i, it.exp) : dash}</td><td class="cd-by">${has ? esc(by) : dash}</td><td class="c">${has ? it.exp : dash}</td><td class="cd-ed"><span class="cd-ed-in">${UPB(`rec:${doc.code}:${it.i}`, has, `${doc.name} for ${it.name}`)}${go(it) ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</span></td></tr>`;
+        return `<tr class="cd-row${go(it) ? ' is-rosterable' : ''}"${go(it)}${go(it) ? ' tabindex="0" role="link"' : ''} data-drop="rec:${doc.code}:${it.i}"><td><span class="n">${it.name}</span>${it.sub ? `<span class="d">${it.sub}</span>` : ''}</td><td><span class="co-badge ${cls}">${label}</span></td><td>${has ? confCell(it.status === 'attention' ? 61 : 86 + (hash(doc.code + it.i) % 14)) : dash}</td><td class="cd-ref">${has ? refOf(doc.code + it.i, it.exp) : dash}</td><td class="cd-by">${has ? esc(by) : dash}</td><td class="c">${has ? it.exp : dash}</td><td class="cd-ed"><span class="cd-ed-in">${UPB(`rec:${doc.code}:${it.i}`, has, `${doc.name} for ${it.name}`)}</span></td></tr>`;
       }).join('')}</tbody></table></div>`
       : '<div class="co-card cd-none"><b class="co-row-n">Nothing matches that.</b></div>';
     groupsEl.innerHTML = `<div class="cd-detail">${crumb}${search}${table}</div>`;
@@ -526,7 +526,7 @@
       const docs = DATA.filter((d) => d.area === a.key && counted(d));
       const alerts = docs.filter(needsAttention).length;
       return `<button type="button" class="cd-area${docs.length ? '' : ' is-empty'}" data-area="${a.key}" role="listitem">` +
-        `<span class="cd-area-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${a.icon}</svg><span>${a.title}</span>${soon(a.key)}${alerts ? `<span class="cd-area-alert">${alerts}</span>` : ''}<span class="cd-area-arrow" aria-hidden="true">→</span></span>` +
+        `<span class="cd-area-h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${a.icon}</svg><span>${a.title}</span>${soon(a.key)}${alerts ? `<span class="cd-area-alert">${alerts}</span>` : ''}</span>` +
         `<span class="cd-area-n">${docs.length}<small>document${docs.length === 1 ? '' : 's'} ${window.DOC_MODEL.ORG ? 'on file' : 'asked of you'}</small></span>` +
         `<span class="cd-area-d">${a.sub}</span>` +
       `</button>`;
@@ -536,7 +536,9 @@
   const renderGroups = () => {
     const scope = area ? [area] : AREAS.map((a) => a.key);
     const list = DATA.filter((d) => keep(d) && scope.includes(d.area));
-    const html = scope.flatMap((key) => GROUPS_OF(key).map((g) => {
+    // Workers: no Optional or Archived document tables (a search still finds those documents)
+    const hide = (key, g) => key === 'workers' && area === 'workers' && !filtering() && (g === 'Optional' || g === 'Archived');
+    const html = scope.flatMap((key) => GROUPS_OF(key).filter((g) => !hide(key, g)).map((g) => {
       const docs = list.filter((d) => d.area === key && d.group === g);
       return docs.length ? group(area ? g : docs[0].groupLabel, docs, g) : '';
     })).join('');
@@ -548,30 +550,58 @@
 
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
   // per-record document asked of any of them, a dot for its status (a dash where it isn't)
-  const SHORT = { 'WK-11': 'Fitness', 'WK-12': 'Special risk', 'WK-13': 'Operator', 'WK-14': 'Training', 'WK-15': 'PPE', 'WK-16': 'Residence permit', 'WK-17': 'A1',
+  const SHORT = { 'WK-11': 'Fitness', 'WK-12': 'Special risk', 'WK-13': 'Operator', 'WK-14': 'Training', 'WK-15': 'Delivery record', 'WK-16': 'Residence permit', 'WK-17': 'A1',
     'EQ-01': 'EC conformity', 'EQ-02': 'Pre&#8209;1995 cert.', 'EQ-03': 'Inspection', 'EQ-04': 'Maintenance', 'EQ-05': 'Manual', 'EQ-06': 'Calibration', 'EQ-07': 'Insurance',
     'PR-01': 'DoP', 'PR-02': 'Constancy', 'PR-03': 'Technical sheet', 'PR-04': 'Safety sheet', 'PR-05': 'EU DoC', 'PR-06': 'EPD', 'PR-07': 'REACH', 'PR-08': 'Certification', 'UN-29': 'UL', 'UN-30': 'Prop 65' };
-  const TONE = { valid: 'ok', na: 'neu', processing: 'neu', expiring: 'pend', filemissing: 'warn', attention: 'warn', missing: 'bad', expired: 'bad', rejected: 'bad' };
+  // a worker's documents, by what they're for: the columns of the matrix and the sections of their
+  // page, in this order. Identity is their ID document (not in the catalog: ALMA files it from an
+  // upload); anything the catalog adds later goes to Other until it's given one
+  const WK_CATS = [['identity', 'Identity'], ['right', 'Right to work'], ['health', 'Health'], ['training', 'Training and qualifications'], ['ppe', 'Personal protective equipment', 'PPE'], ['driving', 'Driving'], ['other', 'Other']];
+  const WK_CAT = { ID: 'identity', DRV: 'driving', CRM: 'other', 'WK-16': 'right', 'WK-17': 'right', 'WK-11': 'health', 'WK-12': 'training', 'WK-13': 'training', 'WK-14': 'training', 'WK-15': 'ppe' };
+  const catOf = (d) => WK_CAT[d.code] || (/driv/i.test(d.name || '') ? 'driving' : 'other');
+  const byCat = (list) => WK_CATS.map(([k, l, sh]) => [k, l, list.filter((d) => catOf(d) === k), sh || l]);
+  // their identity document: its status by the date it's valid until, once there's a file of it;
+  // until then their ID is on file as data only, not uploaded
+  const idRow = (i) => {
+    const p = PERSON[i], f = M.idOf ? M.idOf(i) : null, has = !!(f && f.file);
+    const valid = (has && f.valid) || p.id[2], t = Date.parse(valid);
+    const status = !has ? 'notuploaded' : !Number.isNaN(t) && t < Date.now() ? 'expired' : !Number.isNaN(t) && t - Date.now() < 60 * 864e5 ? 'expiring' : 'valid';
+    return { code: 'ID', name: 'Identity document', req: `${esc((has && f.type) || p.id[0])} &middot; ${esc((has && f.no) || p.id[1])}${has ? '' : ' &middot; on file as data, no document yet'}`, plain: true, status, exp: esc(valid || '—'), spec: p.archived ? '' : `rec:ID:${i}` };
+  };
+  // their optional documents (js/doc-upload.js files them): never asked for, so none missing; there
+  // for whoever has one, and in date or not once it's on file
+  const EXTRA = { DRV: ['Driving licence', 'Licence'], CRM: ['Criminal record certificate', 'Criminal record'] };
+  const extraRow = (code, i) => {
+    const f = M.extraOf ? M.extraOf(code, i) : null, has = !!(f && f.file), t = has ? Date.parse(f.valid) : NaN;
+    const status = !has ? 'notuploaded' : !Number.isNaN(t) && t < Date.now() ? 'expired' : !Number.isNaN(t) && t - Date.now() < 30 * 864e5 ? 'expiring' : 'valid';
+    return { code, name: EXTRA[code][0], req: has ? `Optional &middot; uploaded ${esc(f.on || '')}` : 'Optional &middot; upload it if they have one', plain: true, status, exp: has ? esc(f.valid || '—') : '—', spec: PERSON[i].archived || !M.saveExtra ? '' : `rec:${code}:${i}` };
+  };
+  const TONE = { notuploaded: 'neu', valid: 'ok', na: 'neu', processing: 'neu', expiring: 'pend', filemissing: 'warn', attention: 'warn', missing: 'bad', expired: 'bad', rejected: 'bad' };
   const matrix = (key) => {
     if (!['workers', 'equipment', 'products'].includes(key)) return '';
-    const cols = DOCS.filter((d) => d.area === key && d.kind === key && d.roster.length);
+    let cols = DOCS.filter((d) => d.area === key && d.kind === key && d.roster.length);
     if (cols.length < 2) return '';
+    // workers: in their categories, their ID first
+    const wk = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
+    const XCOLS = M.saveExtra ? Object.keys(EXTRA).map((code) => ({ code, name: EXTRA[code][0], isX: true })) : [];
+    if (wk) cols = byCat([ID_COL, ...cols, ...XCOLS]).flatMap(([, , l]) => l);
+    const heads = wk ? byCat(cols).filter(([, , l]) => l.length) : [];
     const recs = D.records[key];
     const label = { workers: 'By worker', equipment: 'By machine', products: 'By product' }[key];
     const rows = recs.map((rec, i) => {
       if (rec.left) return ''; // no longer on the worker list
-      const cells = cols.map((d) => { const r = d.roster.find((x) => x.i === i); return r ? r.status : null; });
+      const cells = cols.map((d) => { if (d.isId) return idRow(i).status; if (d.isX) return extraRow(d.code, i).status; const r = d.roster.find((x) => x.i === i); return r ? r.status : null; });
       const worst = worstOf(cells.filter(Boolean));
       const [wl, wc] = STATUS[worst];
       const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : '';
       return `<tr class="cd-row${go ? ' is-rosterable' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (s
-        ? `<td class="c"><button type="button" class="cd-cell" data-up="rec:${cols[c].code}:${i}" title="${STATUS[s][0]} &middot; ${NO_FILE.includes(s) ? 'upload it' : 'replace it'}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name} for ${recordName(key, i)}: ${STATUS[s][0]}. ${NO_FILE.includes(s) ? 'Upload' : 'Replace'} it</span></button></td>`
-        : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span>${go ? `<span class="cd-row-open" aria-hidden="true">${CHEV_R}</span>` : ''}</td></tr>`;
+        ? `<td class="c"><button type="button" class="cd-cell" data-up="rec:${cols[c].code}:${i}" title="${cols[c].isId && s === 'notuploaded' ? 'On file as data, no document yet &middot; upload it' : cols[c].isX && s === 'notuploaded' ? 'Optional &middot; upload it if they have one' : `${STATUS[s][0]} &middot; ${NO_FILE.includes(s) ? 'upload it' : 'replace it'}`}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name} for ${recordName(key, i)}: ${STATUS[s][0]}. ${NO_FILE.includes(s) ? 'Upload' : 'Replace'} it</span></button></td>`
+        : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span></td></tr>`;
     }).join('');
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${window.CMUpload ? `<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="area:${key}">Upload documents</button>` : ''}</div>
-      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c" title="${esc(d.name)}">${SHORT[d.code] || esc(d.name)}</th>`).join('')}<th>Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${key !== 'products' ? `<span>Open a ${NOUN[key][0]} for ${key === 'workers' ? 'their' : 'its'} profile and documents; a dot uploads or replaces that one.</span>` : ''}${key === 'workers' && M.register && M.register() ? `<span>Worker register: ${esc(M.register().file)}, read ${esc(M.register().on)}${M.register().n ? `, ${M.register().n} workers` : ''}.</span>` : ''}${key === 'workers' && M.saveId ? '<span>Upload a worker register, a list or anyone&rsquo;s ID document: ALMA finds who&rsquo;s on it, and asks before adding someone new.</span>' : ''}</p></div>`;
+      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix${wk ? ' cd-matrix-cats' : ''}"><thead>${wk ? `<tr class="cd-cat-h"><th aria-hidden="true"></th>${heads.map(([, l, list, sh]) => `<th class="c" colspan="${list.length}" scope="colgroup"${sh !== l ? ` title="${l}"` : ''}>${sh}</th>`).join('')}<th aria-hidden="true"></th></tr>` : ''}<tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d, c) => `<th class="c${wk && c && catOf(d) !== catOf(cols[c - 1]) ? ' cd-cat-s' : ''}" title="${esc(d.name)}">${d.isId ? 'ID' : d.isX ? EXTRA[d.code][1] : SHORT[d.code] || esc(d.name)}</th>`).join('')}<th>Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="cd-legend">${legend}${wk ? '<span><span class="cd-dot is-neu"></span>Not uploaded</span>' : ''}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${key !== 'products' ? `<span>Open a ${NOUN[key][0]} for ${key === 'workers' ? 'their' : 'its'} profile and documents; a dot uploads or replaces that one.</span>` : ''}${key === 'workers' && M.register && M.register() ? `<span>Worker register: ${esc(M.register().file)}, read ${esc(M.register().on)}${M.register().n ? `, ${M.register().n} workers` : ''}.</span>` : ''}${key === 'workers' && M.saveId ? '<span>Upload a worker register, a list or anyone&rsquo;s ID document: ALMA finds who&rsquo;s on it, and asks before adding someone new.</span>' : ''}</p></div>`;
   };
 
   // Archived workers: archived from their own page (the switch there), off the list and every site,
@@ -580,7 +610,7 @@
     const list = PERSON.map((p, i) => ({ p, i })).filter((x) => x.p.archived)
       .sort((a, b) => (Date.parse(b.p.archived) || 0) - (Date.parse(a.p.archived) || 0));
     const kept = (i) => recordDocs('workers', i).length;
-    const rows = list.map(({ p, i }) => `<tr class="cd-row is-rosterable" data-worker="${i}" tabindex="0" role="link" aria-label="Open ${p.name}, archived"><td><span class="n">${p.name}</span><span class="d">${p.role}</span></td><td class="c">${esc(p.archived)}</td><td class="c">${kept(i)} kept, read&#8209;only</td><td><span class="co-badge b-arch">Archived</span><span class="cd-row-open" aria-hidden="true">${CHEV_R}</span></td></tr>`).join('');
+    const rows = list.map(({ p, i }) => `<tr class="cd-row is-rosterable" data-worker="${i}" tabindex="0" role="link" aria-label="Open ${p.name}, archived"><td><span class="n">${p.name}</span><span class="d">${p.role}</span></td><td class="c">${esc(p.archived)}</td><td class="c">${kept(i)} kept, read&#8209;only</td><td><span class="co-badge b-arch">Archived</span></td></tr>`).join('');
     return `<div class="cd-group" data-archived-workers><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Archived workers</h3><span class="co-muted">${list.length} worker${list.length === 1 ? '' : 's'}</span></div>
       ${list.length ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-arch-tbl" data-paged="wk-archived"><thead><tr><th>Worker</th><th class="c">Archived on</th><th class="c">Documents</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend"><span>Archived workers are off your worker list and every site, kept for audits: you and the clients you shared them with still see what was on file. Open one to see their details, or to unarchive them.</span></p>`
@@ -605,10 +635,8 @@
     // their identity document, once ALMA filed one for them (it's what made them a worker here, for
     // someone added from their documents)
     const idf = M.idOf ? M.idOf(i) : null;
-    if (idf && idf.file) {
-      const t = Date.parse(idf.valid), soon = !Number.isNaN(t) && t - Date.now() < 60 * 864e5, over = !Number.isNaN(t) && t < Date.now();
-      per.unshift({ code: 'ID', name: 'Identity document', req: `${esc(idf.type || p.id[0])} &middot; ${esc(idf.no || p.id[1])}`, status: over ? 'expired' : soon ? 'expiring' : 'valid', exp: esc(idf.valid || '—'), spec: gone ? '' : `rec:ID:${i}` });
-    }
+    per.unshift(idRow(i));
+    if (M.extraOf) per.push(...Object.keys(EXTRA).map((code) => extraRow(code, i)));
     // the documents for all workers, as they concern this one: whether the list on file names them
     // (the payroll insurance, the social security declaration), what they're designated for
     const SAYS = {
@@ -624,6 +652,17 @@
       return Object.assign(row, { req: `${d.code} &middot; ${say[1]}`, plain: true, tag: say[2] });
     });
     const [wl, wc] = gone ? ['Archived', 'b-arch'] : STATUS[worstOf(per.map((d) => d.status))];
+    // what their documents say, by category, for the profile (in date, until when, or not on file)
+    const docOf = (code) => per.find((d) => d.code === code);
+    const said = (code, ok) => {
+      const d = docOf(code); if (!d) return '<span class="co-subtle">Not asked of them</span>';
+      if (NO_FILE.includes(d.status)) return '<span class="co-subtle">Not on file</span>';
+      const [l, c] = STATUS[d.status];
+      return `<span class="co-badge ${c}">${d.status === 'valid' ? ok : l}</span> <span class="co-subtle">${/^(—|No expiry|Until replaced)$/.test(d.exp) ? d.exp : `until ${d.exp}`}</span>`;
+    };
+    const quals = per.filter((d) => catOf(d) === 'training' && !NO_FILE.includes(d.status));
+    // their documents, under what they're for; a section with nothing asked of them says so
+    const catsCard = `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl cd-wk-cats" data-unpaged><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead>${byCat(per).map(([k, l, list]) => `<tbody data-cat="${k}"><tr class="cd-cat-r"><th colspan="4" scope="rowgroup">${l}</th></tr>${list.length ? list.map(docRow).join('') : `<tr class="cd-cat-none"><td colspan="4">Nothing asked of them</td></tr>`}</tbody>`).join('')}</table></div>`;
     // archiving: a switch beside their name; on, it asks first (the modal below); off, they're back
     const sw = `<span class="cd-arch-sw"><span id="cd-arch-l-${i}">Archive worker</span><button type="button" class="co-sw" role="switch" aria-checked="${gone}" aria-labelledby="cd-arch-l-${i}" data-archive="${i}"><i></i></button></span>`;
     const gonebar = gone ? `<div class="cd-arch-bar" role="status"><span><b>Archived on ${esc(p.archived)}.</b> Off your worker list and every site, and ALMA doesn&rsquo;t ask for their documents. For audits, what was on file is kept, read&#8209;only: you, and the clients you shared them with, can still see it.</span><button type="button" class="btn btn-primary btn-sm" data-unarchive="${i}">Unarchive worker</button></div>` : '';
@@ -638,13 +677,15 @@
       ${gone ? '' : `<p class="cd-restricted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>Restricted personal data. Clients see it only while ${p.name.split(' ')[0]} is on one of their sites.</p>`}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Worker profile</h3><span class="co-muted">${p.isNew ? `Added ${esc(p.since)}, from their documents` : 'Data only, no file'}</span></div>
         <div class="co-card cd-card-pad"><dl class="pd-grid">
-          ${kv('Full name', p.name)}${kv('Job category', p.roleUnset ? '<span class="co-subtle">Not set yet</span>' : p.role)}${kv('Nationality', p.passportOnly ? '<span class="co-subtle">Not read yet</span>' : p.nationalityName)}
+          ${kv('Full name', p.name)}${kv('Job category', p.roleUnset ? '<span class="co-subtle">Not set yet</span>' : p.role)}${kv('Nationality', p.passportOnly && !p.nationalityRead ? '<span class="co-subtle">Not read yet</span>' : p.nationalityName)}
           ${kv('Birth date', p.birth)}${kv('Tax number', p.tax)}${kv('Social security number', p.ss)}
           ${kv('Home address', p.address)}${kv('Employment', `${p.employment}, since ${p.since}`)}
           ${kv('Identification', `${p.id[0]} &middot; ${p.id[1]}<br><span class="co-subtle">valid until ${p.id[2]}${idf && idf.file ? ' &middot; read by ALMA from their document' : ''}</span>`)}
           ${kv('Right to work in Portugal', right)}
+          ${kv('Health', said('WK-11', 'Fit for work'))}${kv('Training and qualifications', quals.length ? quals.map((d) => `${esc(d.name)}${d.status === 'valid' ? '' : ` <span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>`}`).join('<br>') : '<span class="co-subtle">None on file</span>')}
+          ${kv('Personal protective equipment', said('WK-15', 'Delivered'))}${kv('Driving', said('DRV', 'Licence valid'))}${kv('Other', docOf('CRM') && !NO_FILE.includes(docOf('CRM').status) ? `Criminal record certificate<br>${said('CRM', 'Valid')}` : '<span class="co-subtle">Nothing on file</span>')}
         </dl></div></div>
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Their documents</h3><span class="co-muted">${per.length} document${per.length === 1 ? '' : 's'}</span></div>${docsCard(per)}</div>
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Their documents</h3><span class="co-muted">${((n) => `${n} document${n === 1 ? '' : 's'}`)(per.filter((d) => d.status !== 'notuploaded').length)}</span></div>${catsCard}</div>
       ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Company documents that name them</h3><span class="co-muted">For all workers &middot; what each one says about ${p.name.split(' ')[0]}</span></div>${docsCard(month)}</div>` : ''}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${gone ? 'Was on site' : 'On site'}</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(p.sites)}</div>
     </div>`;
@@ -658,7 +699,7 @@
     const next = per.find((d) => d.code === 'EQ-03'), maint = per.find((d) => d.code === 'EQ-04');
     const op = DOCS.find((d) => d.code === 'WK-13');
     const opRow = (w) => { const r = op && op.roster.find((x) => x.i === w); const [l, c] = STATUS[r ? r.status : 'missing'];
-      return `<tr class="cd-row is-rosterable" data-worker="${w}" tabindex="0" role="link" aria-label="Open ${WORKERS[w][0]}"><td><span class="n">${WORKERS[w][0]}</span><span class="d">${WORKERS[w][1]}</span></td><td class="c">${r ? r.exp : '&mdash;'}</td><td><span class="co-badge ${c}">${r ? 'Operator certificate ' + l.toLowerCase() : 'No certificate on file'}</span><span class="cd-row-open" aria-hidden="true">${CHEV_R}</span></td></tr>`; };
+      return `<tr class="cd-row is-rosterable" data-worker="${w}" tabindex="0" role="link" aria-label="Open ${WORKERS[w][0]}"><td><span class="n">${WORKERS[w][0]}</span><span class="d">${WORKERS[w][1]}</span></td><td class="c">${r ? r.exp : '&mdash;'}</td><td><span class="co-badge ${c}">${r ? 'Operator certificate ' + l.toLowerCase() : 'No certificate on file'}</span></td></tr>`; };
     groupsEl.innerHTML = `<div class="cd-detail cd-worker cd-machine">
       <div class="cd-area-head"><h2 class="co-h-l">${m.type} <span class="soft">&middot; ${m.brand === 'Ferreira (in&#8209;house)' ? m.model : m.brand + ' ' + m.model}</span></h2><p class="co-muted">${m.ref} &middot; built ${m.yearBuilt} &middot; ${m.owned.toLowerCase().replace(/&middot;.*$/, '').trim()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
       ${next && next.status === 'attention' ? `<p class="cd-restricted cd-attn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Periodic inspection due ${next.exp}. Book it, and drop the report on ALMA when it is done.</p>` : ''}

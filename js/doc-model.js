@@ -145,6 +145,12 @@ window.DOC_MODEL = (() => {
   const ids = (() => { try { return JSON.parse(sessionStorage.getItem(IDS_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveId = (i, patch) => { ids[i] = Object.assign(ids[i] || {}, patch); try { sessionStorage.setItem(IDS_KEY, JSON.stringify(ids)); } catch (e) {} };
   const idOf = (i) => ids[i] || null;
+  // their optional documents, outside the catalog: a driving licence (DRV), a criminal record
+  // certificate (CRM). { [code]: { [worker]: { valid, file, on } } }
+  const EXTRA_KEY = 'cm-worker-extra' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const extras = (() => { try { return JSON.parse(sessionStorage.getItem(EXTRA_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const saveExtra = (code, i, patch) => { extras[code] = extras[code] || {}; extras[code][i] = Object.assign(extras[code][i] || {}, patch); try { sessionStorage.setItem(EXTRA_KEY, JSON.stringify(extras)); } catch (e) {} };
+  const extraOf = (code, i) => (extras[code] && extras[code][i]) || null;
   // who a document for all workers names (the payroll insurance, the social security declaration,
   // the emergency designations): by document, the workers on it. Until a new one is read, the ones on
   // file name everyone who was on the list before (not who joined since); the designations, seven
@@ -212,6 +218,13 @@ window.DOC_MODEL = (() => {
     // a passport, not a citizen card: where they're from is still to check (not taken as Portuguese)
     if (add[2] === 'Passport') p.passportOnly = true;
     if (add.length && !add[1]) p.roleUnset = true;
+    // and the details ALMA read for them (and the user checked) when they were added
+    const x = add[6];
+    if (x) {
+      ['birth', 'address', 'tax', 'ss'].forEach((k) => { if (x[k]) p[k] = x[k]; });
+      if (x.since) p.since = x.since;
+      if (x.nationality) { p.nationalityName = x.nationality; p.nationality = /portug/i.test(x.nationality) ? 'PT' : ''; p.nationalityRead = true; if (p.nationality === 'PT') p.passportOnly = false; }
+    }
     if (read && read.no) p.id = [read.type || p.id[0], read.no, read.valid || p.id[2]];
     return p;
   });
@@ -668,5 +681,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { saveId, idOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

@@ -166,12 +166,11 @@
 
   // ---- on Documents: the section, and a drawer for each -----------------------------------------------
   const FILE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M10 13a2 2 0 1 1 2.6 1.9c-.4.2-.6.5-.6.9V16M12 18.5v.01"/></svg>';
-  const CHEV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 0-1.06L10.92 10 7.21 6.29a.75.75 0 1 1 1.06-1.06l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0Z" clip-rule="evenodd"/></svg>';
   const section = () => {
     const l = load(); if (!l.length) return '';
     return `<section class="ucs" aria-labelledby="ucs-h"><div class="ucs-h"><h2 id="ucs-h">Uncategorized documents</h2><span class="co-badge b-pend">${l.length} to sort</span></div>
       <p>Files ALMA couldn&rsquo;t place. Open one and tell her what it is: choose its category, its section and the document, and check its details. She files it there.</p>
-      <ul class="ucs-l">${l.map((x) => `<li><button type="button" data-uncat="${esc(x.id)}">${FILE}<span><b>${esc(x.name || x.file)}</b><small>${x.name ? `${esc(x.file)} &middot; ` : ''}Uploaded on ${esc(x.at)}${x.from ? ` &middot; ${esc(x.from)}` : ''}</small></span><span class="co-badge b-neu">Uncategorized</span>${CHEV}</button></li>`).join('')}</ul></section>`;
+      <ul class="ucs-l">${l.map((x) => `<li><button type="button" data-uncat="${esc(x.id)}">${FILE}<span><b>${esc(x.name || x.file)}</b><small>${x.name ? `${esc(x.file)} &middot; ` : ''}Uploaded on ${esc(x.at)}${x.from ? ` &middot; ${esc(x.from)}` : ''}</small></span><span class="co-badge b-neu">Uncategorized</span></button></li>`).join('')}</ul></section>`;
   };
   const M = DM.MONTHS;
   const isoOf = (v) => { const t = Date.parse(v); if (Number.isNaN(t)) return ''; const x = new Date(t); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
