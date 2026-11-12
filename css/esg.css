@@ -728,11 +728,6 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cd-tbl.cd-matrix th:last-child { width: 15%; }
 .cd-matrix th.c { white-space: normal; line-height: 1.25; font-size: 0.8125rem; }
 .cd-matrix td:last-child, .cd-matrix th:last-child { text-align: right; }
-/* workers: a row of categories above the documents, each underlined across its own columns */
-.cd-matrix .cd-cat-h th { text-wrap: balance; padding-left: 0.25rem; padding-right: 0.25rem; padding-top: 0.75rem; padding-bottom: 0.375rem; border-bottom: 0; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); line-height: 1.25; vertical-align: bottom;
-  background: linear-gradient(var(--color-line-strong, var(--color-dark-beige)), var(--color-line-strong, var(--color-dark-beige))) center bottom / calc(100% - 0.75rem) 1px no-repeat; }
-.cd-matrix .cd-cat-h th:first-child, .cd-matrix .cd-cat-h th:last-child { background: none; }
-.cd-matrix .cd-cat-h + tr th { padding-top: 0.5rem; }
 /* a worker's page: their documents under the same categories */
 .cd-wk-cats .cd-cat-r th { padding-top: 0.875rem; padding-bottom: 0.375rem; border-bottom: 1px solid var(--color-line); background: none; text-align: left; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
 .cd-wk-cats tbody:first-of-type .cd-cat-r th { padding-top: 0.5rem; }

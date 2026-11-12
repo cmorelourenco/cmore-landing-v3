@@ -467,12 +467,17 @@ window.DOC_MODEL = (() => {
       let held = subj.filter((r) => r.archived).map((r) => r.i);
       const pr = D.perRecord[c.code] || {};
       if (c.requirement === 'on_request') { covers = covers.filter((i) => (pr.requested || []).includes(i)); held = held.filter((i) => (pr.requested || []).includes(i)); }
-      if (c.requirement === 'optional') { covers = covers.filter((i) => (pr.have || []).includes(i)); held = held.filter((i) => (pr.have || []).includes(i)); }
+      // an optional one: a worker's is there for everyone, not uploaded until they have one (a
+      // machine's or a product's, only where there is one)
+      const optAll = c.requirement === 'optional' && kind === 'workers', has = (i) => (pr.have || []).includes(i) || !!updates[`${c.code}#${i}`];
+      if (c.requirement === 'optional' && !optAll) { covers = covers.filter((i) => (pr.have || []).includes(i)); held = held.filter((i) => (pr.have || []).includes(i)); }
+      if (optAll) held = held.filter(has);
       const upOf = (i) => updates[`${c.code}#${i}`];
-      const statusOf = (i) => { if (upOf(i)) return upOf(i).status; if (all[i] && all[i].isNew) return 'missing'; const o = (pr.over || {})[i]; if (o) return o[0]; return pr.def ? pr.def[0] : 'missing'; };
-      const expOf = (i) => { if (upOf(i)) return upOf(i).exp; if (all[i] && all[i].isNew) return '—'; const o = (pr.over || {})[i]; if (o) return o[1] || '—'; return pr.def ? pr.def[1](i) : '—'; };
+      const statusOf = (i) => { if (upOf(i)) return upOf(i).status; if (optAll && !has(i)) return 'notuploaded'; if (all[i] && all[i].isNew) return 'missing'; const o = (pr.over || {})[i]; if (o) return o[0]; return pr.def ? pr.def[0] : 'missing'; };
+      const expOf = (i) => { if (upOf(i)) return upOf(i).exp; if (optAll && !has(i)) return '—'; if (all[i] && all[i].isNew) return '—'; const o = (pr.over || {})[i]; if (o) return o[1] || '—'; return pr.def ? pr.def[1](i) : '—'; };
       const roster = covers.map((i) => ({ i, status: statusOf(i), exp: expOf(i) }));
-      const status = roster.length ? worstOf(roster.map((r) => r.status))
+      const filed = roster.filter((r) => r.status !== 'notuploaded');
+      const status = roster.length && filed.length ? worstOf(filed.map((r) => r.status)) : roster.length && optAll ? 'notuploaded'
         : c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'na';
       const note = !roster.length && status === 'na' ? `None of your ${NOUN[kind][1]} need it.` : '';
       const kept = held.map((i) => ({ i, status: statusOf(i), exp: expOf(i) }));
@@ -490,7 +495,7 @@ window.DOC_MODEL = (() => {
     // covers everywhere else — unless nobody has asked for it yet, or it is optional (the company's
     // optional ones keep their section from the list, next to the required ones of that section)
     doc.group = doc.status === 'notrequested' ? 'On client request' : area === 'company' ? doc.section
-      : c.requirement === 'optional' ? 'Optional' : BY_LEVEL[c.level] || doc.section;
+      : c.requirement === 'optional' && c.level !== 'per_worker' ? 'Optional' : BY_LEVEL[c.level] || doc.section;
     DOCS.push(doc);
   });
   // replaced versions, kept read-only for audit

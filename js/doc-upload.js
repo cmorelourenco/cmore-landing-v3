@@ -48,8 +48,8 @@ window.CMUpload = (() => {
   // a worker's optional documents, outside the catalog: their driving licence, and under Other their
   // criminal record certificate. Never asked for; there for whoever has one to file
   const EXTRA_D = {
-    DRV: { code: 'DRV', name: 'Driving licence', section: 'Driving', area: 'workers', kind: 'workers', cat: { usuallyIssuedBy: 'IMT, Instituto da Mobilidade e dos Transportes', titles: 'Carta de condu\u00e7\u00e3o; Driving licence; Driver licence; Driving license; Licen\u00e7a de condu\u00e7\u00e3o', fields: [], renewal: '15 years', expiryRule: '' } },
-    CRM: { code: 'CRM', name: 'Criminal record certificate', section: 'Other', area: 'workers', kind: 'workers', cat: { usuallyIssuedBy: 'Direc\u00e7\u00e3o-Geral da Administra\u00e7\u00e3o da Justi\u00e7a', titles: 'Certificado de registo criminal; Registo criminal; Criminal record; Criminal record certificate; Police clearance', fields: [], renewal: '3 months', expiryRule: '' } },
+    DRV: { code: 'DRV', name: 'Driving Licence', section: 'Driving', area: 'workers', kind: 'workers', cat: { usuallyIssuedBy: 'IMT, Instituto da Mobilidade e dos Transportes', titles: 'Carta de condu\u00e7\u00e3o; Driving licence; Driver licence; Driving license; Licen\u00e7a de condu\u00e7\u00e3o', fields: [], renewal: '15 years', expiryRule: '' } },
+    CRM: { code: 'CRM', name: 'Individual Criminal Record Certificate', section: 'Other', area: 'workers', kind: 'workers', cat: { usuallyIssuedBy: 'Direc\u00e7\u00e3o-Geral da Administra\u00e7\u00e3o da Justi\u00e7a', titles: 'Certificado de registo criminal; Registo criminal; Criminal record; Criminal record certificate; Police clearance', fields: [], renewal: '3 months', expiryRule: '' } },
   };
   const extraSlot = (code, i) => { const p = M.PERSON[i], on = M.extraOf(code, i); return { key: `${code}#${i}`, code, i, d: EXTRA_D[code], name: EXTRA_D[code].name, who: plain(p.name), status: on && on.file ? 'valid' : 'notuploaded', exp: on && on.file ? on.valid : '—' }; };
   const extrasOf = (i) => (M.saveExtra ? Object.keys(EXTRA_D).map((c) => extraSlot(c, i)) : []);
@@ -607,6 +607,56 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // expired: the date read has passed; it needs a new one, none (not applicable), or a current file
     const lapsedR = (r) => !!r.slot && !NA.includes(r.read.valid) && !Number.isNaN(Date.parse(r.read.valid)) && Date.parse(r.read.valid) < new Date().setHours(0, 0, 0, 0);
     const corrected = (r) => Object.assign(r, { edited: true, how: 'sure' });
+    // a worker's document: what ALMA extracts from it, as the list has it per document
+    // (js/worker-docs.js), each to check and change; its dates are the card's own issue and expiry
+    const wFields = (s) => {
+      if (!s || s.i == null || !s.who || !s.d || s.d.area !== 'workers') return null;
+      const l = ((window.CM_WORKER_DOCS || {})[s.code] || {}).fields || (s.d.cat && s.d.cat.fields) || [];
+      let iss = false, val = false;
+      return l.length ? l.map((fl, j) => {
+        const n = fl.name.toLowerCase();
+        const key = /expiry|end date|period end/.test(n) && !val ? (val = true, 'valid') : /issue date|start date|period start|delivery date/.test(n) && !iss ? (iss = true, 'issued') : `w${j}`;
+        return [key, fl.name.replace(/\s*\((issue|expiry) date\)$/i, '').replace(/^Issue date \(delivery date\)$/i, 'Delivery date')];
+      }) : null;
+    };
+    const personOf = (s) => (s.fresh ? Object.assign({ name: s.fresh.name, role: s.fresh.role }, s.fresh.prof || {}, { nationalityName: (s.fresh.prof || {}).nationality }) : M.PERSON[s.i] || {});
+    const wVal = (r, key, label) => {
+      const s = r.slot, v = (r.wv || {})[key]; if (v != null) return v;
+      const p = personOf(s), n = label.toLowerCase(), h = hash(s.key + label);
+      if (/full name|worker name/.test(n)) return s.who;
+      if (/employer/.test(n)) return plain(M.D.company || '');
+      if (/nationality/.test(n)) return plain(p.nationalityName || '');
+      if (/date of birth/.test(n)) return plain(p.birth || '');
+      if (/document number|passport number/.test(n)) return refOf(s, r);
+      if (/social security|personal identification/.test(n)) return plain(p.ss || '');
+      if (/tax number/.test(n)) return plain(p.tax || '');
+      if (/issuing country/.test(n)) return COUNTRY[(M.PROFILE || {}).country] || '';
+      if (/job category|occupation|^trade$|trade \/ category/.test(n)) return plain(p.role || '');
+      if (/signed by|\(y\/n\)|yes\/no|right to work/.test(n)) return 'Yes';
+      if (/^result/.test(n)) return 'Fit';
+      if (/restrictions/.test(n)) return 'None';
+      if (/exam type/.test(n)) return 'Periodic';
+      if (/doctor|training entity|certifying body|issuing entity|trainer/.test(n)) return issuerFor(s);
+      if (/hours/.test(n)) return String(8 + (h % 5) * 4);
+      if (/task|topic/.test(n)) return ['Work at height', 'Scaffolding', 'Confined spaces', 'Excavations'][h % 4];
+      if (/equipment type/.test(n)) return ['Excavator', 'Aerial work platform', 'Forklift', 'Tower crane'][h % 4];
+      if (/ppe items/.test(n)) return 'Helmet, safety boots, gloves, high-visibility vest, harness';
+      if (/harness/.test(n)) return `HS-${String(10000 + h % 89999)}`;
+      if (/categories/.test(n)) return ['B', 'B, C', 'B, C, CE'][h % 3];
+      if (/record status/.test(n)) return 'No record';
+      if (/purpose/.test(n)) return 'Employment';
+      if (/permit type|permit class/.test(n)) return 'Residence permit for work';
+      if (/application type/.test(n)) return 'Renewal';
+      if (/contract type/.test(n)) return /fixed/i.test(p.employment || '') ? 'Fixed-term' : 'Permanent';
+      if (/qualification level/.test(n)) return 'Level 2';
+      if (/^standard$/.test(n)) return 'ISO 9606-1';
+      if (/welding process/.test(n)) return '135 (MAG)';
+      if (/material group/.test(n)) return 'FM1';
+      if (/course/.test(n)) return '30 hours';
+      if (/industry/.test(n)) return 'Construction';
+      if (/number/.test(n)) return refOf(s, r);
+      return '';
+    };
 
     // ---- the file, beside the drawer (as the setup's preview): the file itself, and what she read --
     const dw = document.createElement('div');
@@ -704,7 +754,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
           if (!r.on) return `<section class="cmu-r is-off" data-card="${k}" aria-label="${esc(r.file.name)}"><div class="cmu-r-h"><div class="cmu-r-t"><h3>${esc(s ? label(s) : r.file.name)}</h3><p>${esc(r.file.name)} &middot; left out, nothing is saved from it</p></div><button type="button" class="link-btn" data-undo-rej="${k}">Undo</button></div></section>`;
           // the fields, as in the setup: read as she read them, or (Make changes) as fields, the dates
           // with a date picker that can also be not applicable
-          const fieldsOf = () => FIELDS.filter(([f]) => f !== 'ref' || s.i == null || s.code === 'ID').map(([f, l]) => {
+          const wf = wFields(s);
+          const fieldsOf = () => (wf || FIELDS.filter(([f]) => f !== 'ref' || s.i == null || s.code === 'ID')).map(([f, l]) => {
+            if (wf && !DATES.includes(f)) { const val = wVal(r, f, l); return `<div><dt>${esc(l)}</dt><dd>${r.editing ? `<input name="${f}" value="${esc(val)}" aria-label="${esc(l)}">` : val ? esc(val) : '<span class="co-subtle">Not on it</span>'}</dd></div>`; }
             const flag = ex && f === 'valid', na = DATES.includes(f) && NA.includes(v[f]);
             const input = !DATES.includes(f) ? `<input name="${f}" value="${esc(v[f])}" aria-label="${l}">`
               : `<input type="date" name="${f}" value="${na ? '' : isoOf(v[f])}" aria-label="${l}"${na ? ' disabled' : ''}><label class="cmu-fna"><input type="checkbox" data-fna="${f}"${na ? ' checked' : ''}>Not applicable</label>`;
@@ -963,6 +1015,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         // 17 Jan 2027; a date can be not applicable. Checked by a person, it reads as sure
         const k = +t('[data-fixsave]').dataset.fixsave, r = results[k], card = el.querySelector(`.cmu-r[data-card="${k}"]`), v = valsOf(r);
         let changed = false;
+        (wFields(r.slot) || []).forEach(([f, l]) => {
+          if (DATES.includes(f)) return; const inp = card.querySelector(`input[name="${f}"]`); if (!inp) return;
+          const val = inp.value.trim(); if (val === wVal(r, f, l)) return; r.wv = Object.assign({}, r.wv, { [f]: val }); changed = true;
+        });
         FIELDS.forEach(([f]) => {
           const box = card.querySelector(`[data-fna="${f}"]`), na = box && box.checked, inp = card.querySelector(`input[name="${f}"]`); if (!inp) return;
           const raw = na ? 'Not applicable' : inp.value.trim(), val = !na && DATES.includes(f) && raw ? fromIso(raw) : raw;

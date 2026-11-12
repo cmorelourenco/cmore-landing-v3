@@ -205,7 +205,7 @@
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Asked, waiting for you'], ['off', 'You stopped sharing']].map(([k, l]) => `<span><span class="cd-dot is-${k}"></span>${l}</span>`).join('');
     return `<section class="sp-glance" aria-labelledby="cl-glance-h"><div class="sp-glance-h"><h2 id="cl-glance-h">What each client sees</h2><span>${shown.length} client${shown.length === 1 ? '' : 's'}</span></div>
       <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Client</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not shared</span><span>Renew a document in Documents and every client who sees it gets the new one.</span></p></section>`;
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not shared</span></p></section>`;
   };
 
   // ---- the clients, as cards -----------------------------------------------------------------------

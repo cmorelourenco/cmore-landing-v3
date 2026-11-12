@@ -38,7 +38,7 @@ window.CMLibrary = (() => {
     // in this session (another tab's), left out
     const recOk = (kind, k) => !!(({ workers: D.WORKERS, equipment: D.EQUIPMENT, products: D.PRODUCTS }[kind] || [])[k]);
     if (code === 'ID') { if (!recOk('workers', +i)) return null; const who = plain(D.recordName('workers', +i)); return { title: 'Identity document', who, area: 'workers', note: 'Filed in Documents', base: `Identity document - ${who}` }; }
-    const EXTRA = { DRV: 'Driving licence', CRM: 'Criminal record certificate' };
+    const EXTRA = { DRV: 'Driving Licence', CRM: 'Individual Criminal Record Certificate' };
     if (EXTRA[code]) { if (!recOk('workers', +i)) return null; const who = plain(D.recordName('workers', +i)); return { title: EXTRA[code], who, area: 'workers', note: 'Filed in Documents', base: `${EXTRA[code]} - ${who}` }; }
     if (code === 'WK-REG') return { title: 'Worker register', area: 'workers', note: 'Filed in Documents', base: 'Worker register' };
     const d = docOf(code); if (!d) return null;
