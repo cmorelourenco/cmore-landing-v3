@@ -525,6 +525,18 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // after anything already added, in the order they're shown
     const crewCtx = crewHere() && pool.some((sl) => sl.d.area === 'workers');
     let found = null, sorted = 0;
+    // a worker register isn't reviewed as a document: who's on it was the step before (who to add,
+    // their details), so it's saved with the rest, and no card asks to accept it
+    const quiet = (r) => !!(r.slot && r.slot.code === 'WK-REG');
+    const shown = () => results.filter((r) => r.on && !quiet(r));
+    // on to saving: what differs from what's on file waits for the user's approval, else it's saved
+    const toSave = () => {
+      closePeek();
+      reviews = reviewOf(results, !!(found && found.people.length)); stage = 0;
+      if (reviews.length) { step = 4; paint(); panel.scrollTop = 0; $('cmu-body').scrollTop = 0; } else save();
+    };
+    // the review, after filing; nothing left to review (only a register): straight on
+    const toReview = () => { results.forEach((r) => { if (quiet(r)) r.ok = true; }); if (!shown().length && results.some((r) => r.on && r.slot)) { toSave(); return; } step = 3; paint(); el.querySelector('select, [data-save]')?.focus({ preventScroll: true }); };
     const fs = focus && pool.find((s) => s.key === focus);
     let files = [...(opts.files || [])], step = 1, results = [], reading = 0, reviews = [], stage = 0;
     // a job picked up from another page opens at once with its files' names; the files follow
@@ -673,9 +685,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         foot.innerHTML = '<span class="cmu-foot-l">Checking each one with the body that issued it.</span>';
       } else {
         // as the setup's review (js/guided-upload.js): how many are accepted, Accept all; expired first
-        const on = results.filter((r) => r.on), ready = on.filter((r) => r.slot);
+        const on = shown(), ready = on.filter((r) => r.slot);
         const grouped = !!(found && found.asked), gk = (r) => (!r.slot ? '\uffff' : r.slot.who || '');
-        const order = results.map((r, k) => k).sort((a, b) => (grouped ? gk(results[a]).localeCompare(gk(results[b])) : 0) || (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
+        const order = results.map((r, k) => k).filter((k) => !quiet(results[k])).sort((a, b) => (grouped ? gk(results[a]).localeCompare(gk(results[b])) : 0) || (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
         let lastG = null;
         const whoHead = (k) => {
           if (!grouped) return ''; const r = results[k], g = gk(r); if (g === lastG) return ''; lastG = g;
@@ -868,9 +880,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         const on = x.people.filter((q) => q.decision === 'ok'), nn = on.filter((q) => q.i == null).length;
         results[k].note = `${fs && results[k].slot && results[k].slot.key !== fs.key ? `It&rsquo;s a ${esc(plain(results[k].slot.name).toLowerCase())}, not ${esc(fs.who ? `${fs.who}&rsquo;s ` : '')}${esc(fs.name)}, so it&rsquo;s filed as that. ` : ''}It names ${on.length} worker${on.length === 1 ? '' : 's'}: ${on.length - nn} on your list${nn ? `, and ${nn} you&rsquo;re adding` : ''}. I&rsquo;ve noted it in each one&rsquo;s file.`;
       });
-      if (now || matchMedia('(prefers-reduced-motion: reduce)').matches) { step = 3; paint(); return; }
+      if (now || matchMedia('(prefers-reduced-motion: reduce)').matches) { toReview(); return; }
       step = 'sort'; sorted = 0; paint();
-      const go = () => { if (!el.isConnected || step !== 'sort') return; sorted += 1; if (sorted >= results.length) { step = 3; paint(); el.querySelector('select, [data-save]')?.focus({ preventScroll: true }); return; } paint(); setTimeout(go, 420); };
+      const go = () => { if (!el.isConnected || step !== 'sort') return; sorted += 1; if (sorted >= results.length) { toReview(); return; } paint(); setTimeout(go, 420); };
       setTimeout(go, 420);
     };
     const save = () => {
@@ -970,13 +982,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-reject]')) { const k = +t('[data-reject]').dataset.reject; Object.assign(results[k], { on: false, ok: false, editing: false }); if (peek === k) closePeek(); paint(); return; }
       if (t('[data-undo-rej]')) { results[+t('[data-undo-rej]').dataset.undoRej].on = true; paint(); return; }
       if (t('[data-swap]')) { swapAt = +t('[data-swap]').dataset.swap; $('cmu-swap').value = ''; $('cmu-swap').click(); return; }
-      if (t('[data-save]')) {
-        closePeek();
-        // anything that differs from what's on file waits for the user's approval
-        reviews = reviewOf(results, !!(found && found.people.length)); stage = 0;
-        if (reviews.length) { step = 4; paint(); panel.scrollTop = 0; $('cmu-body').scrollTop = 0; } else save();
-        return;
-      }
+      if (t('[data-save]')) { toSave(); return; }
       if (t('[data-dec]')) {
         const [k, j] = t('[data-dec]').dataset.dec.split(':'), v = reviews[+k], val = t('[data-dec]').dataset.v;
         const d = val || undefined; if (j != null) v.crew[+j].decision = d; else v.decision = d;
@@ -988,7 +994,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         paint(); return;
       }
       if (t('[data-next]')) { stage = Math.min(stage + 1, stages().length - 1); paint(); $('cmu-body').scrollTop = 0; return; }
-      if (t('[data-prev]')) { if (stage) { stage -= 1; } else step = 3; paint(); $('cmu-body').scrollTop = 0; return; }
+      if (t('[data-prev]')) { if (stage) { stage -= 1; } else step = shown().length ? 3 : found && found.asked ? 'who' : 1; paint(); $('cmu-body').scrollTop = 0; return; }
       if (t('[data-commit]')) { save(); return; }
       if (t('[data-pck]')) { const b = t('[data-pck]'), q = found.people.find((x) => x.key === b.dataset.pck); q.decision = b.checked ? 'ok' : 'no'; const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector(`[data-pck="${q.key}"]`)?.focus({ preventScroll: true }); return; }
       if (t('[data-pall]')) { const b = t('[data-pall]'), on = b.checked; found.people.filter((q) => q.i == null && wMatch(q)).forEach((q) => { q.decision = on ? 'ok' : 'no'; }); const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector('[data-pall]')?.focus({ preventScroll: true }); return; }
