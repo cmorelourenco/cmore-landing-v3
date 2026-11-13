@@ -1245,7 +1245,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const dNeeds = (r) => r.on && (!r.slot || (dLow(r).length > 0 && !r.checked) || dGuess(r) || lapsedR(r));
     const pLow = (q) => (q.i != null ? [] : Object.entries(confsOf(q)).filter(([f, x]) => x < 75 && !(q.fe && q.fe.has(f))).map(([f]) => f));
     const pNeeds = (q) => pLow(q).length > 0 && !q.checked;
-    const wNeeds = (q) => (q.lists.length && !q.regOk ? 1 : 0) + docsOf(q).filter((r) => r.on && !r.ok).length; // documents not decided yet
+    // what holds the worker back: only what needs them (low confidence, a type she guessed, expired, no type);
+    // high and medium confidence go in as read unless rejected
+    const wNeeds = (q) => (q.lists.length && !q.regOk && pNeeds(q) ? 1 : 0) + docsOf(q).filter((r) => r.on && !r.ok && dNeeds(r)).length;
     const ACC = '<span class="co-badge b-ok">Accepted</span>';
     const canAcc = (r) => !!r.slot && !lapsedR(r);
     const corrB = () => `<span class="co-badge b-neu">${M.corrected()}</span>`, CONFD = '<span class="co-badge b-ok">Confirmed</span>';
@@ -1272,13 +1274,13 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (q.ok && n) q.ok = false; // a document undone: the worker isn't accepted any more
       // accepted or skipped already (back to them with the arrows): undone here, or on to the next
       if (q.ok || q.skip) { $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${q.ok ? 'Worker accepted' : q.i == null ? 'Skipped: not added' : 'Skipped: their documents aren&rsquo;t saved'}</span><button type="button" class="btn btn-quiet btn-sm" data-wkundo>${q.ok ? 'Unaccept worker' : 'Undo skip'}</button><button type="button" class="btn btn-primary btn-sm" data-wknext>${rest ? 'Next worker' : 'Finish'}</button>`; return; }
-      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `Accept or reject ${n === 1 ? 'one more document' : `${n} more documents`}` : ''}</span><button type="button" class="link-btn" data-wkskip title="${q.i == null ? 'Don&rsquo;t add them now' : 'Don&rsquo;t save their documents now'}">Skip</button><button type="button" class="btn btn-primary btn-sm" data-wkok${n ? ' disabled' : ''}>Accept worker</button>`;
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `${n === 1 ? 'One document needs' : `${n} documents need`} you: accept or reject ${n === 1 ? 'it' : 'them'}` : ''}</span><button type="button" class="link-btn" data-wkskip title="${q.i == null ? 'Don&rsquo;t add them now' : 'Don&rsquo;t save their documents now'}">Skip</button><button type="button" class="btn btn-primary btn-sm" data-wkok${n ? ' disabled' : ''}>Accept worker</button>`;
     };
     const workerStep = () => {
       const q = batch[wi]; if (!q) return;
       if (q.ok && wNeeds(q)) q.ok = false;
       const v = profOf(q), D = docsOf(q), isNew = q.i == null, c = confsOf(q), pl = pLow(q), pOpen = wOpen === 'p';
-      head('ALMA', 'Check each worker', 'Their documents, and what I read on each one. Accept or reject each document; low confidence needs you to check it against the file first. Open a document to see the file beside this panel.');
+      head('ALMA', 'Check each worker', 'Their documents, and what I read on each one. Low confidence needs you: check it against the file, then accept or reject it. High and medium confidence are up to you. Open a document to see the file beside this panel.');
       const top = `<div class="cmu-wk-top"><span class="co-badge ${isNew ? 'b-info' : 'b-neu'}">${isNew ? 'New worker' : 'On your list'}</span>${q.ok ? '<span class="co-badge b-ok">Accepted</span>' : q.skip ? '<span class="co-badge b-neu">Skipped</span>' : ''}<span class="cmu-wk-n"><button type="button" data-wprev aria-label="Previous worker"${wi ? '' : ' disabled'}>${PREV}</button><span>${wi + 1} of ${batch.length}</span><button type="button" data-wnext aria-label="Next worker"${wi < batch.length - 1 ? '' : ' disabled'}>${NEXT}</button></span></div>`;
       const reg = srcList(), lk = q.lists[0], lr = lk != null ? results[lk] : null;
       // the register's line for them: what it says of them (a job changed on it, shown so)
