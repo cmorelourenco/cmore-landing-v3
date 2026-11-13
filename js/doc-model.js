@@ -123,18 +123,22 @@ window.DOC_MODEL = (() => {
   const CREW_KEY = 'cm-crew' + (PERSONA === 'beatriz' ? '-beatriz' : '');
   // archived: archived by hand from a worker's page (js/company-details.js), { worker: the day }:
   // off the list like one who left, their documents kept read-only, and back with Unarchive
-  const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {}, archived: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {}, archived: {} }; } })();
+  const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {}, archived: {}, names: {}, details: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {}, archived: {}, names: {}, details: {} }; } })();
   const CREW_BASE = WORKERS.length;
   if (PERSONA === 'miguel') {
     // a worker added from their documents: [name, job, ID type, ID number, ID valid until, added on];
     // their job may be set later
     crew.added.forEach(([n, r]) => WORKERS.push([n, r || 'Job not set yet']));
     Object.entries(crew.roles).forEach(([i, r]) => { if (WORKERS[i]) WORKERS[i][1] = r; });
+    // a name put right when their documents were checked (js/doc-upload.js)
+    Object.entries(crew.names).forEach(([i, n]) => { if (WORKERS[i]) WORKERS[i][0] = n; });
   }
   const saveCrew = (patch) => {
     crew.added = crew.added.concat(patch.added || []);
     crew.left = [...new Set(crew.left.concat(patch.left || []))];
     Object.assign(crew.roles, patch.roles || {});
+    Object.assign(crew.names, patch.names || {});
+    Object.entries(patch.details || {}).forEach(([i, d]) => { crew.details[i] = Object.assign(crew.details[i] || {}, d); });
     if (patch.archive) crew.archived[patch.archive[0]] = patch.archive[1];
     if (patch.unarchive != null) delete crew.archived[patch.unarchive];
     try { sessionStorage.setItem(CREW_KEY, JSON.stringify(crew)); } catch (e) {}
@@ -267,8 +271,9 @@ window.DOC_MODEL = (() => {
     if (add[2] === 'Passport') p.passportOnly = true;
     if (add.length && !add[1]) p.roleUnset = true;
     // and the details ALMA read for them (and the user checked) when they were added
-    const x = add[6];
-    if (x) {
+    // (and for someone on the list, the details the user changed when their documents were checked)
+    const x = Object.assign({}, add[6] || {}, crew.details[i] || {});
+    if (Object.keys(x).length) {
       ['birth', 'address', 'tax', 'ss'].forEach((k) => { if (x[k]) p[k] = x[k]; });
       if (x.since) p.since = x.since;
       if (x.nationality) { p.nationalityName = x.nationality; p.nationality = /portug/i.test(x.nationality) ? 'PT' : ''; p.nationalityRead = true; if (p.nationality === 'PT') p.passportOnly = false; }

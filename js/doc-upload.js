@@ -289,7 +289,11 @@ window.CMUpload = (() => {
       if (nm && theirs && !taken.has(fold(nm))) { const q = fresh(nm, /passport|passaporte/.test(fw.n) ? 'Passport' : 'Citizen card'); q.files.push(k); return { people: [q] }; }
       return { people: [] };
     });
-    return { people, per };
+    // the same first and last name, but not the same name (a middle name on one file only): she
+    // can't tell one person from two, and asks
+    const fr = people.filter((q) => q.i == null && !q.kind && !q.lists.length), unsure = [];
+    fr.forEach((a, x) => fr.slice(x + 1).forEach((b) => { const wa = fold(a.name).split(/\s+/), wb = fold(b.name).split(/\s+/); if (wa[0] === wb[0] && wa[wa.length - 1] === wb[wb.length - 1]) unsure.push({ a, b, decision: null }); }));
+    return { people, per, unsure };
   };
   // someone new, once added: their identity document, and what every worker is asked for
   const freshSlots = (q) => [{ key: `ID#${q.ni}`, code: 'ID', i: q.ni, d: ID_D, name: 'Identity document', who: q.name, status: 'notuploaded', exp: '—', fresh: q }]
@@ -353,7 +357,7 @@ window.CMUpload = (() => {
 .cmu-x { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 0; border-radius: 0.5rem; background: none; color: var(--color-ink-subtle); cursor: pointer; }
 .cmu-x:hover { background: var(--color-light-beige); color: var(--color-ink); }
 .cmu-x svg { width: 1.125rem; height: 1.125rem; }
-.cmu-body { flex: 1; min-height: 0; overflow: auto; padding: 0 1.5rem 1rem; display: grid; gap: 1rem; align-content: start; }
+.cmu-body { flex: 1; min-height: 0; overflow: auto; padding: 0 1.5rem 1rem; display: grid; grid-template-columns: minmax(0, 1fr); /* never wider than the panel: a long file name is cut, not the panel stretched */ grid-auto-rows: max-content; /* each part its full height (a long table isn't squeezed to fit): the body scrolls */ gap: 1rem; align-content: start; }
 .cmu-foot { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem 1.25rem; border-top: 1px solid var(--color-line); }
 .cmu-foot .cmu-foot-l { margin-right: auto; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .cmu-now { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; border-radius: 0.625rem; background: var(--color-off-white); font-size: 0.875rem; }
@@ -381,7 +385,7 @@ window.CMUpload = (() => {
 .cmu-f.is-done .cmu-ic { background: var(--color-positive-subtle, #e7f2e4); color: var(--color-positive, #3d7a2c); }
 @keyframes cmu-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .cmu-f.is-reading .cmu-ic svg { animation: none; } }
-.cmu-r { display: grid; gap: 0.75rem; padding: 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; }
+.cmu-r { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; padding: 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; }
 .cmu-r.is-off { opacity: .55; }
 .cmu-r.is-ask { border-color: var(--color-caution, #d9a21b); }
 .cmu-r-h { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; }
@@ -517,6 +521,40 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
 .cmu-checks input { width: 100%; height: 2.25rem; padding: 0 0.625rem; border: 1px solid var(--color-line); border-radius: 0.5rem; background: var(--color-surface, #fff); font: inherit; font-size: 0.875rem; color: var(--color-ink); }
 .cmu-checks input:focus { outline: none; border-color: var(--color-graphite); box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-graphite) 12%, transparent); }
 .cmu-panel { z-index: 2; }
+/* one worker at a time: their details, then each of their documents, one open at once */
+.cmu-wk-top { display: flex; align-items: center; gap: 0.5rem; }
+.cmu-wk-n { margin-left: auto; display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.875rem; color: var(--color-ink-subtle); white-space: nowrap; }
+.cmu-wk-n button { display: grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: 0.375rem; background: none; color: var(--color-ink); cursor: pointer; }
+.cmu-wk-n button:hover { background: var(--color-light-beige); }
+.cmu-wk-n button:disabled { opacity: .35; cursor: default; background: none; }
+.cmu-wk-n svg { width: 1rem; height: 1rem; }
+.cmu-wk-h { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; color: inherit; cursor: pointer; }
+.cmu-wk-h .cmu-r-t b { display: block; font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); overflow-wrap: anywhere; }
+.cmu-wk-h .cmu-r-t small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-wk-p .cmu-wk-h .cmu-r-t b { font-size: 1.125rem; }
+.cmu-wk-p { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; }
+.cmu-wk-p .cmu-pic { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
+.cmu-wk-nm { flex: 1; min-width: 0; padding: 0.375rem 0.5rem; border: 1px solid transparent; border-radius: 0.375rem; background: none; font: inherit; font-size: 1.125rem; font-weight: 600; color: var(--color-ink); }
+.cmu-wk-nm:hover { border-color: var(--color-line); }
+.cmu-wk-nm:focus { outline: none; border-color: var(--color-graphite); background: var(--color-surface); }
+.cmu-wk-h .cmu-wk-b { flex: none; }
+.cmu-wk-h .cmu-ic, .cmu-wk-d .cmu-r-h .cmu-ic { flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 0.375rem; background: var(--color-light-beige); color: var(--color-ink-subtle); }
+.cmu-wk-h .cmu-ic svg, .cmu-wk-d .cmu-r-h .cmu-ic svg { width: 1rem; height: 1rem; }
+.cmu-chev { flex: none; width: 1rem; height: 1rem; color: var(--color-ink-subtle); transition: transform .15s; }
+.cmu-r.is-open > .cmu-wk-h .cmu-chev { transform: rotate(180deg); }
+.cmu-wk-d { padding: 0.75rem 1rem; }
+.cmu-r.is-open { border-color: var(--color-graphite); }
+.cmu-r.is-open.is-ask { border-color: var(--color-caution, #d9a21b); }
+.cmu-wk-sel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.cmu-tg { display: block; margin-top: 0.375rem; }
+.cmu-tg:empty { display: none; }
+.cmu-was { display: block; margin-top: 0.25rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-same { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.cmu-same > div { display: grid; gap: 0.125rem; padding: 0.75rem; border-radius: 0.5rem; background: var(--color-off-white); }
+.cmu-same b { font-size: 0.9375rem; font-weight: 600; color: var(--color-ink); }
+.cmu-same small { font-size: 0.8125rem; color: var(--color-ink-subtle); overflow-wrap: anywhere; }
+.cmu-wt td.cmu-wn { white-space: nowrap; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+@media (max-width: 560px) { .cmu-wk-sel, .cmu-same { grid-template-columns: minmax(0, 1fr); } }
 .cmu-dw { z-index: 1; pointer-events: none; } /* under the upload drawer, which stays usable beside it: it slides out from behind it */
 .cmu-dw .docd-scrim { display: none; }
 .cmu-dw .docd-panel { pointer-events: auto; right: 40rem; width: min(40rem, calc(100vw - 45rem)); box-shadow: -24px 0 48px -24px rgba(52, 52, 52, .35); }
@@ -532,6 +570,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
   const SPIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
   const OK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd"/></svg>';
   const FOLD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg>';
+  const PREV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
+  const NEXT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
+  const CHEV = '<svg class="cmu-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
   const size = (b) => (!b ? '' : b < 1e6 ? Math.max(1, Math.round(b / 1e3)) + ' KB' : (b / 1e6).toFixed(1) + ' MB');
 
   // the toast, shared with the pages that show ALMA reading on their own (js/alma-job.js)
@@ -547,7 +588,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // a worker register isn't reviewed as a document: who's on it was the step before (who to add,
     // their details), so it's saved with the rest, and no card asks to accept it
     const quiet = (r) => !!(r.slot && (r.slot.code === 'WK-REG' || r.slot.code === 'EQ-REG' || r.slot.code === 'PR-REG'));
-    const shown = () => results.filter((r) => r.on && !quiet(r));
+    const shown = () => results.filter((r) => r.on && !quiet(r) && !r.wk);
+    // workers' documents: who is on each file comes first, then each worker is checked on their own
+    const wCtx = crewHere() && pool.some((sl) => sl.d.area === 'workers');
     // on to saving: what differs from what's on file was accepted or rejected on its card
     const toSave = () => { closePeek(); save(); };
     // the review, after filing; nothing left to review (only a register): straight on
@@ -730,7 +773,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     el.appendChild(dw);
     let peek = null;
     const paintPeek = () => {
-      if (typeof peek === 'string') { paintWPeek(); return; }
+      if (typeof peek === 'string') { if (peek.startsWith('r:')) paintRPeek(+peek.slice(2)); else paintWPeek(); return; }
       const r = results[peek]; if (!r) { closePeek(); return; }
       const s = r.slot, q = (id) => dw.querySelector('#' + id);
       q('cmu-dw-t').textContent = s ? label(s) : r.file.name;
@@ -750,25 +793,43 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     };
     // someone new's details, as the setup's document drawer (js/guided-upload.js): the file with each
     // detail she read highlighted, then each detail with her confidence and, under it, its citation
+    // what she read, each detail with her confidence and, under it, its citation (a detail typed over
+    // is the user's: corrected)
+    const citeTable = (rows, fname) => {
+      const part = (l) => (/date|until|since|birth/i.test(l) ? 'Dates' : /number|nif|niss|document|serial|reference|code/i.test(l) ? 'Identification' : 'Particulars');
+      return `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map((x, i) => !x.val
+        ? `<tr><td><span class="n">${esc(x.l)}</span></td><td><span class="co-subtle">Not on the file</span></td><td></td></tr>`
+        : `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.l)}</span></td><td>${x.flag ? `<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">I&rsquo;ve put ${esc(x.val)}. Check it against the file.</span>` : esc(x.val)}`
+          + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="false" aria-controls="cmu-cite-${i}">View citation</button></td><td>${x.ed ? corrB() : x.p == null ? '' : tagOf(x.p)}</td></tr>`
+          + `<tr class="cdd-cite-row" id="cmu-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(fname)}</b><span>Page 1 &middot; ${part(x.l)}</span></figcaption><blockquote>&ldquo;${esc(x.l)}: <mark${x.flag ? ' class="is-flag"' : ''}>${x.flag ? '[cut off at the edge of the scan]' : esc(x.val)}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>`;
+    };
+    // one of the documents of the worker being checked: the file, each detail highlighted, and what she read
+    const paintRPeek = (k) => {
+      const r = results[k]; if (!r || !r.slot) { closePeek(); return; }
+      const d = (id) => dw.querySelector('#' + id), s = r.slot, fc = dConfs(r);
+      d('cmu-dw-t').textContent = plain(s.name) + (r.owner ? ` \u00b7 ${profOf(r.owner).name || r.owner.name}` : '');
+      d('cmu-dw-sub').innerHTML = `${esc(r.file.name)}${r.file.size ? ' &middot; ' + size(r.file.size) : ''}`;
+      d('cmu-dw-conf').innerHTML = dBadge(r);
+      const rows = dFields(r).map(([f, l]) => { const ed = !!(r.fe && r.fe.has(f)); return { l, val: dVal(r, f, l), p: fc[f], ed, flag: !ed && !r.checked && fc[f] != null && fc[f] < 75 }; });
+      const rec = { name: r.file.name, type: r.file.type, size: r.file.size, blob: r.file };
+      const spec = { title: plain(s.name), file: r.file.name, issuer: '', holder: plain(M.D.company || ''), fields: rows.map((x, i) => ({ name: x.l, value: x.val, flag: x.flag, i })) };
+      d('cmu-dw-body').innerHTML = (window.CMFiles && window.CMFiles.preview ? window.CMFiles.preview(rec, spec) : '') + citeTable(rows, r.file.name);
+      d('cmu-dw-foot').textContent = ''; d('cmu-dw-acts').innerHTML = '';
+    };
     const paintWPeek = () => {
       const q = found && found.people.find((x) => x.key === peek); if (!q) { closePeek(); return; }
-      const d = (id) => dw.querySelector('#' + id), v = profOf(q), c = confsOf(q), src = srcOf(q), f0 = files[src[0]];
-      const fromList = q.lists.length > 0, title = fromList ? (isM(q) ? 'Equipment register' : isP(q) ? 'Product list' : 'Worker register') : isM(q) || isP(q) ? 'Document' : 'Identity document';
+      const d = (id) => dw.querySelector('#' + id), v = profOf(q), c = confsOf(q), src = srcOf(q), f0 = files[step === 'worker' && q.lists.length ? q.lists[0] : src[0]];
+      const fromList = q.lists.length > 0 && (step === 'worker' || !q.files.length), title = fromList ? (isM(q) ? 'Equipment register' : isP(q) ? 'Product list' : 'Worker register') : isM(q) || isP(q) ? 'Document' : 'Identity document';
       d('cmu-dw-t').textContent = titleOf(q);
       d('cmu-dw-sub').innerHTML = src.map((j) => esc(files[j].name)).join(', ');
       d('cmu-dw-conf').innerHTML = confTagOf(q);
-      const rows = fieldsFor(q).map(([f, l]) => ({ f, l, val: v[f] || '', p: q.edited ? 98 : c[f], flag: !q.edited && c[f] != null && c[f] < 75 }));
-      const part = (l) => (/date|until|since|birth/i.test(l) ? 'Dates' : /number|nif|niss|document|serial|reference|code/i.test(l) ? 'Identification' : 'Particulars');
-      const read = `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${rows.map((x, i) => !x.val
-        ? `<tr><td><span class="n">${esc(x.l)}</span></td><td><span class="co-subtle">Not on the file</span></td><td></td></tr>`
-        : `<tr class="${x.flag ? 'is-flag' : ''}"><td><span class="n">${esc(x.l)}</span></td><td>${x.flag ? `<span class="cdd-unread">Couldn&rsquo;t read it cleanly</span><span class="cdd-why">I&rsquo;ve put ${esc(x.val)}. Check it against the file.</span>` : esc(x.val)}`
-          + `<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="false" aria-controls="cmu-cite-${i}">View citation</button></td><td>${tagOf(x.p)}</td></tr>`
-          + `<tr class="cdd-cite-row" id="cmu-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(f0 ? f0.name : '')}</b><span>Page 1 &middot; ${part(x.l)}</span></figcaption><blockquote>&ldquo;${esc(x.l)}: <mark${x.flag ? ' class="is-flag"' : ''}>${x.flag ? '[cut off at the edge of the scan]' : esc(x.val)}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>`;
+      const rows = fieldsFor(q).map(([f, l]) => { const ed = !!(q.fe && q.fe.has(f)); return { f, l, val: v[f] || '', ed, p: q.edited ? 98 : c[f], flag: !q.edited && !ed && !q.checked && c[f] != null && c[f] < 75 }; });
+      const read = citeTable(rows, f0 ? f0.name : '');
       const rec = f0 ? { name: f0.name, type: f0.type, size: f0.size, blob: f0 } : null;
       const spec = { title, file: f0 ? f0.name : '', issuer: '', holder: plain(M.D.company || ''), fields: rows.map((x, i) => ({ name: x.l, value: x.val, flag: x.flag, i })) };
       d('cmu-dw-body').innerHTML = (window.CMFiles && window.CMFiles.preview ? window.CMFiles.preview(rec, spec) : '') + read;
-      d('cmu-dw-foot').textContent = q.out ? 'Left out' : q.ok ? 'Accepted' : 'Not accepted yet';
-      d('cmu-dw-acts').innerHTML = q.out ? '' : `<button type="button" class="link-btn" data-dwedit>Make changes</button>${q.ok ? `<span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-dwaccept>${TICK}Accept</button>`}`;
+      d('cmu-dw-foot').textContent = step === 'worker' ? '' : q.out ? 'Left out' : q.ok ? 'Accepted' : 'Not accepted yet';
+      d('cmu-dw-acts').innerHTML = q.out || step === 'worker' ? '' : `<button type="button" class="link-btn" data-dwedit>Make changes</button>${q.ok ? `<span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-dwaccept>${TICK}Accept</button>`}`;
     };
     const edit = (k) => { results.forEach((x, j) => { x.editing = j === k; }); paint(); const c = el.querySelector(`.cmu-r[data-card="${k}"]`), i = c && (c.querySelector('.is-flag input') || c.querySelector('.cmu-fields input')); if (i) { i.scrollIntoView({ block: 'center' }); i.focus(); } };
     // Replace file: another file in its place, read again
@@ -807,6 +868,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       el.querySelector('.cmu-alma').classList.toggle('is-reading', step === 2 || step === 'wread' || step === 'sort');
       if (step === 'who') { whoStep(); return; }
       if (step === 'manual') { manualStep(); return; }
+      if (step === 'worker') { workerStep(); return; }
       if (step === 'wread' || step === 'details') { detailsStep(); return; }
       head('ALMA', R0.title, R0.lead);
       if (step === 'sort') {
@@ -825,14 +887,14 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
             : window.CMLibrary && window.CMLibrary.has() ? `<div class="cmu-lib"><span>or</span>${window.CMLibrary.button('data-lib')}</div>` : '') + list;
         foot.innerHTML = `<button type="button" class="link-btn" data-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-read${files.length ? '' : ' disabled'}>${files.length > 1 ? `Check ${files.length} files with ALMA` : 'Check it with ALMA'}</button>`;
       } else if (step === 2) {
-        body.innerHTML = `<div class="cmu-list"><h3>ALMA is reading</h3>${files.map((f, k) => `<div class="cmu-f ${k < reading ? 'is-done' : k === reading ? 'is-reading' : ''}"><span class="cmu-ic">${k < reading ? OK : k === reading ? SPIN : FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${k < reading ? 'Checked' : k === reading ? 'Reading the name, dates and issuer&hellip;' : 'Waiting'}</small></div>`).join('')}</div>`;
+        body.innerHTML = `<div class="cmu-list"><h3>ALMA is reading</h3>${files.map((f, k) => `<div class="cmu-f ${k < reading ? 'is-done' : k === reading ? 'is-reading' : ''}"><span class="cmu-ic">${k < reading ? OK : k === reading ? SPIN : FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${k < reading ? 'Checked' : k === reading ? (wCtx ? 'Reading the names and ID numbers on it&hellip;' : 'Reading the name, dates and issuer&hellip;') : 'Waiting'}</small></div>`).join('')}</div>`;
         body.insertAdjacentHTML('afterbegin', `<div class="cmu-hide"><span>${files.length > 1 ? 'This can take a few minutes.' : 'This can take a minute.'} Hide the panel and keep working: I&rsquo;ll let you know when I&rsquo;m done.</span><button type="button" class="btn btn-quiet btn-sm" data-tuck>Hide panel</button></div>`);
         foot.innerHTML = '<span class="cmu-foot-l">Checking each one with the body that issued it.</span>';
       } else {
         // as the setup's review (js/guided-upload.js): how many are accepted, Accept all; expired first
         const on = shown(), ready = on.filter((r) => r.slot);
         const grouped = !!(found && found.asked), gk = (r) => (!r.slot ? '\uffff' : r.slot.who || '');
-        const order = results.map((r, k) => k).filter((k) => !quiet(results[k])).sort((a, b) => (grouped ? gk(results[a]).localeCompare(gk(results[b])) : 0) || (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
+        const order = results.map((r, k) => k).filter((k) => !quiet(results[k]) && !results[k].wk).sort((a, b) => (grouped ? gk(results[a]).localeCompare(gk(results[b])) : 0) || (lapsedR(results[b]) && results[b].on) - (lapsedR(results[a]) && results[a].on) || a - b);
         let lastG = null;
         const whoHead = (k) => {
           if (!grouped) return ''; const r = results[k], g = gk(r); if (g === lastG) return ''; lastG = g;
@@ -890,7 +952,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const n = results.filter((x) => x.on).length || files.length, J = window.CMAlmaJob; if (!J) return;
       const P = found ? found.people.filter((q) => q.i == null && q.decision === 'ok') : [], nw = found ? found.people.filter((q) => q.i == null) : [];
       const st = step === 2 ? { reading: true, at: Math.min(reading + 1, files.length), total: files.length }
-        : step === 'who' ? { done: true, n: nw.length, label: `Choose who to add · ${nounsOf(nw)}` }
+        : step === 'who' ? (found && found.w ? { done: true, n: pickable().length, label: `Choose who to check · ${pickable().length} worker${pickable().length === 1 ? '' : 's'}` } : { done: true, n: nw.length, label: `Choose who to add · ${nounsOf(nw)}` })
+        : step === 'worker' ? { done: true, n: batch.length, label: `Check each worker · ${wi + 1} of ${batch.length}` }
         : step === 'wread' ? { reading: true, at: Math.min(wread + 1, P.length), total: P.length, label: `ALMA is reading their details · ${Math.min(wread + 1, P.length)} of ${P.length}` }
         : step === 'details' ? { done: true, n: P.length + roleChanges().length, label: 'Ready to check · their details' }
         : step === 'manual' ? { done: false, n: 0, label: 'Add a worker manually' }
@@ -926,15 +989,17 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
           found = crewCtx ? identify(files, R0.pool) : null;
           // only someone new is asked about; who's already on the list is matched without asking
           // (and no one new is ticked to start: the user picks who to add)
-          if (found) found.people.forEach((q) => { q.decision = q.i != null ? 'ok' : 'no'; });
-          const ask = !!(found && found.people.some((q) => q.i == null));
+          // workers only (no machines or products): every worker found, new or on the list, is for
+          // the user to pick, then checked one at a time
+          if (found) { found.w = found.people.some((q) => !isR(q)); found.people.forEach((q) => { q.decision = q.i != null && !found.w ? 'ok' : 'no'; }); }
+          const ask = !!(found && (found.w || found.people.some((q) => q.i == null)));
           if (found) { found.asked = ask; found.changes = found.per.some((x) => x && x.list && !x.eq && !x.pr) ? crewDiff(true) : []; }
           // nobody new, but the list changes someone on it: straight to their cards
           if (ask) { step = 'who'; wq = ''; paint(); } else if (found && roleChanges().length) { step = 'details'; paint(); } else fileThem(true);
           if (tucked) {
             rail();
             const n = results.filter((x) => x.on).length;
-            if (!job.told) toast(ask ? `ALMA found ${nounsOf(found.people.filter((q) => q.i == null))}. Choose which to add, and she files the documents.` : J ? J.doneMsg(n) : 'ALMA has read your files.', ['Review', () => tuck(false)]);
+            if (!job.told) toast(ask && found.w ? `ALMA found ${pickable().length === 1 ? 'one worker' : `${pickable().length} workers`} on your files. Choose whose documents to check.` : ask ? `ALMA found ${nounsOf(found.people.filter((q) => q.i == null))}. Choose which to add, and she files the documents.` : J ? J.doneMsg(n) : 'ALMA has read your files.', ['Review', () => tuck(false)]);
           } else el.querySelector('[data-pgo], select, [data-save]')?.focus({ preventScroll: true });
           job.told = true; if (J) J.save(job);
           return;
@@ -964,12 +1029,18 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (q.prof) return q.prof;
       if (isM(q)) { q.prof = Object.assign({}, q.mach); return q.prof; }
       if (isP(q)) { q.prof = Object.assign({}, q.prod); return q.prof; }
+      if (q.i != null) {
+        const p = M.PERSON[q.i] || { id: ['', '', ''] };
+        q.prof = { name: plain(p.name), role: plain(p.role), type: plain(p.id[0]), no: plain(p.id[1]), valid: plain(p.id[2] || ''), birth: plain(p.birth || ''), nationality: plain(p.nationalityName || ''), tax: plain(p.tax || ''), ss: plain(p.ss || ''), address: plain(p.address || ''), since: plain(p.since || '') };
+        q.was = Object.assign({}, q.prof); return q.prof;
+      }
       const h = hash(q.name), reg = q.lists.length > 0, pp = q.type === 'Passport', mo = (k) => M.MONTHS[(h + k) % 12];
       const since = new Date(); since.setDate(since.getDate() - 3 - (h % 20));
       q.prof = {
         name: q.name, role: q.role || '', type: q.type, no: q.no, valid: q.valid || '', birth: `${1 + (h % 27)} ${mo(3)} ${1970 + (h % 33)}`,
         nationality: pp ? '' : 'Portuguese',
-        tax: reg ? nifOf(h) : '', ss: reg ? String(11000000000 + h * 104729).slice(0, 11).replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3') : '',
+        // (read off the register, or off their own documents: a tax or social security document has its number)
+        tax: reg || q.files.length > 1 ? nifOf(h) : '', ss: reg || q.files.length > 1 ? String(11000000000 + h * 104729).slice(0, 11).replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3') : '',
         address: reg ? `${STREET[h % STREET.length]} ${10 + (h % 400)}, ${4000 + (h % 370)}-${String(100 + (h % 899))} Porto` : '',
         since: reg ? fmt(since) : '',
       };
@@ -1002,7 +1073,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${v.name.trim() ? '' : 'Give their full name to add them'}</span><button type="button" class="btn btn-primary btn-sm" data-madd${v.name.trim() ? '' : ' disabled'}>Add worker</button>`;
     };
     const detailsStep = () => {
-      const P = found.people.filter((q) => q.i == null && q.decision === 'ok');
+      const P = chosen();
       if (step === 'wread') {
         head('ALMA', `Reading the details of ${nounsOf(P)}`, 'From the files you uploaded: what each one says.');
         $('cmu-body').innerHTML = `<div class="cmu-list"><h3>ALMA is reading</h3>${P.map((q, k) => `<div class="cmu-f ${k < wread ? 'is-done' : k === wread ? 'is-reading' : ''}"><span class="cmu-ic">${k < wread ? OK : k === wread ? SPIN : FILE}</span><span class="cmu-n">${esc(q.name)}</span><small>${k < wread ? 'Read' : k === wread ? (isM(q) ? 'Reading its type, serial number and year&hellip;' : isP(q) ? 'Reading its manufacturer, reference and family&hellip;' : 'Reading their ID, tax and social security numbers&hellip;') : 'Waiting'}</small></div>`).join('')}</div>`;
@@ -1053,6 +1124,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const kindOf = (q) => (isM(q) ? 'equipment' : isP(q) ? 'products' : 'workers');
     const confsOf = (q) => {
       if (q.conf) return q.conf;
+      if (q.i != null && !isR(q)) { profOf(q); q.conf = q.roleWas ? { role: 82 } : {}; return q.conf; }
       const v = profOf(q), h = hash(q.key), can = LOWABLE[kindOf(q)].filter((f) => v[f]);
       // one in two with a detail she couldn't read cleanly (low); of the rest, some with one she's less sure of (medium)
       const low = h % 2 === 0 && can.length ? can[h % can.length] : null, mid = !low && h % 3 === 1 && can.length ? can[(h >> 2) % can.length] : null;
@@ -1067,9 +1139,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const labelOf = (q, f) => (fieldsFor(q).find(([k]) => k === f) || [f, f])[1];
     const srcOf = (q) => [...new Set(q.files.concat(q.lists))];
     const readDetails = () => {
-      const P = found.people.filter((q) => q.i == null && q.decision === 'ok');
+      const P = chosen();
       dq = ''; step = 'wread'; wread = 0; paint();
-      const tick = () => { if (!el.isConnected || step !== 'wread') return; wread += 1; if (wread >= P.length) { P.forEach(profOf); step = 'details'; paint(); $('cmu-body').scrollTop = 0; if (tucked) toast(`ALMA has read the details of ${nounsOf(P)}. Check them before she adds them.`, ['Review', () => tuck(false)]); return; } paint(); setTimeout(tick, 450); };
+      const tick = () => { if (!el.isConnected || step !== 'wread') return; wread += 1; if (wread >= P.length) { P.forEach(profOf);
+          if (found.w) { batchThem(); if (tucked) toast(`ALMA has read ${P.length === 1 ? 'their details and documents' : `the details and documents of ${P.length} workers`}. Check each one.`, ['Review', () => tuck(false)]); return; } step = 'details'; paint(); $('cmu-body').scrollTop = 0; if (tucked) toast(`ALMA has read the details of ${nounsOf(P)}. Check them before she adds them.`, ['Review', () => tuck(false)]); return; } paint(); setTimeout(tick, 450); };
       setTimeout(tick, 450);
     };
     // the workers ALMA read who aren't on the list yet, as Team's list from a file (js/team.js): the
@@ -1081,10 +1154,193 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const wMatch = (q) => !wq || fold(`${q.name} ${q.no}`).includes(fold(wq));
     const SEARCH_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
     const wAll = () => {
-      const nw = found.people.filter((q) => q.i == null), shown = nw.filter(wMatch), on = shown.filter((q) => q.decision === 'ok').length, b = el.querySelector('[data-pall]');
+      const nw = pickable(), shown = nw.filter(wMatch), on = shown.filter((q) => q.decision === 'ok').length, b = el.querySelector('[data-pall]');
       if (b) { b.checked = !!shown.length && on === shown.length; b.indeterminate = on > 0 && on < shown.length; b.disabled = !shown.length; }
     };
+    // ---- workers, one at a time ----------------------------------------------------------------------
+    let batch = [], wi = 0, wOpen = null;
+    const chosen = () => found.people.filter((q) => q.decision === 'ok' && (found.w || q.i == null));
+    const merged = (q) => (found.unsure || []).some((u) => u.decision === 'same' && u.b === q);
+    const pickable = () => found.people.filter((q) => (found.w ? !isR(q) || q.i == null : q.i == null) && !merged(q));
+    const simN = (q) => (isR(q) ? 0 : Math.max(0, 2 + (hash(q.key) % 3) - q.files.length));
+    const nDocs = (q) => q.files.length + simN(q) + (q.lists.length ? 1 : 0) + (found.unsure || []).filter((u) => u.decision === 'same' && u.a === q).reduce((a, u) => a + u.b.files.length, 0);
+    // the same person after all: one worker, the files of both
+    const mergeSame = () => {
+      (found.unsure || []).filter((u) => u.decision === 'same').forEach(({ a, b }) => {
+        a.files.push(...b.files); found.per.forEach((x) => { if (!x.list && x.people[0] === b) x.people[0] = a; });
+        if (b.decision === 'ok') a.decision = 'ok'; found.people.splice(found.people.indexOf(b), 1);
+      });
+      found.unsure = (found.unsure || []).filter((u) => u.decision !== 'same');
+    };
+    // who is on the files: each worker once (matched by name, ID and social security numbers), new
+    // or on the list, for the user to pick; two names she can't tell apart, for them to say
+    const whoStepW = () => {
+      const every = pickable(), all = every.filter((q) => !isR(q)), other = every.filter(isR), nw = all.filter((q) => q.i == null), U = found.unsure || [], open = U.filter((u) => !u.decision), nOn = every.filter((q) => q.decision === 'ok').length;
+      head('ALMA', `I found ${all.length === 1 ? 'one worker' : `${all.length} workers`}${nw.length ? `, ${nw.length === all.length ? (all.length === 1 ? 'new' : 'all new') : `${nw.length} of them new`}` : all.length === 1 ? ', already on your list' : ', all on your list'}${other.length ? `, and ${nounsOf(other)}` : ''}`,
+        `Matched across your ${files.length === 1 ? 'file' : `${files.length} files`} by name, ID and social security numbers. New means not on your worker list yet. ${open.length ? `First, tell me if ${open.length === 1 ? 'two of them are' : 'these are'} the same person. Then select` : 'Select'} the ones to check: I&rsquo;ll read their details and documents, and you check one worker at a time.`);
+      const side = (q) => `<div><b>${esc(q.name)}</b><small>${esc(q.type)} &middot; ${esc(q.no)}</small><small>${q.files.map((k) => esc(files[k].name)).join(', ')}</small></div>`;
+      const uCard = (u, j) => (u.decision ? `<section class="cmu-r is-off"><div class="cmu-r-h"><div class="cmu-r-t"><h3>${esc(u.a.name)} and ${esc(u.b.name)}</h3><p>${u.decision === 'same' ? 'The same person: their files are together' : 'Two different people'}</p></div><button type="button" class="link-btn" data-uundo="${j}">Undo</button></div></section>`
+        : `<section class="cmu-r is-ask"><div class="cmu-r-h"><div class="cmu-r-t"><h3>The same person?</h3><p>The names are close, but I can&rsquo;t tell if this is one worker or two.</p></div><span class="co-badge b-pend">Needs you</span></div><div class="cmu-same">${side(u.a)}${side(u.b)}</div><footer class="cmu-r-acts"><span></span><span><button class="cmu-acc" type="button" data-utwo="${j}">Two people</button><button class="cmu-acc" type="button" data-usame="${j}">${TICK}Same person</button></span></footer></section>`);
+      const row = (q) => `<tr class="${q.decision === 'ok' ? 'is-picked' : ''}" data-wrow="${q.key}"${wMatch(q) ? '' : ' hidden'}><td class="c"><input type="checkbox" class="cmu-pck" id="cmu-pk-${q.key}" data-pck="${q.key}" aria-label="Check ${esc(q.name)}"${q.decision === 'ok' ? ' checked' : ''}></td>
+        <td><label class="cmu-wp" for="cmu-pk-${q.key}"><span class="cmu-pic" aria-hidden="true">${esc(initials(q.name))}</span><span class="cmu-wp-t"><b>${esc(q.name)}</b><small>${esc(q.type)} &middot; ${esc(q.no)}</small></span></label></td>
+        <td class="cmu-wn">${nDocs(q) ? `${nDocs(q)} document${nDocs(q) === 1 ? '' : 's'}` : isM(q) ? 'On the equipment list' : isP(q) ? 'On the product list' : 'On the register'}</td><td><span class="co-badge ${q.i == null ? 'b-info' : 'b-neu'}">${isM(q) ? 'New machine' : isP(q) ? 'New product' : q.i == null ? 'New' : 'On your list'}</span></td></tr>`;
+      const search = all.length > 5 ? `<label class="co-search cmu-wq">${SEARCH_I}<input type="search" placeholder="Search by name or ID number" aria-label="Search the workers" data-wq value="${esc(wq)}"></label>` : '';
+      $('cmu-body').innerHTML = U.map(uCard).join('') + search + `<div class="cmu-wt"><table><thead><tr><th class="c"><input type="checkbox" class="cmu-pck" data-pall="n" aria-label="Select everyone shown"></th><th>${other.length ? 'Worker, machine or product' : 'Worker'}</th><th>Documents</th><th></th></tr></thead><tbody>${nw.concat(all.filter((q) => q.i != null), other).map(row).join('')}<tr class="cmu-wnone"${every.some(wMatch) ? ' hidden' : ''}><td colspan="4">No one matches that.</td></tr></tbody></table></div>`;
+      wAll();
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${open.length ? `Tell me about ${open.length === 1 ? 'the possible match' : `the ${open.length} possible matches`} first` : `${nOn} of ${every.length} selected`}</span><button type="button" class="btn btn-primary btn-sm" data-pgo${open.length || !nOn ? ' disabled' : ''}>Continue</button>`;
+    };
+    // the files to the workers picked: each file to its worker, under its type; a worker who wasn't
+    // picked has their files left out
+    const batchThem = () => {
+      files = files.filter((f) => !f.sim); // (again from the who step: her documents for them are read again)
+      const B = chosen().filter((q) => !isR(q)).sort((a, b) => (a.i == null ? 0 : 1) - (b.i == null ? 0 : 1)), base = (M.WORKERS || []).length; // the new ones first
+      B.filter((q) => q.i == null).forEach((q, k) => { q.ni = base + k; });
+      const anyOf = (q) => { const L = freshSlots(q), have = new Set(L.map((x) => x.code)); return L.concat(M.DOCS.filter((d) => d.kind === 'workers' && live(d) && !have.has(d.code)).map((d) => ({ key: `${d.code}#${q.ni}`, code: d.code, i: q.ni, d, name: plain(d.name), who: q.name, status: 'missing', exp: '—', fresh: q }))); };
+      pool = R0.pool.concat(B.filter((q) => q.i == null).flatMap(anyOf), regsOf());
+      const picks = found.per.map((x) => (x.list ? { list: true } : !x.people[0] ? null : x.people[0].decision === 'ok' ? { who: x.people[0].name } : { off: 'x' }));
+      results = place(pool, focus, files, picks);
+      results.forEach((r, k) => {
+        const pk = picks[k]; if (pk && pk.off) r.on = false;
+        r.owner = pk && pk.who ? found.per[k].people[0] : null;
+        if (r.slot && r.slot.fresh && r.slot.code === 'ID' && r.slot.fresh.type === 'Passport') Object.assign(r, { by: 'Issuing country’s passport office', country: 'Not read: check it' });
+      });
+      // a job that changed on the register: shown on the worker, as their job category
+      B.forEach((q) => { const v = profOf(q), c = q.i != null && (found.changes || []).find((x) => x.type === 'role' && x.i === q.i); if (c && !q.roleWas) { v.role = plain(c.to); q.roleWas = plain(c.from); q.conf = null; } });
+      found.changes = [];
+      B.forEach((q) => {
+        const n = simN(q); if (!n) return;
+        const have = new Set(docsOf(q).map((r) => r.slot && r.slot.code)), L = slotsOf(q).filter((x) => !have.has(x.code)), h = hash(q.key);
+        const id = L.find((x) => x.code === 'ID'), rest = L.filter((x) => x !== id).sort((a, b) => (M.RANK[b.status] || 0) - (M.RANK[a.status] || 0));
+        const pick = id ? [id] : []; let j = h % Math.max(1, rest.length);
+        while (pick.length < n && rest.length) { pick.push(rest.splice(j % rest.length, 1)[0]); j += 2; }
+        pick.forEach((sl) => {
+          const f = new File(['x'], `${sl.name} - ${profOf(q).name || q.name}.pdf`, { type: 'application/pdf' }); f.sim = true; files.push(f);
+          results.push({ file: f, slot: sl, how: 'sure', note: '', on: true, read: readDates(sl, f), conf: 90 + (hash(f.name) % 9), owner: q });
+        });
+      });
+      batch = B; if (!B.length) { finish(); return; } wGo(0);
+    };
+    const docsOf = (q) => results.filter((r) => r.owner === q);
+    // where one of their documents can go: any of that worker's documents
+    const slotsOf = (q) => (q.i == null ? pool.filter((x) => x.fresh === q) : pool.filter((x) => !x.fresh && x.i === q.i && x.d && x.d.kind === 'workers'));
+    const reslot = (r, sl) => Object.assign(r, { slot: sl, read: sl ? readDates(sl, r.file) : null, ref: null, by: null, country: null, wv: null, fc: null, fe: null, checked: false, edited: false, how: 'sure', note: '' });
+    // a document's details: what the list has for it (or the setup's), as read, each open to change
+    const IDF = [['name', 'Full name'], ['type', 'ID document'], ['no', 'Document number'], ['birth', 'Birth date'], ['nationality', 'Nationality'], ['issued', 'Issue date'], ['valid', 'Valid until']];
+    const PB = ['name', 'type', 'no', 'birth', 'nationality']; // what an ID document says of the person: theirs, wherever it's changed
+    const isDateF = (f) => DATES.includes(f) || f === 'birth' || f === 'since';
+    const idDoc = (r) => !!(r.slot && r.slot.code === 'ID' && r.owner);
+    const dFields = (r) => { const sl = r.slot; if (!sl) return []; if (idDoc(r)) return IDF; return wFields(sl) || FIELDS.filter(([f]) => f !== 'ref' || sl.i == null || sl.code === 'ID').map(([f, l]) => [f, labOf(sl, f, l)]); };
+    const dVal = (r, f, l) => (idDoc(r) && PB.includes(f) ? profOf(r.owner)[f] : DATES.includes(f) || !wFields(r.slot) ? valsOf(r)[f] : wVal(r, f, l)) || '';
+    const dSet = (r, f, val) => { if (idDoc(r) && (PB.includes(f) || f === 'valid')) { profOf(r.owner)[f] = val; if (f === 'no') r.ref = val; } if (idDoc(r) && PB.includes(f)) { (r.fe = r.fe || new Set()).add(f); r.edited = true; return; } if (DATES.includes(f)) r.read = Object.assign({}, r.read, { [f]: val }); else if (wFields(r.slot)) r.wv = Object.assign({}, r.wv, { [f]: val }); else r[f] = val; (r.fe = r.fe || new Set()).add(f); r.edited = true; };
+    // her confidence on each detail of a document: one in three with one she couldn't read cleanly
+    const dConfs = (r) => {
+      if (r.fc) return r.fc;
+      const F = dFields(r).filter(([f, l]) => dVal(r, f, l)), h = Math.floor(hash(r.file.name + '|' + r.slot.key) / 7), can = F.filter(([f]) => !DATES.includes(f)).map(([f]) => f);
+      const low = h % 3 === 0 && can.length ? can[(h >> 3) % can.length] : null, mid = !low && h % 3 === 1 && can.length ? can[(h >> 3) % can.length] : null;
+      r.fc = Object.fromEntries(F.map(([f]) => [f, f === low ? 55 + (hash(r.file.name + f) % 15) : f === mid ? 78 + (hash(r.file.name + f) % 10) : 91 + (hash(r.file.name + f) % 9)]));
+      return r.fc;
+    };
+    const dLow = (r) => (!r.slot ? [] : Object.entries(dConfs(r)).filter(([f, x]) => x < 75 && !(r.fe && r.fe.has(f))).map(([f]) => f));
+    const dGuess = (r) => !!(r.slot && r.how === 'guess' && !r.checked);
+    const dNeeds = (r) => r.on && (!r.slot || (dLow(r).length > 0 && !r.checked) || dGuess(r) || lapsedR(r));
+    const pLow = (q) => (q.i != null ? [] : Object.entries(confsOf(q)).filter(([f, x]) => x < 75 && !(q.fe && q.fe.has(f))).map(([f]) => f));
+    const pNeeds = (q) => pLow(q).length > 0 && !q.checked;
+    const wNeeds = (q) => (q.lists.length && !q.regOk ? 1 : 0) + docsOf(q).filter((r) => r.on && !r.ok).length; // documents not decided yet
+    const ACC = '<span class="co-badge b-ok">Accepted</span>';
+    const canAcc = (r) => !!r.slot && !lapsedR(r);
+    const corrB = () => `<span class="co-badge b-neu">${M.corrected()}</span>`, CONFD = '<span class="co-badge b-ok">Confirmed</span>';
+    const minTag = (o) => tagOf(Math.min(...Object.values(o).concat(99)));
+    const dBadge = (r) => (!r.on ? '<span class="co-badge b-neu">Left out</span>' : r.ok ? ACC : !r.slot ? '<span class="co-badge b-over">Needs you</span>' : lapsedR(r) ? '<span class="co-badge b-over">Expired</span>'
+      : dGuess(r) ? tagOf(70) : dLow(r).length && !r.checked ? tagOf(Math.min(...dLow(r).map((f) => dConfs(r)[f]))) : r.fe && r.fe.size ? corrB() : r.checked ? CONFD : minTag(dConfs(r)));
+    const pBadge = (q) => (q.regOk ? ACC : q.i != null ? (q.roleWas ? '<span class="co-badge b-pend">Job category changed</span>' : q.fe && q.fe.size ? corrB() : '')
+      : pNeeds(q) ? tagOf(Math.min(...pLow(q).map((f) => confsOf(q)[f]))) : q.fe && q.fe.size ? corrB() : q.checked ? CONFD : minTag(confsOf(q)));
+    const tagP = (q, f) => { const c = confsOf(q)[f]; return q.fe && q.fe.has(f) ? corrB() : q.i != null ? (f === 'role' && q.roleWas ? '<span class="co-badge b-pend">Changed</span>' : '') : c == null ? '' : c < 75 && q.checked ? CONFD : tagOf(c); };
+    const tagD = (r, f) => { const c = dConfs(r)[f]; return r.fe && r.fe.has(f) ? corrB() : c == null ? '' : c < 75 && r.checked ? CONFD : tagOf(c); };
+    const inp = (attr, val, date, l) => (date && (!val || !Number.isNaN(Date.parse(val))) ? `<input type="date" ${attr} value="${isoOf(val)}" aria-label="${esc(l)}">` : `<input ${attr} value="${esc(val)}" aria-label="${esc(l)}" placeholder="Not on the files">`);
+    const lowSay = (L, lab) => `I couldn&rsquo;t read ${L.map((f) => `the ${lab(f).replace(/^\w/, (x) => x.toLowerCase())}`).join(' or ')} cleanly. Check ${L.length === 1 ? 'it' : 'them'} against the file, then change ${L.length === 1 ? 'it' : 'them'} or accept the document as it is.`;
+    const ownerOpts = (cur) => {
+      const inB = batch.map((x, j) => `<option value="b:${j}"${x === cur ? ' selected' : ''}>${esc(profOf(x).name || x.name)}${x.i == null ? ' (new)' : ''}</option>`).join('');
+      const rest = activeWorkers().filter((x) => !batch.some((b) => b.i === x.i)).map((x) => `<option value="w:${x.i}">${esc(plain(x.p.name))}</option>`).join('');
+      return `<optgroup label="Checking now">${inB}</optgroup>${rest ? `<optgroup label="Your worker list">${rest}</optgroup>` : ''}`;
+    };
+    const typeOpts = (r) => (r.slot ? '' : '<option value="" selected disabled>Choose what document this is</option>') + slotsOf(r.owner).map((x) => `<option value="${esc(x.key)}"${r.slot === x ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
+    const peekFor = (key) => { const q = batch[wi]; if (key === 'p') { if (q && q.lists.length) openPeek(q.key); else closePeek(); } else if (key != null && results[key] && results[key].slot) openPeek('r:' + key); else closePeek(); };
+    const wGo = (j) => { wi = j; const q = batch[wi]; q.moved = ''; wOpen = null; step = 'worker'; paint(); $('cmu-body').scrollTop = 0; closePeek(); };
+    const keep = () => { const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; };
+    const wkFoot = () => {
+      const q = batch[wi], n = wNeeds(q), rest = batch.filter((x) => x !== q && !x.ok && !x.skip).length;
+      if (q.ok && n) q.ok = false; // a document undone: the worker isn't accepted any more
+      // accepted or skipped already (back to them with the arrows): undone here, or on to the next
+      if (q.ok || q.skip) { $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${q.ok ? 'Worker accepted' : q.i == null ? 'Skipped: not added' : 'Skipped: their documents aren&rsquo;t saved'}</span><button type="button" class="btn btn-quiet btn-sm" data-wkundo>${q.ok ? 'Unaccept worker' : 'Undo skip'}</button><button type="button" class="btn btn-primary btn-sm" data-wknext>${rest ? 'Next worker' : 'Finish'}</button>`; return; }
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `Accept or reject ${n === 1 ? 'one more document' : `${n} more documents`}` : ''}</span><button type="button" class="link-btn" data-wkskip title="${q.i == null ? 'Don&rsquo;t add them now' : 'Don&rsquo;t save their documents now'}">Skip</button><button type="button" class="btn btn-primary btn-sm" data-wkok${n ? ' disabled' : ''}>Accept worker</button>`;
+    };
+    const workerStep = () => {
+      const q = batch[wi]; if (!q) return;
+      if (q.ok && wNeeds(q)) q.ok = false;
+      const v = profOf(q), D = docsOf(q), isNew = q.i == null, c = confsOf(q), pl = pLow(q), pOpen = wOpen === 'p';
+      head('ALMA', 'Check each worker', 'Their documents, and what I read on each one. Accept or reject each document; low confidence needs you to check it against the file first. Open a document to see the file beside this panel.');
+      const top = `<div class="cmu-wk-top"><span class="co-badge ${isNew ? 'b-info' : 'b-neu'}">${isNew ? 'New worker' : 'On your list'}</span>${q.ok ? '<span class="co-badge b-ok">Accepted</span>' : q.skip ? '<span class="co-badge b-neu">Skipped</span>' : ''}<span class="cmu-wk-n"><button type="button" data-wprev aria-label="Previous worker"${wi ? '' : ' disabled'}>${PREV}</button><span>${wi + 1} of ${batch.length}</span><button type="button" data-wnext aria-label="Next worker"${wi < batch.length - 1 ? '' : ' disabled'}>${NEXT}</button></span></div>`;
+      const reg = srcList(), lk = q.lists[0], lr = lk != null ? results[lk] : null;
+      // the register's line for them: what it says of them (a job changed on it, shown so)
+      const pBody = !pOpen ? '' : `<dl class="cmu-fields">${PF.map(([f, l, date]) => { const flag = isNew && !(q.fe && q.fe.has(f)) && !q.checked && c[f] != null && c[f] < 75; return `<div${flag ? ' class="is-flag"' : ''} data-row="p:${f}"><dt>${l}</dt><dd>${inp(`data-pf="${f}"`, v[f] || '', date, l)}${f === 'role' && q.roleWas ? `<span class="cmu-was">Was ${esc(q.roleWas)} on your list</span>` : ''}<span class="cmu-tg">${tagP(q, f)}</span></dd></div>`; }).join('')}</dl>`
+        + (pl.length && !q.checked ? `<p class="cmu-why" data-why="p">${lowSay(pl, (f) => labelOf(q, f))}</p>` : '')
+        + `<footer class="cmu-r-acts"><span><button type="button" class="link-btn" data-wppeek>Preview</button></span><span>${q.regOk ? `<button type="button" class="link-btn" data-pundo>Undo</button><span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-pacc>${TICK}Accept</button>`}</span></footer>`;
+      const regCard = lk == null ? '' : `<section class="cmu-r cmu-wk-d${pOpen ? ' is-open' : ''}${q.regOk ? ' is-ok' : pNeeds(q) ? ' is-ask' : ''}" data-wk="p"><button type="button" class="cmu-wk-h" data-wopen="p" aria-expanded="${pOpen}"><span class="cmu-ic">${FILE}</span><span class="cmu-r-t"><b>${esc(lr && lr.slot ? lr.slot.name : 'Worker register')}</b><small>${esc(files[lk].name)}</small></span><span class="cmu-wk-b">${pBadge(q)}</span>${CHEV}</button>${pBody}</section>`;
+      // their name, as in the drawing: on its own, and theirs to put right
+      const pCard = `<section class="cmu-r cmu-wk-p"><span class="cmu-pic" aria-hidden="true">${esc(initials(v.name || q.name))}</span><input class="cmu-wk-nm" data-pf="name" value="${esc(v.name || q.name)}" aria-label="Their full name" title="Change their name"></section>`;
+      const dCard = (r) => {
+        const k = results.indexOf(r), sl = r.slot, op = wOpen === k && r.on;
+        if (!r.on) return `<section class="cmu-r cmu-wk-d is-off" data-wk="${k}"><div class="cmu-r-h"><span class="cmu-ic">${FILE}</span><div class="cmu-r-t"><h3>${esc(sl ? sl.name : r.file.name)}</h3><p>${esc(r.file.name)} &middot; left out, not saved</p></div><button type="button" class="link-btn" data-wdin="${k}">Undo</button></div></section>`;
+        const hd = `<button type="button" class="cmu-wk-h" data-wopen="${k}" aria-expanded="${op}"><span class="cmu-ic">${FILE}</span><span class="cmu-r-t"><b>${sl ? esc(sl.name) : 'Which document is this?'}</b><small>${esc(r.file.name)}</small></span><span class="cmu-wk-b">${dBadge(r)}</span>${CHEV}</button>`;
+        const cls = r.ok ? ' is-ok' : dNeeds(r) ? ' is-ask' : '';
+        if (!op) return `<section class="cmu-r cmu-wk-d${cls}" data-wk="${k}">${hd}</section>`;
+        const F = dFields(r), fc = sl ? dConfs(r) : {}, dl = dLow(r), ex = sl && lapsedR(r), df = sl ? fileDiff(r) : null;
+        const fields = sl ? `<dl class="cmu-fields">${F.map(([f, l]) => { const flag = (!(r.fe && r.fe.has(f)) && !r.checked && fc[f] != null && fc[f] < 75) || (ex && f === 'valid'); return `<div${flag ? ' class="is-flag"' : ''} data-row="${k}:${f}"><dt>${esc(l)}</dt><dd>${inp(`data-df="${k}:${f}"`, dVal(r, f, l), isDateF(f), l)}<span class="cmu-tg">${tagD(r, f)}</span></dd></div>`; }).join('')}</dl>` : '';
+        const notes = (!sl ? '<p class="cmu-why">I couldn&rsquo;t tell which document this is. Choose it under Filed as.</p>' : '')
+          + (dGuess(r) ? `<p class="cmu-why" data-why="g${k}">I&rsquo;m not sure this is a ${esc(sl.name.toLowerCase())}. Check it under Filed as, then accept it.</p>` : '')
+          + (ex ? `<p class="cmu-why">It expired on <b>${esc(r.read.valid)}</b>. If it&rsquo;s still in force, give it its new expiry date. Or leave it out.</p>` : '')
+          + (dl.length && !r.checked ? `<p class="cmu-why" data-why="${k}">${lowSay(dl, (f) => (F.find((x) => x[0] === f) || [f, f])[1])}</p>` : '')
+          + (df && df.length ? `<p class="cmu-why">It replaces the ${esc(sl.name)} on file. Accept to replace it, or reject to keep the one you have.</p><table class="cmu-diff"><thead><tr><th>What</th><th>On file now</th><th>New file</th></tr></thead><tbody>${df.map((x) => `<tr${x.flag ? ' class="is-flag"' : ''}><td>${x.label}</td><td>${x.from}</td><td>${x.to}</td></tr>${x.flag ? `<tr class="is-flag cmu-flag"><td colspan="3">${x.flag}</td></tr>` : ''}`).join('')}</tbody></table>` : '');
+        const sel = `<div class="cmu-wk-sel"><label class="cmu-to"><span>Belongs to</span><select data-wown="${k}">${ownerOpts(r.owner)}</select></label><label class="cmu-to"><span>Filed as</span><select data-wtype="${k}">${typeOpts(r)}</select></label></div>`;
+        const right = r.ok ? `<button type="button" class="link-btn" data-wdundo="${k}">Undo</button><span class="cmu-acc is-ok">${TICK}Accepted</span>`
+          : `<button class="cmu-acc cmu-rej" type="button" data-wdout="${k}">${CROSS}Reject</button><button class="cmu-acc" type="button" data-wdacc="${k}"${canAcc(r) ? '' : ` disabled title="${sl ? 'Give it a new expiry date first' : 'Choose what document this is first'}"`}>${TICK}Accept</button>`;
+        return `<section class="cmu-r cmu-wk-d is-open${cls}" data-wk="${k}">${hd}${r.note ? `<p class="cmu-note">${r.note}</p>` : ''}${sel}${fields}${notes}<footer class="cmu-r-acts"><span>${sl ? `<button type="button" class="link-btn" data-wdpeek="${k}">Preview</button>` : ''}</span><span>${right}</span></footer></section>`;
+      };
+      const nD = D.length + (lk != null ? 1 : 0);
+      const on = D.filter((r) => r.on), acc = on.filter((r) => r.ok).length + (lk != null && q.regOk ? 1 : 0), tot = on.length + (lk != null ? 1 : 0);
+      const easy = on.some((r) => !r.ok && !dNeeds(r)) || (lk != null && !q.regOk && !pNeeds(q));
+      const all = easy ? `<button class="cmu-acc" type="button" data-wdall>${TICK}Accept all</button>` : tot && acc === tot ? '<button class="cmu-acc" type="button" data-wdunall>Unaccept all</button>' : '';
+      const bar = (end) => `<div class="cmu-bar${end ? ' cmu-bar-end' : ''}"><span>${acc} of ${tot} accepted</span>${all}</div>`;
+      const docs = nD ? `<h3 class="cmu-h">Documents &middot; ${nD}</h3>${bar()}${D.map(dCard).join('')}${regCard}${nD > 3 && easy ? bar(true) : ''}` : '<p class="cmu-dnone">No documents of theirs in these files.</p>';
+      $('cmu-body').innerHTML = top + (q.moved ? `<p class="cmu-note" role="status">${q.moved}</p>` : '') + pCard + docs;
+      wkFoot();
+    };
+    // typed over: the field reads as corrected at once (no repaint, so the field keeps the focus)
+    const wLive = (row, key) => {
+      const x = el.querySelector(`[data-row="${row}"]`); if (x) { x.classList.remove('is-flag'); const tg = x.querySelector('.cmu-tg'); if (tg) tg.innerHTML = corrB(); }
+      const q = batch[wi], item = el.querySelector(`[data-wk="${key}"]`);
+      if (item) {
+        const b = item.querySelector('.cmu-wk-b'); if (b) b.innerHTML = key === 'p' ? pBadge(q) : dBadge(results[key]);
+        item.classList.toggle('is-ask', key === 'p' ? pNeeds(q) : dNeeds(results[key]));
+        if (key === 'p' ? !pLow(q).length : !dLow(results[key]).length) item.querySelector(`[data-why="${key}"]`)?.remove();
+        const ab = key === 'p' ? null : item.querySelector('[data-wdacc]'); if (ab) ab.disabled = !canAcc(results[key]);
+      }
+      wkFoot();
+    };
+    // accepted or skipped: on to the next one not decided yet; none left, on to saving
+    const nextW = () => { const j = batch.findIndex((x, n) => n > wi && !x.ok && !x.skip), j2 = j >= 0 ? j : batch.findIndex((x) => !x.ok && !x.skip); if (j2 >= 0) wGo(j2); else finish(); };
+    const finish = () => {
+      closePeek();
+      batch.forEach((q) => { if (q.skip) q.decision = 'no'; const v = profOf(q); if (q.i == null && !q.skip) Object.assign(q, { name: (v.name || q.name).trim(), role: v.role, type: v.type, no: v.no, valid: v.valid }); });
+      const base = (M.WORKERS || []).length; batch.filter((q) => q.i == null && !q.skip).forEach((q, k) => { q.ni = base + k; });
+      results.forEach((r) => { if (quiet(r)) r.ok = true; if (!r.owner) return; r.wk = true; if (r.owner.skip) r.on = false; else if (r.on) r.ok = true; });
+      // what no worker was found on (a company document, a file she couldn't place): the review, as before
+      if (shown().length) { step = 3; paint(); $('cmu-body').scrollTop = 0; return; }
+      if (!results.some((r) => r.on && r.slot) && !batch.some((q) => q.ok)) { close(); toast('Nothing saved: you skipped every worker.'); return; }
+      save();
+    };
     const whoStep = () => {
+      if (found.w) { whoStepW(); return; }
       const nw = found.people.filter((q) => q.i == null), nOn = nw.filter((q) => q.decision === 'ok').length;
       const t0 = nounsOf(nw);
       head('ALMA', `${t0[0].toUpperCase()}${t0.slice(1)}`, `Not on your ${listOf(nw)} yet. ${nw.length === 1 ? `Add ${nw.every(isR) ? 'it' : 'them'}?` : 'Select the ones to add.'}`);
@@ -1100,11 +1356,13 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     };
     // the documents to their people: someone new gets their place on the list (and their documents'
     // slots); each file then goes to its worker, under its type, and she reads its fields
+    // the lists she read that the drawer doesn't already have a place for (an equipment list dropped on Workers)
+    const regsOf = () => { const have = new Set(R0.pool.map((x) => x.code)); return (found ? found.per : []).flatMap((x) => (x.eq && !have.has('EQ-REG') ? [eqRegSlot()] : x.pr && !have.has('PR-REG') ? [prRegSlot()] : [])).filter((x, j, a) => a.findIndex((y) => y.code === x.code) === j); };
     const fileThem = (now) => {
       const base = (M.WORKERS || []).length;
       const fresh = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && !isR(q)) : [];
       fresh.forEach((q, k) => { q.ni = base + k; });
-      pool = R0.pool.concat(fresh.flatMap(freshSlots));
+      pool = R0.pool.concat(fresh.flatMap(freshSlots), regsOf());
       const picks = found ? found.per.map((x) => {
         if (x.list) return { list: true };
         const q = x.people[0]; if (!q) return null;
@@ -1130,8 +1388,19 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       // what was rejected stays as it was; the rest is filed
       const kept = new Set(results.filter((r) => !r.on && r.slot && fileDiff(r)));
       const done = results.filter((r) => r.on && r.slot);
-      const crew = { added: [], left: [], roles: {} };
+      const crew = { added: [], left: [], roles: {}, names: {}, details: {} };
       ((found && found.changes) || []).filter((c) => c.decision === 'ok').forEach((c) => { crew.roles[c.i] = c.to; });
+      // workers on the list, checked one at a time: what the user changed of their details
+      if (found && found.w) batch.filter((q) => q.i != null && q.ok).forEach((q) => {
+        const v = q.prof || {}, w = q.was || {}, dd = {};
+        if (v.role !== w.role) crew.roles[q.i] = M.esc(v.role);
+        if (v.name && v.name !== w.name) crew.names[q.i] = M.esc(v.name.trim());
+        ['birth', 'nationality', 'tax', 'ss', 'address', 'since'].forEach((f) => { if (v[f] !== w[f]) dd[f] = v[f]; });
+        if (Object.keys(dd).length) crew.details[q.i] = dd;
+        if (v.type !== w.type || v.no !== w.no || v.valid !== w.valid) M.saveId(q.i, { type: v.type, no: v.no, valid: v.valid });
+      });
+      // on a list: everyone it names who's on the worker list, and the new ones added
+      const onList = (q) => q.decision === 'ok' || !!(found && found.w && q.i != null);
       // the new people the user added, at the end of the list, with the ID ALMA read
       const fresh = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && !isR(q)) : [];
       // the new machines, at the end of the equipment list, with what the register said of them
@@ -1143,12 +1412,12 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         const s = r.slot, at = s.fresh ? s.fresh.ni : s.i, k = results.indexOf(r);
         // who a list names: the workers it covers, as each one's file shows it
         const x = found && found.per[k];
-        if (x && x.list && !x.eq && !x.pr) M.saveList(s.code, x.people.filter((q) => q.decision === 'ok').map((q) => (q.i == null ? q.ni : q.i)));
+        if (x && x.list && !x.eq && !x.pr) M.saveList(s.code, x.people.filter(onList).map((q) => (q.i == null ? q.ni : q.i)));
         if (s.code === 'PR-REG') { M.savePrRegister({ file: r.file.name, on: M.today(), n: x && x.list ? x.people.filter((q) => q.decision === 'ok').length : 0 }); if (window.CMFiles) window.CMFiles.put('PR-REG', r.file); return; }
         if (s.code === 'EQ-REG') { M.saveEqRegister({ file: r.file.name, on: M.today(), n: x && x.list ? x.people.filter((q) => q.decision === 'ok').length : 0 }); if (window.CMFiles) window.CMFiles.put('EQ-REG', r.file); return; }
         if (s.code === 'ID') { M.saveId(at, { type: s.fresh ? s.fresh.type : plain(M.PERSON[at].id[0]), no: refOf(s, r), valid: r.read.valid, file: r.file.name, on: M.today() }); if (window.CMFiles) window.CMFiles.put(`ID#${at}`, r.file); return; }
         if (EXTRA_D[s.code]) { M.saveExtra(s.code, at, { valid: r.read.valid, file: r.file.name, on: M.today() }); if (window.CMFiles) window.CMFiles.put(`${s.code}#${at}`, r.file); return; }
-        if (s.code === 'WK-REG') { M.saveRegister({ file: r.file.name, on: M.today(), n: x && x.list ? x.people.filter((q) => q.decision === 'ok').length : 0 }); if (window.CMFiles) window.CMFiles.put('WK-REG', r.file); return; }
+        if (s.code === 'WK-REG') { M.saveRegister({ file: r.file.name, on: M.today(), n: x && x.list ? x.people.filter(onList).length : 0 }); if (window.CMFiles) window.CMFiles.put('WK-REG', r.file); return; }
         if (s.fresh) { M.saveLater(s.code, at, { status: 'valid', exp: r.read.valid }); if (window.CMFiles) window.CMFiles.put(`${s.code}#${at}`, r.file); return; }
         if (s.i == null) M.saveDoc(s.code, { status: 'valid', issued: r.read.issued, valid: r.read.valid, note: '', ref: refOf(s, r), by: r.by != null ? r.by : issuerFor(s), conf: r.edited ? 98 : r.conf, edited: !!r.edited });
         else M.saveRecord(s.code, s.i, { status: 'valid', exp: r.read.valid });
@@ -1160,14 +1429,15 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       close();
       if (!done.length && unc.length) { say(`${unc.length === 1 ? `${esc(unc[0].file.name)} is` : `${unc.length} files are`} in Uncategorized documents. Open ${unc.length === 1 ? 'it' : 'each'} there to say what it is.`, done); return; }
       const whose = [...new Set(done.map((r) => r.slot.who).filter(Boolean))];
-      const nCrew = crew.added.length + crew.left.length + Object.keys(crew.roles).length, nEq = freshMs.length, nPr = freshPs.length;
+      const nDet = new Set(Object.keys(crew.names).concat(Object.keys(crew.details))).size;
+      const nCrew = crew.added.length + crew.left.length + Object.keys(crew.roles).length + nDet, nEq = freshMs.length, nPr = freshPs.length;
       if (found && found.manual) { M.saveCrew(crew); try { sessionStorage.setItem('cm-upload-toast', `${esc(found.people[0].name)} added to your worker list.`); } catch (e) {} location.reload(); return; }
       if (kept.size || nCrew || nEq || nPr) {
         const parts = [done.length ? `${done.length} document${done.length === 1 ? '' : 's'} saved` : 'Nothing replaced'];
         if (kept.size) parts.push(`${kept.size} kept as ${kept.size === 1 ? 'it was' : 'they were'}`);
         if (nEq) parts.push(`${nEq} machine${nEq === 1 ? '' : 's'} added`);
         if (nPr) parts.push(`${nPr} product${nPr === 1 ? '' : 's'} added`);
-        if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} added`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`].filter(Boolean).join(', ')})`);
+        if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} added`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`, nDet && `${nDet} with new details`].filter(Boolean).join(', ')})`);
         const msg = parts.join(' &middot; ') + '.';
         // the crew is part of how the pages are drawn: they come back with it, and the message after
         if (nCrew || nEq || nPr) {
@@ -1207,7 +1477,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-lib]')) { window.CMLibrary.pick({ multiple: !fs }).then((l) => { if (l && l.length) add(fs ? l.slice(0, 1) : l); else el.querySelector('[data-lib]')?.focus(); }); return; }
       if (t('[data-rm]')) { files.splice(+t('[data-rm]').dataset.rm, 1); paint(); return; }
       if (t('[data-read]')) { if (files.length) read(); return; }
-      if (t('[data-back]')) { closePeek(); step = 1; if (window.CMAlmaJob) window.CMAlmaJob.clear(); paint(); return; }
+      if (t('[data-back]')) { closePeek(); step = 1; files = files.filter((f) => !f.sim); if (window.CMAlmaJob) window.CMAlmaJob.clear(); paint(); return; }
       if (t('[data-peek]')) { openPeek(+t('[data-peek]').dataset.peek); return; }
       if (t('[data-edit]')) { edit(+t('[data-edit]').dataset.edit); return; }
       if (t('[data-cancel]')) { const k = +t('[data-cancel]').dataset.cancel; results[k].editing = false; paint(); el.querySelector(`[data-edit="${k}"]`)?.focus(); return; }
@@ -1241,7 +1511,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-swap]')) { swapAt = +t('[data-swap]').dataset.swap; $('cmu-swap').value = ''; $('cmu-swap').click(); return; }
       if (t('[data-save]')) { toSave(); return; }
       if (t('[data-pck]')) { const b = t('[data-pck]'), q = found.people.find((x) => x.key === b.dataset.pck); q.decision = b.checked ? 'ok' : 'no'; const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector(`[data-pck="${q.key}"]`)?.focus({ preventScroll: true }); return; }
-      if (t('[data-pall]')) { const b = t('[data-pall]'), on = b.checked; found.people.filter((q) => q.i == null && wMatch(q)).forEach((q) => { q.decision = on ? 'ok' : 'no'; }); const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector('[data-pall]')?.focus({ preventScroll: true }); return; }
+      if (t('[data-pall]')) { const b = t('[data-pall]'), on = b.checked; pickable().filter(wMatch).forEach((q) => { q.decision = on ? 'ok' : 'no'; }); const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector('[data-pall]')?.focus({ preventScroll: true }); return; }
       if (t('[data-manual]')) { manual = manual || { prof: Object.fromEntries(PF.map(([f]) => [f, f === 'type' ? 'Citizen card' : ''])) }; step = 'manual'; paint(); el.querySelector('[data-mf="name"]')?.focus(); return; }
       if (t('[data-mback]')) { step = 1; paint(); return; }
       if (t('[data-madd]')) {
@@ -1249,6 +1519,28 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         const q = { key: 'manual', i: null, name: v.name.trim(), type: v.type, no: v.no, valid: v.valid, role: v.role, prof: Object.assign({}, v, { name: v.name.trim() }), files: [], lists: [], decision: 'ok', edited: true };
         found = { people: [q], per: [], changes: [], asked: false, manual: true }; results = []; save(); return;
       }
+      // the worker step's: two names one person or two; Continue; open a detail or a document; Confirm; move on
+      if (t('[data-usame]') || t('[data-utwo]') || t('[data-uundo]')) { const b = t('[data-usame]') || t('[data-utwo]') || t('[data-uundo]'), u = found.unsure[+(b.dataset.usame || b.dataset.utwo || b.dataset.uundo)]; u.decision = b.dataset.usame ? 'same' : b.dataset.utwo ? 'two' : null; keep(); return; }
+      if (t('[data-pgo]') && found && found.w) { mergeSame(); if (chosen().length) readDetails(); return; }
+      if (t('[data-wopen]')) { const v = t('[data-wopen]').dataset.wopen, key = v === 'p' ? 'p' : +v; wOpen = wOpen === key ? null : key; keep(); if (wOpen == null) closePeek(); else peekFor(wOpen); return; }
+      if (t('[data-wprev]')) { wGo(wi - 1); return; }
+      if (t('[data-wnext]')) { wGo(wi + 1); return; }
+      if (t('[data-wppeek]')) { peekFor('p'); return; }
+      if (t('[data-wdpeek]')) { openPeek('r:' + t('[data-wdpeek]').dataset.wdpeek); return; }
+      if (t('[data-pacc]')) { Object.assign(batch[wi], { regOk: true, checked: true }); keep(); if (peek === batch[wi].key) paintPeek(); return; }
+      if (t('[data-pundo]')) { Object.assign(batch[wi], { regOk: false, checked: false }); keep(); if (peek === batch[wi].key) paintPeek(); return; }
+      if (t('[data-wdacc]')) { const k = +t('[data-wdacc]').dataset.wdacc; if (!canAcc(results[k])) return; Object.assign(results[k], { ok: true, checked: true }); keep(); if (peek === 'r:' + k) paintPeek(); return; }
+      if (t('[data-wdundo]')) { const k = +t('[data-wdundo]').dataset.wdundo; Object.assign(results[k], { ok: false, checked: false }); keep(); if (peek === 'r:' + k) paintPeek(); return; }
+      // Accept all: every document that doesn't need them; a low-confidence one is theirs to accept on its own
+      if (t('[data-wdall]')) { const q = batch[wi]; docsOf(q).forEach((r) => { if (r.on && !r.ok && !dNeeds(r)) r.ok = true; }); if (q.lists.length && !pNeeds(q)) q.regOk = true; keep(); return; }
+      if (t('[data-wdunall]')) { const q = batch[wi]; docsOf(q).forEach((r) => { r.ok = false; }); q.regOk = false; keep(); return; }
+      if (t('[data-wdout]')) { const k = +t('[data-wdout]').dataset.wdout; Object.assign(results[k], { on: false, ok: false }); if (peek === 'r:' + k) closePeek(); keep(); return; }
+      if (t('[data-wdin]')) { results[+t('[data-wdin]').dataset.wdin].on = true; keep(); return; }
+      if (t('[data-wkback]')) { if (wi > 0) wGo(wi - 1); else { closePeek(); step = 'who'; paint(); } return; }
+      if (t('[data-wkok]')) { Object.assign(batch[wi], { ok: true, skip: false }); if (batch.some((x) => !x.ok && !x.skip)) nextW(); else keep(); return; }
+      if (t('[data-wkundo]')) { Object.assign(batch[wi], { ok: false, skip: false }); keep(); return; }
+      if (t('[data-wknext]')) { nextW(); return; }
+      if (t('[data-wkskip]')) { Object.assign(batch[wi], { ok: false, skip: true }); if (batch.some((x) => !x.ok && !x.skip)) nextW(); else keep(); return; }
       if (t('[data-pgo]')) { if (found.people.some((q) => q.i == null && q.decision === 'ok')) readDetails(); else if (roleChanges().length) { step = 'details'; paint(); $('cmu-body').scrollTop = 0; } else { fileThem(false); $('cmu-body').scrollTop = 0; } return; }
       if (t('[data-wback]')) { found.people.forEach((q) => { q.editing = false; }); step = found.asked ? 'who' : 1; paint(); return; }
       if (t('[data-wgo]')) { found.people.forEach((q) => { if (q.i == null && q.out) q.decision = 'no'; }); fileThem(false); $('cmu-body').scrollTop = 0; return; }
@@ -1288,6 +1580,18 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         if (b) b.disabled = !ok; if (l) l.textContent = ok ? '' : 'Give their full name to add them';
         return;
       }
+      if (e.target.matches('[data-pf]')) {
+        const q = batch[wi], f = e.target.dataset.pf, raw = e.target.value; profOf(q)[f] = e.target.type === 'date' ? (raw ? fromIso(raw) : '') : raw;
+        (q.fe = q.fe || new Set()).add(f);
+        if (f === 'name') { const b = el.querySelector('[data-wname]'); if (b) b.textContent = raw; }
+        wLive(`p:${f}`, 'p'); if (peek === q.key) paintPeek(); return;
+      }
+      if (e.target.matches('[data-df]')) {
+        const [k, f] = e.target.dataset.df.split(':'), r = results[+k], raw = e.target.value;
+        dSet(r, f, e.target.type === 'date' ? (raw ? fromIso(raw) : '') : raw);
+        if (f === 'name' && idDoc(r)) { const nm = el.querySelector('.cmu-wk-nm'); if (nm) nm.value = raw; }
+        wLive(`${k}:${f}`, +k); if (peek === 'r:' + k) paintPeek(); return;
+      }
       if (e.target.matches('[data-dq]')) {
         dq = e.target.value.trim();
         const P = found.people.filter((q) => q.i == null && q.decision === 'ok'), m = (q) => !dq || fold(`${profOf(q).name} ${profOf(q).no}`).includes(fold(dq));
@@ -1299,7 +1603,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       }
       if (!e.target.matches('[data-wq]')) return;
       wq = e.target.value.trim();
-      const nw = found.people.filter((q) => q.i == null);
+      const nw = pickable();
       nw.forEach((q) => { const tr = el.querySelector(`[data-wrow="${q.key}"]`); if (tr) tr.hidden = !wMatch(q); });
       const none = el.querySelector('.cmu-wnone'); if (none) none.hidden = nw.some(wMatch);
       wAll();
@@ -1325,6 +1629,24 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       }
       const xna = e.target.closest('[data-expna]');
       if (xna) { const k = +xna.dataset.expna, r = results[k]; r.read = Object.assign({}, r.read, { valid: 'Not applicable' }); corrected(r); paint(); if (peek === k) paintPeek(); return; }
+      const ow = e.target.closest('[data-wown]');
+      if (ow) {
+        // moved to another worker: any on the list, new or not; someone not being checked yet joins the ones being checked
+        const k = +ow.dataset.wown, r = results[k], [t0, n] = ow.value.split(':'); let q2;
+        if (t0 === 'b') q2 = batch[+n];
+        else {
+          const i = +n, p = M.PERSON[i];
+          q2 = found.people.find((x) => x.i === i && !isR(x)) || (() => { const x = { key: 'w' + i, i, name: plain(p.name), type: plain(p.id[0]), no: plain(p.id[1]), valid: p.id[2], role: plain(p.role), files: [], lists: [], decision: 'ok' }; found.people.push(x); return x; })();
+          q2.decision = 'ok'; if (!batch.includes(q2)) batch.push(q2);
+        }
+        const from = r.owner; if (!q2 || q2 === from) return;
+        r.owner = q2; const L = slotsOf(q2), fw = fileWords(r.file);
+        reslot(r, (r.slot && L.find((x) => x.code === r.slot.code)) || L.map((x) => [x, docScore(x, fw)]).filter(([, sc]) => sc > 0).sort((a, b) => b[1] - a[1]).map(([x]) => x)[0] || null);
+        from.moved = `${esc(r.file.name)} moved to ${esc(profOf(q2).name || q2.name)}.`;
+        if (wOpen === k) wOpen = null; closePeek(); keep(); return;
+      }
+      const wt = e.target.closest('[data-wtype]');
+      if (wt) { const k = +wt.dataset.wtype; reslot(results[k], pool.find((x) => x.key === wt.value) || null); keep(); peekFor(k); return; }
       const on = e.target.closest('[data-on]'); if (on) { results[+on.dataset.on].on = on.checked; paint(); if (peek === +on.dataset.on) paintPeek(); return; }
       const to = e.target.closest('[data-to]');
       if (to) {
