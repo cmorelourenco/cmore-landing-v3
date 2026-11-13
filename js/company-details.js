@@ -36,6 +36,7 @@
   let detail = null; // the id of a per-record document whose roster is open, or null
   let worker = null; // the index of a worker whose own page is open, or null
   let machine = null; // the index of a machine whose own page is open, or null
+  let product = null; // the index of a product whose own page is open, or null
   const open = new Set(); // ids of document rows expanded to show their versions
   let detailQ = '';
   let detailFilter = { status: new Set(), tag: new Set() };
@@ -443,7 +444,7 @@
   const renderDetail = (id) => {
     const doc = docById(id), kind = doc.kind;
     const fq = fold(detailQ);
-    const tagLabel = kind === 'workers' ? 'Role' : kind === 'equipment' ? 'Type' : null;
+    const tagLabel = kind === 'workers' ? 'Role' : kind === 'equipment' ? 'Type' : kind === 'products' && M.PERSONA !== 'beatriz' ? 'Family' : null;
     const items = doc.roster.map((r) => ({ i: r.i, name: recordName(kind, r.i), sub: recordSub(kind, r.i), status: r.status, exp: r.exp, tag: recordTag(kind, r.i), text: fold(recordName(kind, r.i)) }));
     const dKeep = (it, skip) => (!fq || it.text.includes(fq))
       && (skip === 'status' || !detailFilter.status.size || detailFilter.status.has(it.status))
@@ -466,7 +467,7 @@
       : '';
     const filt = `<div class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="${detailFiltOpen}" data-dfilt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n"${nOnD ? '' : ' hidden'}>${nOnD}</span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button><div class="co-filt-panel" role="menu" aria-label="Filter this roster" data-dfilt-panel${detailFiltOpen ? '' : ' hidden'}>${panelHtml}</div></div>`;
     const search = `<div class="co-tools cd-detail-tools"><label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by name" aria-label="Search this roster" data-detail-q value="${detailQ.replace(/"/g, '&quot;')}"></label><div class="co-tools-r"><span class="co-muted cd-detail-count">${list.length} of ${items.length}</span>${nOnD ? '<button type="button" class="link-btn co-tools-clear" data-dclear>Clear filters</button>' : ''}${filt}</div></div>`;
-    const go = (it) => (kind === 'workers' ? ` data-worker="${it.i}"` : kind === 'equipment' ? ` data-machine="${it.i}"` : '');
+    const go = (it) => (kind === 'workers' ? ` data-worker="${it.i}"` : kind === 'equipment' ? ` data-machine="${it.i}"` : kind === 'products' && M.PERSONA !== 'beatriz' ? ` data-product="${it.i}"` : '');
     const by = issuerOf(doc.cat);
     const table = list.length
       ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl cd-roster-tbl"><thead><tr><th>${NOUN[kind][0][0].toUpperCase() + NOUN[kind][0].slice(1)}</th><th>Status</th><th>ALMA confidence</th><th>Reference no.</th><th>Issued by</th><th class="c">Expiry date</th><th></th></tr></thead><tbody>${list.map((it) => {
@@ -538,7 +539,7 @@
     const list = DATA.filter((d) => keep(d) && scope.includes(d.area));
     // Workers: no Optional or Archived document tables (a search still finds those documents)
     // (nor the per-record documents as a list: the matrix above shows them, record by record)
-    const hide = (key, g) => (key === 'workers' || key === 'equipment') && area === key && !filtering() && (g === 'Optional' || g === 'Archived' || g === 'For each worker' || g === 'For each machine');
+    const hide = (key, g) => (key === 'workers' || key === 'equipment' || key === 'products') && area === key && !filtering() && (g === 'Optional' || g === 'Archived' || g === 'For each worker' || g === 'For each machine' || g === 'For each product');
     const html = scope.flatMap((key) => GROUPS_OF(key).filter((g) => !hide(key, g)).map((g) => {
       const docs = list.filter((d) => d.area === key && d.group === g);
       return docs.length ? group(area ? g : docs[0].groupLabel, docs, g) : '';
@@ -553,7 +554,10 @@
   // per-record document asked of any of them, a dot for its status (a dash where it isn't)
   const SHORT = { 'WK-11': 'Fitness', 'WK-12': 'Special risk', 'WK-13': 'Operator', 'WK-14': 'Training', 'WK-15': 'Delivery record', 'WK-16': 'Residence permit', 'WK-17': 'A1', 'WD-01': 'AIMA application', 'WD-02': 'Work permit', 'WD-03': 'Contract', 'WD-04': 'SS number', 'WD-05': 'Tax number', 'WD-06': 'OSHA card', 'WD-07': 'Trade licence', 'WD-08': 'Welder (ISO 9606)', 'WD-09': 'First aid', 'WD-10': 'NCA (Kenya)', 'WD-11': 'Driver CPC',
     'EQ-01': 'EC conformity', 'EQ-02': 'Pre&#8209;1995 cert.', 'EQ-03': 'Inspection', 'EQ-04': 'Maintenance', 'EQ-05': 'Manual', 'EQ-06': 'Calibration', 'EQ-07': 'Insurance', 'EQ-21': 'Technical sheet', 'EQ-22': 'Lifting exam', 'EQ-23': 'Pressure inspection', 'EQ-24': 'Electrical test', 'EQ-25': 'Fall arrest', 'EQ-26': 'ATEX', 'EQ-27': 'Scaffold', 'EQ-28': 'Registration', 'EQ-29': 'Road inspection', 'EQ-30': 'Motor insurance',
-    'PR-01': 'DoP', 'PR-02': 'Constancy', 'PR-03': 'Technical sheet', 'PR-04': 'Safety sheet', 'PR-05': 'EU DoC', 'PR-06': 'EPD', 'PR-07': 'REACH', 'PR-08': 'Certification', 'UN-29': 'UL', 'UN-30': 'Prop 65' };
+    'PR-01': 'DoP', 'PR-02': 'Constancy', 'PR-03': 'Technical sheet', 'PR-04': 'Safety data sheet', 'PR-05': 'EU DoC', 'PR-06': 'EPD', 'PR-07': 'REACH / RoHS', 'PR-08': 'Certification', 'UN-29': 'UL', 'UN-30': 'Prop 65',
+    'PD-01': 'Food specification', 'PD-02': 'PPE type exam', 'PD-03': 'ECE 22.06', 'PD-04': 'Conformity of production', 'PD-05': 'DOT FMVSS 218', 'PD-06': 'GPSR file', 'PD-07': 'Lab test', 'PD-08': 'OEKO&#8209;TEX', 'PD-09': 'Flammability', 'PD-10': 'National approval',
+    'PD-11': 'Restricted substances', 'PD-12': 'Allergens', 'PD-13': 'GMO status', 'PD-14': 'Microbiology', 'PD-15': 'Certificate of analysis', 'PD-16': 'Food contact', 'PD-17': 'PDO / PGI', 'PD-18': 'Organic', 'PD-19': 'Halal', 'PD-20': 'Kosher',
+    'PD-21': 'EUDR', 'PD-22': 'Cotton origin', 'PD-23': 'CBAM', 'PD-24': 'Packaging (PPWR)', 'PD-25': 'Carbon footprint', 'PD-26': 'EU Ecolabel' };
   // a worker's documents, by what they're for: the columns of the matrix and the sections of their
   // page, in this order. Identity is their ID document (not in the catalog: ALMA files it from an
   // upload); anything the catalog adds later goes to Other until it's given one
@@ -568,7 +572,12 @@
   const EQ_CATS = [['conformity', 'Conformity'], ['documentation', 'Documentation'], ['inspections', 'Inspections'], ['maintenance', 'Maintenance'], ['calibration', 'Calibration'], ['specific', 'Specific equipment'], ['insurance', 'Insurance']];
   const EQ_SEC = { 'Conformity': 'conformity', 'Documentation': 'documentation', 'Inspections': 'inspections', 'Maintenance': 'maintenance', 'Calibration': 'calibration', 'Specific equipment': 'specific', 'Insurance': 'insurance' };
   const eqCatOf = (d) => { const sec = d.section || (d.cat && d.cat.section && d.cat.section.en) || ((DOCS.find((x) => x.code === d.code) || {}).section); return EQ_SEC[sec] || 'specific'; };
-  const byCat = (list, kind) => (kind === 'equipment' ? EQ_CATS.map(([k, l]) => [k, l, list.filter((d) => eqCatOf(d) === k), l])
+  // a product's or material's documents, the same way (js/product-docs.js)
+  const PR_CATS = [['technical', 'Technical'], ['compliance', 'Compliance'], ['food', 'Food'], ['traceability', 'Traceability'], ['environment', 'Environment']];
+  const PR_SEC = { 'Technical': 'technical', 'Compliance': 'compliance', 'Food': 'food', 'Traceability': 'traceability', 'Environment': 'environment' };
+  const prCatOf = (d) => { const sec = d.section || (d.cat && d.cat.section && d.cat.section.en) || ((DOCS.find((x) => x.code === d.code) || {}).section); return PR_SEC[sec] || 'compliance'; };
+  const byCat = (list, kind) => (kind === 'products' ? PR_CATS.map(([k, l]) => [k, l, list.filter((d) => prCatOf(d) === k), l])
+    : kind === 'equipment' ? EQ_CATS.map(([k, l]) => [k, l, list.filter((d) => eqCatOf(d) === k), l])
     : WK_CATS.map(([k, l, sh]) => [k, l, list.filter((d) => catOf(d) === k).sort((x, y) => (LEAD.includes(y.code) ? 1 : 0) - (LEAD.includes(x.code) ? 1 : 0)), sh || l]));
   // a record's documents, as the company's: one table per category (its name and how many), the
   // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
@@ -593,17 +602,21 @@
     return { code, name: EXTRA[code][0], req: has ? `Optional &middot; uploaded ${esc(f.on || '')}` : 'Optional &middot; upload it if they have one', plain: true, status, exp: has ? esc(f.valid || '—') : '—', spec: PERSON[i].archived || !M.saveExtra ? '' : `rec:${code}:${i}` };
   };
   const TONE = { notuploaded: 'neu', valid: 'ok', na: 'neu', processing: 'neu', expiring: 'pend', filemissing: 'warn', attention: 'warn', missing: 'bad', expired: 'bad', rejected: 'bad' };
+  // the matrices' Overall column sorts (as the Team list's headers do): the worst first, the best
+  // first, then back to the list's order; kept per area while the page is open
+  const SEVERITY = ['valid', 'na', 'notrequested', 'notuploaded', 'processing', 'expiring', 'filemissing', 'attention', 'missing', 'rejected', 'expired'];
+  const mSort = {};
   const matrix = (key) => {
     if (!['workers', 'equipment', 'products'].includes(key)) return '';
     let cols = DOCS.filter((d) => d.area === key && d.kind === key && d.roster.length);
     if (cols.length < 2) return '';
     // workers: in their categories, their ID first
-    const wk = key === 'workers' || key === 'equipment', people = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
+    const wk = key === 'workers' || key === 'equipment' || key === 'products', people = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
     const XCOLS = M.saveExtra ? Object.keys(EXTRA).map((code) => ({ code, name: EXTRA[code][0], isX: true })) : [];
     // workers: one column per category, its dot the worst of the documents in it asked of them
     const CAT_COL = { identity: 'Identity', right: 'Right to work', health: 'Health', training: 'Training and qualifications', ppe: 'PPE', driving: 'Driving license', other: 'Other' };
     if (people) cols = byCat([ID_COL, ...cols, ...XCOLS]).map(([k, , list]) => ({ cat: k, name: CAT_COL[k], docs: list }));
-    else if (wk) cols = byCat(cols, 'equipment').map(([k, l, list]) => ({ cat: k, name: l, docs: list }));
+    else if (wk) cols = byCat(cols, key).map(([k, l, list]) => ({ cat: k, name: l, docs: list })).filter((c) => key !== 'products' || c.docs.length);
     const docSt = (d, i) => { if (d.isId) return idRow(i).status; if (d.isX) return extraRow(d.code, i).status; const r = d.roster.find((x) => x.i === i); return r ? r.status : null; };
     const catCell = (c, i) => {
       const asked = c.docs.map((d) => [d, docSt(d, i)]).filter(([, st]) => st);
@@ -616,20 +629,25 @@
     const recs = D.records[key];
     const label = { workers: 'By worker', equipment: 'By machine', products: 'By product' }[key];
     const rows = recs.map((rec, i) => {
-      if (rec.left) return ''; // no longer on the worker list
+      if (rec.left) return null; // no longer on the worker list
       const info = wk ? cols.map((c) => catCell(c, i)) : null;
       const cells = wk ? info.map((x) => (x ? x.st : null)) : cols.map((d) => docSt(d, i));
       const worst = worstOf(cells.filter(Boolean));
       const [wl, wc] = STATUS[worst];
-      const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : '';
+      const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : key === 'products' && M.PERSONA !== 'beatriz' ? ` data-product="${i}"` : '';
       return `<tr class="cd-row${go ? ' is-rosterable' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (s
         ? wk ? `<td class="c"><button type="button" class="cd-cell" data-up="${info[c].spec}" title="${info[c].tip}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${cols[c].name} for ${recordName(key, i)}: ${info[c].tip}. Upload a document</span></button></td>`
         : `<td class="c"><button type="button" class="cd-cell" data-up="rec:${cols[c].code}:${i}" title="${STATUS[s][0]} &middot; ${NO_FILE.includes(s) ? 'upload it' : 'replace it'}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name} for ${recordName(key, i)}: ${STATUS[s][0]}. ${NO_FILE.includes(s) ? 'Upload' : 'Replace'} it</span></button></td>`
         : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span></td></tr>`;
-    }).join('');
+    }).map((html, i) => (html == null ? null : { i, html, sev: SEVERITY.indexOf(worstOf((wk ? cols.map((c) => catCell(c, i)).map((x) => (x ? x.st : null)) : cols.map((d) => docSt(d, i))).filter(Boolean))) }))
+      .filter(Boolean);
+    // sorted by Overall, if asked: the worst first, or the best first; otherwise in the list's order
+    const so = mSort[key];
+    if (so) rows.sort((a, b) => (so > 0 ? b.sev - a.sev : a.sev - b.sev) || a.i - b.i);
+    const sortTh = `<th${so ? ` aria-sort="${so > 0 ? 'descending' : 'ascending'}"` : ''}><button type="button" class="cd-sort" data-msort="${key}" title="${!so ? 'Sort by overall: the worst first' : so > 0 ? 'Sort by overall: the best first' : 'Back to the list&rsquo;s order'}">Overall<span aria-hidden="true">${so ? (so > 0 ? '&darr;' : '&uarr;') : '&varr;'}</span></button></th>`;
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
-    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span></div>
-      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix${wk ? ' cd-matrix-cats' : ''}"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c">${wk ? d.name : SHORT[d.code] || esc(d.name)}</th>`).join('')}<th>Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
+    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${people && window.CMUpload ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:workers">Add worker</button>' : ''}</div>
+      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix${wk ? ' cd-matrix-cats' : ''}"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c">${wk ? d.name : SHORT[d.code] || esc(d.name)}</th>`).join('')}${sortTh}</tr></thead><tbody>${rows.map((r) => r.html).join('')}</tbody></table></div>
       <p class="cd-legend">${legend}${wk ? '<span><span class="cd-dot is-neu"></span>Not uploaded</span>' : ''}<span><span class="cd-dash">&mdash;</span>Not asked of them</span></p></div>`;
   };
 
@@ -758,7 +776,36 @@
     </div>`;
   };
 
-  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : 'Registration, tax and social security, and the rest of the company&rsquo;s own papers.'} ALMA asks for them one section at a time.</span>${window.DOC_MODEL.ORG ? `<button type="button" class="btn btn-primary btn-sm" data-alma-area="${key}">Add them with ALMA</button>` : ''}</div>`;
+  // one product or material: its profile (the catalog's Product profile form), its documents by
+  // category, and the sites it is used on
+  const renderProduct = (i) => {
+    const p = M.PRODUCT[i];
+    const per = recordDocs('products', i);
+    const [wl, wc] = STATUS[worstOf(per.map((d) => d.status))];
+    // what its documents say, by category, for the profile: the badge only
+    const onFile = (d) => d && !NO_FILE.includes(d.status);
+    const sayP = (list) => {
+      const got = list.filter(onFile); if (!list.length) return '<span class="co-subtle">Not asked of it</span>';
+      if (!got.length) return '<span class="co-subtle">Not on file</span>';
+      return got.map((d) => { const [l, c] = STATUS[d.status]; return `${esc(d.name)} <span class="co-badge ${c}">${l}</span>`; }).join('<br>');
+    };
+    const inCat = (k) => per.filter((d) => prCatOf(d) === k);
+    const yes = (v) => (v ? 'Yes' : 'No');
+    groupsEl.innerHTML = `<div class="cd-detail cd-worker cd-machine">
+      <div class="cd-area-head"><h2 class="co-h-l">${p.name}${p.maker ? ` <span class="soft">&middot; ${p.maker}</span>` : ''}</h2><p class="co-muted">${p.code} &middot; ${p.family.toLowerCase()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Product profile</h3><span class="co-muted">Data only, no file</span></div>
+        <div class="co-card cd-card-pad"><dl class="pd-grid">
+          ${kv('Commercial name', p.name)}${kv('Manufacturer', p.maker || '<span class="co-subtle">Not on file</span>')}${kv('Manufacturer reference / model', p.ref || '<span class="co-subtle">Not on file</span>')}
+          ${kv('Internal code', p.code)}${kv('Product family', p.family)}${kv('Company&rsquo;s role', p.role)}
+          ${kv('CE marked', yes(p.ceMarked))}${kv('Hazardous product', yes(p.hazardous))}${kv('Harmonised standard', p.standard || '<span class="co-subtle">None</span>')}
+          ${PR_CATS.filter(([k]) => inCat(k).length).map(([k, l]) => kv(l, sayP(inCat(k)))).join('')}
+        </dl></div></div>
+      ${catGroups(per, 'products', i)}
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">On site</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${p.sites.length ? sitesCard(p.sites) : '<div class="co-card cd-none"><span class="co-subtle">Not on a site yet.</span></div>'}</div>
+    </div>`;
+  };
+
+  const areaEmpty = (key) => `<div class="co-card cd-none"><b class="co-row-n">Nothing in ${AREA_TITLE[key]} yet</b><span class="co-subtle">${key === 'workers' ? 'Payroll and social security, and what each worker is cleared for.' : key === 'equipment' ? 'Conformity, inspections and manuals for every machine you bring.' : key === 'products' ? 'Technical and safety sheets, declarations and certificates for every product and material.' : 'Registration, tax and social security, and the rest of the company&rsquo;s own papers.'} ALMA asks for them one section at a time.</span>${window.DOC_MODEL.ORG ? `<button type="button" class="btn btn-primary btn-sm" data-alma-area="${key}">Add them with ALMA</button>` : ''}</div>`;
   // ALMA, on a section of a company added in this session (js/guided-upload.js): she comes up on
   // her own when it's empty, each time it's opened; afterwards the page comes back with what was filed
   let asked = null;
@@ -778,7 +825,7 @@
   const crumbTrail = document.getElementById('cd-crumb-trail'), crumbBack = document.getElementById('cd-crumb-back');
   const hero = document.getElementById('cd-hero'), h2 = document.getElementById('cd-h2'), sub = document.getElementById('cd-sub');
   // not open at launch: its badge (js/company-switcher.js)
-  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) }); // this page draws before js/company-switcher.js loads
+  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment', 'products'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) }); // this page draws before js/company-switcher.js loads
   const soon = (k) => (SOON.areas.includes(k) ? SOON.badge : '');
   const updateHeader = () => {
     const a = area ? AREAS.find((x) => x.key === area) : null;
@@ -788,6 +835,7 @@
     if (doc) levels.push({ label: esc(doc.name), crumb: 'detail' });
     if (worker !== null) levels.push({ label: WORKERS[worker][0], crumb: 'worker' });
     if (machine !== null) levels.push({ label: EQUIPMENT[machine][0], crumb: 'machine' });
+    if (product !== null) levels.push({ label: PRODUCTS[product][0], crumb: 'product' });
     crumbTrail.innerHTML = levels.map((lvl, i) => {
       const sep = i ? '<span aria-hidden="true">/</span>' : '';
       if (i === levels.length - 1) return sep + `<span aria-current="page">${lvl.label}</span>`;
@@ -795,13 +843,14 @@
     }).join('');
     crumbBack.onclick = () => {
       if (worker !== null) { worker = null; render(); toTop(); }
-      else if (machine !== null) { machine = null; render(); toTop(); }
+      else if (machine !== null) { machine = null; product = null; render(); toTop(); }
+      else if (product !== null) { product = null; render(); toTop(); }
       else if (doc) { detail = null; resetDetailFilter(); render(); toTop(); }
       else if (a) { area = null; render(); toTop(); }
       else location.href = 'my-company.html?filled';
     };
-    hero.hidden = !!doc || worker !== null || machine !== null;
-    if (doc || worker !== null || machine !== null) return;
+    hero.hidden = !!doc || worker !== null || machine !== null || product !== null;
+    if (doc || worker !== null || machine !== null || product !== null) return;
     h2.innerHTML = a ? a.title + (soon(a.key) ? ' ' + soon(a.key) : '') : 'All company documents';
     const fresh = window.DOC_MODEL.ORG; // a company added in this session: only what it uploaded
     sub.innerHTML = a ? a.long : fresh ? `The documents you&rsquo;ve uploaded, kept in one profile so any client finds the same set. Your profile: <b class="cd-profile">${D.line}</b>.` : `Every document the C&#8209;MORE catalog asks of a company like yours, kept in one profile so any client finds the same set. Chosen from your profile: <b class="cd-profile">${D.line}</b>.`;
@@ -827,11 +876,12 @@
     if (typeof syncCards === 'function') syncCards();
     askIfEmpty();
     updateHeader();
-    const deep = detail !== null || worker !== null || machine !== null;
+    const deep = detail !== null || worker !== null || machine !== null || product !== null;
     tools.hidden = deep;
     pills.hidden = deep;
     if (worker !== null) { renderWorker(worker); return; }
     if (machine !== null) { renderMachine(machine); return; }
+    if (product !== null) { renderProduct(product); return; }
     if (detail !== null) { renderDetail(detail); return; }
     const onHome = !area && !filtering();
     tools.querySelector('.co-filt').hidden = onHome;
@@ -855,22 +905,22 @@
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.sn-item[title="Documents"]')) return;
     e.preventDefault();
-    if (area === null && detail === null && worker === null && machine === null) { toTop(); return; }
-    area = null; detail = null; worker = null; machine = null; resetDetailFilter(); render(); toTop();
+    if (area === null && detail === null && worker === null && machine === null && product === null) { toTop(); return; }
+    area = null; detail = null; worker = null; machine = null; product = null; resetDetailFilter(); render(); toTop();
   });
   document.addEventListener('click', (e) => {
     const a = e.target.closest('a[data-sn-area]');
     if (!a || e.metaKey || e.ctrlKey || e.shiftKey || !AREAS.some((x) => x.key === a.dataset.snArea)) return;
     e.preventDefault();
-    area = a.dataset.snArea; detail = null; worker = null; machine = null; resetDetailFilter(); render(); toTop();
+    area = a.dataset.snArea; detail = null; worker = null; machine = null; product = null; resetDetailFilter(); render(); toTop();
     const scrim = document.getElementById('sn-scrim'); if (scrim && !scrim.hidden) scrim.click(); // the menu, as a drawer on a phone, closes
   });
 
   crumbTrail.addEventListener('click', (e) => {
     const b = e.target.closest('[data-crumb]'); if (!b) return;
-    if (b.dataset.crumb === 'root') { area = null; detail = null; worker = null; machine = null; resetDetailFilter(); }
-    else if (b.dataset.crumb === 'area') { detail = null; worker = null; machine = null; resetDetailFilter(); }
-    else if (b.dataset.crumb === 'detail') { worker = null; machine = null; }
+    if (b.dataset.crumb === 'root') { area = null; detail = null; worker = null; machine = null; product = null; resetDetailFilter(); }
+    else if (b.dataset.crumb === 'area') { detail = null; worker = null; machine = null; product = null; resetDetailFilter(); }
+    else if (b.dataset.crumb === 'detail') { worker = null; machine = null; product = null; }
     render(); toTop();
   });
 
@@ -921,8 +971,10 @@
     const c = e.target.closest('[data-clear]'); if (c) { clearAll(); return; }
     const al = e.target.closest('[data-alma-area]'); if (al) { askALMA(al.dataset.almaArea); return; }
     const tile = e.target.closest('[data-area]'); if (tile) { area = tile.dataset.area; render(); toTop(); return; }
-    const who = e.target.closest('[data-worker]'); if (who) { area = 'workers'; detail = null; machine = null; worker = +who.dataset.worker; render(); toTop(); return; }
-    const what = e.target.closest('[data-machine]'); if (what) { area = 'equipment'; detail = null; worker = null; machine = +what.dataset.machine; render(); toTop(); return; }
+    const who = e.target.closest('[data-worker]'); if (who) { area = 'workers'; detail = null; machine = null; product = null; worker = +who.dataset.worker; render(); toTop(); return; }
+    const what = e.target.closest('[data-machine]'); if (what) { area = 'equipment'; detail = null; worker = null; product = null; machine = +what.dataset.machine; render(); toTop(); return; }
+    const ms = e.target.closest('[data-msort]'); if (ms) { const k = ms.dataset.msort; mSort[k] = mSort[k] === 1 ? -1 : mSort[k] === -1 ? 0 : 1; render(); const b = groupsEl.querySelector(`[data-msort="${k}"]`); if (b) b.focus({ preventScroll: true }); return; }
+    const prod = e.target.closest('[data-product]'); if (prod) { area = 'products'; detail = null; worker = null; machine = null; product = +prod.dataset.product; render(); toTop(); return; }
     const ros = e.target.closest('[data-detail]'); if (ros) {
       const doc = docById(+ros.dataset.detail);
       area = doc.area; detail = doc.id; detailQ = ''; resetDetailFilter();
@@ -957,7 +1009,7 @@
     }
   });
   groupsEl.addEventListener('keydown', (e) => {
-    const t = e.target.closest('[data-worker], [data-machine], [data-detail], [data-open], [data-version]');
+    const t = e.target.closest('[data-worker], [data-machine], [data-product], [data-detail], [data-open], [data-version]');
     if (t && e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.click(); }
   });
   groupsEl.addEventListener('input', (e) => {

@@ -42,6 +42,7 @@ window.CMLibrary = (() => {
     if (EXTRA[code]) { if (!recOk('workers', +i)) return null; const who = plain(D.recordName('workers', +i)); return { title: EXTRA[code], who, area: 'workers', note: 'Filed in Documents', base: `${EXTRA[code]} - ${who}` }; }
     if (code === 'WK-REG') return { title: 'Worker register', area: 'workers', note: 'Filed in Documents', base: 'Worker register' };
     if (code === 'EQ-REG') return { title: 'Equipment register', area: 'equipment', note: 'Filed in Documents', base: 'Equipment register' };
+    if (code === 'PR-REG') return { title: 'Product list', area: 'products', note: 'Filed in Documents', base: 'Product list' };
     const d = docOf(code); if (!d) return null;
     if (i != null && d.kind && !recOk(d.kind, +i)) return null;
     if (i != null && d.kind) { const who = plain(D.recordName(d.kind, +i)); return { title: plain(d.name), who, area: d.area, note: 'Filed in Documents', base: `${plain(d.name)} - ${who}` }; }

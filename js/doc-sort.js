@@ -22,9 +22,9 @@
   const plain = (h) => { const d = document.createElement('div'); d.innerHTML = String(h == null ? '' : h); return d.textContent.trim(); };
 
   // ---- the picker -------------------------------------------------------------------------------------
-  // what can be chosen: three categories, always Company, Workers and Equipment; in each, the
-  // company's documents (not archived ones), once each, in the order Documents lists them
-  const AREAS = ['company', 'workers', 'equipment'].map((key) => ({ key, title: (DM.AREA_META && DM.AREA_META[key] ? DM.AREA_META[key].title : key.replace(/^./, (c) => c.toUpperCase())) }));
+  // what can be chosen: Company, Workers and Equipment, and Products and materials where the company
+  // has it; in each, the company's documents (not archived ones), once each, in the order Documents lists them
+  const AREAS = ['company', 'workers', 'equipment'].concat((DM.AREAS || []).some((a) => a.key === 'products') ? ['products'] : []).map((key) => ({ key, title: (DM.AREA_META && DM.AREA_META[key] ? DM.AREA_META[key].title : key.replace(/^./, (c) => c.toUpperCase())) }));
   const ALL = (() => {
     const seen = new Set();
     return DM.DOCS.filter((d) => d.code && d.status !== 'archived' && !d.archivedCode && AREAS.some((a) => a.key === d.area) && !seen.has(d.code) && seen.add(d.code));

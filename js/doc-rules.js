@@ -7,7 +7,7 @@
      2. its scope covers the company's region — EU or US, from the country (workbook column J);
      3. it is for any sector, or for the company's sector (column K: Construction specific);
      4. its area is open to the company: Workers needs employees, Equipment needs equipment
-        records, Products needs Material supply among the service types; Sites is left out
+        records, Products needs Material supply among the service types or product records; Sites is left out
         until it is reworked;
      5. its condition, if any (the 'Condition key' column), isn't false for this company.
    A condition is a fact (read from a profile; false hides the document) or an answer only the
@@ -49,7 +49,7 @@
     company: () => true,
     workers: (p) => p.employees > 0,
     equipment: (p) => p.equipmentCount > 0,
-    products: (p) => (p.services || []).includes('material_supply'),
+    products: (p) => (p.services || []).includes('material_supply') || p.productCount > 0,
     sites: () => false, // being reworked
   };
 

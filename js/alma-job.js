@@ -59,12 +59,12 @@ window.CMAlmaJob = (() => {
   // the folded rail: open it, the document she's reading (a check on it when she's done), how far
   const rail = () => `<button type="button" class="cmu-fold" data-untuck aria-label="Show the panel" title="Show the panel">${FOLD}</button>
       <button type="button" class="cmu-rail-st" data-untuck aria-label="Show the panel">${DOC}${OKI}</button><span class="cmu-rail-n"></span><button type="button" class="cmu-rail-t" data-untuck></button>`;
-  // state: { reading: true|false, at (1-based, while reading), total, n (files ready, when done) }
+  // state: { reading: true|false, at (1-based, while reading), total, n (files ready, when done), label (what the stage is, if not those) }
   const paint = (r, s) => {
     const b = r.querySelector('.cmu-rail-st');
     b.className = `cmu-rail-st${s.reading ? ' is-reading' : s.done ? ' is-done' : ''}`;
     r.querySelector('.cmu-rail-n').textContent = s.reading ? `${s.at}/${s.total}` : s.done ? `${s.n}` : '';
-    r.querySelector('.cmu-rail-t').textContent = s.reading ? `ALMA is reading · ${s.at} of ${s.total}` : s.done ? `Ready to review · ${s.n} file${s.n === 1 ? '' : 's'}` : 'Upload documents';
+    r.querySelector('.cmu-rail-t').textContent = s.label || (s.reading ? `ALMA is reading · ${s.at} of ${s.total}` : s.done ? `Ready to review · ${s.n} file${s.n === 1 ? '' : 's'}` : 'Upload documents');
   };
 
   // the toast; act: [label, fn], a button on it

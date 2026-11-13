@@ -34,7 +34,7 @@
   // a document's name: the company's own, if it renamed it (DOC_MODEL.rename), else the catalog's
   const dn = (d) => { const m = DM && DM.DOCS && DM.DOCS.find((x) => x.code === d.code && x.name0); return m && m.name !== m.name0 ? m.name : d.name.en; };
   // not open at launch (js/company-switcher.js styles the badge)
-  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) });
+  const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment', 'products'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) });
   const soon = (k) => (SOON.areas.includes(k) ? ' ' + SOON.badge : '');
   if (!O || !CAT || !R || !DM) return;
   const org = O.current();

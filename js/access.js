@@ -24,7 +24,7 @@ window.CM_SOON_OPEN = (() => {
     const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {};
     if (/^test@c-more\.test$/i.test(p.email || '')) return [];
     const org = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null') || 'home';
-    return org === 'home' ? ['ecosystem', 'workers', 'equipment', 'questionnaires', 'clients', 'projects'] : [];
+    return org === 'home' ? ['ecosystem', 'workers', 'equipment', 'products', 'questionnaires', 'clients', 'projects'] : [];
   } catch (e) { return []; }
 })();
 window.CMAccess = (() => {
@@ -51,13 +51,14 @@ window.CMAccess = (() => {
     ['documents.company', 'Documents · Company', 'Registration, tax, insurance, H&S, certifications'],
     ['documents.workers', 'Documents · Workers', 'Payroll, social security, training, fitness'],
     ['documents.equipment', 'Documents · Equipment', 'Conformity, inspections, manuals'],
+    ['documents.products', 'Documents · Products and materials', 'Technical and safety sheets, declarations, certificates'],
     ['projects', 'Projects', 'Every project, as owner or as supplier'],
     ['consents', 'Consents', 'Clients asking to see the company’s documents'],
     ['questionnaires', 'Questionnaires', 'ESG and client questionnaires'],
     ['ecosystem', 'C‑MORE ecosystem', 'Finding and connecting with companies'],
     ['clients', 'My clients', 'The companies you supply'],
     ['suppliers', 'My suppliers', 'The companies that supply you'],
-  ].concat(persona === 'beatriz' ? [['documents.products', 'Documents · Products', 'Declarations, technical and safety sheets, EUDR']] : []);
+  ];
   const PAGE_NAME = Object.fromEntries(PAGES.map(([k, n]) => [k, n]));
   // a page can be given whole, or only some of it: some of Documents' sections (the catalog's, as
   // the page groups them), or some of the projects. A group's scope = { page: [parts] }; a page
@@ -67,7 +68,7 @@ window.CMAccess = (() => {
     'documents.company': ['Identification and registration', 'Licences', 'Tax and social security', 'Insurance', 'Health and safety', 'Declarations', 'Certifications', 'Information security', 'Financial', 'Public contracts', 'ESG and sustainability'],
     'documents.workers': ['Insurance', 'Social security', 'Emergency', 'Training', 'Health', 'PPE', 'Legal status', 'Posted workers'],
     'documents.equipment': ['Conformity', 'Inspections', 'Maintenance', 'Documentation', 'Calibration', 'Insurance'],
-    'documents.products': ['Products and environment', 'Performance and CE marking', 'Technical and safety', 'Environmental', 'Certifications'],
+    'documents.products': ['Technical', 'Compliance', 'Food', 'Traceability', 'Environment'],
   };
   if (PROJECTS.length) PARTS.projects = PROJECTS.map((p) => p[0]);
   const PART_NAME = (page, k) => (page === 'projects' ? ((PROJECTS.find((p) => p[0] === k) || [k, k])[1]) : k);

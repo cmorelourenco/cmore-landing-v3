@@ -186,15 +186,52 @@ window.DOC_MODEL = (() => {
   const EQREG_KEY = 'cm-eq-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const eqRegister = () => { try { return JSON.parse(sessionStorage.getItem(EQREG_KEY) || 'null'); } catch (e) { return null; } };
   const saveEqRegister = (r) => { try { sessionStorage.setItem(EQREG_KEY, JSON.stringify(r)); } catch (e) {} };
-  // the products a company supplies, one per row in Products (none for this demo company)
-  // Beatriz's products (the same ones as on her company page and product sheets)
-  const PRODUCTS = PERSONA === 'beatriz' ? [
+  // the products and materials a company supplies or uses, one per row in Products and materials.
+  // Miguel's: what his crews build with (the catalog's Product profile form: commercial name,
+  // manufacturer, reference, family, harmonised standard), and what the product list's optional
+  // documents are about (js/product-docs.js)
+  const PR_BASE_M = [
+    ['Portland cement CEM II/A&#8209;L 42.5R', 'Secil', 'CEM II/A&#8209;L 42.5R', 'Cement', 'EN 197&#8209;1', { ceMarked: true, notifiedBody: true, hazardous: true, cbam: true }],
+    ['Ready&#8209;mix concrete C30/37', 'Bet&atilde;o Liz', 'C30/37 XC2 S3', 'Concrete', 'EN 206', { hazardous: true, batch: true }],
+    ['Reinforcing steel A500 NR SD', 'Megasa', 'A500 NR SD &Oslash;12', 'Steel', 'LNEC E 460', { cbam: true, batch: true }],
+    ['Concrete blocks 50&times;20&times;20', 'Preferbet&atilde;o', 'BL 20 Standard', 'Concrete', 'EN 771&#8209;3', { ceMarked: true }],
+    ['Repair mortar MonoTop&#8209;412', 'Sika Portugal', 'Sika MonoTop&#8209;412 N', 'Cement', 'EN 1504&#8209;3', { ceMarked: true, notifiedBody: true, hazardous: true }],
+    ['Joint sealant Sikaflex&#8209;11 FC+', 'Sika Portugal', 'Sikaflex&#8209;11 FC+', 'Other', 'EN 15651&#8209;1', { ceMarked: true, hazardous: true }],
+    ['Rock wool insulation panel', 'Rockwool', 'Rockcalm&#8209;E 211', 'Insulation', 'EN 13162', { ceMarked: true, notifiedBody: true }],
+    ['Acrylic facade paint', 'CIN', 'Cinolite Fachadas', 'Coverings', '', { hazardous: true, ecolabel: true }],
+    ['Pine formwork boards', 'Serra&ccedil;&atilde;o do Vouga', 'Pine 25&times;150 mm', 'Other', '', { eudr: true }],
+    ['Power cable H07V&#8209;K', 'General Cable', 'H07V&#8209;K 1&times;2.5', 'Other', 'EN 50575', { ceMarked: true, notifiedBody: true, otherEuRules: true }],
+    ['Safety helmet', '3M', 'SecureFit H&#8209;701', 'Other', 'EN 397', { ppe: true, otherEuRules: true }],
+    ['FFP2 dust mask', '3M', 'Aura 9322+', 'Other', 'EN 149', { ppe: true, otherEuRules: true }],
+  ];
+  // products added from a product list ALMA read (js/doc-upload.js): { name, maker, ref, family, code, on },
+  // at the end of the list, with what the list said of them
+  const PR_KEY = 'cm-pr-added' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const prAdded = (() => { try { return JSON.parse(sessionStorage.getItem(PR_KEY) || '[]') || []; } catch (e) { return []; } })();
+  const saveProducts = (list) => { try { sessionStorage.setItem(PR_KEY, JSON.stringify(prAdded.concat(list))); } catch (e) {} };
+  // the product list (Lista de materiais): the last one ALMA read, { file, on, n }
+  const PRREG_KEY = 'cm-pr-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const prRegister = () => { try { return JSON.parse(sessionStorage.getItem(PRREG_KEY) || 'null'); } catch (e) { return null; } };
+  const savePrRegister = (r) => { try { sessionStorage.setItem(PRREG_KEY, JSON.stringify(r)); } catch (e) {} };
+  const PR_BASE = PR_BASE_M.length;
+  const PRODUCTS = PERSONA !== 'beatriz' ? PR_BASE_M.map(([name, maker, ref]) => [name, `${maker} &middot; ${ref}`])
+    .concat(prAdded.map((x) => [x.name, `${x.maker || 'New'}${x.ref ? ` &middot; ${x.ref}` : ''}`])) : [
+    // Beatriz's products (the same ones as on her company page and product sheets)
     ['Roasted coffee beans', 'VH&#8209;COF&#8209;201'], ['Green coffee beans', 'VH&#8209;COF&#8209;110'], ['Cocoa butter', 'VH&#8209;COC&#8209;410'],
     ['Dark chocolate couverture, 70%', 'VH&#8209;COC&#8209;702'], ['Crude palm oil', 'VH&#8209;PLM&#8209;100'], ['Refined soybean oil', 'VH&#8209;SOY&#8209;220'],
     ['Natural rubber sheets (RSS3)', 'VH&#8209;RUB&#8209;300'], ['Sawn tropical hardwood', 'VH&#8209;WOD&#8209;510'], ['Frozen beef cuts', 'VH&#8209;BEF&#8209;020'],
     ['Soy protein concentrate', 'VH&#8209;SOY&#8209;410'],
-  ] : [];
-  const PRODUCT = PRODUCTS.map(([name, sku]) => ({ name, sku }));
+  ];
+  const PRODUCT = PERSONA === 'beatriz' ? PRODUCTS.map(([name, sku]) => ({ name, sku })) : PRODUCTS.map(([name], i) => {
+    const b = PR_BASE_M[i];
+    if (b) return Object.assign({ name, maker: b[1], ref: b[2], family: b[3], standard: b[4], code: `MAT&#8209;${101 + i * 7}`, role: 'Distributor',
+      sites: [[0, 1], [0, 2], [0, 1, 2], [1], [0], [0, 2], [2], [1], [0, 1], [2], [0, 1, 2], [0, 1, 2]][i] }, b[5]);
+    // one added from a product list: what it said of it, by its name what it is, and on no site yet
+    const a = prAdded[i - PR_BASE] || {}, t = `${name} ${a.family || ''}`;
+    return { name, maker: a.maker || '', ref: a.ref || '', family: a.family || 'Other', standard: '', code: a.code || 'New', role: 'Distributor', sites: [], isNew: true, since: a.on,
+      ceMarked: /cement|mortar|block|brick|insulation|cable|tile|window|adhesive/i.test(t), hazardous: /cement|mortar|paint|sealant|adhesive|resin|primer|solvent|oil|grout/i.test(t),
+      eudr: /wood|timber|pine|plywood|board/i.test(t), cbam: /steel|cement|alumin|rebar|mesh/i.test(t), ppe: /helmet|glove|mask|boots|harness|goggles/i.test(t), batch: /concrete|steel|rebar/i.test(t) };
+  });
 
   // each worker's profile (the catalog's Worker profile form): made up but consistent. Two are
   // Brazilian, so the rules ask them for a residence permit (WK-16); everyone else is EU.
@@ -273,12 +310,12 @@ window.DOC_MODEL = (() => {
   const DEMO = {
     miguel: {
       company: 'Ferreira Constru&ccedil;&otilde;es, Lda.',
-      profile: { country: 'PT', sector: 'construction', entityType: 'company', employees: WORKERS.length, services: ['construction_work'], equipmentCount: EQUIPMENT.length, usClients: false },
+      profile: { country: 'PT', sector: 'construction', entityType: 'company', employees: WORKERS.length, services: ['construction_work'], equipmentCount: EQUIPMENT.length, productCount: PRODUCTS.length, usClients: false },
       line: 'Portugal (EU) &middot; Construction &middot; 24 employees &middot; 12 machines',
       // what ALMA read from the company's own documents, by field name (lower case, a pattern)
       facts: { 'tax number|nipc': '514 228 930', 'registered address|address': 'Rua do Freixo 1071, 4300&#8209;219 Porto', 'activity codes|cae': 'CAE 41200, 42110, 43120',
         'legal representatives|representative': 'Miguel Ferreira (managing partner), Helena Ferreira (manager)', 'social security number|niss': '20005 418 337', 'access code': '4417&#8209;2209&#8209;1180' },
-      records: { workers: PERSON, equipment: MACHINE, products: [] },
+      records: { workers: PERSON, equipment: MACHINE, products: PRODUCT },
       state: {
         'CO-01': ['valid', '3 Jan 2026', '3 Jan 2027', '', { ref: '4417&#8209;2209&#8209;1180' }],
         'CO-02': ['valid', '12 Mar 2024', 'No expiry', '', { ref: '514 228 930' }],
@@ -321,6 +358,18 @@ window.DOC_MODEL = (() => {
         'EQ-05': { def: ['valid', () => 'No expiry'] },
         'EQ-06': { def: ['valid', () => '3 Feb 2027'] },
         'EQ-07': { requested: [0, 1, 6, 7], def: ['valid', () => '1 Mar 2027'] },
+        // the products and materials (js/product-docs.js)
+        'PR-03': { def: ['valid', () => 'No expiry'], over: { 8: ['missing'] } },
+        'PR-04': { def: ['valid', () => 'No expiry'], over: { 7: ['attention', 'No expiry'] } },
+        'PR-01': { def: ['valid', () => 'No expiry'] },
+        'PR-02': { def: ['valid', (k) => ['14 Feb 2027', '30 Jun 2027', '9 Sep 2027'][k % 3]], over: { 6: ['expiring', '28 Nov 2026'] } },
+        'PR-05': { def: ['valid', () => 'No expiry'] },
+        'PR-06': { requested: [0, 6], def: ['valid', () => '12 May 2030'] },
+        'PR-07': { requested: [9], def: ['valid', () => 'No expiry'] },
+        'PR-08': { have: [2], def: ['valid', () => '3 Jun 2027'] },
+        'PD-02': { have: [10, 11], def: ['valid', (k) => (k === 10 ? '9 Sep 2029' : '2 Apr 2028')] },
+        'PD-21': { have: [8], def: ['valid', () => 'No expiry'] },
+        'PD-23': { have: [2], def: ['valid', () => '31 Dec 2026'] },
       },
       archive: [
         ['CO-06', 'Version of 1 Mar 2026', 'Replaced 1 Sep 2026'],
@@ -428,7 +477,7 @@ window.DOC_MODEL = (() => {
     company: { title: 'Company', sub: 'Who you are, your licences, tax, insurance, policies and certifications.', long: 'Where you&rsquo;ll find everything about the company itself: who you are, your licences, tax, insurance, policies and how you run health &amp; safety.', icon: '<path d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>' },
     workers: { title: 'Workers', sub: 'Monthly payroll and social security, and what each worker is cleared for.', long: 'Where you&rsquo;ll find all your worker documentation: the monthly payroll and social security, and what each worker is cleared for.', icon: '<path d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>' },
     equipment: { title: 'Equipment', sub: 'Every machine: conformity, inspections, maintenance and manuals.', long: 'Where you&rsquo;ll find all your equipment documentation: every machine you bring, its checks and its paperwork.', icon: '<path d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17 2.496 24.03m8.924-8.86-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m0 0a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276a4.5 4.5 0 0 1-4.486 6.336l-.144-.004"/>' },
-    products: { title: 'Products', sub: 'What you supply: declarations, technical and safety sheets, certifications.', long: 'Where you&rsquo;ll find the documents for each product you supply: declarations, technical and safety sheets, and certifications.', icon: '<path d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>' },
+    products: { title: 'Products and materials', sub: 'Every product and material: technical and safety sheets, declarations, certificates.', long: 'Where you&rsquo;ll find the documents for each product and material you supply or use: technical and safety sheets, declarations and certificates.', icon: '<path d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>' },
   };
   // which records a per-record level is about, and what to call them
   const LEVEL_OF = { per_worker: 'workers', per_equipment: 'equipment', per_product: 'products' };
@@ -436,7 +485,7 @@ window.DOC_MODEL = (() => {
   const BY_LEVEL = { all_workers: 'For all workers', per_worker: 'For each worker', per_equipment: 'For each machine', per_product: 'For each product' };
   const recordName = (kind, i) => (kind === 'workers' ? WORKERS[i][0] : kind === 'equipment' ? EQUIPMENT[i][0] : PRODUCTS[i][0]);
   const recordSub = (kind, i) => (kind === 'workers' ? WORKERS[i][1] : kind === 'equipment' ? EQUIPMENT[i][1] : PRODUCTS[i][1]);
-  const recordTag = (kind, i) => (kind === 'workers' ? WORKERS[i][1] : kind === 'equipment' ? EQUIPMENT[i][0].split(' &middot; ')[0] : null);
+  const recordTag = (kind, i) => (kind === 'workers' ? WORKERS[i][1] : kind === 'equipment' ? EQUIPMENT[i][0].split(' &middot; ')[0] : kind === 'products' && PRODUCT[i] && PRODUCT[i].family ? PRODUCT[i].family : null);
 
   // ---- every document this company is asked for ---------------------------------------------------
   // the issuer the catalog expects, trimmed to its first name for the table
@@ -466,6 +515,7 @@ window.DOC_MODEL = (() => {
     .concat(OPT.map((d) => ({ doc: d, ask: false }))); // in the list's order
   const REGS = new Set(ORG ? companyMandatory(PROFILE.country).map((d) => d.code) : []);
   if (window.CM_EQUIPMENT_FACTS && R.FACTS) Object.assign(R.FACTS, window.CM_EQUIPMENT_FACTS);
+  if (window.CM_PRODUCT_FACTS && R.FACTS) Object.assign(R.FACTS, window.CM_PRODUCT_FACTS);
   const DOCS = [];
   shown.forEach(({ doc: c, ask }) => {
     const area = c.category;
@@ -490,7 +540,7 @@ window.DOC_MODEL = (() => {
       if (c.requirement === 'on_request') { covers = covers.filter((i) => (pr.requested || []).includes(i)); held = held.filter((i) => (pr.requested || []).includes(i)); }
       // an optional one: a worker's is there for everyone, not uploaded until they have one (a
       // machine's or a product's, only where there is one)
-      const optAll = c.requirement === 'optional' && (kind === 'workers' || kind === 'equipment'), has = (i) => (pr.have || []).includes(i) || !!updates[`${c.code}#${i}`];
+      const optAll = c.requirement === 'optional' && (kind === 'workers' || kind === 'equipment' || (kind === 'products' && PERSONA !== 'beatriz')), has = (i) => (pr.have || []).includes(i) || !!updates[`${c.code}#${i}`];
       if (c.requirement === 'optional' && !optAll) { covers = covers.filter((i) => (pr.have || []).includes(i)); held = held.filter((i) => (pr.have || []).includes(i)); }
       if (optAll) held = held.filter(has);
       if (optAll && !covers.length && !held.length) return; // none of them is one it's about
@@ -517,7 +567,7 @@ window.DOC_MODEL = (() => {
     // covers everywhere else — unless nobody has asked for it yet, or it is optional (the company's
     // optional ones keep their section from the list, next to the required ones of that section)
     doc.group = doc.status === 'notrequested' ? 'On client request' : area === 'company' ? doc.section
-      : c.requirement === 'optional' && !['per_worker', 'per_equipment'].includes(c.level) ? 'Optional' : BY_LEVEL[c.level] || doc.section;
+      : c.requirement === 'optional' && !['per_worker', 'per_equipment', 'per_product'].includes(c.level) ? 'Optional' : BY_LEVEL[c.level] || doc.section;
     DOCS.push(doc);
   });
   // replaced versions, kept read-only for audit
@@ -708,5 +758,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

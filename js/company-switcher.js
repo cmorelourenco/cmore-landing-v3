@@ -231,7 +231,7 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
   if (window.DOC_MODEL && window.DOC_MODEL.AREAS) {
     areas = window.DOC_MODEL.AREAS.map((a) => [a.key, a.title]);
     try { sessionStorage.setItem(KEY, JSON.stringify(areas)); } catch (e) {}
-  } else areas = read() || (O.persona === 'beatriz' ? [['company', 'Company'], ['products', 'Products']] : [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment']]);
+  } else areas = read() || (O.persona === 'beatriz' ? [['company', 'Company'], ['products', 'Products']] : [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['products', 'Products and materials']]);
   if (!areas.length) return;
   const css = `
 .sn-sub { display: grid; gap: 1px; margin: 0.125rem 0 0.375rem; padding-left: 2.75rem; }
@@ -256,12 +256,12 @@ html[data-sn="rail"] .sn-sub { display: none; }`;
 
 // Coming soon: what's shown but not open at launch. The badge is styled here, once for every page
 // (js/company-details.js and js/guided-upload.js use it too): the side menu's C-MORE ecosystem,
-// Questionnaires and My clients, and Documents' Workers and Equipment.
+// Questionnaires and My clients, and Documents' Workers, Equipment and Products and materials.
 // the company homepage, as the side menu's Company overview opens it (the empty one for a company
 // with nothing in it yet: a test user's lands there, its setup already skipped)
 const cmSoonHome = () => { const a = document.querySelector('.sn-item[title="Company overview"]'); const h = a && a.getAttribute('href'); return h && h !== '#' ? h : 'my-company.html?filled'; };
 window.CM_SOON = {
-  badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)),
+  badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment', 'products'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)),
   // instead of the feature itself: an empty state, ALMA big, saying it's on its way
   screen: (what, verb = 'is') => `<section class="cm-soon-page" aria-labelledby="cm-soon-t"><span class="alma-media cm-soon-alma" aria-hidden="true">${(window.ESG && window.ESG.SPHERES) || ''}</span>
     <p class="cm-soon-says">ALMA</p><h1 id="cm-soon-t">${what} ${verb} coming soon. <span>Stay tuned.</span></h1>
