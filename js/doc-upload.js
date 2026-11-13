@@ -488,7 +488,9 @@ html[data-theme="dark"] .cmu-to select { background-image: url("data:image/svg+x
 .cmu-r.is-expired:not(.is-ok) { border-color: var(--color-coral); }
 .cmu-r.is-off { opacity: 1; background: var(--color-off-white); }
 .cmu-bar-end { margin-top: 0.25rem; }
-.cmu-manual .cmu-fields { border-top: 0; padding-top: 0; } /* a form on its own: no header above to set it off from */
+.cmu-manual .cmu-fields { border-top: 0; padding-top: 0; }
+.cmu-fields .cmu-wide { grid-column: 1 / -1; }
+.cmu-fields .cmu-to select { height: 2.375rem; } /* a form on its own: no header above to set it off from */
 .cmu-bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 2.25rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
 .cmu-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; margin: 0; padding: 0.875rem 0 0; border-top: 1px solid var(--color-line); }
 .cmu-fields dt { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-subtle); }
@@ -944,7 +946,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         foot.innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${why}</span><button type="button" class="btn btn-primary btn-sm" data-save${(ready.length || unc) && !wait ? '' : ' disabled'}>${ready.length + unc === 1 ? 'Save it' : `Save ${ready.length + unc} files`}</button>`;
       }
     };
-    const add = (list) => { const l = [...(list || [])]; if (!l.length) return; files = files.concat(l); step = 1; paint(); };
+    const add = (list) => { const l = [...(list || [])]; if (!l.length) return; if (step === 'manual') { manual.files = manual.files.concat(l); paint(); return; } files = files.concat(l); step = 1; paint(); };
     // folded to its rail: the page in full view while she reads; the rail (or the toast) opens it again
     let tucked = false;
     // what the rail says, at each stage: reading, who to add, their details, filing, the review
@@ -1066,11 +1068,23 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // someone added by hand (Add worker): their details as a details card has them, typed in; only
     // the name is needed, their documents come later (from their page, or dropped on ALMA)
     let manual = null;
+    // the worker profile's fields, as their page has them: the name and one number that's only theirs
+    // (ID document, tax or social security) are needed, the rest is optional; their documents, if
+    // dropped here, ALMA reads and they're checked as any worker's are
+    const MG = [['Worker', [['name', 'Full name'], ['role', 'Job category'], ['nationality', 'Nationality'], ['birth', 'Birth date', 'date'], ['tax', 'Tax number'], ['ss', 'Social security number'], ['address', 'Home address', 'wide']]],
+      ['Employment', [['employment', 'Contract', ['Permanent contract', 'Fixed-term contract', 'Temporary agency contract']], ['since', 'Start date', 'date']]],
+      ['Identification', [['type', 'ID document', ['Citizen card', 'Passport', 'Residence permit', 'Identity card (EU)']], ['no', 'Document number'], ['valid', 'Valid until', 'date']]]];
+    const mOk = (v) => !!(v.name.trim() && (v.no.trim() || v.tax.trim() || v.ss.trim()));
+    const mWhy = (v) => (!v.name.trim() ? 'Give their full name' : !mOk(v) ? 'Give one of their ID document, tax or social security numbers' : '');
     const manualStep = () => {
-      head('ALMA', 'Add a worker manually', 'Fill in what you know. Only the full name is needed: add their documents later, from their page or by dropping them on me.');
+      head('ALMA', 'Add a worker manually', 'Their full name and one of their ID document, tax or social security numbers are needed; the rest is optional. Add their documents too, and I&rsquo;ll read them for you to check.');
       const v = manual.prof;
-      $('cmu-body').innerHTML = `<section class="cmu-r is-editing cmu-manual" aria-label="New worker"><dl class="cmu-fields">${PF.map(([f, l, date]) => `<div><dt>${l}${f === 'name' ? ' <span class="co-subtle">&middot; needed</span>' : ''}</dt><dd>${date ? `<input type="date" data-mf="${f}" value="${isoOf(v[f])}" aria-label="${l}">` : `<input data-mf="${f}" value="${esc(v[f])}" aria-label="${l}"${f === 'name' ? ' required' : ''}>`}</dd></div>`).join('')}</dl></section>`;
-      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${v.name.trim() ? '' : 'Give their full name to add them'}</span><button type="button" class="btn btn-primary btn-sm" data-madd${v.name.trim() ? '' : ' disabled'}>Add worker</button>`;
+      const cell = ([f, l, kind]) => `<div${kind === 'wide' ? ' class="cmu-wide"' : ''}><dt>${l}${f === 'name' ? ' <span class="co-subtle">&middot; needed</span>' : ''}</dt><dd${Array.isArray(kind) ? ' class="cmu-to"' : ''}>${Array.isArray(kind) ? `<select data-mf="${f}" aria-label="${l}">${kind.map((o) => `<option${v[f] === o ? ' selected' : ''}>${o}</option>`).join('')}</select>` : kind === 'date' ? `<input type="date" data-mf="${f}" value="${isoOf(v[f])}" aria-label="${l}">` : `<input data-mf="${f}" value="${esc(v[f])}" aria-label="${l}"${f === 'name' ? ' required' : ''}>`}</dd></div>`;
+      const list = manual.files.length ? `<div class="cmu-list">${manual.files.map((f, k) => `<div class="cmu-f"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${size(f.size)}</small><button type="button" class="cmu-rm" data-mrm="${k}" aria-label="Remove ${esc(f.name)}">${XI}</button></div>`).join('')}</div>` : '';
+      $('cmu-body').innerHTML = MG.map(([h, F]) => `<h3 class="cmu-h">${h}</h3><section class="cmu-r is-editing cmu-manual" aria-label="${h}"><dl class="cmu-fields">${F.map(cell).join('')}</dl></section>`).join('')
+        + `<h3 class="cmu-h">Their documents <span class="co-subtle">&middot; optional</span></h3><div class="cmu-drop" id="cmu-drop" role="button" tabindex="0" aria-label="Add their documents">${UP}<b>${manual.files.length ? 'Add more of their documents' : 'Drop their documents here'}</b><span>or <u>browse your device</u> &middot; ALMA reads each one, for you to check</span></div>${list}`;
+      const n = manual.files.length;
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${mWhy(v)}</span><button type="button" class="btn btn-primary btn-sm" data-madd${mOk(v) ? '' : ' disabled'}>${n ? `Add worker and check ${n === 1 ? 'the document' : `${n} documents`}` : 'Add worker'}</button>`;
     };
     const detailsStep = () => {
       const P = chosen();
@@ -1162,7 +1176,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const chosen = () => found.people.filter((q) => q.decision === 'ok' && (found.w || q.i == null));
     const merged = (q) => (found.unsure || []).some((u) => u.decision === 'same' && u.b === q);
     const pickable = () => found.people.filter((q) => (found.w ? !isR(q) || q.i == null : q.i == null) && !merged(q));
-    const simN = (q) => (isR(q) ? 0 : Math.max(0, 2 + (hash(q.key) % 3) - q.files.length));
+    const simN = (q) => (isR(q) || q.manual ? 0 : Math.max(0, 2 + (hash(q.key) % 3) - q.files.length));
     const nDocs = (q) => q.files.length + simN(q) + (q.lists.length ? 1 : 0) + (found.unsure || []).filter((u) => u.decision === 'same' && u.a === q).reduce((a, u) => a + u.b.files.length, 0);
     // the same person after all: one worker, the files of both
     const mergeSame = () => {
@@ -1207,6 +1221,15 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       // a job that changed on the register: shown on the worker, as their job category
       B.forEach((q) => { const v = profOf(q), c = q.i != null && (found.changes || []).find((x) => x.type === 'role' && x.i === q.i); if (c && !q.roleWas) { v.role = plain(c.to); q.roleWas = plain(c.from); q.conf = null; } });
       found.changes = [];
+      // someone added by hand with their ID document: what it says, where the form was left blank
+      B.filter((q) => q.manual).forEach((q) => {
+        const ids = docsOf(q).filter((r) => r.slot && r.slot.code === 'ID'); if (!ids.length) return;
+        const v = profOf(q), pp = v.type === 'Passport', [, no, valid] = newId(q.name, pp ? 'Passport' : 'Citizen card'), h = hash(q.name);
+        if (!v.no) v.no = no; if (!v.valid) v.valid = valid;
+        if (!v.birth) v.birth = `${1 + (h % 27)} ${M.MONTHS[(h + 3) % 12]} ${1970 + (h % 33)}`;
+        if (!v.nationality && !pp) v.nationality = 'Portuguese';
+        Object.assign(q, { no: v.no, valid: v.valid, type: v.type }); ids.forEach((r) => { r.read = readDates(r.slot, r.file); });
+      });
       B.forEach((q) => {
         const n = simN(q); if (!n) return;
         const have = new Set(docsOf(q).map((r) => r.slot && r.slot.code)), L = slotsOf(q).filter((x) => !have.has(x.code)), h = hash(q.key);
@@ -1409,7 +1432,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const freshMs = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && isM(q)) : [];
       // the new products, at the end of the product list, with what the list said of them
       const freshPs = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && isP(q)) : [];
-      fresh.forEach((q) => { const v = q.prof || {}; crew.added.push([q.name, q.role || '', q.type, q.no, q.valid, M.today(), { birth: v.birth || '', nationality: v.nationality || '', tax: v.tax || '', ss: v.ss || '', address: v.address || '', since: v.since || '' }]); });
+      fresh.forEach((q) => { const v = q.prof || {}; crew.added.push([q.name, q.role || '', q.type, q.no, q.valid, M.today(), { birth: v.birth || '', nationality: v.nationality || '', tax: v.tax || '', ss: v.ss || '', address: v.address || '', since: v.since || '', employment: v.employment || '', manual: !!q.manual }]); });
       done.forEach((r, j) => {
         const s = r.slot, at = s.fresh ? s.fresh.ni : s.i, k = results.indexOf(r);
         // who a list names: the workers it covers, as each one's file shows it
@@ -1514,12 +1537,15 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-save]')) { toSave(); return; }
       if (t('[data-pck]')) { const b = t('[data-pck]'), q = found.people.find((x) => x.key === b.dataset.pck); q.decision = b.checked ? 'ok' : 'no'; const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector(`[data-pck="${q.key}"]`)?.focus({ preventScroll: true }); return; }
       if (t('[data-pall]')) { const b = t('[data-pall]'), on = b.checked; pickable().filter(wMatch).forEach((q) => { q.decision = on ? 'ok' : 'no'; }); const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector('[data-pall]')?.focus({ preventScroll: true }); return; }
-      if (t('[data-manual]')) { manual = manual || { prof: Object.fromEntries(PF.map(([f]) => [f, f === 'type' ? 'Citizen card' : ''])) }; step = 'manual'; paint(); el.querySelector('[data-mf="name"]')?.focus(); return; }
+      if (t('[data-manual]')) { manual = manual || { files: [], prof: Object.fromEntries(MG.flatMap(([, F]) => F).map(([f, , kind]) => [f, Array.isArray(kind) ? kind[0] : ''])) }; step = 'manual'; paint(); el.querySelector('[data-mf="name"]')?.focus(); return; }
+      if (t('[data-mrm]')) { manual.files.splice(+t('[data-mrm]').dataset.mrm, 1); paint(); return; }
       if (t('[data-mback]')) { step = 1; paint(); return; }
       if (t('[data-madd]')) {
-        const v = manual.prof; if (!v.name.trim()) return;
-        const q = { key: 'manual', i: null, name: v.name.trim(), type: v.type, no: v.no, valid: v.valid, role: v.role, prof: Object.assign({}, v, { name: v.name.trim() }), files: [], lists: [], decision: 'ok', edited: true };
-        found = { people: [q], per: [], changes: [], asked: false, manual: true }; results = []; save(); return;
+        const v = manual.prof; if (!mOk(v)) return;
+        const fl = manual.files.slice(), q = { key: 'manual', i: null, manual: true, name: v.name.trim(), type: v.no.trim() ? v.type : '', no: v.no.trim(), valid: v.valid, role: v.role.trim(), prof: Object.assign({}, v, { name: v.name.trim() }), files: fl.map((f, k) => k), lists: [], decision: 'ok', edited: true };
+        // no documents: added as typed. Documents: she reads them, and they're checked as any worker's
+        if (!fl.length) { found = { people: [q], per: [], changes: [], asked: false, manual: true }; results = []; save(); return; }
+        files = fl; found = { people: [q], per: fl.map(() => ({ people: [q] })), changes: [], unsure: [], asked: false, w: true }; readDetails(); return;
       }
       // the worker step's: two names one person or two; Continue; open a detail or a document; Confirm; move on
       if (t('[data-usame]') || t('[data-utwo]') || t('[data-uundo]')) { const b = t('[data-usame]') || t('[data-utwo]') || t('[data-uundo]'), u = found.unsure[+(b.dataset.usame || b.dataset.utwo || b.dataset.uundo)]; u.decision = b.dataset.usame ? 'same' : b.dataset.utwo ? 'two' : null; keep(); return; }
@@ -1538,7 +1564,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-wdunall]')) { const q = batch[wi]; docsOf(q).forEach((r) => { r.ok = false; }); q.regOk = false; keep(); return; }
       if (t('[data-wdout]')) { const k = +t('[data-wdout]').dataset.wdout; Object.assign(results[k], { on: false, ok: false }); if (peek === 'r:' + k) closePeek(); keep(); return; }
       if (t('[data-wdin]')) { results[+t('[data-wdin]').dataset.wdin].on = true; keep(); return; }
-      if (t('[data-wkback]')) { if (wi > 0) wGo(wi - 1); else { closePeek(); step = 'who'; paint(); } return; }
+      if (t('[data-wkback]')) { if (wi > 0) wGo(wi - 1); else { closePeek(); step = found.people[0] && found.people[0].manual ? 'manual' : 'who'; paint(); } return; }
       if (t('[data-wkok]')) { Object.assign(batch[wi], { ok: true, skip: false }); if (batch.some((x) => !x.ok && !x.skip)) nextW(); else keep(); return; }
       if (t('[data-wkundo]')) { Object.assign(batch[wi], { ok: false, skip: false }); keep(); return; }
       if (t('[data-wknext]')) { nextW(); return; }
@@ -1578,8 +1604,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     el.addEventListener('input', (e) => {
       if (e.target.matches('[data-mf]')) {
         const f = e.target.dataset.mf, raw = e.target.value; manual.prof[f] = e.target.type === 'date' ? (raw ? fromIso(raw) : '') : raw;
-        const ok = !!manual.prof.name.trim(), b = el.querySelector('[data-madd]'), l = el.querySelector('.cmu-foot-l');
-        if (b) b.disabled = !ok; if (l) l.textContent = ok ? '' : 'Give their full name to add them';
+        const ok = mOk(manual.prof), b = el.querySelector('[data-madd]'), l = el.querySelector('.cmu-foot-l');
+        if (b) b.disabled = !ok; if (l) l.textContent = mWhy(manual.prof);
         return;
       }
       if (e.target.matches('[data-pf]')) {

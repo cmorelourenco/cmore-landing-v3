@@ -670,6 +670,7 @@
     const r = d.roster.find((x) => x.i === i) || (d.kept || []).find((x) => x.i === i); return r ? { code: d.code, name: d.name, req: d.requirement, status: r.status, exp: r.exp, spec: `rec:${d.code}:${i}` } : null;
   }).filter(Boolean);
   const kv = (k, v) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`;
+  const NOF = '<span class="co-subtle">Not on file</span>';
   const docRow = (d) => { const [l, c] = d.tag || STATUS[d.status]; return `<tr${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td class="c">${d.status === 'missing' ? '&mdash;' : d.exp}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed">${d.spec ? UPB(d.spec, !NO_FILE.includes(d.status), d.name) : ''}</td></tr>`; };
   const docsCard = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead><tbody>${rows.map(docRow).join('')}</tbody></table></div>`;
   const sitesCard = (list) => `<div class="co-card cd-card-pad"><ul class="cd-sites">${list.map((s) => { const [n, client] = SITES[s].split(' &middot; '); return `<li><span class="n">${n}</span><span class="co-subtle">${client}</span></li>`; }).join('')}</ul></div>`;
@@ -720,15 +721,15 @@
       : p.permit ? `<span class="co-badge ${STATUS[p.permit.status][1]}">${p.permit.status === 'valid' ? 'Valid permit' : 'Permit expiring'}</span>`
       : '<span class="co-badge b-ok">Can work</span>'}`;
     groupsEl.innerHTML = `<div class="cd-detail cd-worker">
-      <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment.toLowerCase()} since ${p.since} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
+      <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment ? `${p.employment.toLowerCase()}${p.since ? ` since ${p.since}` : ''}` : `added ${p.addedOn || p.since}`} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
       ${gonebar}
       ${gone ? '' : `<p class="cd-restricted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>Restricted personal data. Clients see it only while ${p.name.split(' ')[0]} is on one of their sites.</p>`}
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Worker profile</h3><span class="co-muted">${p.isNew ? `Added ${esc(p.since)}, from their documents` : 'Data only, no file'}</span></div>
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Worker profile</h3><span class="co-muted">${p.manual ? `Added ${esc(p.addedOn)} by hand` : p.isNew ? `Added ${esc(p.since)}, from their documents` : 'Data only, no file'}</span></div>
         <div class="co-card cd-card-pad"><dl class="pd-grid">
-          ${kv('Full name', p.name)}${kv('Job category', p.roleUnset ? '<span class="co-subtle">Not set yet</span>' : p.role)}${kv('Nationality', p.passportOnly && !p.nationalityRead ? '<span class="co-subtle">Not read yet</span>' : p.nationalityName)}
-          ${kv('Birth date', p.birth)}${kv('Tax number', p.tax)}${kv('Social security number', p.ss)}
-          ${kv('Home address', p.address)}${kv('Employment', `${p.employment}, since ${p.since}`)}
-          ${kv('Identification', `${p.id[0]} &middot; ${p.id[1]}<br><span class="co-subtle">valid until ${p.id[2]}${idf && idf.file ? ' &middot; read by ALMA from their document' : ''}</span>`)}
+          ${kv('Full name', p.name)}${kv('Job category', p.roleUnset ? '<span class="co-subtle">Not set yet</span>' : p.role)}${kv('Nationality', p.passportOnly && !p.nationalityRead ? '<span class="co-subtle">Not read yet</span>' : p.nationalityName || NOF)}
+          ${kv('Birth date', p.birth || NOF)}${kv('Tax number', p.tax || NOF)}${kv('Social security number', p.ss || NOF)}
+          ${kv('Home address', p.address || NOF)}${kv('Employment', p.employment ? `${p.employment}${p.since ? `, since ${p.since}` : ''}` : NOF)}
+          ${kv('Identification', p.id[1] ? `${p.id[0]} &middot; ${p.id[1]}${p.id[2] ? `<br><span class="co-subtle">valid until ${p.id[2]}${idf && idf.file ? ' &middot; read by ALMA from their document' : ''}</span>` : ''}` : NOF)}
           ${kv('Right to work', right)}
           ${kv('Health', said('WK-11', 'Fit for work'))}${kv('Training and qualifications', quals.length ? quals.map((d) => `${esc(d.name)}${d.status === 'valid' ? '' : ` <span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>`}`).join('<br>') : '<span class="co-subtle">None on file</span>')}
           ${kv('Personal protective equipment', said('WK-15', 'Delivered'))}${kv('Driving', said('DRV', 'Licence valid'))}${kv('Other', docOf('CRM') && !NO_FILE.includes(docOf('CRM').status) ? `Criminal record certificate<br>${said('CRM', 'Valid')}` : '<span class="co-subtle">Nothing on file</span>')}

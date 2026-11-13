@@ -278,6 +278,14 @@ window.DOC_MODEL = (() => {
       if (x.since) p.since = x.since;
       if (x.nationality) { p.nationalityName = x.nationality; p.nationality = /portug/i.test(x.nationality) ? 'PT' : ''; p.nationalityRead = true; if (p.nationality === 'PT') p.passportOnly = false; }
     }
+    // added by hand: what the user typed, and nothing else (what they left out is not on file)
+    if (x.manual) {
+      ['birth', 'address', 'tax', 'ss', 'nationality'].forEach((k) => { p[k === 'nationality' ? 'nationalityName' : k] = esc(x[k] || ''); });
+      p.nationality = /portug/i.test(x.nationality || '') ? 'PT' : ''; p.nationalityRead = true; p.passportOnly = false;
+      p.employment = esc(x.employment || ''); p.employmentType = /fixed|temporary/i.test(x.employment || '') ? 'fixed_term' : 'permanent';
+      p.since = esc(x.since || ''); p.addedOn = add[5]; p.manual = true;
+      p.id = add[3] ? [esc(add[2] || ''), esc(add[3]), esc(add[4] || '')] : ['', '', ''];
+    }
     if (read && read.no) p.id = [read.type || p.id[0], read.no, read.valid || p.id[2]];
     return p;
   });
