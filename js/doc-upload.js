@@ -241,6 +241,7 @@ window.CMUpload = (() => {
   };
   const identify = (files, pool) => {
     const people = [], byKey = {}, here = activeWorkers(), everyone = here.map((x) => plain(x.p.name));
+    const wDrop = pool.some((sl) => sl.d && sl.d.area === 'workers');
     const kinds = [...new Map(pool.concat(regSlot(), eqHere() ? [eqRegSlot()] : [], prHere() ? [prRegSlot()] : []).map((sl) => [sl.code, sl])).values()];
     // a machine, on the list or not: its name, and its serial number as what identifies it
     const mName = (m) => plain(`${m.type} · ${m.brand ? `${m.brand} ` : ''}${m.model}`);
@@ -255,6 +256,18 @@ window.CMUpload = (() => {
     const known = (x) => get('w' + x.i, () => ({ i: x.i, name: plain(x.p.name), type: plain(x.p.id[0]), no: plain(x.p.id[1]), valid: x.p.id[2], role: plain(x.p.role) }));
     const fresh = (name, type, role, from) => { const q = get('n' + fold(name), () => { const [t, no, valid] = newId(name, type); return { i: null, name, type: t, no, valid, role: '' }; }); if (role && !q.role) { q.role = role; q.roleFrom = from || ''; } return q; };
     const taken = new Set((M.WORKERS || []).map((w) => fold(plain(w[0]))));
+    // Prototype: dropped among workers' documents, whatever the files and however many, she always
+    // finds the same workers: three new (two of them maybe one person) and two on the list, each with
+    // the same ID; the files are shared out among them
+    if (wDrop && here.length) {
+      const who = (nm, role) => { const on = here.find((x) => fold(plain(x.p.name)) === fold(nm)); return on ? known(on) : fresh(nm, 'Citizen card', role); };
+      const F = [who('Ana Ribeiro', 'Laborer'), who('Joana Matos', 'Electrician'), who('Carina Silva', 'Painter'), who('Carina Maria Silva', '')]
+        .concat([2, 7].map((i) => here.find((x) => x.i === i) || here[i % here.length]).map(known));
+      const per = files.map((f, k) => { const q = F[k % F.length]; q.files.push(k); return { people: [q] }; });
+      const fr = people.filter((q) => q.i == null), unsure = [];
+      fr.forEach((a, x) => fr.slice(x + 1).forEach((b) => { const wa = fold(a.name).split(/\s+/), wb = fold(b.name).split(/\s+/); if (wa[0] === wb[0] && wa[wa.length - 1] === wb[wb.length - 1]) unsure.push({ a, b, decision: null }); }));
+      return { people, per, unsure };
+    }
     const per = files.map((f, k) => {
       const fw = fileWords(f);
       const top = kinds.map((sl) => [sl, docScore(sl, fw)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1])[0];
@@ -287,6 +300,9 @@ window.CMUpload = (() => {
       // a name that isn't on the list, on an identity document or a worker's own document
       const nm = nameIn(f), theirs = ID_RE.test(fw.n.replace(/[^a-z0-9]+/g, ' ')) || (top && top[0].d.kind === 'workers');
       if (nm && theirs && !taken.has(fold(nm))) { const q = fresh(nm, /passport|passaporte/.test(fw.n) ? 'Passport' : 'Citizen card'); q.files.push(k); return { people: [q] }; }
+      // no name in the file's name (a photo, a scan): she reads it off the page. Prototype: dropped
+      // among workers' documents, it's one of the workers on the list, so it's checked as theirs
+      if (wDrop && here.length && !(top && top[0].d.area !== 'workers')) { const q = known(here[hash(f.name) % here.length]); q.files.push(k); return { people: [q] }; }
       return { people: [] };
     });
     // the same first and last name, but not the same name (a middle name on one file only): she
@@ -537,7 +553,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
 .cmu-wk-p { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; }
 .cmu-wk-p .cmu-pic { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
 .cmu-wk-nm { flex: 1; min-width: 0; padding: 0.375rem 0.5rem; border: 1px solid transparent; border-radius: 0.375rem; background: none; font: inherit; font-size: 1.125rem; font-weight: 600; color: var(--color-ink); }
-.cmu-wk-nm:hover { border-color: var(--color-line); }
+.cmu-wk-nm.is-edit { border-color: var(--color-sand-400, var(--color-line)); background: var(--color-surface); }
+.cmu-wk-nmt { flex: 1; min-width: 0; font-size: 1.125rem; font-weight: 600; color: var(--color-ink); overflow-wrap: anywhere; }
+.cmu-wk-p .link-btn { flex: none; font-size: 0.875rem; }
 .cmu-wk-nm:focus { outline: none; border-color: var(--color-graphite); background: var(--color-surface); }
 .cmu-wk-h .cmu-wk-b { flex: none; }
 .cmu-wk-h .cmu-ic, .cmu-wk-d .cmu-r-h .cmu-ic { flex: none; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 0.375rem; background: var(--color-light-beige); color: var(--color-ink-subtle); }
@@ -1312,7 +1330,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         + `<footer class="cmu-r-acts"><span><button type="button" class="link-btn" data-wppeek>Preview</button></span><span>${q.regOk ? `<button type="button" class="link-btn" data-pundo>Undo</button><span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-pacc>${TICK}Accept</button>`}</span></footer>`;
       const regCard = lk == null ? '' : `<section class="cmu-r cmu-wk-d${pOpen ? ' is-open' : ''}${q.regOk ? ' is-ok' : pNeeds(q) ? ' is-ask' : ''}" data-wk="p"><button type="button" class="cmu-wk-h" data-wopen="p" aria-expanded="${pOpen}"><span class="cmu-ic">${FILE}</span><span class="cmu-r-t"><b>${esc(lr && lr.slot ? lr.slot.name : 'Worker register')}</b><small>${esc(files[lk].name)}</small></span><span class="cmu-wk-b">${pBadge(q)}</span>${CHEV}</button>${pBody}</section>`;
       // their name, as in the drawing: on its own, and theirs to put right
-      const pCard = `<section class="cmu-r cmu-wk-p"><span class="cmu-pic" aria-hidden="true">${esc(initials(v.name || q.name))}</span><input class="cmu-wk-nm" data-pf="name" value="${esc(v.name || q.name)}" aria-label="Their full name" title="Change their name"></section>`;
+      // Edit name: the name as a field, Done (or Enter) to leave it
+      const pCard = `<section class="cmu-r cmu-wk-p"><span class="cmu-pic" aria-hidden="true">${esc(initials(v.name || q.name))}</span>${q.nameEdit
+        ? `<input class="cmu-wk-nm is-edit" data-pf="name" value="${esc(v.name || q.name)}" aria-label="Their full name"><button type="button" class="btn btn-quiet btn-sm" data-wnmdone>Done</button>`
+        : `<b class="cmu-wk-nmt">${esc(v.name || q.name)}</b>${q.fe && q.fe.has('name') ? corrB() : ''}<button type="button" class="link-btn" data-wnmedit>Edit name</button>`}</section>`;
       const dCard = (r) => {
         const k = results.indexOf(r), sl = r.slot, op = wOpen === k && r.on;
         if (!r.on) return `<section class="cmu-r cmu-wk-d is-off" data-wk="${k}"><div class="cmu-r-h"><span class="cmu-ic">${FILE}</span><div class="cmu-r-t"><h3>${esc(sl ? sl.name : r.file.name)}</h3><p>${esc(r.file.name)} &middot; left out, not saved</p></div><button type="button" class="link-btn" data-wdin="${k}">Undo</button></div></section>`;
@@ -1551,6 +1572,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-usame]') || t('[data-utwo]') || t('[data-uundo]')) { const b = t('[data-usame]') || t('[data-utwo]') || t('[data-uundo]'), u = found.unsure[+(b.dataset.usame || b.dataset.utwo || b.dataset.uundo)]; u.decision = b.dataset.usame ? 'same' : b.dataset.utwo ? 'two' : null; keep(); return; }
       if (t('[data-pgo]') && found && found.w) { mergeSame(); if (chosen().length) readDetails(); return; }
       if (t('[data-wopen]')) { const v = t('[data-wopen]').dataset.wopen, key = v === 'p' ? 'p' : +v; wOpen = wOpen === key ? null : key; keep(); if (wOpen == null) closePeek(); else peekFor(wOpen); return; }
+      if (t('[data-wnmedit]')) { batch[wi].nameEdit = true; keep(); const i = el.querySelector('.cmu-wk-nm'); if (i) { i.focus(); i.select(); } return; }
+      if (t('[data-wnmdone]')) { const q = batch[wi], v = profOf(q); if (!(v.name || '').trim()) v.name = q.name; q.nameEdit = false; keep(); el.querySelector('[data-wnmedit]')?.focus(); return; }
       if (t('[data-wprev]')) { wGo(wi - 1); return; }
       if (t('[data-wnext]')) { wGo(wi + 1); return; }
       if (t('[data-wppeek]')) { peekFor('p'); return; }
@@ -1600,7 +1623,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const card = t('.cmu-r[data-card]');
       if (card && !card.classList.contains('is-editing') && !card.classList.contains('is-off') && !t('button, a, input, select, textarea, label')) openPeek(+card.dataset.card);
     });
-    el.addEventListener('keydown', (e) => { if (e.target.id === 'cmu-drop' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.click(); } });
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches('.cmu-wk-nm')) { e.preventDefault(); el.querySelector('[data-wnmdone]')?.click(); return; } if (e.target.id === 'cmu-drop' && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.target.click(); } });
     el.addEventListener('input', (e) => {
       if (e.target.matches('[data-mf]')) {
         const f = e.target.dataset.mf, raw = e.target.value; manual.prof[f] = e.target.type === 'date' ? (raw ? fromIso(raw) : '') : raw;
