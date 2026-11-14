@@ -1357,7 +1357,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const easy = on.some((r) => !r.ok && !dNeeds(r)) || (lk != null && !q.regOk && !pNeeds(q));
       const all = easy ? `<button class="cmu-acc" type="button" data-wdall>${TICK}Accept all</button>` : tot && acc === tot ? '<button class="cmu-acc" type="button" data-wdunall>Unaccept all</button>' : '';
       const bar = (end) => `<div class="cmu-bar${end ? ' cmu-bar-end' : ''}"><span>${acc} of ${tot} accepted</span>${all}</div>`;
-      const docs = nD ? `<h3 class="cmu-h">Documents &middot; ${nD}</h3>${bar()}${D.map(dCard).join('')}${regCard}${nD > 3 && easy ? bar(true) : ''}` : '<p class="cmu-dnone">No documents of theirs in these files.</p>';
+      const docs = nD ? `<h3 class="cmu-h">Documents &middot; ${nD}</h3>${bar()}${D.map(dCard).join('')}${regCard}${bar(true)}` : '<p class="cmu-dnone">No documents of theirs in these files.</p>';
       $('cmu-body').innerHTML = top + (q.moved ? `<p class="cmu-note" role="status">${q.moved}</p>` : '') + pCard + docs;
       wkFoot();
     };
