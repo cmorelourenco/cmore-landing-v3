@@ -78,11 +78,12 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 .sa-docs b { display: block; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); }
 .sa-docs small { display: block; font-size: 0.75rem; color: var(--color-ink-subtle); }
 .sa-sum { display: grid; gap: 0; margin: 0; }
-.sa-sum > div { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 1rem; padding: 0.625rem 0; border-top: 1px solid var(--color-mid-beige); font-size: 0.875rem; }
+.sa-sum > div { display: grid; grid-template-columns: 9rem minmax(0, 1fr) auto; gap: 1rem; padding: 0.625rem 0; border-top: 1px solid var(--color-mid-beige); font-size: 0.875rem; }
 .sa-sum > div:first-child { border-top: 0; padding-top: 0; }
 .sa-sum dt { color: var(--color-ink-subtle); }
 .sa-sum dd { margin: 0; color: var(--color-ink); }
 .sa-sum dd small { display: block; margin-top: 0.125rem; color: var(--color-ink-subtle); }
+.sa-sum .sa-ed { align-self: start; font-size: 0.8125rem; }
 .sa .docd-foot .sa-acts { display: flex; align-items: center; gap: 1rem; }
 .sa .btn:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
 .sa-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 120; transform: translateX(-50%); padding: 0.75rem 1.125rem; border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; box-shadow: 0 12px 32px -16px rgba(0,0,0,.5); }
@@ -202,16 +203,16 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
     const c = country(f.country), docs = docsFor().filter((d) => f.picked.has(d.code)), req = docs.filter((d) => d.req).length;
     const on = f.found && f.found.on;
     return `<section class="sa-card"><h4>Review and send</h4><dl class="sa-sum">
-        <div><dt>Supplier</dt><dd>${esc(who())}<small>${esc(c.name)} &middot; ${esc(c.label)} ${esc(f.code.trim())}</small></dd></div>
         <div><dt>Invitation</dt><dd>${on ? 'To your supplier list<small>They&rsquo;re on C&#8209;MORE: their team gets it there.</small>' : `To join C&#8209;MORE, and your supplier list<small>Sent to ${esc(f.contact.trim() ? `${f.contact.trim()}, ` : '')}${esc(f.email.trim())}</small>`}</dd></div>
-        <div><dt>Documents</dt><dd>${docs.length} asked for<small>${req} mandatory, ${docs.length - req} optional: ${docs.map((d) => esc(d.name)).join(', ')}</small></dd></div>
+        <div><dt>Supplier</dt><dd>${esc(who())}<small>${esc(c.name)} &middot; ${esc(c.label)} ${esc(f.code.trim())}</small></dd><button type="button" class="link-btn sa-ed" data-sa-edit="1" aria-label="Edit the supplier">Edit</button></div>
+        <div><dt>Documents</dt><dd>${docs.length} asked for<small>${req} mandatory, ${docs.length - req} optional: ${docs.map((d) => esc(d.name)).join(', ')}</small></dd><button type="button" class="link-btn sa-ed" data-sa-edit="2" aria-label="Edit the documents">Edit</button></div>
       </dl></section>
       <section class="sa-card"><label class="sa-f"><span>A note for them <i>(optional)</i></span><textarea class="sa-in" name="note" rows="3" placeholder="Why you&rsquo;re asking, or what it&rsquo;s for">${esc(f.note)}</textarea></label></section>`;
   };
 
   const STEPS = ['Who they are', 'Documents', 'Review'];
   const acts = () => {
-    const backB = f.step > 1 ? '<button type="button" class="link-btn" data-sa-back>Back</button>' : '';
+    const backB = f.step > 1 || f.ret ? '<button type="button" class="link-btn" data-sa-back>Back</button>' : '';
     const main = f.step === 1 ? (f.found && !f.found.mine ? '<button type="button" class="btn btn-primary btn-sm" data-sa-next>Continue</button>' : '<button type="button" class="btn btn-primary btn-sm" data-sa-find>Find them</button>')
       : f.step === 2 ? `<button type="button" class="btn btn-primary btn-sm" data-sa-next${f.picked.size ? '' : ' disabled'}>Continue</button>`
       : '<button type="button" class="btn btn-primary btn-sm" data-sa-send>Send invitation</button>';
@@ -262,7 +263,10 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
     const fc = e.target.closest('[data-saf]'); if (fc) { const c = fc.dataset.saf; if (f.hide.has(c)) f.hide.delete(c); else { f.hide.add(c); docsFor().filter((d) => !d.req && d.section === c).forEach((d) => f.picked.delete(d.code)); } redraw(`[data-saf="${CSS.escape(c)}"]`); return; }
     if (e.target.closest('[data-saf-all]')) { f.hide.clear(); redraw('[data-saf-btn]'); return; }
     if (f.fOpen && !e.target.closest('.co-filt')) { f.fOpen = false; const p = dw.querySelector('.co-filt-panel'), b = dw.querySelector('[data-saf-btn]'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
-    if (e.target.closest('[data-sa-back]')) { f.step -= 1; paint(); return; }
+    // an Edit on the summary opens that step, and leaving it (Back or Continue) comes back to the summary
+    // (Back leaves it as it was)
+    const ed = e.target.closest('[data-sa-edit]'); if (ed) { f.ret = Object.assign({}, f, { picked: new Set(f.picked), hide: new Set(f.hide), errs: {} }); f.step = +ed.dataset.saEdit; paint(); return; }
+    if (e.target.closest('[data-sa-back]')) { if (f.ret) { f = Object.assign(f.ret, { ret: null, step: 3, fOpen: false }); } else f.step -= 1; paint(); return; }
     if (e.target.closest('[data-sa-find]')) { if (!find()) { paint('[name="code"]'); return; } paint(f.found.on || f.found.mine ? '[data-sa-next], [data-sa-find]' : '[name="name"]'); return; }
     if (e.target.closest('[data-sa-next]')) {
       if (f.step === 1) {
@@ -273,9 +277,10 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
           if (dup) f.errs.email = `This email is already on your supplier list (${esc(dup.name)}). <a href="suppliers.html?id=${esc(dup.id)}">Open them</a>${dup.status === 'invited' ? ' to send a reminder' : ' to ask for more'}.`;
           if (f.errs.name || f.errs.email) { paint(f.errs.name ? '[name="name"]' : '[name="email"]'); return; }
         }
-        if (!f.picked) f.picked = new Set(docsFor().filter((d) => d.req).map((d) => d.code));
+        if (!f.picked) { f.picked = new Set(docsFor().filter((d) => d.req).map((d) => d.code)); f.step = 2; paint(); return; } // a new country: its documents to choose first
       }
-      f.step += 1; paint(); return;
+      if (f.ret) { f.ret = null; f.step = 3; } else f.step += 1;
+      paint(); return;
     }
     if (e.target.closest('[data-sa-send]')) send();
   });

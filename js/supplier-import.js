@@ -44,27 +44,35 @@
       return r;
     }).filter((r) => COLS.some(([k]) => r[k]));
   };
-  // prototype only: a file without those columns reads as this list, the kinds of row an import meets
+  // prototype only: every file reads as a fresh batch of suppliers new to you and to C-MORE, made up
+  // each time (names, valid codes nobody has yet, a contact and an email), so an import always adds
+  const POOL = BEATRIZ ? [
+    ['US', 'Prairie Grain Co-op'], ['US', 'Blue Ridge Paper Supply'], ['US', 'Lakeside Mills Inc.'], ['US', 'Cascade Packaging LLC'], ['US', 'Red Mesa Logistics'],
+    ['US', 'Harbor Steel Works'], ['US', 'Oak Valley Farms'], ['US', 'Summit Cold Storage'], ['BR', 'Cooperativa Cafeeira do Cerrado'], ['BR', 'Transportes Paraná Ltda.'], ['BR', 'Embalagens Serra Azul'],
+  ] : [
+    ['PT', 'Carpintaria Lopes, Lda.'], ['PT', 'Vidraria Atlântica'], ['PT', 'Eletro Sado, Lda.'], ['PT', 'Pavimentos Silva'], ['PT', 'Pinturas Ribeiro, Lda.'], ['PT', 'Serralharia Costa & Filhos'],
+    ['PT', 'Canalizações Mondego'], ['PT', 'Telhados do Minho, Lda.'], ['PT', 'Andaimes Tejo'], ['PT', 'Climatização Algarve'], ['PT', 'Betões do Douro, S.A.'], ['PT', 'Isolamentos Ferreira'],
+    ['ES', 'Grúas Galicia S.L.'], ['ES', 'Construcciones Duero S.A.'], ['FR', 'Échafaudages Durand SARL'],
+  ];
+  const PEOPLE = BEATRIZ ? ['Dale Hughes', 'Rosa Diaz', 'Marina Alves', 'Tom Becker', 'Grace Kim', 'Luis Ortega', 'Amy Walsh']
+    : ['Ana Lopes', 'Paulo Reis', 'Joana Silva', 'Rui Matos', 'Inês Costa', 'Carlos Pinto', 'Marta Sousa', 'Luis Durand', 'Elena Vidal'];
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const num = (n) => Array.from({ length: n }, () => rnd(10)).join('');
+  const CODE = {
+    PT: () => { const b = `5${num(7)}`, s = [...b].reduce((a, c, k) => a + c * (9 - k), 0) % 11; return b + (s < 2 ? 0 : 11 - s); },
+    ES: () => `B${num(8)}`, FR: () => `${1 + rnd(9)}${num(8)}`, US: () => `${1 + rnd(9)}${num(8)}`, BR: () => `${1 + rnd(9)}${num(13)}`,
+  };
   const sample = () => {
-    const mine = S.list().find((s) => s.status !== 'invited' && s.nipc);
-    return (BEATRIZ ? [
-      ['United States', '81-4472019', '', '', ''], ['Brazil', '33.401.288/0001-55', '', '', ''],
-      ['United States', '47-1234567', 'Prairie Grain Co-op', 'Dale Hughes', 'dale@prairiegrain.test'],
-      ['United States', '20-5539180', 'Blue Ridge Paper Supply', '', 'orders@blueridgepaper.test'],
-      ['Brazil', '45.997.418/0001-53', 'Cooperativa Cafeeira do Cerrado', 'Marina Alves', 'marina@coopcerrado.test'],
-      ['Colombia', '900123456', 'Café Andino S.A.S.', '', 'compras@cafeandino.test'],
-      ['US', '36-4419822', 'Lakeside Mills Inc.', 'Rosa Diaz', ''],
-      mine && ['United States', mine.nipc, mine.name, '', ''],
-    ] : [
-      ['Portugal', '503 117 285', '', '', ''], ['Spain', 'B36512874', '', '', ''], ['Portugal', '510 774 199', '', '', ''],
-      ['Portugal', '509 812 333', 'Carpintaria Lopes, Lda.', 'Ana Lopes', 'ana@carpintarialopes.test'],
-      ['PT', '508 406 196', 'Vidraria Atlântica', '', 'geral@vidrariaatlantica.test'],
-      ['Portugal', '515 991 520', 'Eletro Sado, Lda.', 'Paulo Reis', 'paulo.reis@eletrosado.test'],
-      ['France', '552 100 554', 'Échafaudages Durand SARL', 'Luc Durand', ''],
-      ['Portugal', '123 456 780', 'Pavimentos Silva', '', 'pav.silva@mail.test'],
-      ['Portugal', '503117285', 'Pinturas Ribeiro', '', ''],
-      mine && ['Portugal', mine.nipc, mine.name, '', ''],
-    ]).filter(Boolean).map((r, i) => ({ row: i + 2, country: r[0], code: r[1], name: r[2], contact: r[3], email: r[4] }));
+    const taken = new Set(S.list().map((x) => fold(x.name))), used = new Set();
+    const mix = (l) => l.sort(() => Math.random() - 0.5), fresh = (x) => !taken.has(fold(x[1]));
+    const pool = [...mix(POOL.filter(fresh)), ...mix(POOL.filter((x) => !fresh(x)))]; // names not on your list first
+    const n = 5 + rnd(4);
+    return pool.slice(0, n).map(([cc, name], i) => {
+      let code; do { code = CODE[cc](); } while (used.has(cc + code) || !A.country(cc).ok(code) || S.lookup(cc, code).mine || S.lookup(cc, code).on);
+      used.add(cc + code);
+      const who = PEOPLE[rnd(PEOPLE.length)], dom = fold(name).replace(/ (lda|s a|s l|sarl|llc|inc|ltda)$/, '').replace(/ /g, '');
+      return { row: i + 2, country: A.country(cc).name, code, name, contact: who, email: `${fold(who).split(' ')[0]}@${dom}.test` };
+    });
   };
 
   // ---- each row, as Add a supplier would find it ---------------------------------------------------
@@ -190,7 +198,7 @@
   let err = '';
   const banner = () => `<div class="si-bulk" id="si-bulk"><span><b>Adding many suppliers?</b> Choose the documents you need from them, then upload an Excel file with their countries and company codes.</span><span class="si-bulk-acts"><button type="button" class="si-x" data-si-tpl>Download the template</button><button type="button" class="btn btn-secondary btn-sm" data-si-invite>Invite from Excel</button></span></div>
     <div class="si-or">or one by one</div>`;
-  const file = Object.assign(document.createElement('input'), { type: 'file', hidden: true, accept: '.xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel' });
+  const file = Object.assign(document.createElement('input'), { type: 'file', hidden: true });
   document.body.appendChild(file);
   // a problem with the file shows under where it went in (the drawer's file step, or the list read
   // from the last one); the file step is opened for it when neither is showing
@@ -273,16 +281,8 @@
     paint();
     host.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  const load = async (f) => {
-    if (!f) return;
-    if (!/\.(xlsx|xls|csv)$/i.test(f.name)) { say('That isn’t an Excel file. Save it as Excel (.xlsx) or CSV and try again.'); return; }
-    try {
-      const XL = await sheetjs(), wb = XL.read(await f.arrayBuffer(), { type: 'array' });
-      const rows = fromTable(XL.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' }));
-      if (rows && !rows.length) { say('That file has no rows. Use the template: one supplier a row, starting with their country.'); return; }
-      start(f.name, rows || sample());
-    } catch (e) { say(e.message === 'load' ? 'The Excel reader didn’t load. Check your connection and try again.' : 'That file couldn’t be read. Save it as Excel (.xlsx) or CSV and try again.'); }
-  };
+  // prototype only: any file reads as the sample list, whatever it holds (the Excel reader is kept for the template)
+  const load = (f) => { if (f) start(f.name, sample()); };
   const template = async (b) => {
     if (b) b.disabled = true;
     try {
@@ -359,7 +359,35 @@
       : `<span><button type="button" class="link-btn" data-pre-back>Back</button></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button></span>`;
     if (ed.pre === 1) marks();
   };
+  // the last step before sending: what goes, to whom, and a note for them (as on Add a supplier)
+  const revPaint = () => {
+    const go = bulk.rows.filter((r) => r.ok), on = go.filter((r) => r.on).length, nw = go.length - on;
+    const docs = new Map(); go.forEach((r) => A.docsOf(r.cc).forEach((d) => { if (r.docs.has(d.code) && !docs.has(d.code)) docs.set(d.code, d); }));
+    const list = [...docs.values()], req = list.filter((d) => d.req).length, names = go.map(nameOf);
+    const sups = (n) => `${n} supplier${n === 1 ? '' : 's'}`;
+    dw.querySelector('#sid-t').textContent = 'Invite suppliers from Excel';
+    dw.querySelector('#sid-sub').textContent = bulk.file;
+    dw.querySelector('#sid-body').innerHTML = `<section class="sa-card"><h4>Review and send</h4><dl class="sa-sum">
+        <div><dt>Invitation</dt><dd>${!nw ? 'To your supplier list<small>They&rsquo;re on C&#8209;MORE: their teams get it there.</small>' : !on ? `To join C&#8209;MORE, and your supplier list<small>Sent to the email on each row</small>` : `To your supplier list, or to join C&#8209;MORE<small>${sups(on)} on C&#8209;MORE get it there; ${sups(nw)} are sent an email</small>`}</dd></div>
+        <div><dt>Suppliers</dt><dd>${sups(go.length)}<small>${names.slice(0, 8).map(esc).join(', ')}${names.length > 8 ? `, and ${names.length - 8} more` : ''}</small></dd><button type="button" class="link-btn sa-ed" data-sid-edit="sup" aria-label="Edit the suppliers">Edit</button></div>
+        <div><dt>Documents</dt><dd>${list.length} asked for<small>${req} mandatory, ${list.length - req} optional: ${list.map((d) => esc(d.name)).join(', ')}. Each supplier only for those that apply in their country.</small></dd><button type="button" class="link-btn sa-ed" data-sid-edit="docs" aria-label="Edit the documents">Edit</button></div>
+      </dl></section>
+      <section class="sa-card"><label class="sa-f"><span>A note for them <i>(optional)</i></span><textarea class="sa-in" name="si-note" rows="3" placeholder="Why you&rsquo;re asking, or what it&rsquo;s for">${esc(ed.note)}</textarea></label></section>`;
+    dw.querySelector('#sid-foot').innerHTML = `<span><button type="button" class="link-btn" data-sid-x>Back</button></span><span class="sa-acts"><button type="button" class="btn btn-primary btn-sm" data-sid-send>Send ${go.length} invitation${go.length === 1 ? '' : 's'}</button></span>`;
+  };
+  const revState = (note = '') => ({ rows: [], rev: true, note, picked: new Set(), hide: new Set(), fOpen: false });
+  // back on the summary, in the same drawer, from the documents opened by its Edit
+  const revBack = () => { ed = revState(ed.note); edPaint(); dw.querySelector('#sid-body').scrollTop = 0; };
+  const revOpen = () => {
+    if (!bulk || !bulk.rows.some((r) => r.ok)) return;
+    ed = revState(bulk.note || ''); // the note is kept while they change the list
+    edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
+    dw.querySelector('#sid-body').scrollTop = 0;
+    setTimeout(() => dw.classList.add('is-open'), 20);
+    setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
+  };
   const edPaint = () => {
+    if (ed.rev) { revPaint(); return; }
     if (ed.pre) { prePaint(); return; }
     dw.querySelector('#sid-t').textContent = 'Documents to ask for';
     dw.querySelector('#sid-foot').innerHTML = `<span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-sid-apply>Apply</button></span>`;
@@ -381,12 +409,15 @@
     go.disabled = !n; if (!ed.pre) go.textContent = ed.rows.length === 1 ? 'Apply' : `Apply to ${ed.rows.length}`;
   };
   let edBack = null;
-  const edOpen = (rows) => {
-    rows = rows.filter((i) => bulk.rows[i] && bulk.rows[i].ok); if (!rows.length) return;
-    // ticked: what every one of them it applies to is asked for already
+  // ticked: what every one of them it applies to is asked for already
+  const docsState = (rows) => {
     const rs = rows.map((i) => bulk.rows[i]), applies = (r, c) => A.docsOf(r.cc).some((d) => d.code === c);
     const any = new Set(rs.flatMap((r) => [...r.docs]));
-    ed = { rows, picked: new Set([...any].filter((c) => rs.every((r) => !applies(r, c) || r.docs.has(c)))), hide: new Set(), fOpen: false };
+    return { rows, picked: new Set([...any].filter((c) => rs.every((r) => !applies(r, c) || r.docs.has(c)))), hide: new Set(), fOpen: false };
+  };
+  const edOpen = (rows) => {
+    rows = rows.filter((i) => bulk.rows[i] && bulk.rows[i].ok); if (!rows.length) return;
+    ed = docsState(rows);
     edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
     dw.querySelector('#sid-body').scrollTop = 0;
     setTimeout(() => dw.classList.add('is-open'), 20);
@@ -407,21 +438,30 @@
   };
   dw.addEventListener('click', (e) => {
     if (!ed) return;
-    if (e.target.closest('[data-sid-x]')) { edClose(); return; }
+    if (e.target.closest('[data-sid-x]')) { if (ed.ret) revBack(); else edClose(); return; }
+    // Edit on the summary: the suppliers are the list on the page (its Send comes back here); the documents open here, for all of them
+    const eb = e.target.closest('[data-sid-edit]');
+    if (eb) {
+      if (eb.dataset.sidEdit === 'sup') { edClose(); host.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      ed = Object.assign(docsState(bulk.rows.map((r, i) => (r.ok ? i : -1)).filter((i) => i >= 0)), { ret: true, note: ed.note });
+      edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return;
+    }
     const fb = e.target.closest('[data-saf-btn]'); if (fb) { ed.fOpen = !ed.fOpen; redraw('[data-saf-btn]'); return; }
     const fc = e.target.closest('[data-saf]'); if (fc) { const c = fc.dataset.saf; if (ed.hide.has(c)) ed.hide.delete(c); else { ed.hide.add(c); edDocs().filter((d) => !d.req && d.section === c).forEach((d) => ed.picked.delete(d.code)); } redraw(`[data-saf="${CSS.escape(c)}"]`); return; }
     if (e.target.closest('[data-saf-all]')) { ed.hide.clear(); redraw('[data-saf-btn]'); return; }
     if (ed.fOpen && !e.target.closest('.co-filt')) { ed.fOpen = false; const p = dw.querySelector('.co-filt-panel'), b = dw.querySelector('[data-saf-btn]'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
+    if (e.target.closest('[data-sid-send]')) { const note = ed.note.trim(); edClose(); send(note); return; }
     if (e.target.closest('[data-pre-next]')) { asked = new Set(ed.picked); askedHide = new Set(ed.hide); ed.pre = 2; edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return; }
     if (e.target.closest('[data-pre-back]')) { ed.pre = 1; edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return; }
     if (e.target.closest('[data-sid-apply]')) {
       const list = edDocs();
       ed.rows.forEach((i) => { const r = bulk.rows[i], here = new Set(A.docsOf(r.cc).map((d) => d.code)); r.docs = new Set(list.filter((d) => ed.picked.has(d.code) && here.has(d.code)).map((d) => d.code)); });
       changed.clear(); ed.rows.forEach((i) => changed.add(i));
-      bulk.picked = new Set(); edClose(); paint();
+      bulk.picked = new Set(); if (ed.ret) revBack(); else edClose(); paint();
       setTimeout(() => { changed.clear(); host.querySelectorAll('tr.is-changed').forEach((x) => x.classList.remove('is-changed')); }, 2400);
     }
   });
+  dw.addEventListener('input', (e) => { if (ed && ed.rev && e.target.name === 'si-note') ed.note = bulk.note = e.target.value; });
   dw.addEventListener('change', (e) => {
     if (!ed) return;
     const t = e.target;
@@ -430,17 +470,17 @@
     if (t.matches('[data-all]')) { shownDocs().forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
   });
   // Escape closes this drawer only (not ALMA's setup panel under it, js/guided-upload.js)
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { e.stopImmediatePropagation(); if (ed.fOpen) { ed.fOpen = false; redraw('[data-saf-btn]'); return; } edClose(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { e.stopImmediatePropagation(); if (ed.fOpen) { ed.fOpen = false; redraw('[data-saf-btn]'); return; } if (ed.ret) revBack(); else edClose(); } });
 
   // ---- sending, and leaving --------------------------------------------------------------------------
-  const send = () => {
+  const send = (note = '') => {
     const go = bulk.rows.filter((r) => r.ok), today = A.today();
     go.forEach((r, i) => {
       const c = A.country(r.cc), list = A.docsOf(r.cc).filter((d) => r.docs.has(d.code)), name = nameOf(r);
       S.addInvite({
         id: `${S.slug(name)}-${(Date.now() + i).toString(36).slice(-4)}`, name, city: r.on ? r.on.city : '', services: r.on ? r.on.services : [],
         country: c.code, countryName: c.name, idLabel: c.label, code: r.code, email: r.on ? '' : r.email.trim(), contact: r.on ? '' : String(r.contact || '').trim(),
-        onCmore: !!r.on, invited: today, note: '', imported: bulk.file,
+        onCmore: !!r.on, invited: today, note, imported: bulk.file,
         docs: list.map((d) => d.code), required: list.filter((d) => d.req).map((d) => d.code),
         names: Object.fromEntries(list.map((d) => [d.code, d.name])), sections: Object.fromEntries(list.map((d) => [d.code, d.home || d.section])),
       });
@@ -464,7 +504,7 @@
     if (t.closest('[data-si-invite]')) { invite(); return; }
     if (!bulk || !host.contains(t)) return;
     if (t.closest('[data-si-cancel]')) { bulk = null; paint(); return; }
-    if (t.closest('[data-si-send]')) { send(); return; }
+    if (t.closest('[data-si-send]')) { revOpen(); return; }
     if (t.closest('[data-si-unpick]')) { bulk.picked = new Set(); paint(); return; }
     if (t.closest('[data-si-remove]')) { drop(); return; }
     if (t.closest('[data-si-docs]')) { edOpen([...bulk.picked]); return; }
