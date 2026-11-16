@@ -743,8 +743,6 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cd-tbl.cd-log-tbl td { white-space: normal; overflow: visible; }
 .cd-tbl.cd-log-tbl td:nth-child(2), .cd-log-tbl .cd-ov { white-space: nowrap; }
 .cd-tbl.cd-log-tbl .d { overflow-wrap: anywhere; }
-.cd-log-alma { display: inline-flex; align-items: center; gap: 0.375rem; font-weight: 600; }
-.cd-log-alma::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 1px; background: var(--color-coral); }
 .cd-pop { position: fixed; z-index: 90; width: min(20rem, calc(100vw - 24px)); padding: 0.875rem 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); box-shadow: 0 16px 40px -16px rgba(36, 36, 36, .35); font-size: 0.8125rem; color: var(--color-ink); }
 .cd-pop-h { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.875rem; }
 .cd-pop-h .dlg-x { width: 1.75rem; height: 1.75rem; }

@@ -312,7 +312,7 @@
     const DASH = '<span class="cd-dash">&mdash;</span>';
     const hsh = (t) => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 100003, 7);
     // ALMA's confidence in what she read on it, as on Company documents (nothing read: a dash)
-    const conf = (d, st) => (['missing', 'notuploaded', 'notshared'].includes(st) ? DASH : hsh(d.code + s.id) % 4 ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>');
+    const conf = (d, st) => (['missing', 'notuploaded', 'notshared'].includes(st) ? DASH : CONF_B(CONF_N(d.code, s.id)));
     const forOf = (c) => (c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`);
     const sections = (items, kind) => {
       const by = {};
@@ -357,6 +357,9 @@
       ${log(s)}`;
   };
 
+  // ALMA's confidence in a supplier's document (the table's column and the drawer's): a number, and its band
+  const CONF_N = (code, sid) => { const h = [...String(code + sid)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 100003, 7); return h % 4 ? 90 + (h % 9) : 76 + (h % 12); };
+  const CONF_B = (p) => (p >= 90 ? '<span class="co-badge b-ok" title="Read cleanly, and it matches their profile.">High confidence</span>' : p >= 75 ? '<span class="co-badge b-pend" title="Read well, but worth a glance.">Medium confidence</span>' : '<span class="co-badge b-over" title="ALMA isn&rsquo;t sure of something here. Check it against the file.">Low confidence</span>');
   // ---- a document, in the drawer (.docd .cdd, as in Documents) ------------------------------------
   const C = window.DOC_CATALOG || { docs: [], labels: { requirement: {}, sharing: {} } };
   const byCode = Object.fromEntries(C.docs.map((d) => [d.code, d]));
@@ -379,18 +382,40 @@
     // a removed consent's document: as you were last shown it
     const gone = c.state === 'removed', d = gone ? Object.assign({}, d0, { status: !d0.kept ? 'missing' : d0.kept.current ? d0.status : V.stateOf(d0.kept) === 'expired' ? 'expired' : 'valid', valid: d0.kept ? d0.kept.valid : '—', note: d0.kept ? '' : 'Never shared with you before they removed the consent.' }) : d0;
     dq('sp-dw-t').textContent = d.name;
-    dq('sp-dw-sub').innerHTML = `${esc(sup.name)} &middot; ${esc(d.code)} &middot; ${esc(d.requirement)}`;
+    dq('sp-dw-sub').innerHTML = `${esc(sup.name)} &middot; ${esc(d.code)} &middot; ${esc(d.requirement)} &middot; ${tag(d.status)}`;
     dq('sp-dw-bar').textContent = `Shared with you by ${sup.name}`;
-    dq('sp-dw-st').innerHTML = tag(d.status);
+    const hasFile = !['missing', 'notuploaded', 'notshared'].includes(d.status), cn = CONF_N(d.code, sup.id);
+    dq('sp-dw-st').innerHTML = hasFile ? CONF_B(cn) : '';
     const file = `${d.name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}.pdf`;
     const fileHtml = d.status === 'missing' ? `<div class="cmf-none">${DOCI}<h4>They haven&rsquo;t uploaded it yet</h4><p>${esc(d.note || 'ALMA has asked them for it.')}</p></div>`
       // the page as ALMA read it, each value highlighted: Preview opens it beside, as the setup's (js/doc-files.js)
       : window.CMFiles && window.CMFiles.fileRow ? window.CMFiles.fileRow(file, 'Simulated: the demo&rsquo;s suppliers have no files') : '';
-    at.pv = d.status === 'missing' || !window.CMFiles ? null : { title: d.name, sub: `${sup.name} · ${file}`, noFile: true, spec: { title: d.name, file, holder: sup.name, issuer: (cat.usuallyIssuedBy || '').split(';')[0].trim(),
-      fields: [[S.WORDS.id, sup.nipc], ['Issued by', (cat.usuallyIssuedBy || '').split(';')[0].trim()], ['Valid until', d.valid === '—' ? '' : d.valid]].filter(([, v]) => v).map(([name, value]) => ({ name, value })) } };
+    // what ALMA read on it, the fields they share with clients, each with her confidence and its
+    // citation (the passage, and Show on the page: the preview beside, at that value), as in Documents.
+    // Prototype: the values come from the supplier and the document's dates
+    const issuer = (cat.usuallyIssuedBy || '').split(';')[0].trim(), hn = [...String(d.code + sup.id)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 100003, 7);
+    const vt = Date.parse(d.valid), issued = Number.isNaN(vt) ? '' : (() => { const x = new Date(vt); x.setFullYear(x.getFullYear() - 1); return `${x.getDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][x.getMonth()]} ${x.getFullYear()}`; })();
+    const valOf = (n) => {
+      n = n.toLowerCase();
+      if (/expiry|valid until|validity|end date|next exam|next inspection/.test(n)) return d.valid && d.valid !== '—' ? d.valid : '';
+      if (/issue date|date of issue|issued on|^date$/.test(n)) return issued;
+      if (/(provider|insurer|issuer|certification body).*tax number/.test(n)) return '';
+      if (/tax number|nipc|\bnif\b|vat/.test(n)) return sup.nipc || '';
+      if (/legal name|company name|policyholder|holder|insured|organi[sz]ation|supplier name|employer/.test(n)) return sup.name;
+      if (/issuer|issued by|insurer|certification body|authority|provider/.test(n)) return issuer;
+      if (/address/.test(n)) return sup.city || '';
+      if (/(certificate|policy|licence|license|reference|registration|document|report) (no|number)|^number$|reference|access code/.test(n)) return `${d.code}/${(d.valid.match(/\d{4}/) || ['2026'])[0]}-${1000 + (hn % 9000)}`;
+      return '';
+    };
+    const partOf = (n) => (/date|expir|valid|until|next/i.test(n) ? 'Validity' : /sign|representative|officer/i.test(n) ? 'Signatures' : /number|reference|code|nif|tax/i.test(n) ? 'Identification' : 'Particulars');
+    const fields = !hasFile ? [] : (cat.fields || []).filter((x) => x.visibleToClients !== false).map((x, i) => ({ name: x.name, type: x.type, value: valOf(x.name), conf: Math.min(99, cn + ([...x.name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 7) - 3) })).filter((x) => x.value);
+    at.pv = d.status === 'missing' || !window.CMFiles ? null : { title: d.name, sub: `${sup.name} · ${file}`, noFile: true, spec: { title: d.name, file, holder: sup.name, issuer,
+      fields: fields.map((x, i) => ({ name: x.name, value: x.value, i })) } };
+    const read = fields.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, i) => `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type || '')}</span></td><td>${esc(x.value)}<button type="button" class="esgq-src-btn" data-cite="${i}" aria-expanded="false" aria-controls="sp-cite-${i}">View citation</button></td><td>${CONF_B(x.conf)}</td></tr>
+      <tr class="cdd-cite-row" id="sp-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(file)}</b><span>Page 1 &middot; ${partOf(x.name)}</span></figcaption><blockquote>&ldquo;${esc(x.name)}: <mark>${esc(x.value)}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-cite-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>` : '';
     if (window.CMFiles) window.CMFiles.closePeek(dw);
     const kv = (k, v) => (v ? `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>` : '');
-    dq('sp-dw-body').innerHTML = fileHtml
+    dq('sp-dw-body').innerHTML = fileHtml + read
       + `<section class="cdd-card"><h4 class="eyebrow">This document</h4><dl class="pd-facts cdd-facts">${kv('Status', tag(d.status))}${kv('Expiry date', esc(d.valid === '—' ? 'Not on file' : d.valid))}${d.note ? kv('Note', esc(d.note)) : ''}${kv('Issued by', esc((cat.usuallyIssuedBy || '').split(';')[0]))}${kv('Section', esc(d.section))}</dl></section>`
       + (V && d0.versions && d0.versions.some((v) => v.seen) ? `<section class="cdd-card"><h4 class="eyebrow">Versions you can see</h4><p class="cdd-desc">${gone ? `What ${esc(sup.name)} shared with you until ${esc(c.removed)}. Anything they&rsquo;ve uploaded since isn&rsquo;t shared with you.` : `The one in place when they gave you consent, and every one they&rsquo;ve uploaded since.`}</p>${V.list(d0.versions, { cur: tag(d0.status) })}</section>` : '')
       + `<section class="cdd-card"><h4 class="eyebrow">Shared under</h4><dl class="pd-facts cdd-facts">${kv('Consent', esc(c.title))}${kv('For', c.project ? esc(c.project) : `All your ${S.WORDS.scope}`)}${kv('Given on', esc(c.granted))}${gone ? kv('Removed on', esc(c.removed)) + kv('What you keep', 'The versions shared until then') : kv('Stays current', 'When they renew it, you see the new one')}</dl></section>`
@@ -409,6 +434,10 @@
   dw.addEventListener('click', (e) => {
     if (e.target.closest('[data-x]')) { closeDoc(); return; }
     if (e.target.closest('[data-cmf-peek]')) { if (at && at.pv) window.CMFiles.openPeek(dw, at.pv); return; }
+    // a citation: opened in place; Show on the page opens the preview beside, at that value
+    const cb = e.target.closest('[data-cite]');
+    if (cb) { const row = dw.querySelector('#sp-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
+    const sh = e.target.closest('[data-cite-show]'); if (sh) { if (at && at.pv) window.CMFiles.openPeek(dw, at.pv, +sh.dataset.citeShow); return; }
     const st = e.target.closest('[data-step]'); if (st && !st.disabled) { at.i += +st.dataset.step; drawDoc(); }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && at) closeDoc(); });

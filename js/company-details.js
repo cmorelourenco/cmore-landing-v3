@@ -581,10 +581,10 @@
     : WK_CATS.map(([k, l, sh]) => [k, l, list.filter((d) => catOf(d) === k).sort((x, y) => (LEAD.includes(y.code) ? 1 : 0) - (LEAD.includes(x.code) ? 1 : 0)), sh || l]));
   // a record's documents, as the company's: one table per category (its name and how many), the
   // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
-  const catRow = (d, i) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na';
-    return `<tr class="cd-row"${d.spec ? ` data-drop="${d.spec}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
-  const catTable = (rows, i) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map((d) => catRow(d, i)).join('')}</tbody></table></div>`;
-  const catGroups = (per, kind, i) => byCat(per, kind).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${catTable(list, i)}</div>`).join('');
+  const catRow = (d, i, kind) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na', wk = kind === 'workers' && i != null && !d.plain || kind === 'workers' && ['ID', 'DRV', 'CRM'].includes(d.code);
+    return `<tr class="cd-row${wk ? ' is-rosterable' : ''}"${d.spec ? ` data-drop="${d.spec}"` : ''}${wk ? ` data-wdoc="${d.code}" data-wi="${i}" tabindex="0" role="button" aria-label="Open ${esc(decode(d.name))}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
+  const catTable = (rows, i, kind) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map((d) => catRow(d, i, kind)).join('')}</tbody></table></div>`;
+  const catGroups = (per, kind, i) => byCat(per, kind).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${catTable(list, i, kind)}</div>`).join('');
   // their identity document: its status by the date it's valid until, once there's a file of it;
   // until then their ID is on file as data only, not uploaded
   const idRow = (i) => {
@@ -731,13 +731,13 @@
       if (upped.has(d.code)) return;
       const st = d.status, has = !NO_FILE.includes(st) && st !== 'na', h = hash(d.code + i), exp = Date.parse(d.exp), name = d.name;
       const file = `${slug(d.code === 'ID' ? 'id' : name).slice(0, 28)}_${slug(p.name.split(' ').pop())}.pdf`;
-      if (!has) { if (st === 'missing' || st === 'filemissing') ev.push({ t: Math.max(addT + 1, now - (12 + h % 40) * DAY), ev: 'asked', code: d.code, name, by: 'ALMA', to: 'missing' }); return; }
+      if (!has) { if (st === 'missing' || st === 'filemissing') ev.push({ t: Math.max(addT + 1, now - (12 + h % 40) * DAY), ev: 'asked', code: d.code, name, by: p.isNew ? M.me : team[0], to: 'missing' }); return; }
       if (p.isNew) { ev.push({ t: addedAt, ev: 'upload', code: d.code, name, file, by: M.me, from: null, to: st, conf: 78 + (h % 21) }); return; }
       let up = !Number.isNaN(exp) ? exp - 365 * DAY : now - (60 + h % 300) * DAY;
       up = Math.max(Math.min(up, now - (20 + h % 30) * DAY), addedAt + DAY);
       ev.push({ t: up, ev: 'upload', code: d.code, name, file, by: team[h % 2], from: null, to: ['expiring', 'expired'].includes(st) ? 'valid' : st, conf: 78 + (h % 21) });
-      if (st === 'expiring' || st === 'expired') ev.push({ t: Math.max(up + DAY, Math.min(exp - 60 * DAY, now - DAY)), ev: 'status', code: d.code, name, by: 'ALMA', from: 'valid', to: 'expiring', why: 'Expires within 60 days' });
-      if (st === 'expired') ev.push({ t: Math.min(exp, now), ev: 'status', code: d.code, name, by: 'ALMA', from: 'expiring', to: 'expired', why: 'The expiry date passed' });
+      if (st === 'expiring' || st === 'expired') ev.push({ t: Math.max(up + DAY, Math.min(exp - 60 * DAY, now - DAY)), ev: 'status', code: d.code, name, by: team[h % 2], from: 'valid', to: 'expiring', why: 'Expires within 60 days' });
+      if (st === 'expired') ev.push({ t: Math.min(exp, now), ev: 'status', code: d.code, name, by: team[h % 2], from: 'expiring', to: 'expired', why: 'The expiry date passed' });
     });
     if (p.archived && !own.some((e) => e.ev === 'archived')) ev.push({ t: Date.parse(p.archived) || now, ev: 'archived', by: team[0] });
     // this session's, in the order they happened; an upload is followed by the document's status
@@ -755,11 +755,11 @@
   const LCHG = (a, b) => `<span class="cd-lchg">${LST(a)}<span class="cd-arr" aria-hidden="true">&rarr;</span>${LST(b)}<span class="sr-only">${a ? STATUS[a][0] : ''} to ${b ? STATUS[b][0] : ''}</span></span>`;
   const logCard = (i, per) => {
     const L = logRows(i, per), first = PERSON[i].name.split(' ')[0];
-    const who = (b) => (b === 'ALMA' ? '<b class="cd-log-alma">ALMA</b>' : esc(b === 'You' ? 'You' : b));
+    const who = (b) => esc(b);
     const row = (e) => {
       const [doc, sub, st] = e.ev === 'upload' ? [esc(e.name), `Uploaded &middot; ${esc(e.file)}${e.conf ? `</span><span class="d">${e.conf}% confidence &middot; ${e.edited ? 'corrected and ' : ''}approved by ${esc(e.by === 'You' ? 'you' : e.by)}` : ''}`, LCHG(e.from || 'notuploaded', e.to)]
         : e.ev === 'status' ? [esc(e.name), esc(e.why || ''), LCHG(e.from, e.to)]
-        : e.ev === 'asked' ? [esc(e.name), 'Asked for by ALMA', LCHG('notuploaded', e.to)]
+        : e.ev === 'asked' ? [esc(e.name), 'Asked for', LCHG('notuploaded', e.to)]
         : e.ev === 'rejected' ? [esc(e.name), `Upload rejected &middot; ${esc(e.file)} not filed`, `${LST(e.from || 'notuploaded')}<span class="cd-lno">No change</span>`]
         : e.ev === 'added' ? ['Worker added', e.how || '', dash]
         : e.ev === 'archived' ? ['Worker archived', 'Off the worker list and every site', dash]
@@ -769,6 +769,104 @@
     return `<div class="cd-group" data-wk-log><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Log</h3><span class="co-muted">${L.length} entr${L.length === 1 ? 'y' : 'ies'} &middot; every status change of ${esc(first)}&rsquo;s documents, newest first</span></div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-log-tbl" data-paged="wk-log-${i}"><thead><tr><th>Document</th><th>Date</th><th>Status change</th><th>By</th></tr></thead><tbody>${L.map(row).join('')}</tbody></table></div></div>`;
   };
+
+  // ---- a worker's document, in a drawer (.docd .cdd, as in Documents) --------------------------------
+  // What ALMA read on it, field by field, each with her confidence and its citation (the passage; Show
+  // on the page opens the preview beside, at that value). Prototype: the values come from the worker's
+  // profile and the document's dates; a file uploaded in this tab is the one previewed
+  const wdw = document.createElement('div');
+  wdw.className = 'docd cdd'; wdw.hidden = true;
+  wdw.innerHTML = `<div class="docd-scrim" data-wx></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="wd-t" tabindex="-1">
+      <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOC_I}</span><div class="docd-t"><h3 id="wd-t"></h3><p id="wd-sub"></p></div>
+        <button type="button" class="dlg-x" data-wx aria-label="Close the document">${XI}</button></header>
+      <div class="docd-bar"><span id="wd-page"></span><span id="wd-conf"></span></div>
+      <div class="docd-body" id="wd-body"></div>
+      <div class="docd-nav" role="group" aria-label="Their documents"><button type="button" class="docd-step" data-wstep="-1">${LI}Previous document</button><span id="wd-n"></span><button type="button" class="docd-step is-next" data-wstep="1">Next document${LI}</button></div>
+    </aside>`;
+  document.body.appendChild(wdw);
+  const wq = (x) => wdw.querySelector('#' + x);
+  let wAt = null, wBack = null;
+  // their own documents' fields, where the catalog has none (the ID, and the optional ones)
+  const OWN_FIELDS = { ID: ['Document type', 'Document number', 'Full name', 'Birth date', 'Nationality', 'Expiry date'], DRV: ['Full name', 'Licence number', 'Categories', 'Issue date', 'Expiry date'], CRM: ['Full name', 'Certificate number', 'Result', 'Issue date'] };
+  const wFieldsOf = (code) => { const c = (DOCS.find((x) => x.code === code) || {}).cat; return c && c.fields && c.fields.length ? c.fields.map((f) => ({ name: f.name, type: f.type })) : (OWN_FIELDS[code] || []).map((name) => ({ name, type: /date/i.test(name) ? 'Date' : 'Text' })); };
+  const wDraw = () => {
+    const i = wAt.i, p = PERSON[i], d = wAt.list[wAt.k], h = hash(d.code + i), cat = (DOCS.find((x) => x.code === d.code) || {}).cat || {};
+    const has = !NO_FILE.includes(d.status) && d.status !== 'na', cn = 78 + (h % 21);
+    const exp = decode(String(d.exp || '').replace(/<[^>]+>/g, '')), et = Date.parse(exp);
+    const issued = Number.isNaN(et) ? `${1 + (h % 27)} ${MONTHS[h % 12]} 2025` : (() => { const x = new Date(et); x.setFullYear(x.getFullYear() - 1); return `${x.getDate()} ${MONTHS[x.getMonth()]} ${x.getFullYear()}`; })();
+    const issuer = (cat.usuallyIssuedBy || '').split(';')[0].trim();
+    const valOf = (n) => {
+      n = n.toLowerCase();
+      if (/expiry|valid until|end date/.test(n)) return d.code === 'ID' ? p.id[2] || exp : Number.isNaN(et) ? '' : exp;
+      if (/issue date/.test(n)) return issued;
+      if (/worker name|full name/.test(n)) return decode(p.name);
+      if (/employer/.test(n)) return decode(String(D.company || ''));
+      if (/birth/.test(n)) return p.birth || '';
+      if (/nationality/.test(n)) return p.nationalityName || '';
+      if (/document type/.test(n)) return decode(p.id[0] || '');
+      if (/document number/.test(n)) return decode(p.id[1] || '');
+      if (/right to work/.test(n)) return 'Yes';
+      if (/permit type|application type/.test(n)) return p.permit && p.permit.type ? p.permit.type : 'Residence permit';
+      if (/exam type/.test(n)) return h % 3 ? 'Periodic' : 'Admission';
+      if (/^result/.test(n)) return d.code === 'CRM' ? 'No record' : 'Fit';
+      if (/restrictions/.test(n)) return 'None';
+      if (/doctor/.test(n)) return ['Dr. Ana Costa', 'Dr. Rui Moreira', 'Dr. Inês Lopes'][h % 3];
+      if (/signed by worker/.test(n)) return 'Yes';
+      if (/training topic/.test(n)) return decode(d.name).replace(/ (training )?certificate$/i, '');
+      if (/training entity/.test(n)) return ['Formasafe, Lda.', 'Instituto da Construção', 'Segurança Total'][h % 3];
+      if (/hours/.test(n)) return String([8, 16, 25, 35][h % 4]);
+      if (/ppe items/.test(n)) return 'Helmet, safety boots, gloves, high-visibility vest';
+      if (/categories/.test(n)) return h % 2 ? 'B, C' : 'B';
+      if (/number|serial/.test(n)) return `${d.code}-${(exp.match(/\d{4}/) || ['2026'])[0]}/${1000 + (h % 9000)}`;
+      return '';
+    };
+    const file = `${decode(d.name).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${decode(p.name).split(' ').pop()}.pdf`;
+    const partOf = (n) => (/date|expir|valid|until/i.test(n) ? 'Validity' : /sign|doctor/i.test(n) ? 'Signatures' : /number|serial|type|code/i.test(n) ? 'Identification' : 'Particulars');
+    const fields = has ? wFieldsOf(d.code).map((x) => ({ name: x.name, type: x.type, value: valOf(x.name), conf: Math.min(99, cn + ([...x.name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 7) - 3) })).filter((x) => x.value) : [];
+    const [sl, sc] = d.tag || STATUS[d.status];
+    wq('wd-t').innerHTML = esc(decode(d.name));
+    wq('wd-sub').innerHTML = `${esc(decode(p.name))} &middot; ${d.code} &middot; <span class="co-badge ${sc}">${sl}</span>`;
+    wq('wd-page').textContent = has ? 'Current version' : 'No file yet';
+    wq('wd-conf').innerHTML = has ? confCell(cn) : '';
+    const read = fields.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, k) => `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type || '')} &middot; not shared with clients</span></td><td>${esc(x.value)}<button type="button" class="esgq-src-btn" data-wcite="${k}" aria-expanded="false" aria-controls="wd-cite-${k}">View citation</button></td><td>${confCell(x.conf)}</td></tr>
+      <tr class="cdd-cite-row" id="wd-cite-${k}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(file)}</b><span>Page 1 &middot; ${partOf(x.name)}</span></figcaption><blockquote>&ldquo;${esc(x.name)}: <mark>${esc(x.value)}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-wcite-show="${k}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>` : '';
+    const facts = cat.requirement ? [['Requirement', LBL.requirement[cat.requirement] || esc(cat.requirement)], ['Renewal', esc(cat.renewal || '—')], ['Expiry', esc(cat.expiryRule || '—')], ['Legal basis', esc(cat.legalBasis || '—')]].map(([k, v]) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`).join('') : '';
+    const about = cat.description || facts ? `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${cat.description ? `<p class="cdd-desc">${esc(en(cat.description))}</p>` : ''}${facts ? `<dl class="pd-grid cdd-facts">${facts}</dl>` : ''}</section>` : '';
+    const none = `<div class="docd-none"><span class="docd-ico" aria-hidden="true">${DOC_I}</span><h4>No file yet</h4><p>Drop it on ALMA, or upload it from the row: she reads it, dates it and files it.</p></div>`;
+    wq('wd-body').innerHTML = (has ? '<div class="cmf-slot" id="wd-file"></div>' : none) + read + about;
+    wq('wd-body').scrollTop = 0;
+    wAt.pv = null;
+    if (window.CMFiles) window.CMFiles.closePeek(wdw);
+    if (has && window.CMFiles) {
+      const key = `${d.code}#${i}`, spec = { title: decode(d.name), file, holder: decode(p.name), issuer, fields: fields.map((x, k) => ({ name: x.name, value: x.value, i: k })) };
+      wAt.pv = { title: decode(d.name), sub: `${decode(p.name)} · ${file}`, code: key, spec };
+      const slot = wq('wd-file'), drawn = wAt.k;
+      slot.innerHTML = window.CMFiles.fileRow(file);
+      window.CMFiles.get(key).then((r) => { if (wAt && wAt.k === drawn && slot.isConnected) { if (r) slot.innerHTML = window.CMFiles.fileRow(r.name); else wAt.pv.noFile = true; } });
+    }
+    wq('wd-n').textContent = `${wAt.k + 1} of ${wAt.list.length}`;
+    wdw.querySelector('[data-wstep="-1"]').disabled = wAt.k === 0;
+    wdw.querySelector('[data-wstep="1"]').disabled = wAt.k === wAt.list.length - 1;
+  };
+  // the documents on their page, in order, from the tables (Previous / Next walk them)
+  const wOpen = (i, code) => {
+    const per = wkDocs(i), codes = [...groupsEl.querySelectorAll('[data-wdoc]')].map((r) => r.dataset.wdoc);
+    const list = codes.map((c) => per.find((d) => d.code === c)).filter(Boolean);
+    wAt = { i, list, k: Math.max(0, list.findIndex((d) => d.code === code)) }; wBack = document.activeElement;
+    wdw.hidden = false; document.documentElement.style.overflow = 'hidden'; wDraw();
+    setTimeout(() => wdw.classList.add('is-open'), 20); wdw.querySelector('.docd-panel').focus();
+  };
+  const wClose = () => { if (window.CMFiles) window.CMFiles.closePeek(wdw); wdw.classList.remove('is-open'); document.documentElement.style.overflow = ''; setTimeout(() => { wdw.hidden = true; }, 280); if (wBack && wBack.isConnected) wBack.focus(); wAt = null; };
+  wdw.addEventListener('click', (e) => {
+    if (!wAt) return;
+    if (e.target.closest('[data-wx]')) { wClose(); return; }
+    if (e.target.closest('[data-cmf-peek]')) { if (wAt.pv) window.CMFiles.openPeek(wdw, wAt.pv); return; }
+    const cb = e.target.closest('[data-wcite]');
+    if (cb) { const row = wdw.querySelector('#wd-cite-' + cb.dataset.wcite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
+    const sh = e.target.closest('[data-wcite-show]'); if (sh) { if (wAt.pv) window.CMFiles.openPeek(wdw, wAt.pv, +sh.dataset.wciteShow); return; }
+    const st = e.target.closest('[data-wstep]'); if (st && !st.disabled) { wAt.k += +st.dataset.wstep; wDraw(); }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && wAt) wClose(); });
 
   // one worker: their profile, whether they may work here, their documents, and their sites.
   // Personal data is Restricted: a client sees it only while this worker is on one of its sites.
@@ -1085,6 +1183,7 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pop) closePop(); });
   addEventListener('scroll', closePop, { passive: true });
   groupsEl.addEventListener('click', (e) => {
+    const wr = e.target.closest('[data-wdoc]'); if (wr && !e.target.closest('button, a, input, label')) { wOpen(+wr.dataset.wi, wr.dataset.wdoc); return; }
     const cg = e.target.closest('[data-chg]'); if (cg) { e.stopPropagation(); if (pop && pop.dataset.for === cg.dataset.chg) closePop(); else { openPop(cg); pop.dataset.for = cg.dataset.chg; } return; }
     const sw = e.target.closest('[data-archive]');
     if (sw) { const i = +sw.dataset.archive; if (sw.getAttribute('aria-checked') === 'true') unarchive(i); else askArchive(i); return; }
@@ -1130,7 +1229,7 @@
     }
   });
   groupsEl.addEventListener('keydown', (e) => {
-    const t = e.target.closest('[data-worker], [data-machine], [data-product], [data-detail], [data-open], [data-version]');
+    const t = e.target.closest('[data-worker], [data-machine], [data-product], [data-detail], [data-open], [data-version], [data-wdoc]');
     if (t && e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.click(); }
   });
   groupsEl.addEventListener('input', (e) => {
