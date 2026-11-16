@@ -188,7 +188,7 @@
 
   // ---- in Add a supplier: many at once, or one by one -----------------------------------------------
   let err = '';
-  const banner = () => `<div class="si-bulk" id="si-bulk"><span><b>Adding many suppliers?</b> Choose the documents you need from them, then upload an Excel file with their countries and company codes.</span><span class="si-bulk-acts"><button type="button" class="btn btn-secondary btn-sm" data-si-invite>Invite from Excel</button></span></div>
+  const banner = () => `<div class="si-bulk" id="si-bulk"><span><b>Adding many suppliers?</b> Choose the documents you need from them, then upload an Excel file with their countries and company codes.</span><span class="si-bulk-acts"><button type="button" class="si-x" data-si-tpl>Download the template</button><button type="button" class="btn btn-secondary btn-sm" data-si-invite>Invite from Excel</button></span></div>
     <div class="si-or">or one by one</div>`;
   const file = Object.assign(document.createElement('input'), { type: 'file', hidden: true, accept: '.xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel' });
   document.body.appendChild(file);

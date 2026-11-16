@@ -130,6 +130,14 @@
 .sp-wait { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.875rem 1.25rem; font-size: 0.875rem; color: var(--color-ink-muted); }
 .sp-wait svg { width: 1rem; height: 1rem; vertical-align: -0.1875rem; margin-right: 0.375rem; }
 .sp-sent { font-size: 0.875rem; font-weight: 500; color: var(--color-positive); }
+.sp-doc-tbl .sp-cons { text-align: left; }
+.sp-doc-tbl .sp-cons span { display: block; font-size: 0.8125rem; line-height: 1.35; }
+.sp-doc-tbl .sp-cons span + span { margin-top: 0.375rem; }
+.sp-doc-tbl .sp-cons b { font-weight: 500; color: var(--color-ink); }
+.sp-doc-tbl .sp-cons small { display: block; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.sp-sec .cd-group + .cd-group { margin-top: 1.5rem; }
+.sp-sec .cd-group { margin-top: 1rem; }
+.sp-sec > .sp-wait.co-card { margin-top: 0.75rem; }
 @media (max-width: 40rem) { .sp-kpis { grid-template-columns: 1fr; } .sp-tbl .hide-s { display: none; } .sp-tbl th, .sp-tbl td { padding-inline: 0.875rem; } }`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
   const tag = (status) => { const [l, c] = S.STATUS[status] || [status, 'b-neu']; return `<span class="co-badge ${c}">${l}</span>`; };
@@ -137,7 +145,7 @@
   const V = window.CM_VERSIONS, vOpen = new Set();
   const vKey = (c, d) => `${c.id}|${d.code}`;
   const vBtn = (c, d) => (V && d.versions ? V.button(vKey(c, d), d.versions, { open: vOpen.has(vKey(c, d)) }) : '');
-  const vRow = (c, d, cur) => (V && d.versions && vOpen.has(vKey(c, d)) ? `<tr class="cmv-tr"><td colspan="4">${V.list(d.versions, { cur })}</td></tr>` : '');
+  const vRow = (c, d, cur, span = 4) => (V && d.versions && vOpen.has(vKey(c, d)) ? `<tr class="cmv-tr"><td colspan="${span}">${V.list(d.versions, { cur })}</td></tr>` : '');
   // once they removed a consent: the newest version you were shown, as it stands now
   const keptTag = (d) => (!d.kept ? '<span class="co-badge b-neu">Not shared</span>' : d.kept.current ? tag(d.status) : V.stateOf(d.kept) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-ok">Valid</span>');
   const id = new URLSearchParams(location.search).get('id');
@@ -300,48 +308,51 @@
     if (head) { head.classList.add('is-sup'); const sec = head.closest('.eco-head'); if (sec) sec.classList.add('sp-stick'); }
     if (head) head.innerHTML = `<div class="sp-head"><span class="sp-logo is-lg" aria-hidden="true">${esc(ini(s.name))}</span><div><span class="eyebrow">Supplier &middot; ${stTag(s)}</span><h1>${esc(s.name)}</h1>
         <p>${facts}${s.email ? ` &middot; <a href="mailto:${esc(s.email)}">${esc(s.email)}</a>` : ''}</p></div><button type="button" class="btn btn-primary btn-sm sp-ask-docs" data-sup-docs><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Ask for documents</button></div>`;
+    const ORDER = (() => { const o = {}; ((window.DOC_CATALOG || {}).docs || []).forEach((d, k) => { if (d.section && !(d.section in o)) o[d.section] = k; }); return o; })();
+    const DASH = '<span class="cd-dash">&mdash;</span>';
+    const hsh = (t) => [...String(t)].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) % 100003, 7);
+    // ALMA's confidence in what she read on it, as on Company documents (nothing read: a dash)
+    const conf = (d, st) => (['missing', 'notuploaded', 'notshared'].includes(st) ? DASH : hsh(d.code + s.id) % 4 ? '<span class="co-badge b-ok">High confidence</span>' : '<span class="co-badge b-pend">Medium confidence</span>');
+    const forOf = (c) => (c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`);
+    const sections = (items, kind) => {
+      const by = {};
+      items.forEach((x) => { (by[x.d.section] = by[x.d.section] || []).push(x); });
+      return Object.entries(by).sort((a, b) => (ORDER[a[0]] ?? 999) - (ORDER[b[0]] ?? 999)).map(([sec, list]) => `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${esc(sec)}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>
+        <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl sp-doc-tbl"><thead><tr><th>Document name</th><th>Expiration date</th><th>ALMA confidence</th><th>${kind === 'kept' ? 'You keep' : 'Status'}</th><th>Consent</th></tr></thead><tbody>${list.map((x) => {
+          const { c, d, i, cs } = x, kept = kind === 'kept', asked = kind === 'asked', valid = asked ? '—' : kept ? (d.kept ? d.kept.valid : '—') : d.valid, st = asked || (kept && !d.kept) ? 'notshared' : d.status;
+          if (asked) return `<tr class="cd-row${x.vers ? ' has-note' : ''}"><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.requirement)}</span></td><td>${DASH}</td><td>${DASH}</td><td><span class="co-badge b-neu">${x.vers ? 'Not answered yet' : 'Not shared yet'}</span></td><td class="sp-cons"><span><b>Invitation</b><small>Asked on ${esc(s.invite.invited)}</small></span></td></tr>`
+            + (x.vers ? `<tr class="cd-note-tr"><td colspan="5"><span class="cd-note-l"><span class="cd-note-t">They share it, decline, or say they don&rsquo;t have one from ${x.vers}</span></span></td></tr>` : '');
+          const note = kept ? (d.kept ? `As shared on ${esc(d.kept.uploaded)}` : 'Never shared with you') : d.note ? esc(d.note) : '';
+          const noteRow = note ? `<tr class="cd-note-tr" data-doc="${esc(c.id)}:${i}"><td colspan="5"><span class="cd-note-l"><span class="cd-note-t">${kept ? '' : '<b class="is-alma">ALMA</b><span class="cd-note-s"> &middot; </span>'}${note}</span></span></td></tr>` : '';
+          return `<tr class="cd-row is-rosterable sp-row${noteRow ? ' has-note' : ''}" data-doc="${esc(c.id)}:${i}" tabindex="0" role="button" aria-label="Open ${esc(d.name)}"><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.requirement)}</span>${vBtn(c, d)}</td>`
+            + `<td>${valid === '—' || !valid ? DASH : window.DOC_MODEL ? window.DOC_MODEL.expHtml(valid) : esc(valid)}</td><td>${conf(d, st)}</td><td>${kept ? keptTag(d) : tag(d.status)}</td>`
+            + `<td class="sp-cons">${cs.map((k) => `<span><b>${esc(k.title)}</b><small>${kept ? `Removed on ${esc(k.removed)}` : forOf(k)}</small></span>`).join('')}</td></tr>${noteRow}${vRow(c, d, tag(d.status), 5)}`;
+        }).join('')}</tbody></table></div></div>`).join('');
+    };
+    // each document once (one shared under two consents says both)
+    const flat = (list) => { const seen = {}; const out = []; list.forEach((c) => c.docs.forEach((d, i) => { const k = d.code; if (seen[k]) { seen[k].cs.push(c); return; } out.push(seen[k] = { c, d, i, cs: [c] }); })); return out; };
     // invited: they haven't joined yet, so nothing is shared; what you asked them for, and a reminder
     if (inv) {
       const docs = s.consents[0].docs;
       box.innerHTML = `<section class="sp-sec" aria-labelledby="sp-inv"><h2 id="sp-inv">Waiting for them to join</h2>
         <p>${s.invite.onCmore ? `${esc(s.name)} is on C&#8209;MORE. Once they accept, they join your supplier list and you can see the documents below as they give their consent.` : `${esc(s.name)} isn&rsquo;t on C&#8209;MORE yet. We&rsquo;ve invited ${esc(s.email)} to join, and your supplier list with it.`}</p>
-        <article class="sp-consent is-pending">
-          <header class="sp-consent-h"><div><h3>Documents you asked for</h3><p>For all your ${S.WORDS.scope} &middot; asked on ${esc(s.invite.invited)} &middot; ${docs.length} document${docs.length === 1 ? '' : 's'}</p></div><span class="co-badge b-neu">Invited</span></header>
-          <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"></colgroup><thead><tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th></tr></thead>
-            <tbody>${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}</span></td><td class="hide-s">${esc(d.requirement)}</td><td><span class="co-badge b-neu">Not shared yet</span></td></tr>`).join('')}${(s.consents[0].vers || []).map((v) => `<tr><td><span class="n">${esc(v.name)} &middot; ${v.year} version</span><span class="d">${esc(v.code)} &middot; ${esc(v.section)} &middot; they share it, decline, or say they don&rsquo;t have one from ${v.year}</span></td><td class="hide-s">By year</td><td><span class="co-badge b-neu">Not answered yet</span></td></tr>`).join('')}</tbody></table>
-          <div class="sp-wait"><span>${CLOCK}You&rsquo;ll see each one as soon as they share it.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(s.id)}">Send a reminder</button></div>
-        </article></section>${log(s)}`;
+        ${sections(s.consents[0].docs.map((d) => ({ d, cs: [] })).concat((s.consents[0].vers || []).map((v) => ({ d: { name: `${v.name} \u00b7 ${v.year} version`, code: v.code, section: v.section, requirement: 'By year' }, vers: v.year, cs: [] }))), 'asked')}
+        <div class="co-card sp-wait"><span>${CLOCK}You&rsquo;ll see each one as soon as they share it.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(s.id)}">Send a reminder</button></div></section>${log(s)}`;
       return;
     }
     const given = s.consents.filter((c) => c.state === 'given'), pending = s.consents.filter((c) => c.state === 'pending'), removed = s.consents.filter((c) => c.state === 'removed');
-    // the card's title is the table's first row, so the consent's badge sits in the Expiry date
-    // column, level with the title
-    const consent = (c) => `<article class="sp-consent">
-        <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp"></colgroup><thead>
-          <tr class="sp-ch"><td colspan="3" class="sp-ch-t"><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; given on ${esc(c.granted)} &middot; ${c.docs.length} document${c.docs.length === 1 ? '' : 's'}</p></td><td class="sp-ch-b"><span class="co-badge b-ok">Consent given</span></td></tr>
-          <tr><th>Document</th><th class="hide-s">Requirement</th><th>Status</th><th class="c">Expiry date</th></tr></thead>
-          <tbody>${c.docs.map((d, i) => `<tr class="sp-row" data-doc="${esc(c.id)}:${i}" tabindex="0" role="button" aria-label="Open ${esc(d.name)}"><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${esc(d.section)}${d.note ? ' &middot; ' + esc(d.note) : ''}</span>${vBtn(c, d)}</td><td class="hide-s">${esc(d.requirement)}</td><td>${tag(d.status)}</td><td class="c">${window.DOC_MODEL ? window.DOC_MODEL.expHtml(d.valid) : esc(d.valid)}</td></tr>${vRow(c, d, tag(d.status))}`).join('')}</tbody></table>
-      </article>`;
     const ask = (c) => `<article class="sp-consent is-pending" data-ask="${esc(c.id)}">
         <header class="sp-consent-h"><div><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; you asked on ${esc(c.granted)}</p></div><span class="co-badge b-pend">Waiting for their answer</span></header>
         <div class="sp-wait"><span>${CLOCK}Until they answer you can&rsquo;t see: ${c.docs.map((d) => esc(d.name)).concat((c.vers || []).map((v) => `${esc(v.name)} (${v.year} version)`)).join(', ')}.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}">Send a reminder</button></div>
-      </article>`;
-    // one they stopped sharing: you keep what they'd shared until then, nothing newer; and asking again
-    const gone = (c) => `<article class="sp-consent is-removed">
-        <table class="sp-tbl"><colgroup><col><col class="sp-c-req"><col class="sp-c-st"><col class="sp-c-exp"></colgroup><thead>
-          <tr class="sp-ch"><td colspan="3" class="sp-ch-t"><h3>${esc(c.title)}</h3><p>${c.project ? `For ${esc(c.project)}` : `For all your ${S.WORDS.scope}`} &middot; given on ${esc(c.granted)} &middot; removed on ${esc(c.removed)}</p></td><td class="sp-ch-b"><span class="co-badge b-over">Consent removed</span></td></tr>
-          <tr><th>Document</th><th class="hide-s">Requirement</th><th>You keep</th><th class="c">Expiry date</th></tr></thead>
-          <tbody>${c.docs.map((d, i) => `<tr class="sp-row" data-doc="${esc(c.id)}:${i}" tabindex="0" role="button" aria-label="Open ${esc(d.name)}"><td><span class="n">${esc(d.name)}</span><span class="d">${d.kept ? `As shared on ${esc(d.kept.uploaded)}` : 'Never shared with you'}</span>${vBtn(c, d)}</td><td class="hide-s">${esc(d.requirement)}</td><td>${keptTag(d)}</td><td class="c">${window.DOC_MODEL ? window.DOC_MODEL.expHtml(d.kept ? d.kept.valid : '—') : esc(d.kept ? d.kept.valid : '—')}</td></tr>${vRow(c, d, tag(d.status))}`).join('')}</tbody></table>
-        <div class="sp-wait"><span>You keep what they shared until ${esc(c.removed)}, as it was then. Anything they&rsquo;ve uploaded since isn&rsquo;t shared with you.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}" data-sent="Request sent">Ask again</button></div>
       </article>`;
     box.innerHTML = `<div class="sp-kpis">
         <div class="sp-kpi"><span>Documents you can see</span><b>${k.shared}</b><small>${k.ok} in order</small></div>
         <div class="sp-kpi${k.bad ? ' is-bad' : ''}"><span>Need attention</span><b>${k.bad}</b><small>${k.bad ? 'Missing or expired' : k.soon ? `${k.soon} expiring or in review` : 'Nothing to chase'}</small></div>
         <div class="sp-kpi${k.removed ? ' is-bad' : ''}"><span>Consents</span><b>${k.given}</b><small>${k.removed ? `${k.removed} removed` : k.pending ? `${k.pending} waiting for their answer` : 'All answered'}</small></div>
       </div>
-      <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Consents they&rsquo;ve given you</h2><p>What ${esc(s.name)} lets you see, and for which ${S.WORDS.scope}. The documents stay current: when they renew one, you see the new one, and keep the earlier ones you&rsquo;ve seen.</p>
-        ${given.length ? given.map(consent).join('') : `<div class="co-card sp-none">${removed.length ? 'They no longer share any consent with you.' : 'They haven&rsquo;t given you a consent yet.'}</div>`}</section>
-      ${removed.length ? `<section class="sp-sec" aria-labelledby="sp-removed"><h2 id="sp-removed">Consents they&rsquo;ve removed</h2><p>${esc(s.name)} stopped sharing these with you. You keep the versions they&rsquo;d shared until then. Ask again, and you see the current ones as soon as they say yes.</p>${removed.map(gone).join('')}</section>` : ''}
+      <section class="sp-sec" aria-labelledby="sp-given"><h2 id="sp-given">Documents they share with you</h2><p>What ${esc(s.name)} lets you see, by section, and the consent each one is shared under. The documents stay current: when they renew one, you see the new one, and keep the earlier ones you&rsquo;ve seen.</p>
+        ${given.length ? sections(flat(given)) : `<div class="co-card sp-none">${removed.length ? 'They no longer share any consent with you.' : 'They haven&rsquo;t given you a consent yet.'}</div>`}</section>
+      ${removed.length ? `<section class="sp-sec" aria-labelledby="sp-removed"><h2 id="sp-removed">Consents they&rsquo;ve removed</h2><p>${esc(s.name)} stopped sharing these with you. You keep the versions they&rsquo;d shared until then. Ask again, and you see the current ones as soon as they say yes.</p>${sections(flat(removed), 'kept')}${removed.map((c) => `<div class="co-card sp-wait"><span><b>${esc(c.title)}</b> &middot; removed on ${esc(c.removed)}. You keep what they shared until then, as it was.</span><button type="button" class="btn co-btn-ghost co-btn-sm" data-remind="${esc(c.id)}" data-sent="Request sent">Ask again</button></div>`).join('')}</section>` : ''}
       ${pending.length ? `<section class="sp-sec" aria-labelledby="sp-asked"><h2 id="sp-asked">Waiting for their answer</h2><p>Consents you asked for that ${esc(s.name)} hasn&rsquo;t answered yet.</p>${pending.map(ask).join('')}</section>` : ''}
       ${log(s)}`;
   };

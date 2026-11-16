@@ -606,10 +606,9 @@
   // first, then back to the list's order; kept per area while the page is open
   const SEVERITY = ['valid', 'na', 'notrequested', 'notuploaded', 'processing', 'expiring', 'filemissing', 'attention', 'missing', 'rejected', 'expired'];
   const mSort = {};
-  const matrix = (key) => {
-    if (!['workers', 'equipment', 'products'].includes(key)) return '';
+  const mxOf = (key) => {
     let cols = DOCS.filter((d) => d.area === key && d.kind === key && d.roster.length);
-    if (cols.length < 2) return '';
+    if (cols.length < 2) return null;
     // workers: in their categories, their ID first
     const wk = key === 'workers' || key === 'equipment' || key === 'products', people = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
     const XCOLS = M.saveExtra ? Object.keys(EXTRA).map((code) => ({ code, name: EXTRA[code][0], isX: true })) : [];
@@ -626,6 +625,34 @@
       const one = asked.length === 1 ? asked[0][0] : null;
       return { st, spec: one ? `rec:${one.code}:${i}` : `who:${key}:${i}`, tip: asked.map(([d, x]) => `${d.isId ? 'ID' : d.isX ? EXTRA[d.code][1] : SHORT[d.code] || d.name}: ${STATUS[x][0]}`).join(' &middot; ') };
     };
+    return { cols, wk, people, docSt, catCell };
+  };
+  // what each worker's row says now: kept by js/doc-upload.js just before ALMA saves, so the matrix
+  // can show what her reading changed (old dot → new dot), until the user logs out
+  window.CMWorkerSnap = () => {
+    const m = mxOf('workers'), rows = {}; if (!m) return { rows };
+    D.records.workers.forEach((rec, i) => { if (rec.left) return; const cells = {}; m.cols.forEach((c) => { const x = m.catCell(c, i); cells[c.cat] = x ? x.st : null; }); rows[i] = { cells, overall: worstOf(Object.values(cells).filter(Boolean)) }; });
+    return { rows };
+  };
+  const chgState = () => { try { return JSON.parse(sessionStorage.getItem('cm-wk-changes') || 'null'); } catch (e) { return null; } };
+  const CHIP = (st) => (st ? `<span class="cd-chip is-${TONE[st]}"><span class="cd-dot is-${TONE[st]}"></span></span>` : '<span class="cd-chip is-none"><span class="cd-dash">&mdash;</span></span>');
+  const stLabel = (st) => (st ? STATUS[st][0] : 'Not asked');
+  // a worker's row against what it said before ALMA's last reading: which cells changed, and Overall
+  const chgOf = (i, cells, worst, cols) => {
+    const C = chgState(); if (!C || !C.before || !(i in C.before)) return null;
+    const was = C.before[i], prevOf = (c) => (was ? (was.cells[cols[c].cat] != null ? was.cells[cols[c].cat] : null) : 'notuploaded');
+    // someone new: only where a document of theirs was read
+    const read = new Set(((C.notes || {})[i] || []).map((n) => n.code));
+    const changed = cells.map((cur, c) => (was ? prevOf(c) !== cur : !!cur && cols[c].docs.some((d) => read.has(d.code))));
+    const ov = was && was.overall && was.overall !== worst ? `<span class="cd-ov"><span class="co-badge ${STATUS[was.overall][1]}">${STATUS[was.overall][0]}</span><span class="cd-arr" aria-hidden="true">&rarr;</span><span class="co-badge ${STATUS[worst][1]}">${STATUS[worst][0]}</span></span>` : '';
+    if (!changed.some(Boolean) && !ov) return null;
+    return { cell: (c) => changed[c], ov,
+      html: (c) => `<td class="c"><button type="button" class="cd-cell cd-chg" data-chg="${i}:${c}" aria-haspopup="dialog" title="What changed">${CHIP(prevOf(c))}<span class="cd-arr" aria-hidden="true">&rarr;</span>${CHIP(cells[c])}<span class="sr-only">${cols[c].name}: ${stLabel(prevOf(c))} to ${stLabel(cells[c])}. What changed</span></button></td>` };
+  };
+  const matrix = (key) => {
+    if (!['workers', 'equipment', 'products'].includes(key)) return '';
+    const mx = mxOf(key); if (!mx) return '';
+    const { cols, wk, people, docSt, catCell } = mx;
     const recs = D.records[key];
     const label = { workers: 'By worker', equipment: 'By machine', products: 'By product' }[key];
     const rows = recs.map((rec, i) => {
@@ -634,16 +661,19 @@
       const cells = wk ? info.map((x) => (x ? x.st : null)) : cols.map((d) => docSt(d, i));
       const worst = worstOf(cells.filter(Boolean));
       const [wl, wc] = STATUS[worst];
+      const CHG = people ? chgOf(i, cells, worst, cols) : null;
       const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : key === 'products' && M.PERSONA !== 'beatriz' ? ` data-product="${i}"` : '';
-      return `<tr class="cd-row${go ? ' is-rosterable' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (s
+      return `<tr class="cd-row${go ? ' is-rosterable' : ''}${CHG ? ' is-chg' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}${key === 'workers' && PERSON[i] && PERSON[i].isNew ? ' <span class="co-badge b-info cd-new" title="Added recently">New</span>' : ''}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (CHG && CHG.cell(c) ? CHG.html(c) : s
         ? wk ? `<td class="c"><button type="button" class="cd-cell" data-up="${info[c].spec}" title="${info[c].tip}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${cols[c].name} for ${recordName(key, i)}: ${info[c].tip}. Upload a document</span></button></td>`
         : `<td class="c"><button type="button" class="cd-cell" data-up="rec:${cols[c].code}:${i}" title="${STATUS[s][0]} &middot; ${NO_FILE.includes(s) ? 'upload it' : 'replace it'}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name} for ${recordName(key, i)}: ${STATUS[s][0]}. ${NO_FILE.includes(s) ? 'Upload' : 'Replace'} it</span></button></td>`
-        : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td><span class="co-badge ${wc}">${wl}</span></td></tr>`;
+        : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td>${CHG && CHG.ov ? CHG.ov : `<span class="co-badge ${wc}">${wl}</span>`}</td></tr>`;
     }).map((html, i) => (html == null ? null : { i, html, sev: SEVERITY.indexOf(worstOf((wk ? cols.map((c) => catCell(c, i)).map((x) => (x ? x.st : null)) : cols.map((d) => docSt(d, i))).filter(Boolean))) }))
       .filter(Boolean);
     // sorted by Overall, if asked: the worst first, or the best first; otherwise in the list's order
     const so = mSort[key];
     if (so) rows.sort((a, b) => (so > 0 ? b.sev - a.sev : a.sev - b.sev) || a.i - b.i);
+    // in the list's order, workers added recently come first (the latest on top)
+    else if (key === 'workers') { const nw = (i) => (PERSON[i] && PERSON[i].isNew ? 1 : 0); rows.sort((a, b) => nw(b.i) - nw(a.i) || (nw(a.i) ? b.i - a.i : a.i - b.i)); }
     const sortTh = `<th${so ? ` aria-sort="${so > 0 ? 'descending' : 'ascending'}"` : ''}><button type="button" class="cd-sort" data-msort="${key}" title="${!so ? 'Sort by overall: the worst first' : so > 0 ? 'Sort by overall: the best first' : 'Back to the list&rsquo;s order'}">Overall<span aria-hidden="true">${so ? (so > 0 ? '&darr;' : '&uarr;') : '&varr;'}</span></button></th>`;
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${people && window.CMUpload ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:workers">Add worker</button>' : ''}</div>
@@ -965,7 +995,29 @@
     location.href = `company-details.html?area=workers&worker=${i}`;
   };
 
+  let pop = null;
+  const closePop = () => { if (pop) { pop.remove(); pop = null; } };
+  const openPop = (b) => {
+    closePop();
+    const [i, c] = b.dataset.chg.split(':').map(Number), mx = mxOf('workers'), col = mx.cols[c], C = chgState() || {}, was = (C.before || {})[i];
+    const cur = (mx.catCell(col, i) || {}).st || null, prev = was ? (was.cells[col.cat] != null ? was.cells[col.cat] : null) : 'notuploaded';
+    const codes = new Set(col.docs.map((d) => d.code)), notes = ((C.notes || {})[i] || []).filter((n) => codes.has(n.code));
+    const badge = (st) => (st ? `<span class="co-badge ${STATUS[st][1]}">${STATUS[st][0]}</span>` : '<span class="co-badge b-neu">Not asked</span>');
+    pop = document.createElement('div'); pop.className = 'cd-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', `What changed: ${col.name}`);
+    pop.innerHTML = `<div class="cd-pop-h"><b>${esc(col.name)}</b><button type="button" class="dlg-x" data-popx aria-label="Close">&times;</button></div>
+      <p class="cd-pop-st">${badge(prev)}<span class="cd-arr" aria-hidden="true">&rarr;</span>${badge(cur)}</p>
+      ${notes.length ? `<ul class="cd-pop-l">${notes.map((n) => `<li><b>${esc(n.name)}</b><span>${n.valid && n.valid !== '—' ? `${/^\d/.test(n.valid) ? 'Valid until ' : ''}${esc(n.valid)} &middot; ` : ''}from ${esc(n.file)}</span></li>`).join('')}</ul>` : `<p class="cd-pop-n">${was ? 'Changed with the documents ALMA read.' : 'New worker, added with the documents ALMA read.'}</p>`}
+      <p class="cd-pop-f">Read by ALMA on ${esc(C.at || today())}, checked by ${esc(me === 'You' ? 'you' : me)}.</p>`;
+    document.body.appendChild(pop);
+    const r = b.getBoundingClientRect(), w = pop.offsetWidth;
+    pop.style.top = `${Math.round(r.bottom + 8)}px`; pop.style.left = `${Math.round(Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2)))}px`;
+    pop.querySelector('[data-popx]').addEventListener('click', () => { closePop(); b.focus(); });
+  };
+  document.addEventListener('click', (e) => { if (pop && !pop.contains(e.target) && !e.target.closest('[data-chg]')) closePop(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pop) closePop(); });
+  addEventListener('scroll', closePop, { passive: true });
   groupsEl.addEventListener('click', (e) => {
+    const cg = e.target.closest('[data-chg]'); if (cg) { e.stopPropagation(); if (pop && pop.dataset.for === cg.dataset.chg) closePop(); else { openPop(cg); pop.dataset.for = cg.dataset.chg; } return; }
     const sw = e.target.closest('[data-archive]');
     if (sw) { const i = +sw.dataset.archive; if (sw.getAttribute('aria-checked') === 'true') unarchive(i); else askArchive(i); return; }
     const ua = e.target.closest('[data-unarchive]'); if (ua) { unarchive(+ua.dataset.unarchive); return; }

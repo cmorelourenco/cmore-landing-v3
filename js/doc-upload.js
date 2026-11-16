@@ -375,7 +375,9 @@ window.CMUpload = (() => {
 .cmu-x svg { width: 1.125rem; height: 1.125rem; }
 .cmu-body { flex: 1; min-height: 0; overflow: auto; padding: 0 1.5rem 1rem; display: grid; grid-template-columns: minmax(0, 1fr); /* never wider than the panel: a long file name is cut, not the panel stretched */ grid-auto-rows: max-content; /* each part its full height (a long table isn't squeezed to fit): the body scrolls */ gap: 1rem; align-content: start; }
 .cmu-foot { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; padding: 1rem 1.5rem 1.25rem; border-top: 1px solid var(--color-line); }
-.cmu-foot .cmu-foot-l { margin-right: auto; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-foot .cmu-foot-l { margin-right: auto; min-width: 0; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.cmu-foot > button, .cmu-foot > .btn { flex: none; white-space: nowrap; }
+.cmu-foot .cmu-wk-go { min-width: 8.25rem; justify-content: center; } /* Accept worker, Next worker, Finish: one width */ /* the actions keep to one line; the note beside them wraps */
 .cmu-now { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; border-radius: 0.625rem; background: var(--color-off-white); font-size: 0.875rem; }
 .cmu-now b { font-weight: 600; color: var(--color-ink); }
 .cmu-now span { color: var(--color-ink-subtle); }
@@ -431,6 +433,10 @@ html[data-theme="dark"] .cmu-to select { background-image: url("data:image/svg+x
 .cmu-src small { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .cmu-src-ic { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 0.5rem; background: color-mix(in oklab, var(--color-positive, #3d7a2c) 12%, transparent); color: var(--color-positive, #3d7a2c); }
 .cmu-src-ic svg { width: 1.125rem; height: 1.125rem; }
+.cmu-only { display: grid; gap: 0.25rem; font-size: 0.875rem; line-height: 1.5; color: var(--color-ink-subtle); }
+.cmu-only h3 { font-size: 1rem; font-weight: 600; line-height: 1.3; color: var(--color-ink); }
+.cmu-only b { font-weight: 600; color: var(--color-ink); }
+.cmu-req { color: var(--color-coral-deep, #b5432c); font-weight: 600; }
 .cmu-wq { width: 100%; max-width: none; margin-bottom: 0.75rem; }
 .cmu-dnone { padding: 1rem 0; text-align: center; font-size: 0.875rem; color: var(--color-ink-subtle); }
 .cmu-dnone[hidden], .cmu-r[hidden] { display: none; }
@@ -1097,12 +1103,13 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const manualStep = () => {
       head('ALMA', 'Add a worker manually', 'Their full name and one of their ID document, tax or social security numbers are needed; the rest is optional. Add their documents too, and I&rsquo;ll read them for you to check.');
       const v = manual.prof;
-      const cell = ([f, l, kind]) => `<div${kind === 'wide' ? ' class="cmu-wide"' : ''}><dt>${l}${f === 'name' ? ' <span class="co-subtle">&middot; needed</span>' : ''}</dt><dd${Array.isArray(kind) ? ' class="cmu-to"' : ''}>${Array.isArray(kind) ? `<select data-mf="${f}" aria-label="${l}">${kind.map((o) => `<option${v[f] === o ? ' selected' : ''}>${o}</option>`).join('')}</select>` : kind === 'date' ? `<input type="date" data-mf="${f}" value="${isoOf(v[f])}" aria-label="${l}">` : `<input data-mf="${f}" value="${esc(v[f])}" aria-label="${l}"${f === 'name' ? ' required' : ''}>`}</dd></div>`;
+      const cell = ([f, l, kind]) => `<div${kind === 'wide' ? ' class="cmu-wide"' : ''}><dt>${l}${['name', 'tax', 'ss', 'no'].includes(f) ? ' <span class="cmu-req" aria-hidden="true">*</span>' : ''}</dt><dd${Array.isArray(kind) ? ' class="cmu-to"' : ''}>${Array.isArray(kind) ? `<select data-mf="${f}" aria-label="${l}">${kind.map((o) => `<option${v[f] === o ? ' selected' : ''}>${o}</option>`).join('')}</select>` : kind === 'date' ? `<input type="date" data-mf="${f}" value="${isoOf(v[f])}" aria-label="${l}">` : `<input data-mf="${f}" value="${esc(v[f])}" aria-label="${l}"${f === 'name' ? ' required' : ''}>`}</dd></div>`;
       const list = manual.files.length ? `<div class="cmu-list">${manual.files.map((f, k) => `<div class="cmu-f"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${size(f.size)}</small><button type="button" class="cmu-rm" data-mrm="${k}" aria-label="Remove ${esc(f.name)}">${XI}</button></div>`).join('')}</div>` : '';
-      $('cmu-body').innerHTML = MG.map(([h, F]) => `<h3 class="cmu-h">${h}</h3><section class="cmu-r is-editing cmu-manual" aria-label="${h}"><dl class="cmu-fields">${F.map(cell).join('')}</dl></section>`).join('')
+      // what's required, said once at the top: the name, and one number that's only theirs
+      $('cmu-body').innerHTML = '<p class="cmu-only"><span><span class="cmu-req">*</span> Required: <b>the full name</b>, and <b>at least one ID</b> &middot; tax number, social security number or ID document number.</span></p>' + MG.map(([h, F]) => `<h3 class="cmu-h">${h}</h3><section class="cmu-r is-editing cmu-manual" aria-label="${h}"><dl class="cmu-fields">${F.map(cell).join('')}</dl></section>`).join('')
         + `<h3 class="cmu-h">Their documents <span class="co-subtle">&middot; optional</span></h3><div class="cmu-drop" id="cmu-drop" role="button" tabindex="0" aria-label="Add their documents">${UP}<b>${manual.files.length ? 'Add more of their documents' : 'Drop their documents here'}</b><span>or <u>browse your device</u> &middot; ALMA reads each one, for you to check</span></div>${list}`;
       const n = manual.files.length;
-      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${mWhy(v)}</span><button type="button" class="btn btn-primary btn-sm" data-madd${mOk(v) ? '' : ' disabled'}>${n ? `Add worker and check ${n === 1 ? 'the document' : `${n} documents`}` : 'Add worker'}</button>`;
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${mWhy(v)}</span><button type="button" class="btn btn-primary btn-sm" data-madd${mOk(v) ? '' : ' disabled'}>${n && manual.ret !== 'who' ? `Add worker and check ${n === 1 ? 'the document' : `${n} documents`}` : 'Add worker'}</button>`;
     };
     const detailsStep = () => {
       const P = chosen();
@@ -1217,7 +1224,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         <td><label class="cmu-wp" for="cmu-pk-${q.key}"><span class="cmu-pic" aria-hidden="true">${esc(initials(q.name))}</span><span class="cmu-wp-t"><b>${esc(q.name)}</b><small>${esc(q.type)} &middot; ${esc(q.no)}</small></span></label></td>
         <td class="cmu-wn">${nDocs(q) ? `${nDocs(q)} document${nDocs(q) === 1 ? '' : 's'}` : isM(q) ? 'On the equipment list' : isP(q) ? 'On the product list' : 'On the register'}</td><td><span class="co-badge ${q.i == null ? 'b-info' : 'b-neu'}">${isM(q) ? 'New machine' : isP(q) ? 'New product' : q.i == null ? 'New' : 'On your list'}</span></td></tr>`;
       const search = all.length > 5 ? `<label class="co-search cmu-wq">${SEARCH_I}<input type="search" placeholder="Search by name or ID number" aria-label="Search the workers" data-wq value="${esc(wq)}"></label>` : '';
-      $('cmu-body').innerHTML = U.map(uCard).join('') + search + `<div class="cmu-wt"><table><thead><tr><th class="c"><input type="checkbox" class="cmu-pck" data-pall="n" aria-label="Select everyone shown"></th><th>${other.length ? 'Worker, machine or product' : 'Worker'}</th><th>Documents</th><th></th></tr></thead><tbody>${nw.concat(all.filter((q) => q.i != null), other).map(row).join('')}<tr class="cmu-wnone"${every.some(wMatch) ? ' hidden' : ''}><td colspan="4">No one matches that.</td></tr></tbody></table></div>`;
+      const addOne = `<div class="cmu-lib"><button type="button" class="btn btn-quiet btn-sm cm-lib-b" data-manual>${ADDP}<span>Add a worker manually</span></button></div>`;
+      // only who's ticked is touched: said before the list
+      const only = '<div class="cmu-only"><h3>Select workers to update</h3><p>ALMA only updates <b>the workers you select</b>. Anyone not selected stays as they are on your list, and their documents aren&rsquo;t saved.</p></div>';
+      $('cmu-body').innerHTML = U.map(uCard).join('') + only + search + `<div class="cmu-wt"><table><thead><tr><th class="c"><input type="checkbox" class="cmu-pck" data-pall="n" aria-label="Select everyone shown"></th><th>${other.length ? 'Worker, machine or product' : 'Worker'}</th><th>Documents</th><th></th></tr></thead><tbody>${nw.concat(all.filter((q) => q.i != null), other).map(row).join('')}<tr class="cmu-wnone"${every.some(wMatch) ? ' hidden' : ''}><td colspan="4">No one matches that.</td></tr></tbody></table></div>${addOne}`;
       wAll();
       $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${open.length ? `Tell me about ${open.length === 1 ? 'the possible match' : `the ${open.length} possible matches`} first` : `${nOn} of ${every.length} selected`}</span><button type="button" class="btn btn-primary btn-sm" data-pgo${open.length || !nOn ? ' disabled' : ''}>Continue</button>`;
     };
@@ -1310,19 +1320,21 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const peekFor = (key) => { const q = batch[wi]; if (key === 'p') { if (q && q.lists.length) openPeek(q.key); else closePeek(); } else if (key != null && results[key] && results[key].slot) openPeek('r:' + key); else closePeek(); };
     const wGo = (j) => { wi = j; const q = batch[wi]; q.moved = ''; wOpen = null; step = 'worker'; paint(); $('cmu-body').scrollTop = 0; closePeek(); };
     const keep = () => { const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; };
+    const decided = (x) => !!(x.ok || x.rej);
     const wkFoot = () => {
-      const q = batch[wi], n = wNeeds(q), rest = batch.filter((x) => x !== q && !x.ok && !x.skip).length;
+      const q = batch[wi], n = wNeeds(q), rest = batch.filter((x) => x !== q && !decided(x)).length;
       if (q.ok && n) q.ok = false; // a document undone: the worker isn't accepted any more
-      // accepted or skipped already (back to them with the arrows): undone here, or on to the next
-      if (q.ok || q.skip) { $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${q.ok ? 'Worker accepted' : q.i == null ? 'Skipped: not added' : 'Skipped: their documents aren&rsquo;t saved'}</span><button type="button" class="btn btn-quiet btn-sm" data-wkundo>${q.ok ? 'Unaccept worker' : 'Undo skip'}</button><button type="button" class="btn btn-primary btn-sm" data-wknext>${rest ? 'Next worker' : 'Finish'}</button>`; return; }
-      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `${n === 1 ? 'One document needs' : `${n} documents need`} you: accept or reject ${n === 1 ? 'it' : 'them'}` : ''}</span><button type="button" class="link-btn" data-wkskip title="${q.i == null ? 'Don&rsquo;t add them now' : 'Don&rsquo;t save their documents now'}">Skip</button><button type="button" class="btn btn-primary btn-sm" data-wkok${n ? ' disabled' : ''}>Accept worker</button>`;
+      // accepted or rejected already (back to them with the arrows): undone here, or on to the next
+      if (decided(q)) { $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${q.ok ? 'Worker accepted' : q.i == null ? 'Rejected: not added' : 'Rejected: their documents aren&rsquo;t saved'}</span><button type="button" class="btn btn-quiet btn-sm" data-wkundo>${q.ok ? 'Unaccept worker' : 'Undo reject'}</button><button type="button" class="btn btn-primary btn-sm cmu-wk-go" data-wknext>${rest ? 'Next worker' : 'Finish'}</button>`; return; }
+      // Skip: for now only, they come back once the others are done; Reject: not added (or nothing of theirs saved)
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `${n === 1 ? 'One document needs' : `${n} documents need`} you` : ''}</span>${rest ? '<button type="button" class="link-btn" data-wkskip title="Come back to them once the others are done">Skip for now</button>' : ''}<button type="button" class="btn btn-quiet btn-sm" data-wkrej title="${q.i == null ? 'Don&rsquo;t add them' : 'Don&rsquo;t save their documents'}">Reject worker</button><button type="button" class="btn btn-primary btn-sm cmu-wk-go" data-wkok${n ? ' disabled' : ''}>Accept worker</button>`;
     };
     const workerStep = () => {
       const q = batch[wi]; if (!q) return;
       if (q.ok && wNeeds(q)) q.ok = false;
       const v = profOf(q), D = docsOf(q), isNew = q.i == null, c = confsOf(q), pl = pLow(q), pOpen = wOpen === 'p';
       head('ALMA', 'Check each worker', 'Their documents, and what I read on each one. Low confidence needs you: check it against the file, then accept or reject it. High and medium confidence are up to you. Open a document to see the file beside this panel.');
-      const top = `<div class="cmu-wk-top"><span class="co-badge ${isNew ? 'b-info' : 'b-neu'}">${isNew ? 'New worker' : 'On your list'}</span>${q.ok ? '<span class="co-badge b-ok">Accepted</span>' : q.skip ? '<span class="co-badge b-neu">Skipped</span>' : ''}<span class="cmu-wk-n"><button type="button" data-wprev aria-label="Previous worker"${wi ? '' : ' disabled'}>${PREV}</button><span>${wi + 1} of ${batch.length}</span><button type="button" data-wnext aria-label="Next worker"${wi < batch.length - 1 ? '' : ' disabled'}>${NEXT}</button></span></div>`;
+      const top = `<div class="cmu-wk-top"><span class="co-badge ${isNew ? 'b-info' : 'b-neu'}">${isNew ? 'New worker' : 'On your list'}</span>${q.ok ? '<span class="co-badge b-ok">Accepted</span>' : q.rej ? '<span class="co-badge b-over">Rejected</span>' : q.skip ? '<span class="co-badge b-neu">Skipped for now</span>' : ''}<span class="cmu-wk-n"><button type="button" data-wprev aria-label="Previous worker"${wi ? '' : ' disabled'}>${PREV}</button><span>${wi + 1} of ${batch.length}</span><button type="button" data-wnext aria-label="Next worker"${wi < batch.length - 1 ? '' : ' disabled'}>${NEXT}</button></span></div>`;
       const reg = srcList(), lk = q.lists[0], lr = lk != null ? results[lk] : null;
       // the register's line for them: what it says of them (a job changed on it, shown so)
       const pBody = !pOpen ? '' : `<dl class="cmu-fields">${PF.map(([f, l, date]) => { const flag = isNew && !(q.fe && q.fe.has(f)) && !q.checked && c[f] != null && c[f] < 75; return `<div${flag ? ' class="is-flag"' : ''} data-row="p:${f}"><dt>${l}</dt><dd>${inp(`data-pf="${f}"`, v[f] || '', date, l)}${f === 'role' && q.roleWas ? `<span class="cmu-was">Was ${esc(q.roleWas)} on your list</span>` : ''}<span class="cmu-tg">${tagP(q, f)}</span></dd></div>`; }).join('')}</dl>`
@@ -1374,15 +1386,19 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       wkFoot();
     };
     // accepted or skipped: on to the next one not decided yet; none left, on to saving
-    const nextW = () => { const j = batch.findIndex((x, n) => n > wi && !x.ok && !x.skip), j2 = j >= 0 ? j : batch.findIndex((x) => !x.ok && !x.skip); if (j2 >= 0) wGo(j2); else finish(); };
+    const nextW = () => {
+      const open = (x) => !decided(x), after = (f) => { const j = batch.findIndex((x, n) => n > wi && f(x)); return j >= 0 ? j : batch.findIndex(f); };
+      let j = after((x) => open(x) && !x.skip); if (j < 0) j = after((x) => open(x) && x !== batch[wi]); if (j < 0 && open(batch[wi])) j = wi;
+      if (j >= 0) wGo(j); else finish();
+    };
     const finish = () => {
       closePeek();
-      batch.forEach((q) => { if (q.skip) q.decision = 'no'; const v = profOf(q); if (q.i == null && !q.skip) Object.assign(q, { name: (v.name || q.name).trim(), role: v.role, type: v.type, no: v.no, valid: v.valid }); });
-      const base = (M.WORKERS || []).length; batch.filter((q) => q.i == null && !q.skip).forEach((q, k) => { q.ni = base + k; });
-      results.forEach((r) => { if (quiet(r)) r.ok = true; if (!r.owner) return; r.wk = true; if (r.owner.skip) r.on = false; else if (r.on) r.ok = true; });
+      batch.forEach((q) => { if (q.rej) q.decision = 'no'; const v = profOf(q); if (q.i == null && !q.rej) Object.assign(q, { name: (v.name || q.name).trim(), role: v.role, type: v.type, no: v.no, valid: v.valid }); });
+      const base = (M.WORKERS || []).length; batch.filter((q) => q.i == null && !q.rej).forEach((q, k) => { q.ni = base + k; });
+      results.forEach((r) => { if (quiet(r)) r.ok = true; if (!r.owner) return; r.wk = true; if (r.owner.rej) r.on = false; else if (r.on) r.ok = true; });
       // what no worker was found on (a company document, a file she couldn't place): the review, as before
       if (shown().length) { step = 3; paint(); $('cmu-body').scrollTop = 0; return; }
-      if (!results.some((r) => r.on && r.slot) && !batch.some((q) => q.ok)) { close(); toast('Nothing saved: you skipped every worker.'); return; }
+      if (!results.some((r) => r.on && r.slot) && !batch.some((q) => q.ok)) { close(); toast('Nothing saved: you rejected every worker.'); return; }
       save();
     };
     const whoStep = () => {
@@ -1430,7 +1446,21 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const go = () => { if (!el.isConnected || step !== 'sort') return; sorted += 1; if (sorted >= results.length) { toReview(); if (tucked && el.isConnected) toast(window.CMAlmaJob ? window.CMAlmaJob.doneMsg(shown().length) : 'ALMA has filed your documents.', ['Review', () => tuck(false)]); return; } paint(); setTimeout(go, 420); };
       setTimeout(go, 420);
     };
+    // the workers checked one at a time: their row as it was, and the documents read for them, kept
+    // (until logout) for the matrix to show what changed (js/company-details.js)
+    const noteChanges = () => {
+      if (!found || !found.w || !window.CMWorkerSnap) return;
+      const snap = window.CMWorkerSnap().rows, C = (() => { try { return JSON.parse(sessionStorage.getItem('cm-wk-changes') || 'null'); } catch (e) { return null; } })() || { before: {}, notes: {} };
+      batch.filter((q) => q.ok).forEach((q) => {
+        const w = q.i != null ? q.i : q.ni; if (w == null) return;
+        if (!(w in C.before)) C.before[w] = q.i != null ? snap[q.i] || null : null;
+        C.notes[w] = (C.notes[w] || []).concat(results.filter((r) => r.owner === q && r.on && r.slot).map((r) => ({ code: r.slot.code, name: plain(r.slot.name), file: r.file.name, valid: r.read ? r.read.valid : '' })));
+      });
+      C.at = M.today();
+      try { sessionStorage.setItem('cm-wk-changes', JSON.stringify(C)); } catch (e) {}
+    };
     const save = () => {
+      noteChanges();
       // what was rejected stays as it was; the rest is filed
       const kept = new Set(results.filter((r) => !r.on && r.slot && fileDiff(r)));
       const done = results.filter((r) => r.on && r.slot);
@@ -1484,6 +1514,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         if (nEq) parts.push(`${nEq} machine${nEq === 1 ? '' : 's'} added`);
         if (nPr) parts.push(`${nPr} product${nPr === 1 ? '' : 's'} added`);
         if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} added`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`, nDet && `${nDet} with new details`].filter(Boolean).join(', ')})`);
+        const nW = found && found.w ? batch.filter((q) => q.ok).length : 0;
+        if (nW) parts.push(`${nW} worker${nW === 1 ? '' : 's'} with changes, marked on the table`);
         const msg = parts.join(' &middot; ') + '.';
         // the crew is part of how the pages are drawn: they come back with it, and the message after
         if (nCrew || nEq || nPr) {
@@ -1494,12 +1526,14 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         }
         say(msg, done); return;
       }
-      say(done.length === 1 ? `${esc(done[0].slot.name)}${done[0].slot.who ? ` for ${esc(done[0].slot.who)}` : ''} saved. ALMA checked it, valid until ${esc(done[0].read.valid)}.`
-        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`, done);
+      say((done.length === 1 ? `${esc(done[0].slot.name)}${done[0].slot.who ? ` for ${esc(done[0].slot.who)}` : ''} saved. ALMA checked it, valid until ${esc(done[0].read.valid)}.`
+        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`) + (found && found.w && batch.some((q) => q.ok) ? (() => { const n = batch.filter((q) => q.ok).length; return ` ${n === 1 ? 'One worker' : `${n} workers`} with changes, marked on the table.`; })() : ''), done);
     };
     // the message, and the page brought up to date: by its own callback, or (a job picked up from
     // another page, which has none) by drawing it again, the message carried over
     const say = (msg, done) => {
+      // workers checked one at a time: the page comes back with what changed marked on the table
+      if (found && found.w && batch.some((q) => q.ok)) { try { sessionStorage.setItem('cm-upload-toast', msg); } catch (e) {} location.reload(); return; }
       if (opts.onSaved) { toast(msg); opts.onSaved(done); return; }
       if (opts.resumed) { try { sessionStorage.setItem('cm-upload-toast', msg); } catch (e) {} location.reload(); return; }
       toast(msg);
@@ -1558,11 +1592,19 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-save]')) { toSave(); return; }
       if (t('[data-pck]')) { const b = t('[data-pck]'), q = found.people.find((x) => x.key === b.dataset.pck); q.decision = b.checked ? 'ok' : 'no'; const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector(`[data-pck="${q.key}"]`)?.focus({ preventScroll: true }); return; }
       if (t('[data-pall]')) { const b = t('[data-pall]'), on = b.checked; pickable().filter(wMatch).forEach((q) => { q.decision = on ? 'ok' : 'no'; }); const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector('[data-pall]')?.focus({ preventScroll: true }); return; }
-      if (t('[data-manual]')) { manual = manual || { files: [], prof: Object.fromEntries(MG.flatMap(([, F]) => F).map(([f, , kind]) => [f, Array.isArray(kind) ? kind[0] : ''])) }; step = 'manual'; paint(); el.querySelector('[data-mf="name"]')?.focus(); return; }
+      if (t('[data-manual]')) { const fromWho = step === 'who'; manual = fromWho || !manual || manual.ret ? { ret: fromWho ? 'who' : null, files: [], prof: Object.fromEntries(MG.flatMap(([, F]) => F).map(([f, , kind]) => [f, Array.isArray(kind) ? kind[0] : ''])) } : manual; step = 'manual'; paint(); el.querySelector('[data-mf="name"]')?.focus(); return; }
       if (t('[data-mrm]')) { manual.files.splice(+t('[data-mrm]').dataset.mrm, 1); paint(); return; }
-      if (t('[data-mback]')) { step = 1; paint(); return; }
+      if (t('[data-mback]')) { step = manual && manual.ret === 'who' ? 'who' : 1; paint(); return; }
       if (t('[data-madd]')) {
         const v = manual.prof; if (!mOk(v)) return;
+        // from the list of who ALMA read: back to it, with them on it (ticked), their documents theirs
+        if (manual.ret === 'who') {
+          const no = v.no.trim(), tax = v.tax.trim(), ss = v.ss.trim(), at = files.length;
+          const q = { key: `manual${found.people.length}`, i: null, manual: true, name: v.name.trim(), type: no ? v.type : tax ? 'Tax number' : 'Social security number', no: no || tax || ss, valid: v.valid, role: v.role.trim(), prof: Object.assign({}, v, { name: v.name.trim() }), files: manual.files.map((f, k) => at + k), lists: [], decision: 'ok', edited: true };
+          files = files.concat(manual.files); manual.files.forEach(() => found.per.push({ people: [q] }));
+          found.people.unshift(q); manual = null; step = 'who'; paint(); $('cmu-body').scrollTop = 0;
+          toast(`${esc(q.name)} added to the list, to check with the others.`); return;
+        }
         const fl = manual.files.slice(), q = { key: 'manual', i: null, manual: true, name: v.name.trim(), type: v.no.trim() ? v.type : '', no: v.no.trim(), valid: v.valid, role: v.role.trim(), prof: Object.assign({}, v, { name: v.name.trim() }), files: fl.map((f, k) => k), lists: [], decision: 'ok', edited: true };
         // no documents: added as typed. Documents: she reads them, and they're checked as any worker's
         if (!fl.length) { found = { people: [q], per: [], changes: [], asked: false, manual: true }; results = []; save(); return; }
@@ -1588,10 +1630,11 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-wdout]')) { const k = +t('[data-wdout]').dataset.wdout; Object.assign(results[k], { on: false, ok: false }); if (peek === 'r:' + k) closePeek(); keep(); return; }
       if (t('[data-wdin]')) { results[+t('[data-wdin]').dataset.wdin].on = true; keep(); return; }
       if (t('[data-wkback]')) { if (wi > 0) wGo(wi - 1); else { closePeek(); step = found.people[0] && found.people[0].manual ? 'manual' : 'who'; paint(); } return; }
-      if (t('[data-wkok]')) { Object.assign(batch[wi], { ok: true, skip: false }); if (batch.some((x) => !x.ok && !x.skip)) nextW(); else keep(); return; }
-      if (t('[data-wkundo]')) { Object.assign(batch[wi], { ok: false, skip: false }); keep(); return; }
+      if (t('[data-wkok]')) { Object.assign(batch[wi], { ok: true, rej: false, skip: false }); if (batch.some((x) => !decided(x))) nextW(); else keep(); return; }
+      if (t('[data-wkrej]')) { Object.assign(batch[wi], { ok: false, rej: true, skip: false }); if (batch.some((x) => !decided(x))) nextW(); else keep(); return; }
+      if (t('[data-wkundo]')) { Object.assign(batch[wi], { ok: false, rej: false }); keep(); return; }
       if (t('[data-wknext]')) { nextW(); return; }
-      if (t('[data-wkskip]')) { Object.assign(batch[wi], { ok: false, skip: true }); if (batch.some((x) => !x.ok && !x.skip)) nextW(); else keep(); return; }
+      if (t('[data-wkskip]')) { batch[wi].skip = true; nextW(); return; }
       if (t('[data-pgo]')) { if (found.people.some((q) => q.i == null && q.decision === 'ok')) readDetails(); else if (roleChanges().length) { step = 'details'; paint(); $('cmu-body').scrollTop = 0; } else { fileThem(false); $('cmu-body').scrollTop = 0; } return; }
       if (t('[data-wback]')) { found.people.forEach((q) => { q.editing = false; }); step = found.asked ? 'who' : 1; paint(); return; }
       if (t('[data-wgo]')) { found.people.forEach((q) => { if (q.i == null && q.out) q.decision = 'no'; }); fileThem(false); $('cmu-body').scrollTop = 0; return; }
@@ -1743,6 +1786,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     root.addEventListener('drop', (e) => { const r = e.target.closest('[data-drop]'); mark(null); if (!r || !e.dataTransfer.files.length) return; e.preventDefault(); e.stopPropagation(); open(r.dataset.drop, { files: e.dataTransfer.files, onSaved }); });
   };
 
+  // logging out forgets what ALMA's last readings changed on the workers' matrix
+  document.addEventListener('click', (e) => { if (e.target.closest('#who-logout')) try { sessionStorage.removeItem('cm-wk-changes'); } catch (x) {} }, true);
   // a message carried over a reload (a worker list approved)
   try { const t = sessionStorage.getItem('cm-upload-toast'); if (t) { sessionStorage.removeItem('cm-upload-toast'); setTimeout(() => toast(t), 500); } } catch (e) {}
 
