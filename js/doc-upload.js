@@ -1464,6 +1464,19 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       // what was rejected stays as it was; the rest is filed
       const kept = new Set(results.filter((r) => !r.on && r.slot && fileDiff(r)));
       const done = results.filter((r) => r.on && r.slot);
+      // each worker's log (js/company-details.js): who was added, each document filed for them with
+      // what it was before, and each one rejected
+      const WL = window.CMWorkerLog;
+      if (WL) {
+        const was = {}, before = (w) => (was[w] = was[w] || WL.docs(w));
+        (found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && !isR(q)) : []).forEach((q, k) => WL.add(q.ni != null ? q.ni : (M.WORKERS || []).length + k, { ev: 'added', how: q.manual ? 'By hand' : 'From their documents' }));
+        results.filter((r) => r.slot && r.file && (r.on || (r.owner && r.owner.ok))).forEach((r) => {
+          const s = r.slot, w = s.fresh ? s.fresh.ni : s.i; if (w == null || !WL.isWk(s.code)) return;
+          const from = s.fresh ? null : before(w)[s.code] || null;
+          WL.add(w, r.on ? { ev: 'upload', code: s.code, name: plain(s.name), file: r.file.name, from: from && !['missing', 'notuploaded', 'notrequested'].includes(from) ? from : null, conf: r.edited ? 98 : r.conf, edited: !!r.edited }
+            : { ev: 'rejected', code: s.code, name: plain(s.name), file: r.file.name, from });
+        });
+      }
       const crew = { added: [], left: [], roles: {}, names: {}, details: {} };
       ((found && found.changes) || []).filter((c) => c.decision === 'ok').forEach((c) => { crew.roles[c.i] = c.to; });
       // workers on the list, checked one at a time: what the user changed of their details

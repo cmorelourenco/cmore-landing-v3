@@ -149,7 +149,7 @@
   const history = (d) => {
     const vs = versionsOf(d);
     const cur = NO_FILE.includes(d.status) ? '' : `<tr class="is-cur" data-version="${d.id}:0" tabindex="0" role="button"><td><b>Current</b><span class="d">${d.status === 'archived' ? 'Archived' : 'In use'} &middot; ${d.ref || '—'}</span></td><td>${d.issued === '—' ? dash : d.issued}</td><td>${d.valid === '—' ? dash : d.valid}</td><td>${dash}</td><td>${confCell(confOf(d))}</td><td class="cd-h-go">Open</td></tr>`;
-    const rows = vs.map((v, k) => `<tr data-version="${d.id}:${k + 1}" tabindex="0" role="button"><td><b>${esc(v.label)}</b><span class="d">Archived &middot; ${v.ref || '—'} &middot; uploaded by ${escE(v.by)}</span></td><td>${v.issued}</td><td>${v.valid}</td><td>${v.replaced}</td><td>${confCell(v.conf)}</td><td class="cd-h-go">Open</td></tr>`).join('');
+    const rows = vs.map((v, k) => `<tr data-version="${d.id}:${k + 1}" tabindex="0" role="button"><td><b>${esc(v.label)}</b><span class="d">Archived &middot; ${v.ref || '—'}</span><span class="d">Uploaded by ${escE(v.by)}</span></td><td>${v.issued}</td><td>${v.valid}</td><td>${v.replaced}</td><td>${confCell(v.conf)}</td><td class="cd-h-go">Open</td></tr>`).join('');
     const empty = !cur && !rows ? `<p class="cd-h-none">No versions yet. Once a file is uploaded, every version it replaces is kept here.</p>`
       : !rows ? `<p class="cd-h-none">No earlier versions: this is the first one on C&#8209;MORE.</p>` : '';
     return `<tr class="cd-exp"><td colspan="5"><div class="cd-hist">
@@ -705,6 +705,71 @@
   const docsCard = (rows) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-wk-tbl"><thead><tr><th>Document</th><th class="c">Expires</th><th>Status</th><th><span class="sr-only">Upload</span></th></tr></thead><tbody>${rows.map(docRow).join('')}</tbody></table></div>`;
   const sitesCard = (list) => `<div class="co-card cd-card-pad"><ul class="cd-sites">${list.map((s) => { const [n, client] = SITES[s].split(' &middot; '); return `<li><span class="n">${n}</span><span class="co-subtle">${client}</span></li>`; }).join('')}</ul></div>`;
 
+  // ---- a worker's log, at the end of their page ---------------------------------------------------
+  // Every document's uploads and status changes, when, and by whom; and their own (added, archived).
+  // What's done in this session (js/doc-upload.js, the archive switch) is kept in 'cm-wk-log' as it
+  // happened; what was on file before is drawn from each document's dates (prototype)
+  const LOG_KEY = 'cm-wk-log';
+  const logOf = () => { try { return JSON.parse(sessionStorage.getItem(LOG_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const wkDocs = (i) => { const per = recordDocs('workers', i); per.unshift(idRow(i)); if (M.extraOf) per.push(...Object.keys(EXTRA).map((code) => extraRow(code, i))); return per; };
+  window.CMWorkerLog = {
+    add: (i, ev) => { const L = logOf(); (L[i] = L[i] || []).push(Object.assign({ at: M.today(), t: Date.now(), by: M.me }, ev)); try { sessionStorage.setItem(LOG_KEY, JSON.stringify(L)); } catch (e) {} },
+    docs: (i) => { const o = {}; if (PERSON[i]) wkDocs(i).forEach((d) => { o[d.code] = d.status; }); return o; },
+    isWk: (code) => code === 'ID' || !!EXTRA[code] || DOCS.some((d) => d.code === code && d.kind === 'workers'),
+  };
+  const DAY = 864e5;
+  const dOf = (t) => { const n = new Date(t); return `${n.getDate()} ${M.MONTHS[n.getMonth()]} ${n.getFullYear()}`; };
+  const slug = (s) => String(s).toLowerCase().replace(/&[a-z]+;/g, '').normalize('NFD').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
+  const logRows = (i, per) => {
+    const p = PERSON[i], now = Date.now(), own = logOf()[i] || [], ev = [];
+    const upped = new Set(own.filter((e) => e.ev === 'upload').map((e) => e.code));
+    const team = ['Miguel Ferreira', 'Helena Ferreira'];
+    const addedAt = Date.parse(p.addedOn || p.since) || now - 30 * DAY, addE = own.find((e) => e.ev === 'added'), addT = addE ? addE.t : addedAt;
+    // what was on file before this session
+    if (!own.some((e) => e.ev === 'added')) ev.push({ t: addedAt, ev: 'added', how: p.manual ? 'By hand' : p.isNew ? 'From their documents' : '', by: p.isNew ? M.me : team[0] });
+    per.forEach((d) => {
+      if (upped.has(d.code)) return;
+      const st = d.status, has = !NO_FILE.includes(st) && st !== 'na', h = hash(d.code + i), exp = Date.parse(d.exp), name = d.name;
+      const file = `${slug(d.code === 'ID' ? 'id' : name).slice(0, 28)}_${slug(p.name.split(' ').pop())}.pdf`;
+      if (!has) { if (st === 'missing' || st === 'filemissing') ev.push({ t: Math.max(addT + 1, now - (12 + h % 40) * DAY), ev: 'asked', code: d.code, name, by: 'ALMA', to: 'missing' }); return; }
+      if (p.isNew) { ev.push({ t: addedAt, ev: 'upload', code: d.code, name, file, by: M.me, from: null, to: st, conf: 78 + (h % 21) }); return; }
+      let up = !Number.isNaN(exp) ? exp - 365 * DAY : now - (60 + h % 300) * DAY;
+      up = Math.max(Math.min(up, now - (20 + h % 30) * DAY), addedAt + DAY);
+      ev.push({ t: up, ev: 'upload', code: d.code, name, file, by: team[h % 2], from: null, to: ['expiring', 'expired'].includes(st) ? 'valid' : st, conf: 78 + (h % 21) });
+      if (st === 'expiring' || st === 'expired') ev.push({ t: Math.max(up + DAY, Math.min(exp - 60 * DAY, now - DAY)), ev: 'status', code: d.code, name, by: 'ALMA', from: 'valid', to: 'expiring', why: 'Expires within 60 days' });
+      if (st === 'expired') ev.push({ t: Math.min(exp, now), ev: 'status', code: d.code, name, by: 'ALMA', from: 'expiring', to: 'expired', why: 'The expiry date passed' });
+    });
+    if (p.archived && !own.some((e) => e.ev === 'archived')) ev.push({ t: Date.parse(p.archived) || now, ev: 'archived', by: team[0] });
+    // this session's, in the order they happened; an upload is followed by the document's status
+    // (the next upload's 'from', or what it is now)
+    const cur = Object.fromEntries(per.map((d) => [d.code, d.status]));
+    own.forEach((e, k) => {
+      const x = Object.assign({}, e, { t: e.t || now, k: k + 1 });
+      if (e.ev === 'upload') { const nx = own.slice(k + 1).find((y) => y.ev === 'upload' && y.code === e.code); x.to = nx ? (nx.from || 'valid') : cur[e.code] || 'valid'; }
+      ev.push(x);
+    });
+    return ev.sort((a, b) => b.t - a.t || (b.k || 0) - (a.k || 0));
+  };
+  // a status as the matrix shows it (its dot), named; and a change, old → new
+  const LST = (st) => `<span class="cd-lst">${CHIP(st)}<span>${st ? STATUS[st][0] : 'Not asked'}</span></span>`;
+  const LCHG = (a, b) => `<span class="cd-lchg">${LST(a)}<span class="cd-arr" aria-hidden="true">&rarr;</span>${LST(b)}<span class="sr-only">${a ? STATUS[a][0] : ''} to ${b ? STATUS[b][0] : ''}</span></span>`;
+  const logCard = (i, per) => {
+    const L = logRows(i, per), first = PERSON[i].name.split(' ')[0];
+    const who = (b) => (b === 'ALMA' ? '<b class="cd-log-alma">ALMA</b>' : esc(b === 'You' ? 'You' : b));
+    const row = (e) => {
+      const [doc, sub, st] = e.ev === 'upload' ? [esc(e.name), `Uploaded &middot; ${esc(e.file)}${e.conf ? `</span><span class="d">${e.conf}% confidence &middot; ${e.edited ? 'corrected and ' : ''}approved by ${esc(e.by === 'You' ? 'you' : e.by)}` : ''}`, LCHG(e.from || 'notuploaded', e.to)]
+        : e.ev === 'status' ? [esc(e.name), esc(e.why || ''), LCHG(e.from, e.to)]
+        : e.ev === 'asked' ? [esc(e.name), 'Asked for by ALMA', LCHG('notuploaded', e.to)]
+        : e.ev === 'rejected' ? [esc(e.name), `Upload rejected &middot; ${esc(e.file)} not filed`, `${LST(e.from || 'notuploaded')}<span class="cd-lno">No change</span>`]
+        : e.ev === 'added' ? ['Worker added', e.how || '', dash]
+        : e.ev === 'archived' ? ['Worker archived', 'Off the worker list and every site', dash]
+        : ['Worker unarchived', 'Back on the worker list', dash];
+      return `<tr><td><span class="n">${doc}</span>${sub ? `<span class="d">${sub}</span>` : ''}</td><td>${dOf(e.t)}</td><td>${st}</td><td>${who(e.by)}</td></tr>`;
+    };
+    return `<div class="cd-group" data-wk-log><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Log</h3><span class="co-muted">${L.length} entr${L.length === 1 ? 'y' : 'ies'} &middot; every status change of ${esc(first)}&rsquo;s documents, newest first</span></div>
+      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-log-tbl" data-paged="wk-log-${i}"><thead><tr><th>Document</th><th>Date</th><th>Status change</th><th>By</th></tr></thead><tbody>${L.map(row).join('')}</tbody></table></div></div>`;
+  };
+
   // one worker: their profile, whether they may work here, their documents, and their sites.
   // Personal data is Restricted: a client sees it only while this worker is on one of its sites.
   const renderWorker = (i) => {
@@ -767,6 +832,7 @@
       ${docGroups}
       ${month.length ? `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Company documents that name them</h3><span class="co-muted">For all workers &middot; what each one says about ${p.name.split(' ')[0]}</span></div>${catTable(month, i)}</div>` : ''}
       <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${gone ? 'Was on site' : 'On site'}</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${sitesCard(p.sites)}</div>
+      ${logCard(i, per)}
     </div>`;
   };
 
@@ -974,6 +1040,7 @@
       archDlg.querySelector('#cd-arch-go').addEventListener('click', () => {
         const k = +archDlg.dataset.i, q = PERSON[k];
         window.DOC_MODEL.saveCrew({ archive: [k, window.DOC_MODEL.today()] });
+        window.CMWorkerLog.add(k, { ev: 'archived' });
         // the page again from the model, on the same worker, now archived
         try { sessionStorage.setItem('cm-upload-toast', `${q.name} is archived. They&rsquo;re in Archived workers, at the end of Workers, with their documents.`); } catch (e) {}
         location.href = `company-details.html?area=workers&worker=${k}`;
@@ -991,6 +1058,7 @@
   };
   const unarchive = (i) => {
     window.DOC_MODEL.saveCrew({ unarchive: i });
+    window.CMWorkerLog.add(i, { ev: 'unarchived' });
     try { sessionStorage.setItem('cm-upload-toast', `${PERSON[i].name} is back on your worker list. ALMA asks for their documents again.`); } catch (e) {}
     location.href = `company-details.html?area=workers&worker=${i}`;
   };

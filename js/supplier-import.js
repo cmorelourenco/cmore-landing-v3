@@ -316,7 +316,7 @@
   document.body.appendChild(dw);
   let ed = null; // { rows: [index], picked: Set }; or, inviting many, { pre: 1 (the documents) or 2 (the file), picked }
   // inviting many: the documents chosen for all of them, before the file (kept for another file)
-  let asked = null;
+  let asked = null, askedHide = null;
   const own = () => { const o = window.CMOrgs && window.CMOrgs.current(); return (o && o.country) || (BEATRIZ ? 'US' : 'PT'); };
   const edRows = () => ed.rows.map((i) => bulk.rows[i]);
   // what any of them can be asked for: mandatory where it's mandatory in a supplier's own country,
@@ -333,13 +333,17 @@
     return list.filter((d) => d.req).concat(list.filter((d) => !d.req)).map((d) => Object.assign(d, { only: d.ccs.length < ccs.length ? d.ccs : null }));
   };
   const groups = (list) => list.reduce((g, d) => { (g[d.section] = g[d.section] || []).push(d); return g; }, {});
+  // the categories shown (the Categories filter, as in Add a supplier): a hidden one's documents
+  // aren't asked for; Mandatory always shows
+  const shownDocs = () => edDocs().filter((d) => d.req || !ed.hide.has(d.section));
+  const redraw = (focus) => { const b = dw.querySelector('#sid-body'), y = b.scrollTop; edPaint(); b.scrollTop = y; if (focus) { const el = dw.querySelector(focus); if (el) el.focus(); } };
   const onlyIn = (d) => (d.only ? ` &middot; <span class="si-only">only for suppliers in ${d.only.map((cc) => esc(A.country(cc).name)).join(', ')}</span>` : '');
-  const docList = (list, g, n) => `<div class="sa-all"><label class="sa-ck"><input type="checkbox" data-all${n === list.length ? ' checked' : ''}>Select all</label><span><b id="sid-n">${n}</b> of ${list.length} selected</span></div>
+  const docList = (list, g, n) => `<div class="sa-all"><label class="sa-ck"><input type="checkbox" data-all${n === list.length ? ' checked' : ''}>Select all</label><span class="sa-all-r">${A.catFilter ? A.catFilter(edDocs(), ed.hide, ed.fOpen) : ''}<span><b id="sid-n">${n}</b> of ${list.length} selected</span></span></div>
       ${Object.entries(g).map(([sec, l]) => { const c = l.filter((d) => ed.picked.has(d.code)).length; return `<section class="sa-grp"><div class="sa-grp-h"><label class="sa-ck"><input type="checkbox" data-sec="${esc(sec)}"${c === l.length ? ' checked' : ''}>${esc(sec)}</label><span>${c} of ${l.length}</span></div>
         <ul class="sa-docs">${l.map((d) => `<li><label><input type="checkbox" data-doc="${esc(d.code)}"${ed.picked.has(d.code) ? ' checked' : ''}><span><b>${esc(d.name)}</b><small>${esc(d.code)}${d.req ? ' &middot; Mandatory' : ' &middot; Optional'}${onlyIn(d)}</small></span></label></li>`).join('')}</ul></section>`; }).join('')}`;
   // inviting many: 1, every document they can be asked for, to choose from; 2, their Excel file
   const prePaint = () => {
-    const list = edDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length;
+    const list = shownDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length;
     dw.querySelector('#sid-t').textContent = 'Invite suppliers from Excel';
     dw.querySelector('#sid-sub').textContent = ed.pre === 1 ? 'Step 1 of 2 · The documents you need' : 'Step 2 of 2 · Your suppliers';
     dw.querySelector('#sid-body').innerHTML = ed.pre === 1
@@ -354,13 +358,12 @@
       ? `<span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-pre-next>Next: upload the Excel file</button></span>`
       : `<span><button type="button" class="link-btn" data-pre-back>Back</button></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button></span>`;
     if (ed.pre === 1) marks();
-    dw.querySelector('#sid-body').scrollTop = 0;
   };
   const edPaint = () => {
     if (ed.pre) { prePaint(); return; }
     dw.querySelector('#sid-t').textContent = 'Documents to ask for';
     dw.querySelector('#sid-foot').innerHTML = `<span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-sid-apply>Apply</button></span>`;
-    const list = edDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length, rs = edRows();
+    const list = shownDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length, rs = edRows();
     dw.querySelector('#sid-sub').textContent = rs.length === 1 ? nameOf(rs[0]) : `${rs.length} suppliers from ${bulk.file}`;
     dw.querySelector('#sid-body').innerHTML = `<section class="sa-card"><h4>${rs.length === 1 ? 'What you need from them' : `For these ${rs.length} suppliers`}</h4>
         ${rs.length > 1 ? `<div class="si-who">${rs.map((r) => `<span>${esc(nameOf(r))}</span>`).join('')}</div>` : ''}
@@ -369,7 +372,7 @@
     marks();
   };
   const marks = () => {
-    const list = edDocs(), g = groups(list);
+    const list = shownDocs(), g = groups(list);
     dw.querySelectorAll('[data-sec]').forEach((b) => { const l = g[b.dataset.sec], k = l.filter((d) => ed.picked.has(d.code)).length; b.checked = k === l.length; b.indeterminate = k > 0 && k < l.length; b.closest('.sa-grp-h').querySelector('span').textContent = `${k} of ${l.length}`; });
     const all = dw.querySelector('[data-all]'), n = list.filter((d) => ed.picked.has(d.code)).length;
     if (all) { all.checked = n === list.length; all.indeterminate = n > 0 && n < list.length; }
@@ -383,7 +386,7 @@
     // ticked: what every one of them it applies to is asked for already
     const rs = rows.map((i) => bulk.rows[i]), applies = (r, c) => A.docsOf(r.cc).some((d) => d.code === c);
     const any = new Set(rs.flatMap((r) => [...r.docs]));
-    ed = { rows, picked: new Set([...any].filter((c) => rs.every((r) => !applies(r, c) || r.docs.has(c)))) };
+    ed = { rows, picked: new Set([...any].filter((c) => rs.every((r) => !applies(r, c) || r.docs.has(c)))), hide: new Set(), fOpen: false };
     edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
     dw.querySelector('#sid-body').scrollTop = 0;
     setTimeout(() => dw.classList.add('is-open'), 20);
@@ -392,8 +395,9 @@
   const invite = () => {
     if (A.isOpen()) A.close();
     const list = A.docsOf(own());
-    ed = { rows: [], pre: 1, picked: new Set(asked || list.filter((d) => d.req).map((d) => d.code)) };
+    ed = { rows: [], pre: 1, picked: new Set(asked || list.filter((d) => d.req).map((d) => d.code)), hide: askedHide ? new Set(askedHide) : new Set(), fOpen: false };
     err = ''; edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
+    dw.querySelector('#sid-body').scrollTop = 0;
     setTimeout(() => dw.classList.add('is-open'), 20);
     setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
   };
@@ -404,8 +408,12 @@
   dw.addEventListener('click', (e) => {
     if (!ed) return;
     if (e.target.closest('[data-sid-x]')) { edClose(); return; }
-    if (e.target.closest('[data-pre-next]')) { asked = new Set(ed.picked); ed.pre = 2; edPaint(); return; }
-    if (e.target.closest('[data-pre-back]')) { ed.pre = 1; edPaint(); return; }
+    const fb = e.target.closest('[data-saf-btn]'); if (fb) { ed.fOpen = !ed.fOpen; redraw('[data-saf-btn]'); return; }
+    const fc = e.target.closest('[data-saf]'); if (fc) { const c = fc.dataset.saf; if (ed.hide.has(c)) ed.hide.delete(c); else { ed.hide.add(c); edDocs().filter((d) => !d.req && d.section === c).forEach((d) => ed.picked.delete(d.code)); } redraw(`[data-saf="${CSS.escape(c)}"]`); return; }
+    if (e.target.closest('[data-saf-all]')) { ed.hide.clear(); redraw('[data-saf-btn]'); return; }
+    if (ed.fOpen && !e.target.closest('.co-filt')) { ed.fOpen = false; const p = dw.querySelector('.co-filt-panel'), b = dw.querySelector('[data-saf-btn]'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
+    if (e.target.closest('[data-pre-next]')) { asked = new Set(ed.picked); askedHide = new Set(ed.hide); ed.pre = 2; edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return; }
+    if (e.target.closest('[data-pre-back]')) { ed.pre = 1; edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return; }
     if (e.target.closest('[data-sid-apply]')) {
       const list = edDocs();
       ed.rows.forEach((i) => { const r = bulk.rows[i], here = new Set(A.docsOf(r.cc).map((d) => d.code)); r.docs = new Set(list.filter((d) => ed.picked.has(d.code) && here.has(d.code)).map((d) => d.code)); });
@@ -418,11 +426,11 @@
     if (!ed) return;
     const t = e.target;
     if (t.matches('[data-doc]')) { ed.picked[t.checked ? 'add' : 'delete'](t.dataset.doc); marks(); return; }
-    if (t.matches('[data-sec]')) { groups(edDocs())[t.dataset.sec].forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = ed.picked.has(b.dataset.doc); }); marks(); return; }
-    if (t.matches('[data-all]')) { edDocs().forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
+    if (t.matches('[data-sec]')) { groups(shownDocs())[t.dataset.sec].forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = ed.picked.has(b.dataset.doc); }); marks(); return; }
+    if (t.matches('[data-all]')) { shownDocs().forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
   });
   // Escape closes this drawer only (not ALMA's setup panel under it, js/guided-upload.js)
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { e.stopImmediatePropagation(); edClose(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { e.stopImmediatePropagation(); if (ed.fOpen) { ed.fOpen = false; redraw('[data-saf-btn]'); return; } edClose(); } });
 
   // ---- sending, and leaving --------------------------------------------------------------------------
   const send = () => {

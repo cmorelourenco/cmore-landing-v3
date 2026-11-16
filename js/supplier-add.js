@@ -86,6 +86,28 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 .sa .docd-foot .sa-acts { display: flex; align-items: center; gap: 1rem; }
 .sa .btn:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
 .sa-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 120; transform: translateX(-50%); padding: 0.75rem 1.125rem; border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; box-shadow: 0 12px 32px -16px rgba(0,0,0,.5); }
+.sa-all-r { display: flex; align-items: center; gap: 1rem; }
+/* the design system's filter (as on Documents): a ghost button opening a menu of checkbox items */
+.sa .co-filt { position: relative; }
+.sa .co-filt-btn { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.25rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; background: transparent; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); cursor: pointer; transition: background-color .14s ease; }
+.sa .co-filt-btn:hover, .sa .co-filt-btn[aria-expanded="true"] { background: var(--color-mid-beige); }
+.sa .co-filt-btn > svg { width: 1rem; height: 1rem; color: var(--color-ink-subtle); }
+.sa .co-filt-chev { transition: transform .2s var(--ease-brand); }
+.sa .co-filt-btn[aria-expanded="true"] .co-filt-chev { transform: rotate(180deg); }
+.sa .co-filt-n { display: grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3125rem; border-radius: 9999px; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.6875rem; font-weight: 700; }
+.sa .co-filt-panel { position: absolute; right: 0; top: calc(100% + 0.375rem); z-index: 40; min-width: 20rem; padding: 0.375rem 0.5rem; background: var(--color-surface); border-radius: 0.75rem; box-shadow: 0 0 0 1px var(--color-line), 0 4px 8px rgba(52, 52, 52, .08), 0 24px 48px -12px rgba(52, 52, 52, .28); }
+.sa .co-filt-panel[hidden] { display: none; }
+.sa .co-menu-h { padding: 0.5rem 0.5rem 0.25rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-subtle); }
+.sa .co-menu-sep { height: 1px; margin: 0.5rem 0; background: var(--color-mid-beige); }
+.sa .co-menu-i { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.5rem; border: 0; border-radius: 0.375rem; background: none; text-align: left; white-space: nowrap; font: inherit; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
+.sa .co-menu-i:hover, .sa .co-menu-i:focus-visible { background: var(--color-light-beige); outline: none; }
+.sa .co-menu-i .co-menu-c { flex: none; display: grid; place-items: center; width: 1.125rem; height: 1.125rem; margin-right: 0.25rem; border: 1.5px solid var(--color-sand-400); border-radius: 0.3125rem; background: var(--color-surface); color: var(--color-off-white); }
+.sa .co-menu-i .co-menu-c svg { width: 0.8125rem; height: 0.8125rem; visibility: hidden; }
+.sa .co-menu-i[aria-checked="true"] .co-menu-c { background: var(--color-graphite); border-color: var(--color-graphite); }
+.sa .co-menu-i[aria-checked="true"] .co-menu-c svg { visibility: visible; }
+.sa .co-menu-i[data-saf-all] .co-menu-c { border: 0; background: none; color: var(--color-ink-subtle); }
+.sa .co-menu-i small { margin-left: auto; padding-left: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
+.sa .co-menu-i:disabled { color: var(--color-sand-400); cursor: not-allowed; background: none; }
 @media (max-width: 40rem) { .sa-two { grid-template-columns: 1fr; } .sa-sum > div { grid-template-columns: 1fr; gap: 0.125rem; } }`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
@@ -104,7 +126,7 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 
   // the flow's state
   let f = null, back = null;
-  const fresh = () => ({ step: 1, country: BEATRIZ ? 'US' : 'PT', code: '', err: '', found: null, name: '', email: '', contact: '', errs: {}, picked: null, note: '' });
+  const fresh = () => ({ step: 1, country: BEATRIZ ? 'US' : 'PT', code: '', err: '', found: null, name: '', email: '', contact: '', errs: {}, picked: null, note: '', hide: new Set(), fOpen: false });
   const docsOf = (cc) => {
     const req = D.mandatory(cc).map((d) => ({ code: d.code, name: d.name.en, section: 'Mandatory', home: d.section.en, req: true }));
     const opt = D.optional(cc).filter((d) => !req.some((r) => r.code === d.code)).map((d) => ({ code: d.code, name: d.name.en, section: d.section.en, req: false }));
@@ -145,15 +167,29 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 
   // ---- step 2: the documents they're asked for ----------------------------------------------------
   const step2 = () => {
-    const docs = docsFor(), g = groups(docs), n = docs.filter((d) => f.picked.has(d.code)).length;
+    const docs = shownDocs(), g = groups(docs), n = docs.filter((d) => f.picked.has(d.code)).length;
     return `<section class="sa-card"><h4>What you need from ${esc(who())}</h4><p>The documents they&rsquo;ll be asked to share with you. The mandatory ones are ticked; add any of the optional ones you need.</p></section>
-      <div class="sa-all"><label class="sa-ck"><input type="checkbox" data-all${n === docs.length ? ' checked' : ''}>Select all</label><span><b id="sa-n">${n}</b> of ${docs.length} selected</span></div>
+      <div class="sa-all"><label class="sa-ck"><input type="checkbox" data-all${n === docs.length ? ' checked' : ''}>Select all</label><span class="sa-all-r">${filt()}<span><b id="sa-n">${n}</b> of ${docs.length} selected</span></span></div>
       ${Object.entries(g).map(([sec, list]) => { const k = list.filter((d) => f.picked.has(d.code)).length; return `<section class="sa-grp"><div class="sa-grp-h"><label class="sa-ck"><input type="checkbox" data-sec="${esc(sec)}"${k === list.length ? ' checked' : ''}>${esc(sec)}</label><span>${k} of ${list.length}</span></div>
         <ul class="sa-docs">${list.map((d) => `<li><label><input type="checkbox" data-doc="${esc(d.code)}"${f.picked.has(d.code) ? ' checked' : ''}><span><b>${esc(d.name)}</b><small>${esc(d.code)}${d.req ? ' &middot; Mandatory' : ' &middot; Optional'}</small></span></label></li>`).join('')}</ul></section>`; }).join('')}`;
   };
+  // the categories shown: a supplier won't have them all, so the optional ones can be hidden (the
+  // Filter, as on Documents); a hidden one's documents aren't asked for. Mandatory always shows
+  const shownDocs = () => docsFor().filter((d) => d.req || !f.hide.has(d.section));
+  const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 1 1 1.4-1.4l3.8 3.79 6.8-6.8a1 1 0 0 1 1.4 0Z" clip-rule="evenodd"/></svg>';
+  // the menu, for any list of documents and what's hidden of it (js/supplier-import.js uses it too)
+  const catFilter = (docs, hide, open) => {
+    const all = [...new Set(docs.filter((d) => !d.req).map((d) => d.section))], on = all.filter((c) => !hide.has(c)).length;
+    return `<span class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="${open}" data-saf-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Categories${on < all.length ? `<span class="co-filt-n">${on}</span>` : ''}<svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button>
+      <span class="co-filt-panel" role="menu" aria-label="Categories to show"${open ? '' : ' hidden'}><span class="co-menu-h" style="display:block">Show these categories</span>${all.map((c) => `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${!hide.has(c)}" data-saf="${esc(c)}"><span class="co-menu-c">${TICK}</span>${esc(c)}<small>${docs.filter((d) => !d.req && d.section === c).length}</small></button>`).join('')}
+      <span class="co-menu-sep" role="separator" style="display:block"></span><button type="button" class="co-menu-i" role="menuitem" data-saf-all${hide.size ? '' : ' disabled'}><span class="co-menu-c">${X}</span>Show all categories</button></span></span>`;
+  };
+  const filt = () => catFilter(docsFor(), f.hide, f.fOpen);
+  // drawn again where it is (a category shown or hidden), the list kept where it was scrolled
+  const redraw = (focus) => { const b = $('sa-body'), y = b.scrollTop; b.innerHTML = step2(); marks(); b.scrollTop = y; if (focus) { const el = dw.querySelector(focus); if (el) el.focus(); } };
   // the section and Select all boxes: ticked, empty, or in between
   const marks = () => {
-    const docs = docsFor(), g = groups(docs);
+    const docs = shownDocs(), g = groups(docs);
     dw.querySelectorAll('[data-sec]').forEach((b) => { const l = g[b.dataset.sec], k = l.filter((d) => f.picked.has(d.code)).length; b.checked = k === l.length; b.indeterminate = k > 0 && k < l.length; b.closest('.sa-grp-h').querySelector('span').textContent = `${k} of ${l.length}`; });
     const all = dw.querySelector('[data-all]'), n = docs.filter((d) => f.picked.has(d.code)).length;
     if (all) { all.checked = n === docs.length; all.indeterminate = n > 0 && n < docs.length; }
@@ -222,6 +258,10 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   dw.addEventListener('click', (e) => {
     if (!f) return;
     if (e.target.closest('[data-sa-x]')) { close(); return; }
+    const fb = e.target.closest('[data-saf-btn]'); if (fb) { f.fOpen = !f.fOpen; redraw('[data-saf-btn]'); return; }
+    const fc = e.target.closest('[data-saf]'); if (fc) { const c = fc.dataset.saf; if (f.hide.has(c)) f.hide.delete(c); else { f.hide.add(c); docsFor().filter((d) => !d.req && d.section === c).forEach((d) => f.picked.delete(d.code)); } redraw(`[data-saf="${CSS.escape(c)}"]`); return; }
+    if (e.target.closest('[data-saf-all]')) { f.hide.clear(); redraw('[data-saf-btn]'); return; }
+    if (f.fOpen && !e.target.closest('.co-filt')) { f.fOpen = false; const p = dw.querySelector('.co-filt-panel'), b = dw.querySelector('[data-saf-btn]'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
     if (e.target.closest('[data-sa-back]')) { f.step -= 1; paint(); return; }
     if (e.target.closest('[data-sa-find]')) { if (!find()) { paint('[name="code"]'); return; } paint(f.found.on || f.found.mine ? '[data-sa-next], [data-sa-find]' : '[name="name"]'); return; }
     if (e.target.closest('[data-sa-next]')) {
@@ -242,10 +282,10 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   dw.addEventListener('change', (e) => {
     if (!f) return;
     const t = e.target;
-    if (t.name === 'country') { f.country = t.value; f.found = null; f.err = ''; f.picked = null; paint('[name="code"]'); return; }
+    if (t.name === 'country') { f.country = t.value; f.found = null; f.err = ''; f.picked = null; f.hide = new Set(); paint('[name="code"]'); return; }
     if (t.matches('[data-doc]')) { f.picked[t.checked ? 'add' : 'delete'](t.dataset.doc); marks(); return; }
-    if (t.matches('[data-sec]')) { groups(docsFor())[t.dataset.sec].forEach((d) => f.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll(`[data-doc]`).forEach((b) => { b.checked = f.picked.has(b.dataset.doc); }); marks(); return; }
-    if (t.matches('[data-all]')) { docsFor().forEach((d) => f.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
+    if (t.matches('[data-sec]')) { groups(shownDocs())[t.dataset.sec].forEach((d) => f.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll(`[data-doc]`).forEach((b) => { b.checked = f.picked.has(b.dataset.doc); }); marks(); return; }
+    if (t.matches('[data-all]')) { shownDocs().forEach((d) => f.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
   });
   dw.addEventListener('input', (e) => {
     if (!f) return;
@@ -257,11 +297,11 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   // Enter in the code field finds them
   dw.addEventListener('keydown', (e) => {
     if (!f) return;
-    if (e.key === 'Escape') { close(); return; }
+    if (e.key === 'Escape') { if (f.fOpen) { f.fOpen = false; redraw('[data-saf-btn]'); return; } close(); return; }
     if (e.key === 'Enter' && e.target.name === 'code') { e.preventDefault(); const b = dw.querySelector('[data-sa-find], [data-sa-next]'); if (b) b.click(); }
   });
   document.addEventListener('click', (e) => { if (e.target.closest('[data-sup-add]')) { e.preventDefault(); open(); } });
   // what the bulk import (js/supplier-import.js) shares with this flow
-  window.CMSupplierAdd = { open, close, isOpen: () => !!f, COUNTRIES, country, norm, emailOk, today, docsOf, toast };
+  window.CMSupplierAdd = { open, close, isOpen: () => !!f, catFilter, COUNTRIES, country, norm, emailOk, today, docsOf, toast };
   if (new URLSearchParams(location.search).has('add')) { history.replaceState(null, '', location.pathname); setTimeout(open, 150); }
 })();
