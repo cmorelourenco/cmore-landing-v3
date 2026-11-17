@@ -35,7 +35,7 @@
     'worker.non_eu': (p, w) => !EU_EEA.includes(w.nationality),
     'worker.posted': (p, w) => w.employmentType === 'posted',
     'equipment.built_1995_or_later': (p, e) => e.yearBuilt >= 1995,
-    'equipment.built_before_1995': (p, e) => e.yearBuilt < 1995,
+    'equipment.built_before_1995': (p, e) => !!e.yearBuilt && e.yearBuilt < 1995, // (a year not given yet asks for neither)
     'equipment.measuring': (p, e) => !!e.measuring,
     'product.ce_marked': (p, x) => !!x.ceMarked,
     'product.notified_body': (p, x) => !!x.notifiedBody,

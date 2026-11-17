@@ -184,8 +184,13 @@ window.DOC_MODEL = (() => {
   const EQ_BASE = EQUIPMENT.length;
   const EQ_KEY = 'cm-eq-added' + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const eqAdded = (() => { try { return JSON.parse(sessionStorage.getItem(EQ_KEY) || '[]') || []; } catch (e) { return []; } })();
-  if (PERSONA !== 'beatriz') eqAdded.forEach((m) => EQUIPMENT.push([`${m.type} &middot; ${m.brand} ${m.model}`.trim(), m.ref || 'New']));
+  if (PERSONA !== 'beatriz') eqAdded.forEach((m) => EQUIPMENT.push([`${m.type}${m.brand || m.model ? ` &middot; ${[m.brand, m.model].filter(Boolean).join(' ')}` : ''}`, m.ref || `Serial ${esc(m.serial || '')}`]));
   const saveMachines = (list) => { try { sessionStorage.setItem(EQ_KEY, JSON.stringify(eqAdded.concat(list))); } catch (e) {} };
+  // machines archived from their own page (js/company-details.js), { machine: the day }: off the list
+  // and every site, their documents kept read-only, and back with Unarchive (as workers are)
+  const EQARCH_KEY = 'cm-eq-archived' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const eqArch = (() => { try { return JSON.parse(sessionStorage.getItem(EQARCH_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const saveEqArchive = (i, day) => { if (day) eqArch[i] = day; else delete eqArch[i]; try { sessionStorage.setItem(EQARCH_KEY, JSON.stringify(eqArch)); } catch (e) {} };
   // the equipment register (Registo de equipamentos): the last one ALMA read, { file, on, n }
   const EQREG_KEY = 'cm-eq-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const eqRegister = () => { try { return JSON.parse(sessionStorage.getItem(EQREG_KEY) || 'null'); } catch (e) { return null; } };
@@ -292,7 +297,7 @@ window.DOC_MODEL = (() => {
   // each machine's profile (the catalog's Equipment profile form)
   const RENTALS = { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
   const MACHINE = EQUIPMENT.map(([label, ref], i) => {
-    const [type, model] = label.split(' &middot; ');
+    const [type, model = ''] = label.split(' &middot; ');
     const brand = model.split(' ')[0] === 'CM&#8209;500' ? 'Ferreira (in&#8209;house)' : model.split(/ |&#8209;/)[0].replace('Allmand', 'Allmand Bros');
     const operators = i === 1 ? [4, 19] : i === 0 || i === 7 ? [4] : i === 6 ? [19] : [];
     return {
@@ -307,12 +312,13 @@ window.DOC_MODEL = (() => {
       portableElectrical: /welding|light tower|laser|generator/i.test(type), fallArrest: false, scaffold: false,
       sites: [[0], [0], [2], [0, 1], [0], [1], [1], [0, 2], [2], [1], [0], [2]][i],
       hours: i === 11 ? null : 1240 + i * 913,
+      archived: eqArch[i] || '', left: !!eqArch[i],
     };
   }).map((m, i) => {
     // one added from a register: what it said of it, and not on a site yet
     const a = i >= EQ_BASE ? eqAdded[i - EQ_BASE] : null;
     if (!a) return m;
-    return Object.assign(m, { type: a.type, brand: a.brand, model: a.model, serial: a.serial, yearBuilt: +a.year || m.yearBuilt, ref: a.ref || 'New', owned: a.owned || 'Owned', certified: false, operators: [], sites: [0], hours: null, isNew: true, since: a.on,
+    return Object.assign(m, { type: a.type, brand: a.brand, model: a.model, serial: a.serial, yearBuilt: +a.year || null, ref: a.ref || '', owned: a.owned || 'Owned', certified: false, operators: [], sites: [0], hours: null, isNew: true, since: a.on, manual: !!a.manual, how: a.how || '', plate: a.plate || '', addedOn: a.on,
       measuring: /level|laser|measur/i.test(a.type), road: /truck|dumper|tractor/i.test(a.type), lifting: /crane|lift|loader|hoist|forklift/i.test(a.type), pressure: /compressor/i.test(a.type), portableElectrical: /welding|cutter|bender|generator|light tower|laser/i.test(a.type) });
   });
 
@@ -771,5 +777,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { saveEqArchive, saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();

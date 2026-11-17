@@ -935,7 +935,7 @@ button.chip.is-bad:hover { background: color-mix(in oklab, var(--color-critical)
 .cd-sites .n { font-weight: 500; }
 /* a machine's page: same bones as a worker's; the inspection note wears the caution tint */
 .cd-machine .cd-area-head h2 .soft { font-weight: 300; }
-.cd-restricted.cd-attn { background: var(--color-caution-subtle); color: var(--color-caution); }
+.cd-restricted.cd-attn { background: var(--tag-yellow-bg); color: var(--tag-yellow-fg); } /* the yellow tags' colours (css/tags.css), readable on it */
 
 /* Buttons never grow into banners: a call to action is as wide as its words, up to a cap, even
    where its container would stretch it (a flex column, a grid cell). Form-width buttons on the
@@ -981,3 +981,6 @@ html[data-persona="beatriz"] [data-only="miguel"] { display: none !important; }
 /* what sits in a cell as a block or a row of its own follows the cell */
 :is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) :is(th, td):not(:first-child):not(:last-child) > .cm-exp { justify-items: center; }
 :is(.sp-tbl, .co-tbl, .cd-h-tbl, .cd-fields, .cmu-diff, .tm-perm) td:not(:first-child):not(:last-child) > .esgq-src-btn { display: block; width: fit-content; margin-inline: auto; }
+/* a machine profile's detail: the document ALMA read it from, and its citation */
+.cd-pcite { display: block; margin-top: 0.125rem; font-size: 0.75rem; }
+.cd-pcite .esgq-src-btn { display: inline; margin: 0 0 0 0.375rem; font-size: 0.75rem; }
