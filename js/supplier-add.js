@@ -10,7 +10,7 @@
    Step 1 opens with adding many at once, from an Excel file (js/supplier-import.js). */
 (() => {
   const S = window.CM_SUPPLIERS, D = window.CM_COMPANY_DOCS;
-  if (!S || !D || !document.getElementById('sup-body')) return;
+  if (!S || !D) return; // on My suppliers, or on any page where one folded was carried on (js/alma-job.js)
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('') || '?';
   const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
@@ -109,18 +109,29 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 .sa .co-menu-i[data-saf-all] .co-menu-c { border: 0; background: none; color: var(--color-ink-subtle); }
 .sa .co-menu-i small { margin-left: auto; padding-left: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
 .sa .co-menu-i:disabled { color: var(--color-sand-400); cursor: not-allowed; background: none; }
-@media (max-width: 40rem) { .sa-two { grid-template-columns: 1fr; } .sa-sum > div { grid-template-columns: 1fr; gap: 0.125rem; } }`;
+@media (max-width: 40rem) { .sa-two { grid-template-columns: 1fr; } .sa-sum > div { grid-template-columns: 1fr; gap: 0.125rem; } }
+/* these drawers (and Invite from Excel's, js/supplier-import.js) fold to a rail on the right at any step,
+   as ALMA's upload drawer does (js/doc-upload.js); folded, the page is yours, and other pages too */
+.sa-tk .docd-panel { transition: transform .32s var(--ease-brand), width .35s var(--ease-brand, ease); }
+.sa-tk .sa-hacts { flex: none; display: flex; align-items: center; gap: 0.375rem; }
+.sa-tk.is-tucked { pointer-events: none; }
+.sa-tk.is-still :is(.docd-panel, .docd-scrim) { transition: none !important; }
+.sa-tk.is-tucked .docd-scrim { opacity: 0; }
+.sa-tk.is-tucked .docd-panel { pointer-events: auto; width: 4.5rem; overflow: hidden; }
+.sa-tk.is-tucked :is(.docd-head, .docd-body, .docd-foot) { display: none; }`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
   const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6"/></svg>';
+  const FOLD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg>';
   const dw = document.createElement('div');
-  dw.className = 'docd sa'; dw.hidden = true;
-  dw.innerHTML = `<div class="docd-scrim" data-sa-x></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="sa-t" tabindex="-1">
+  dw.className = 'docd sa sa-tk'; dw.hidden = true;
+  dw.innerHTML = `<div class="docd-scrim"></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="sa-t" tabindex="-1">
       <header class="docd-head"><span class="docd-ico" aria-hidden="true">${ICO}</span><div class="docd-t"><h3 id="sa-t">Add a supplier</h3><p id="sa-sub"></p></div>
-        <button type="button" class="dlg-x" data-sa-x aria-label="Close">${X}</button></header>
+        <span class="sa-hacts"><button type="button" class="cmu-fold" data-sa-tuck aria-label="Hide the panel" title="Hide the panel">${FOLD}</button><button type="button" class="dlg-x" data-sa-x aria-label="Close">${X}</button></span></header>
       <form class="docd-body" id="sa-body" novalidate></form>
       <footer class="docd-foot"><span id="sa-step"></span><span class="sa-acts" id="sa-acts"></span></footer>
+      <nav class="cmu-rail" aria-label="Adding a supplier" hidden>${window.CMAlmaJob ? window.CMAlmaJob.rail() : ''}</nav>
     </aside>`;
   document.body.appendChild(dw);
   const $ = (id) => dw.querySelector('#' + id);
@@ -233,7 +244,21 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
     setTimeout(() => dw.classList.add('is-open'), 20);
     setTimeout(() => { const c = dw.querySelector('[name="code"]'); if (c) c.focus(); }, 340);
   };
+  // folded: a rail on the right, saying where they are; the page usable
+  let tucked = false;
+  const rail = () => dw.querySelector('.cmu-rail');
+  const railLabel = () => (f.step === 1 ? 'Add a supplier' : `Add a supplier · ${who() || 'Step ' + f.step}`);
+  const tuck = (on) => {
+    tucked = on;
+    dw.classList.toggle('is-tucked', on); rail().hidden = !on;
+    dw.querySelector('.docd-panel').setAttribute('aria-modal', String(!on));
+    [dw.querySelector('.docd-head'), $('sa-body'), dw.querySelector('.docd-foot')].forEach((x) => { x.inert = on; });
+    document.documentElement.style.overflow = on ? '' : 'hidden';
+    if (on) { if (window.CMAlmaJob) window.CMAlmaJob.paint(rail(), { label: railLabel() }); rail().querySelector('.cmu-fold').focus({ preventScroll: true }); }
+    else dw.querySelector('.docd-panel').focus({ preventScroll: true });
+  };
   const close = () => {
+    if (tucked) tuck(false);
     dw.classList.remove('is-open'); document.documentElement.style.overflow = '';
     setTimeout(() => { dw.hidden = true; }, 280); if (back && back.isConnected) back.focus(); f = null;
   };
@@ -258,6 +283,8 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 
   dw.addEventListener('click', (e) => {
     if (!f) return;
+    if (e.target.closest('[data-sa-tuck]')) { tuck(true); return; }
+    if (e.target.closest('[data-untuck]')) { tuck(false); return; }
     if (e.target.closest('[data-sa-x]')) { close(); return; }
     const fb = e.target.closest('[data-saf-btn]'); if (fb) { f.fOpen = !f.fOpen; redraw('[data-saf-btn]'); return; }
     const fc = e.target.closest('[data-saf]'); if (fc) { const c = fc.dataset.saf; if (f.hide.has(c)) f.hide.delete(c); else { f.hide.add(c); docsFor().filter((d) => !d.req && d.section === c).forEach((d) => f.picked.delete(d.code)); } redraw(`[data-saf="${CSS.escape(c)}"]`); return; }
@@ -302,11 +329,28 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   // Enter in the code field finds them
   dw.addEventListener('keydown', (e) => {
     if (!f) return;
-    if (e.key === 'Escape') { if (f.fOpen) { f.fOpen = false; redraw('[data-saf-btn]'); return; } close(); return; }
+    if (e.key === 'Escape') { if (tucked) return; if (f.fOpen) { f.fOpen = false; redraw('[data-saf-btn]'); return; } close(); return; }
     if (e.key === 'Enter' && e.target.name === 'code') { e.preventDefault(); const b = dw.querySelector('[data-sa-find], [data-sa-next]'); if (b) b.click(); }
   });
-  document.addEventListener('click', (e) => { if (e.target.closest('[data-sup-add]')) { e.preventDefault(); open(); } });
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-sup-add]')) { e.preventDefault(); if (f && tucked) tuck(false); else open(); } });
+  // folded, it goes with you: leave the page and it's kept for the tab (another page shows its rail,
+  // js/alma-job.js); back here, it comes back as it was, folded, or opened from that rail
+  const KEY = 'cm-sup-add' + (BEATRIZ ? '-beatriz' : '');
+  window.addEventListener('pagehide', () => {
+    if (!f || !tucked) return;
+    try { sessionStorage.setItem(KEY, JSON.stringify({ f: Object.assign({}, f, { picked: f.picked ? [...f.picked] : null, hide: [...f.hide], fOpen: false, ret: f.ret ? Object.assign({}, f.ret, { picked: f.ret.picked ? [...f.ret.picked] : null, hide: [...f.ret.hide] }) : null }), label: railLabel() })); } catch (e) {}
+  });
+  const restored = (() => {
+    let st = null; try { st = JSON.parse(sessionStorage.getItem(KEY)); sessionStorage.removeItem(KEY); } catch (e) {}
+    if (!st || !st.f) return false;
+    const sets = (o) => Object.assign(o, { picked: o.picked ? new Set(o.picked) : null, hide: new Set(o.hide || []) });
+    f = sets(st.f); if (f.ret) sets(f.ret);
+    const open2 = new URLSearchParams(location.search).get('add') === 'open';
+    dw.hidden = false; dw.classList.add('is-still', 'is-open'); paint(); tuck(!open2);
+    requestAnimationFrame(() => requestAnimationFrame(() => dw.classList.remove('is-still')));
+    return true;
+  })();
   // what the bulk import (js/supplier-import.js) shares with this flow
   window.CMSupplierAdd = { open, close, isOpen: () => !!f, catFilter, COUNTRIES, country, norm, emailOk, today, docsOf, toast };
-  if (new URLSearchParams(location.search).has('add')) { history.replaceState(null, '', location.pathname); setTimeout(open, 150); }
+  if (new URLSearchParams(location.search).has('add')) { history.replaceState(null, '', location.pathname); if (!restored) setTimeout(open, 150); }
 })();

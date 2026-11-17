@@ -9,7 +9,9 @@
    file without the columns reads as a made-up list, so it can be tried without preparing one. */
 (() => {
   const S = window.CM_SUPPLIERS, A = window.CMSupplierAdd, box = document.getElementById('sup-body');
-  if (!S || !A || !box) return;
+  if (!S || !A) return;
+  // elsewhere than My suppliers (brought by js/alma-job.js to carry on what was folded) there's no
+  // list on the page: the drawer works as here, and what needs the list goes to My suppliers for it
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const fold = (t) => String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const ini = (n) => (String(n || '?').split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('') || '?');
@@ -202,13 +204,6 @@
 .si-who span { padding: 0.25rem 0.625rem; border-radius: 999px; background: var(--color-light-beige); font-size: 0.8125rem; color: var(--color-ink); }
 .sa-docs small .si-only { color: var(--color-ink-muted); }
 @media (max-width: 40rem) { .si-rev table { min-width: 40rem; } .si-edit { opacity: 1; } }
-/* the drawer folds to a rail on the right at any step, as ALMA's upload drawer does (js/doc-upload.js) */
-.si-dw .docd-panel { transition: transform .32s var(--ease-brand), width .35s var(--ease-brand, ease); }
-.si-dw .si-hacts { flex: none; display: flex; align-items: center; gap: 0.375rem; }
-.si-dw.is-tucked { pointer-events: none; }
-.si-dw.is-tucked .docd-scrim { opacity: 0; }
-.si-dw.is-tucked .docd-panel { pointer-events: auto; width: 4.5rem; overflow: hidden; }
-.si-dw.is-tucked :is(.docd-head, .docd-body, .docd-foot) { display: none; }
 /* sending: a spinner, how many have gone, a bar */
 .si-sending { display: flex; align-items: center; gap: 1rem; }
 .si-spin { flex: none; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--color-light-beige); color: var(--color-coral); }
@@ -261,7 +256,7 @@
   // ---- the list read from the file, in the page's place ----------------------------------------------
   const host = document.createElement('section');
   host.className = 'si-card'; host.hidden = true; host.setAttribute('aria-labelledby', 'si-h');
-  box.parentNode.insertBefore(host, box);
+  if (box) box.parentNode.insertBefore(host, box);
   let bulk = null;
   const changed = new Set();
   const RANK = (r) => (r.ok ? (r.on ? 0 : 1) : 2);
@@ -311,6 +306,7 @@
   // a repaint keeps the list scrolled where it was
   const paint = (focus) => {
     document.dispatchEvent(new CustomEvent('cm-sup-review', { detail: !!bulk })); // ALMA's setup panel makes room (js/guided-upload.js)
+    if (!box) return;
     if (!bulk) { host.hidden = true; host.innerHTML = ''; box.hidden = false; return; }
     const w = host.querySelector('.si-wrap'), top = w ? w.scrollTop : 0;
     host.innerHTML = review(); host.hidden = false; box.hidden = true;
@@ -331,6 +327,7 @@
     err = ''; changed.clear();
     if (A.isOpen()) A.close();
     if (ed && ed.pre) edClose();
+    if (!box) { toList(null); return; }
     paint();
     host.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
@@ -359,10 +356,10 @@
 
   // ---- the drawer: the documents the suppliers picked on the list are asked for -----------------------
   const dw = document.createElement('div');
-  dw.className = 'docd sa si-dw'; dw.hidden = true;
-  dw.innerHTML = `<div class="docd-scrim" data-sid-x></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="sid-t" tabindex="-1">
+  dw.className = 'docd sa sa-tk'; dw.hidden = true;
+  dw.innerHTML = `<div class="docd-scrim"></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="sid-t" tabindex="-1">
       <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOC}</span><div class="docd-t"><h3 id="sid-t">Documents to ask for</h3><p id="sid-sub"></p></div>
-        <span class="si-hacts"><button type="button" class="cmu-fold" data-sid-tuck aria-label="Hide the panel" title="Hide the panel">${FOLD}</button><button type="button" class="dlg-x" data-sid-x aria-label="Close">${X}</button></span></header>
+        <span class="sa-hacts"><button type="button" class="cmu-fold" data-sid-tuck aria-label="Hide the panel" title="Hide the panel">${FOLD}</button><button type="button" class="dlg-x" data-sid-x aria-label="Close">${X}</button></span></header>
       <form class="docd-body" id="sid-body" novalidate></form>
       <footer class="docd-foot" id="sid-foot"></footer>
       <nav class="cmu-rail" aria-label="Inviting suppliers" hidden>${window.CMAlmaJob ? window.CMAlmaJob.rail() : ''}</nav>
@@ -469,36 +466,38 @@
         <ul class="si-fail">${f.map((r) => `<li><b>${esc(nameOf(r))}</b><code>${esc(r.email)}</code><small>${esc(r.bounce)}</small></li>`).join('')}</ul></section>` : ''}`;
     dw.querySelector('#sid-foot').innerHTML = '<span></span><span class="sa-acts"><button type="button" class="btn btn-primary btn-sm" data-sid-done>Continue</button></span>';
   };
-  // a few go each moment; those added show on the page as they go
+  // they go by the clock, so leaving the page doesn't hold them up: back here, those due are added at once
+  const PER = 90; // ms an invitation
+  const step = () => {
+    if (!job) return;
+    const n = Math.max(0, Math.min(job.total, Math.floor((Date.now() - job.start) / PER)));
+    for (; job.at < n; job.at += 1) {
+      const r = job.go[job.at];
+      if (r.bounce) { job.failed.push(r); continue; }
+      const c = A.country(r.cc), list = A.docsOf(r.cc).filter((d) => r.docs.has(d.code)), name = nameOf(r);
+      S.addInvite({
+        id: `${S.slug(name)}-${(Date.now() + job.at).toString(36).slice(-4)}`, name, city: r.on ? r.on.city : '', services: r.on ? r.on.services : [],
+        country: c.code, countryName: c.name, idLabel: c.label, code: r.code, email: r.on ? '' : r.email.trim(), contact: r.on ? '' : String(r.contact || '').trim(),
+        onCmore: !!r.on, invited: job.today, note: job.note, imported: job.file,
+        docs: list.map((d) => d.code), required: list.filter((d) => d.req).map((d) => d.code),
+        names: Object.fromEntries(list.map((d) => [d.code, d.name])), sections: Object.fromEntries(list.map((d) => [d.code, d.home || d.section])),
+      });
+      job.sent += 1;
+    }
+    if (job.at >= job.total) {
+      job.done = true; sendPaint(); railPaint();
+      if (window.CMSupPage) window.CMSupPage.refresh();
+      if (tucked && !job.told && window.CMAlmaJob) window.CMAlmaJob.toast(`${job.sent} invitation${job.sent === 1 ? '' : 's'} sent${job.failed.length ? `, ${job.failed.length} not sent` : ''}.`, ['See', () => tuck(false)]);
+      job.told = true;
+      return;
+    }
+    sendPaint(); railPaint(); setTimeout(step, PER);
+  };
   const sendAll = (note) => {
-    const go = bulk.rows.filter((r) => r.ok), today = A.today(), file = bulk.file;
-    job = { go, note, file, total: go.length, at: 0, sent: 0, failed: [], done: false };
+    const go = bulk.rows.filter((r) => r.ok);
+    job = { go, note, file: bulk.file, today: A.today(), total: go.length, start: Date.now() + 400, per: PER, at: 0, sent: 0, failed: [], done: false, told: false };
     bulk = null; paint(); // the list goes: they're being sent
     ed = { send: true, rows: [], picked: new Set(), hide: new Set(), fOpen: false }; edPaint();
-    const step = () => {
-      if (!job) return;
-      const n = Math.min(job.total, job.at + 1 + rnd(2));
-      for (; job.at < n; job.at += 1) {
-        const r = job.go[job.at];
-        if (r.bounce) { job.failed.push(r); continue; }
-        const c = A.country(r.cc), list = A.docsOf(r.cc).filter((d) => r.docs.has(d.code)), name = nameOf(r);
-        S.addInvite({
-          id: `${S.slug(name)}-${(Date.now() + job.at).toString(36).slice(-4)}`, name, city: r.on ? r.on.city : '', services: r.on ? r.on.services : [],
-          country: c.code, countryName: c.name, idLabel: c.label, code: r.code, email: r.on ? '' : r.email.trim(), contact: r.on ? '' : String(r.contact || '').trim(),
-          onCmore: !!r.on, invited: today, note: job.note, imported: file,
-          docs: list.map((d) => d.code), required: list.filter((d) => d.req).map((d) => d.code),
-          names: Object.fromEntries(list.map((d) => [d.code, d.name])), sections: Object.fromEntries(list.map((d) => [d.code, d.home || d.section])),
-        });
-        job.sent += 1;
-      }
-      if (job.at >= job.total) {
-        job.done = true; sendPaint(); railPaint();
-        if (window.CMSupPage) window.CMSupPage.refresh();
-        if (tucked && window.CMAlmaJob) window.CMAlmaJob.toast(`${job.sent} invitation${job.sent === 1 ? '' : 's'} sent${job.failed.length ? `, ${job.failed.length} not sent` : ''}.`, ['See', () => tuck(false)]);
-        return;
-      }
-      sendPaint(); railPaint(); setTimeout(step, 110);
-    };
     setTimeout(step, 400);
   };
   // Continue: the drawer goes, and the page is as after any invitation
@@ -581,11 +580,11 @@
     if (e.target.closest('[data-untuck]')) { tuck(false); return; }
     if (e.target.closest('[data-sid-done]')) { sendDone(); return; }
     // while they're going, closing folds it instead; once sent, only Continue ends it
-    if (e.target.closest('[data-sid-x]')) { if (ed.send) { if (!job.done) tuck(true); return; } if (ed.ret) revBack(); else edClose(); return; }
+    if (e.target.closest('[data-sid-x]')) { if (ed.send) { if (!job.done) tuck(true); return; } if (ed.ret) revBack(); else if (ed.rev && !box) toList(null); else edClose(); return; }
     // Edit on the summary: the suppliers are the list on the page (its Send comes back here); the documents open here, for all of them
     const eb = e.target.closest('[data-sid-edit]');
     if (eb) {
-      if (eb.dataset.sidEdit === 'sup') { edClose(); host.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+      if (eb.dataset.sidEdit === 'sup') { if (!box) { toList(null); return; } edClose(); host.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       ed = Object.assign(docsState(bulk.rows.map((r, i) => (r.ok ? i : -1)).filter((i) => i >= 0)), { ret: true, note: ed.note });
       edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return;
     }
@@ -661,6 +660,41 @@
   ['dragover', 'dragenter'].forEach((ev) => document.addEventListener(ev, (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z) { e.preventDefault(); z.classList.add('is-over'); } }));
   document.addEventListener('dragleave', (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z && !z.contains(e.relatedTarget)) z.classList.remove('is-over'); });
   document.addEventListener('drop', (e) => { const z = e.target.closest && e.target.closest('#si-bulk'); if (z) { e.preventDefault(); z.classList.remove('is-over'); load(e.dataTransfer.files[0]); } });
+
+  // ---- folded, it goes with you: leave the page and it's kept for the tab (another page shows its rail,
+  // js/alma-job.js); back here, the drawer and the list come back as they were, folded or opened ----------
+  const KEY = 'cm-sup-invite' + (BEATRIZ ? '-beatriz' : '');
+  const rowsOut = (l) => l.map((r) => Object.assign({}, r, { docs: [...r.docs] }));
+  const rowsIn = (l) => l.map((r) => Object.assign({}, r, { docs: new Set(r.docs) }));
+  const keep = () => {
+    try {
+      sessionStorage.setItem(KEY, JSON.stringify({
+        ed: ed && Object.assign({}, ed, { picked: [...ed.picked], hide: [...ed.hide], fOpen: false }),
+        bulk: bulk && Object.assign({}, bulk, { picked: [], rows: rowsOut(bulk.rows) }),
+        job: job && Object.assign({}, job, { go: rowsOut(job.go), failed: rowsOut(job.failed) }),
+        asked: asked && [...asked], askedHide: askedHide && [...askedHide],
+        label: dw.querySelector('#sid-t').textContent,
+      }));
+    } catch (e) {}
+  };
+  window.addEventListener('pagehide', () => { if (ed && tucked) keep(); });
+  // the list lives on My suppliers: there, with the drawer as it is now (or closed: d is null)
+  function toList(d) { ed = d; tucked = false; keep(); location.href = `suppliers.html${d ? '?invite=open' : ''}`; }
+  (() => {
+    let st = null; try { st = JSON.parse(sessionStorage.getItem(KEY)); sessionStorage.removeItem(KEY); } catch (e) {}
+    if (!st || (!st.ed && !st.bulk)) return;
+    const q = new URLSearchParams(location.search), open = q.get('invite') === 'open';
+    if (q.has('invite')) { q.delete('invite'); history.replaceState(null, '', location.pathname + (q.toString() ? `?${q}` : '') + location.hash); }
+    asked = st.asked && new Set(st.asked); askedHide = st.askedHide && new Set(st.askedHide);
+    if (st.bulk) { bulk = Object.assign(st.bulk, { picked: new Set(), rows: rowsIn(st.bulk.rows) }); paint(); }
+    if (st.job) job = Object.assign(st.job, { go: rowsIn(st.job.go), failed: rowsIn(st.job.failed) });
+    if (!st.ed) { if (host.isConnected) host.scrollIntoView({ block: 'start' }); return; } // just the list
+    ed = Object.assign(st.ed, { picked: new Set(st.ed.picked), hide: new Set(st.ed.hide) });
+    edBack = null; dw.hidden = false; dw.classList.add('is-still', 'is-open');
+    edPaint(); tuck(!open);
+    requestAnimationFrame(() => requestAnimationFrame(() => dw.classList.remove('is-still')));
+    if (job && !job.done) step();
+  })();
 
   window.CMSupplierImport = { banner, load, template, pick, invite, isOpen: () => !!ed, active: () => !!bulk };
 })();

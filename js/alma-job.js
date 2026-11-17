@@ -104,5 +104,25 @@ window.CMAlmaJob = (() => {
   // on Documents and the homepage the upload drawer takes over from it (js/doc-upload.js)
   { const job = get(); if (job) solo(job); }
 
+  // Add a supplier or Invite from Excel, folded and left (js/supplier-add.js, js/supplier-import.js):
+  // they carry on here, on whatever page this is, folded as they were, and open here from their rail.
+  // Their scripts are brought in, those this page doesn't have, in the order My suppliers loads them
+  (() => {
+    if (!document.querySelector('.sn-foot')) return;
+    const kept = (k) => { try { return !!JSON.parse(sessionStorage.getItem(k + (beatriz() ? '-beatriz' : ''))); } catch (e) { return false; } };
+    if (!kept('cm-sup-add') && !kept('cm-sup-invite')) return;
+    const NEED = ['doc-catalog', 'worker-docs', 'equipment-docs', 'product-docs', 'doc-rules', 'company-docs', 'suppliers', 'supplier-add', 'supplier-import'];
+    const go = () => {
+      const have = new Set([...document.scripts].map((x) => (x.getAttribute('src') || '').replace(/^.*\//, '').replace(/\.js.*$/, '')));
+      const next = (k) => {
+        while (k < NEED.length && have.has(NEED[k])) k += 1;
+        if (k >= NEED.length) return;
+        const sc = document.createElement('script'); sc.src = `js/${NEED[k]}.js`; sc.onload = sc.onerror = () => next(k + 1); document.body.appendChild(sc);
+      };
+      next(0);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  })();
+
   return { get, save, clear, progress, rail, paint, toast, doneMsg };
 })();
