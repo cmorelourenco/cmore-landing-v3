@@ -80,6 +80,11 @@ window.CMUpload = (() => {
     ['Plywood formwork panel', 'Finsa', 'Phenolic 18 mm', 'Other', 'MAT-223'], ['Ceramic floor tile', 'Revigrés', 'Barro 30x60', 'Coverings', 'MAT-227'], ['XPS insulation board', 'Iberfibran', 'Wallmate CW 40', 'Insulation', 'MAT-231'],
     ['Epoxy primer', 'CIN', 'Cinepoxi Primer', 'Coverings', 'MAT-236'], ['Aluminium window frame', 'Navarra', 'C70', 'Windows and doors', 'MAT-240'], ['Hydraulic lime mortar', 'Secil', 'Argamassa HD', 'Cement', 'MAT-244'], ['Nitrile work gloves', 'Ansell', 'HyFlex 11-800', 'Other', 'MAT-249']];
   const N_PR = 6;
+  // the products documents dropped on Products and materials name that aren't on the list yet (name,
+  // manufacturer, reference, family, internal code): two each time, as for machines
+  const PR_DOCS = [['Gypsum plasterboard', 'Knauf', 'GKB 12.5 mm', 'Coverings', 'MAT-252'], ['Bituminous waterproofing membrane', 'Imperalum', 'Polyster 40', 'Other', 'MAT-256'],
+    ['Self-levelling floor screed', 'Weber', 'weberfloor 4310', 'Cement', 'MAT-261'], ['Cut-resistant work gloves', 'Ansell', 'HyFlex 11-542', 'Other', 'MAT-265']];
+  const activeProducts = () => (M.PRODUCT || []).map((x, i) => ({ x, i })).filter((y) => !y.x.left);
   const activeWorkers = () => (M.PERSON || []).map((p, i) => ({ p, i })).filter((x) => !x.p.left);
   // uploaded for one document (its dot, its row): that's the one it's for, but ALMA still reads
   // what the file is. Everything else of the same area is where it can go too, so a worker
@@ -119,7 +124,7 @@ window.CMUpload = (() => {
       return { pool, focus: null, title: `Documents for ${who}`, lead: `Any of ${who}&rsquo;s documents. ALMA works out which one each file is.` };
     }
     // Add worker (above the workers' matrix): their documents, as for the area, said as adding someone
-    if (t === 'add') { const r = resolve(`area:${a}`); return r && Object.assign(r, a === 'equipment' ? { adding: 'equipment', title: 'Add machines', lead: 'Drop their EU declaration, inspection reports or an equipment register. ALMA reads which machine each one is, you choose which to add, and she fills in their details.' } : { adding: 'workers', title: 'Add workers', lead: 'Drop their citizen card, passport or a worker register. ALMA reads who they are, you choose who to add, and she fills in their details.' }); }
+    if (t === 'add') { const r = resolve(`area:${a}`); return r && Object.assign(r, a === 'equipment' ? { adding: 'equipment', title: 'Add machines', lead: 'Drop their EU declaration, inspection reports or an equipment register. ALMA reads which machine each one is, you choose which to add, and she fills in their details.' } : a === 'products' ? { adding: 'products', title: 'Add products', lead: 'Drop their technical sheets, safety data sheets, declarations or a product list. ALMA reads which product each one is, you choose which to add, and she fills in their details.' } : { adding: 'workers', title: 'Add workers', lead: 'Drop their citizen card, passport or a worker register. ALMA reads who they are, you choose who to add, and she fills in their details.' }); }
     if (t === 'area') {
       const pool = D.filter((x) => x.area === a && x.kind).flatMap(rosterSlots);
       if (a === 'workers' && crewHere()) { pool.push(...activeWorkers().flatMap((x) => [idSlot(x.i), ...extrasOf(x.i)])); pool.unshift(regSlot()); }
@@ -249,6 +254,8 @@ window.CMUpload = (() => {
     const wDrop = pool.some((sl) => sl.d && sl.d.area === 'workers');
     // dropped among machines' documents (and not workers'): the machines on them, the same way
     const eDrop = !wDrop && eqHere() && pool.some((sl) => sl.d && sl.d.area === 'equipment');
+    // dropped among products' documents (and not workers' or machines'): the products on them
+    const pDrop = !wDrop && !eDrop && prHere() && pool.some((sl) => sl.d && sl.d.area === 'products');
     const kinds = [...new Map(pool.concat(regSlot(), eqHere() ? [eqRegSlot()] : [], prHere() ? [prRegSlot()] : []).map((sl) => [sl.code, sl])).values()];
     // a machine, on the list or not: its name, and its serial number as what identifies it
     const mName = (m) => plain(`${m.type} · ${m.brand ? `${m.brand} ` : ''}${m.model}`);
@@ -285,6 +292,20 @@ window.CMUpload = (() => {
       const per = files.map((f, k) => {
         const fw = fileWords(f), top = kinds.map((sl) => [sl, docScore(sl, fw)]).filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1])[0];
         if (top && top[0].code === 'EQ-REG') { const all = (M.MACHINE || []).map(knownM).concat(EQ_JOIN.filter((x) => !serials.has(fold(x[3]))).slice(0, N_EQ).map(freshM)); all.forEach((q) => q.lists.push(k)); return { list: true, eq: true, people: all }; }
+        const q = F[n++ % F.length]; q.files.push(k); return { people: [q] };
+      });
+      return { people, per, unsure: [] };
+    }
+    // Prototype: dropped among products' documents, she finds two products not on the list and two on
+    // it (by the manufacturer's reference on each file); a product list still reads as a list
+    if (pDrop && activeProducts().length) {
+      const on = activeProducts(), pickP = [on[0], on[Math.min(4, on.length - 1)]].filter((x, j, a) => a.indexOf(x) === j);
+      const F = PR_DOCS.filter((x) => !prNames.has(fold(x[0]))).slice(0, 2).map((x) => Object.assign(freshP(x), { byDocs: true }))
+        .concat(pickP.map((y) => Object.assign(knownP(y.x, y.i), { byDocs: true })));
+      let n = 0;
+      const per = files.map((f, k) => {
+        const fw = fileWords(f), top = kinds.map((sl) => [sl, docScore(sl, fw)]).filter(([, x]) => x > 0).sort((a, b) => b[1] - a[1])[0];
+        if (top && top[0].code === 'PR-REG') { const all = (M.PRODUCT || []).map(knownP).concat(PR_JOIN.filter((x) => !prNames.has(fold(x[0]))).slice(0, N_PR).map(freshP)); all.forEach((q) => q.lists.push(k)); return { list: true, pr: true, people: all }; }
         const q = F[n++ % F.length]; q.files.push(k); return { people: [q] };
       });
       return { people, per, unsure: [] };
@@ -706,7 +727,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const n = label.toLowerCase(), h = hash(s.key + label);
       // a product's: what its profile says, then what such a document reads
       if (s.d.area === 'products') {
-        const x = (M.PRODUCT || [])[s.i] || {};
+        const x = s.fresh ? profOf(s.fresh) : (M.PRODUCT || [])[s.i] || {};
         if (/identification code|reference|model/.test(n)) return plain(x.ref || '');
         if (/^products? covered|^product|commercial name|article group/.test(n)) return plain(x.name || '');
         if (/signatory/.test(n)) return 'Head of product compliance';
@@ -930,7 +951,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
           : many ? `<div class="cmu-now"><span>${pool.length} document${pool.length === 1 ? '' : 's'} can go here</span><b>${need ? `${need} need${need === 1 ? 's' : ''} a file` : 'All in order'}</b></div>` : '';
         const list = files.length ? `<div class="cmu-list"><h3>Your files &middot; ${files.length}</h3>${files.map((f, k) => `<div class="cmu-f"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${size(f.size)}</small><button type="button" class="cmu-rm" data-rm="${k}" aria-label="Remove ${esc(f.name)}">${XI}</button></div>`).join('')}</div>` : '';
         body.innerHTML = now + `<div class="cmu-drop" id="cmu-drop" role="button" tabindex="0" aria-label="Add files">${UP}<b>${files.length ? 'Add more files' : `Drop ${fs ? 'the file' : 'files'} here`}</b><span>or <u>browse your device</u> &middot; PDF, scan or photo</span></div>`
-          + (R0.adding ? `<div class="cmu-lib"><span>or</span><button type="button" class="btn btn-quiet btn-sm cm-lib-b" data-manual>${ADDP}<span>Add a ${R0.adding === 'equipment' ? 'machine' : 'worker'} manually</span></button></div>`
+          + (R0.adding ? `<div class="cmu-lib"><span>or</span><button type="button" class="btn btn-quiet btn-sm cm-lib-b" data-manual>${ADDP}<span>Add a ${R0.adding === 'equipment' ? 'machine' : R0.adding === 'products' ? 'product' : 'worker'} manually</span></button></div>`
             : window.CMLibrary && window.CMLibrary.has() ? `<div class="cmu-lib"><span>or</span>${window.CMLibrary.button('data-lib')}</div>` : '') + list;
         foot.innerHTML = `<button type="button" class="link-btn" data-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-read${files.length ? '' : ' disabled'}>${files.length > 1 ? `Check ${files.length} files with ALMA` : 'Check it with ALMA'}</button>`;
       } else if (step === 2) {
@@ -1066,9 +1087,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const PFP = [['name', 'Product'], ['maker', 'Manufacturer'], ['ref', 'Reference / model'], ['family', 'Product family'], ['code', 'Internal code']];
     const isM = (q) => q.kind === 'equipment', isP = (q) => q.kind === 'products', isR = (q) => isM(q) || isP(q);
     // checked one at a time (as workers are): a machine found on its own documents, or added by hand
-    const isMD = (q) => isM(q) && !!q.byDocs, inBatch = (q) => !isR(q) || isMD(q);
-    // what one of them is called: a worker, or a machine
-    const nounOf = (q) => (q && isM(q) ? 'machine' : 'worker');
+    const isMD = (q) => isR(q) && !!q.byDocs, inBatch = (q) => !isR(q) || isMD(q);
+    // what one of them is called: a worker, a machine or a product
+    const nounOf = (q) => (q && isM(q) ? 'machine' : q && isP(q) ? 'product' : 'worker');
     const fieldsFor = (q) => (isM(q) ? PFM : isP(q) ? PFP : PF);
     const titleOf = (q) => { const v = q.prof || q.mach || q.prod || q; return isM(q) ? plain(`${v.type} · ${v.brand ? `${v.brand} ` : ''}${v.model}`) : isP(q) ? v.name : (q.prof ? q.prof.name : q.name); };
     // what they are, said once: new workers, new machines, or both
@@ -1126,19 +1147,22 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // a machine's: the equipment profile's fields; what it is and its serial number are needed
     const MGM = [['Machine', [['type', 'Equipment type'], ['brand', 'Brand'], ['model', 'Model'], ['serial', 'Serial number'], ['year', 'Year built'], ['plate', 'Plate', 'opt'], ['ref', 'Internal code'], ['owned', 'Owned or rented', ['Owned', 'Rented']]]]];
     const mIsM = () => !!(manual && manual.kind === 'equipment');
-    const mOk = (v) => (mIsM() ? !!((v.type || '').trim() && (v.serial || '').trim()) : !!(v.name.trim() && (v.no.trim() || v.tax.trim() || v.ss.trim())));
-    const mWhy = (v) => (mIsM() ? (!(v.type || '').trim() ? 'Give what kind of machine it is' : !mOk(v) ? 'Give its serial number' : '') : !v.name.trim() ? 'Give their full name' : !mOk(v) ? 'Give one of their ID document, tax or social security numbers' : '');
+    // a product's: the product profile's fields; its name and the manufacturer's reference are needed
+    const MGP = [['Product', [['name', 'Commercial name'], ['maker', 'Manufacturer'], ['ref', 'Manufacturer reference / model'], ['family', 'Product family', ['Other', 'Cement', 'Concrete', 'Steel', 'Insulation', 'Coverings', 'Windows and doors']], ['code', 'Internal code'], ['standard', 'Harmonised standard'], ['ce', 'CE marked', ['No', 'Yes']], ['hazardous', 'Hazardous product', ['No', 'Yes']]]]];
+    const mIsP = () => !!(manual && manual.kind === 'products');
+    const mOk = (v) => (mIsP() ? !!((v.name || '').trim() && (v.ref || '').trim()) : mIsM() ? !!((v.type || '').trim() && (v.serial || '').trim()) : !!(v.name.trim() && (v.no.trim() || v.tax.trim() || v.ss.trim())));
+    const mWhy = (v) => (mIsP() ? (!(v.name || '').trim() ? 'Give the product&rsquo;s name' : !mOk(v) ? 'Give the manufacturer&rsquo;s reference or model' : '') : mIsM() ? (!(v.type || '').trim() ? 'Give what kind of machine it is' : !mOk(v) ? 'Give its serial number' : '') : !v.name.trim() ? 'Give their full name' : !mOk(v) ? 'Give one of their ID document, tax or social security numbers' : '');
     const manualStep = () => {
-      const MQ = mIsM();
-      head('ALMA', `Add a ${MQ ? 'machine' : 'worker'} manually`, MQ ? 'What kind of machine it is and its serial number are needed; the rest is optional. Add its documents too, and I&rsquo;ll read them for you to check.' : 'Their full name and one of their ID document, tax or social security numbers are needed; the rest is optional. Add their documents too, and I&rsquo;ll read them for you to check.');
+      const MP = mIsP(), MQ = mIsM() || MP, N = MP ? 'product' : MQ ? 'machine' : 'worker';
+      head('ALMA', `Add a ${N} manually`, MP ? 'Its name and the manufacturer&rsquo;s reference or model are needed; the rest is optional. Add its documents too, and I&rsquo;ll read them for you to check.' : MQ ? 'What kind of machine it is and its serial number are needed; the rest is optional. Add its documents too, and I&rsquo;ll read them for you to check.' : 'Their full name and one of their ID document, tax or social security numbers are needed; the rest is optional. Add their documents too, and I&rsquo;ll read them for you to check.');
       const v = manual.prof;
-      const cell = ([f, l, kind]) => `<div${kind === 'wide' ? ' class="cmu-wide"' : ''}><dt>${l}${(MQ ? ['type', 'serial'] : ['name', 'tax', 'ss', 'no']).includes(f) ? ' <span class="cmu-req" aria-hidden="true">*</span>' : ''}</dt><dd${Array.isArray(kind) ? ' class="cmu-to"' : ''}>${Array.isArray(kind) ? `<select data-mf="${f}" aria-label="${l}">${kind.map((o) => `<option${v[f] === o ? ' selected' : ''}>${o}</option>`).join('')}</select>` : kind === 'date' ? `<input type="date" data-mf="${f}" value="${isoOf(v[f])}" aria-label="${l}">` : `<input data-mf="${f}" value="${esc(v[f])}" aria-label="${l}"${f === 'name' ? ' required' : ''}>`}</dd></div>`;
+      const cell = ([f, l, kind]) => `<div${kind === 'wide' ? ' class="cmu-wide"' : ''}><dt>${l}${(MP ? ['name', 'ref'] : MQ ? ['type', 'serial'] : ['name', 'tax', 'ss', 'no']).includes(f) ? ' <span class="cmu-req" aria-hidden="true">*</span>' : ''}</dt><dd${Array.isArray(kind) ? ' class="cmu-to"' : ''}>${Array.isArray(kind) ? `<select data-mf="${f}" aria-label="${l}">${kind.map((o) => `<option${v[f] === o ? ' selected' : ''}>${o}</option>`).join('')}</select>` : kind === 'date' ? `<input type="date" data-mf="${f}" value="${isoOf(v[f])}" aria-label="${l}">` : `<input data-mf="${f}" value="${esc(v[f])}" aria-label="${l}"${f === 'name' ? ' required' : ''}>`}</dd></div>`;
       const list = manual.files.length ? `<div class="cmu-list">${manual.files.map((f, k) => `<div class="cmu-f"><span class="cmu-ic">${FILE}</span><span class="cmu-n">${esc(f.name)}</span><small>${size(f.size)}</small><button type="button" class="cmu-rm" data-mrm="${k}" aria-label="Remove ${esc(f.name)}">${XI}</button></div>`).join('')}</div>` : '';
       // what's required, said once at the top: the name, and one number that's only theirs
-      $('cmu-body').innerHTML = (MQ ? '<p class="cmu-only"><span><span class="cmu-req">*</span> Required: <b>the equipment type</b> and <b>its serial number</b>.</span></p>' : '<p class="cmu-only"><span><span class="cmu-req">*</span> Required: <b>the full name</b>, and <b>at least one ID</b> &middot; tax number, social security number or ID document number.</span></p>') + (MQ ? MGM : MG).map(([h, F]) => `<h3 class="cmu-h">${h}</h3><section class="cmu-r is-editing cmu-manual" aria-label="${h}"><dl class="cmu-fields">${F.map(cell).join('')}</dl></section>`).join('')
+      $('cmu-body').innerHTML = (MP ? '<p class="cmu-only"><span><span class="cmu-req">*</span> Required: <b>the commercial name</b> and <b>the manufacturer&rsquo;s reference or model</b>.</span></p>' : MQ ? '<p class="cmu-only"><span><span class="cmu-req">*</span> Required: <b>the equipment type</b> and <b>its serial number</b>.</span></p>' : '<p class="cmu-only"><span><span class="cmu-req">*</span> Required: <b>the full name</b>, and <b>at least one ID</b> &middot; tax number, social security number or ID document number.</span></p>') + (MP ? MGP : MQ ? MGM : MG).map(([h, F]) => `<h3 class="cmu-h">${h}</h3><section class="cmu-r is-editing cmu-manual" aria-label="${h}"><dl class="cmu-fields">${F.map(cell).join('')}</dl></section>`).join('')
         + `<h3 class="cmu-h">${MQ ? 'Its' : 'Their'} documents <span class="co-subtle">&middot; optional</span></h3><div class="cmu-drop" id="cmu-drop" role="button" tabindex="0" aria-label="Add ${MQ ? 'its' : 'their'} documents">${UP}<b>${manual.files.length ? `Add more of ${MQ ? 'its' : 'their'} documents` : `Drop ${MQ ? 'its' : 'their'} documents here`}</b><span>or <u>browse your device</u> &middot; ALMA reads each one, for you to check</span></div>${list}`;
       const n = manual.files.length;
-      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${mWhy(v)}</span><button type="button" class="btn btn-primary btn-sm" data-madd${mOk(v) ? '' : ' disabled'}>${n && manual.ret !== 'who' ? `Add ${MQ ? 'machine' : 'worker'} and check ${n === 1 ? 'the document' : `${n} documents`}` : `Add ${MQ ? 'machine' : 'worker'}`}</button>`;
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-mback>Back</button><span class="cmu-foot-l">${mWhy(v)}</span><button type="button" class="btn btn-primary btn-sm" data-madd${mOk(v) ? '' : ' disabled'}>${n && manual.ret !== 'who' ? `Add ${N} and check ${n === 1 ? 'the document' : `${n} documents`}` : `Add ${N}`}</button>`;
     };
     const detailsStep = () => {
       const P = chosen();
@@ -1210,7 +1234,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const P = chosen();
       dq = ''; step = 'wread'; wread = 0; paint();
       const tick = () => { if (!el.isConnected || step !== 'wread') return; wread += 1; if (wread >= P.length) { P.forEach(profOf);
-          if (found.w) { batchThem(); if (tucked) toast(`ALMA has read ${P.length === 1 ? (isM(P[0]) ? 'its details and documents' : 'their details and documents') : `the details and documents of ${P.length} ${P.every(isM) ? 'machines' : 'workers'}`}. Check each one.`, ['Review', () => tuck(false)]); return; } step = 'details'; paint(); $('cmu-body').scrollTop = 0; if (tucked) toast(`ALMA has read the details of ${nounsOf(P)}. Check them before she adds them.`, ['Review', () => tuck(false)]); return; } paint(); setTimeout(tick, 450); };
+          if (found.w) { batchThem(); if (tucked) toast(`ALMA has read ${P.length === 1 ? (isR(P[0]) ? 'its details and documents' : 'their details and documents') : `the details and documents of ${P.length} ${P.every(isM) ? 'machines' : P.every(isP) ? 'products' : 'workers'}`}. Check each one.`, ['Review', () => tuck(false)]); return; } step = 'details'; paint(); $('cmu-body').scrollTop = 0; if (tucked) toast(`ALMA has read the details of ${nounsOf(P)}. Check them before she adds them.`, ['Review', () => tuck(false)]); return; } paint(); setTimeout(tick, 450); };
       setTimeout(tick, 450);
     };
     // the workers ALMA read who aren't on the list yet, as Team's list from a file (js/team.js): the
@@ -1244,9 +1268,10 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // or on the list, for the user to pick; two names she can't tell apart, for them to say
     const whoStepW = () => {
       const every = pickable(), all = every.filter(inBatch), other = every.filter((q) => !inBatch(q)), nw = all.filter((q) => q.i == null), U = found.unsure || [], open = U.filter((u) => !u.decision), nOn = every.filter((q) => q.decision === 'ok').length;
-      const MC = all.length && all.every(isM), N1 = MC ? 'machine' : 'worker', NN = MC ? 'machines' : 'workers';
+      const MC = all.length && all.every(isM), PC = all.length && all.every(isP), N1 = MC ? 'machine' : PC ? 'product' : 'worker', NN = MC ? 'machines' : PC ? 'products' : 'workers';
       head('ALMA', `I found ${all.length === 1 ? `one ${N1}` : `${all.length} ${NN}`}${nw.length ? `, ${nw.length === all.length ? (all.length === 1 ? 'new' : 'all new') : `${nw.length} of them new`}` : all.length === 1 ? ', already on your list' : ', all on your list'}${other.length ? `, and ${nounsOf(other)}` : ''}`,
-        MC ? `Matched across your ${files.length === 1 ? 'file' : `${files.length} files`} by serial number. New means not on your equipment list yet. Select the ones to check: I&rsquo;ll read their details and documents, and you check one machine at a time.`
+        PC ? `Matched across your ${files.length === 1 ? 'file' : `${files.length} files`} by name and manufacturer&rsquo;s reference. New means not on your product list yet. Select the ones to check: I&rsquo;ll read their details and documents, and you check one product at a time.`
+        : MC ? `Matched across your ${files.length === 1 ? 'file' : `${files.length} files`} by serial number. New means not on your equipment list yet. Select the ones to check: I&rsquo;ll read their details and documents, and you check one machine at a time.`
         : `Matched across your ${files.length === 1 ? 'file' : `${files.length} files`} by name, ID and social security numbers. New means not on your worker list yet. ${open.length ? `First, tell me if ${open.length === 1 ? 'two of them are' : 'these are'} the same person. Then select` : 'Select'} the ones to check: I&rsquo;ll read their details and documents, and you check one worker at a time.`);
       const side = (q) => `<div><b>${esc(q.name)}</b><small>${esc(q.type)} &middot; ${esc(q.no)}</small><small>${q.files.map((k) => esc(files[k].name)).join(', ')}</small></div>`;
       const uCard = (u, j) => (u.decision ? `<section class="cmu-r is-off"><div class="cmu-r-h"><div class="cmu-r-t"><h3>${esc(u.a.name)} and ${esc(u.b.name)}</h3><p>${u.decision === 'same' ? 'The same person: their files are together' : 'Two different people'}</p></div><button type="button" class="link-btn" data-uundo="${j}">Undo</button></div></section>`
@@ -1254,12 +1279,13 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const row = (q) => `<tr class="${q.decision === 'ok' ? 'is-picked' : ''}" data-wrow="${q.key}"${wMatch(q) ? '' : ' hidden'}><td class="c"><input type="checkbox" class="cmu-pck" id="cmu-pk-${q.key}" data-pck="${q.key}" aria-label="Check ${esc(q.name)}"${q.decision === 'ok' ? ' checked' : ''}></td>
         <td><label class="cmu-wp" for="cmu-pk-${q.key}"><span class="cmu-pic" aria-hidden="true">${esc(initials(q.name))}</span><span class="cmu-wp-t"><b>${esc(q.name)}</b><small>${esc(q.type)} &middot; ${esc(q.no)}</small></span></label></td>
         <td class="cmu-wn">${nDocs(q) ? `${nDocs(q)} document${nDocs(q) === 1 ? '' : 's'}` : isM(q) ? 'On the equipment list' : isP(q) ? 'On the product list' : 'On the register'}</td><td><span class="co-badge ${q.i == null ? 'b-info' : 'b-neu'}">${q.i != null ? 'On your list' : isM(q) ? 'New machine' : isP(q) ? 'New product' : 'New'}</span></td></tr>`;
-      const search = all.length > 5 ? `<label class="co-search cmu-wq">${SEARCH_I}<input type="search" placeholder="${MC ? 'Search by name or serial number' : 'Search by name or ID number'}" aria-label="Search the ${NN}" data-wq value="${esc(wq)}"></label>` : '';
+      const search = all.length > 5 ? `<label class="co-search cmu-wq">${SEARCH_I}<input type="search" placeholder="${MC ? 'Search by name or serial number' : PC ? 'Search by name or reference' : 'Search by name or ID number'}" aria-label="Search the ${NN}" data-wq value="${esc(wq)}"></label>` : '';
       const addOne = `<div class="cmu-lib"><button type="button" class="btn btn-quiet btn-sm cm-lib-b" data-manual>${ADDP}<span>Add a ${N1} manually</span></button></div>`;
       // only who's ticked is touched: said before the list
-      const only = MC ? '<div class="cmu-only"><h3>Select machines to update</h3><p>ALMA only updates <b>the machines you select</b>. Any not selected stays as it is on your list, and its documents aren&rsquo;t saved.</p></div>'
+      const only = PC ? '<div class="cmu-only"><h3>Select products to update</h3><p>ALMA only updates <b>the products you select</b>. Any not selected stays as it is on your list, and its documents aren&rsquo;t saved.</p></div>'
+        : MC ? '<div class="cmu-only"><h3>Select machines to update</h3><p>ALMA only updates <b>the machines you select</b>. Any not selected stays as it is on your list, and its documents aren&rsquo;t saved.</p></div>'
         : '<div class="cmu-only"><h3>Select workers to update</h3><p>ALMA only updates <b>the workers you select</b>. Anyone not selected stays as they are on your list, and their documents aren&rsquo;t saved.</p></div>';
-      $('cmu-body').innerHTML = U.map(uCard).join('') + only + search + `<div class="cmu-wt"><table><thead><tr><th class="c"><input type="checkbox" class="cmu-pck" data-pall="n" aria-label="Select everyone shown"></th><th>${other.length ? 'Worker, machine or product' : MC ? 'Machine' : 'Worker'}</th><th>Documents</th><th></th></tr></thead><tbody>${nw.concat(all.filter((q) => q.i != null), other).map(row).join('')}<tr class="cmu-wnone"${every.some(wMatch) ? ' hidden' : ''}><td colspan="4">No one matches that.</td></tr></tbody></table></div>${addOne}`;
+      $('cmu-body').innerHTML = U.map(uCard).join('') + only + search + `<div class="cmu-wt"><table><thead><tr><th class="c"><input type="checkbox" class="cmu-pck" data-pall="n" aria-label="Select everyone shown"></th><th>${other.length ? 'Worker, machine or product' : MC ? 'Machine' : PC ? 'Product' : 'Worker'}</th><th>Documents</th><th></th></tr></thead><tbody>${nw.concat(all.filter((q) => q.i != null), other).map(row).join('')}<tr class="cmu-wnone"${every.some(wMatch) ? ' hidden' : ''}><td colspan="4">No one matches that.</td></tr></tbody></table></div>${addOne}`;
       wAll();
       $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-back>Add or change files</button><span class="cmu-foot-l">${open.length ? `Tell me about ${open.length === 1 ? 'the possible match' : `the ${open.length} possible matches`} first` : `${nOn} of ${every.length} selected`}</span><button type="button" class="btn btn-primary btn-sm" data-pgo${open.length || !nOn ? ' disabled' : ''}>Continue</button>`;
     };
@@ -1269,7 +1295,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       files = files.filter((f) => !f.sim); // (again from the who step: her documents for them are read again)
       const B = chosen().filter(inBatch).sort((a, b) => (a.i == null ? 0 : 1) - (b.i == null ? 0 : 1)); // the new ones first
       numberNew(B);
-      const anyOf = (q) => { const L = isM(q) ? [] : freshSlots(q), have = new Set(L.map((x) => x.code)); return L.concat(M.DOCS.filter((d) => d.kind === kindOf(q) && live(d) && !have.has(d.code)).map((d) => ({ key: `${d.code}#${q.ni}`, code: d.code, i: q.ni, d, name: plain(d.name), who: q.name, status: 'missing', exp: '—', fresh: q }))); };
+      const anyOf = (q) => { const L = isR(q) ? [] : freshSlots(q), have = new Set(L.map((x) => x.code)); return L.concat(M.DOCS.filter((d) => d.kind === kindOf(q) && live(d) && !have.has(d.code)).map((d) => ({ key: `${d.code}#${q.ni}`, code: d.code, i: q.ni, d, name: plain(d.name), who: q.name, status: 'missing', exp: '—', fresh: q }))); };
       pool = R0.pool.concat(B.filter((q) => q.i == null).flatMap(anyOf), regsOf());
       const picks = found.per.map((x) => (x.list ? { list: true } : !x.people[0] ? null : x.people[0].decision === 'ok' ? { who: x.people[0].name } : { off: 'x' }));
       results = place(pool, focus, files, picks);
@@ -1304,7 +1330,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       batch = B; if (!B.length) { finish(); return; } wGo(0);
     };
     // the new ones' places: a worker's at the end of the worker list, a machine's at the end of the equipment list
-    const numberNew = (B) => { const wb = (M.WORKERS || []).length, mb = (M.MACHINE || []).length; B.filter((q) => q.i == null && !isM(q)).forEach((q, k) => { q.ni = wb + k; }); B.filter((q) => q.i == null && isM(q)).forEach((q, k) => { q.ni = mb + k; }); };
+    const numberNew = (B) => { const wb = (M.WORKERS || []).length, mb = (M.MACHINE || []).length, pb = (M.PRODUCT || []).length; B.filter((q) => q.i == null && !isR(q)).forEach((q, k) => { q.ni = wb + k; }); B.filter((q) => q.i == null && isM(q)).forEach((q, k) => { q.ni = mb + k; }); B.filter((q) => q.i == null && isP(q)).forEach((q, k) => { q.ni = pb + k; }); };
     const docsOf = (q) => results.filter((r) => r.owner === q);
     // where one of their documents can go: any of that worker's documents
     const slotsOf = (q) => (q.i == null ? pool.filter((x) => x.fresh === q) : pool.filter((x) => !x.fresh && x.i === q.i && x.d && x.d.kind === kindOf(q)));
@@ -1346,10 +1372,14 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     const inp = (attr, val, date, l) => (date && (!val || !Number.isNaN(Date.parse(val))) ? `<input type="date" ${attr} value="${isoOf(val)}" aria-label="${esc(l)}">` : `<input ${attr} value="${esc(val)}" aria-label="${esc(l)}" placeholder="Not on the files">`);
     const lowSay = (L, lab) => `I couldn&rsquo;t read ${L.map((f) => `the ${lab(f).replace(/^\w/, (x) => x.toLowerCase())}`).join(' or ')} cleanly. Check ${L.length === 1 ? 'it' : 'them'} against the file, then change ${L.length === 1 ? 'it' : 'them'} or accept the document as it is.`;
     const ownerOpts = (cur) => {
-      const inB = batch.map((x, j) => (isM(x) ? '' : `<option value="b:${j}"${x === cur ? ' selected' : ''}>${esc(profOf(x).name || x.name)}${x.i == null ? ' (new)' : ''}</option>`)).join('');
+      const inB = batch.map((x, j) => (isR(x) ? '' : `<option value="b:${j}"${x === cur ? ' selected' : ''}>${esc(profOf(x).name || x.name)}${x.i == null ? ' (new)' : ''}</option>`)).join('');
       if (cur && isM(cur)) {
         const restM = activeMachines().filter((x) => !batch.some((b) => isM(b) && b.i === x.i)).map((x) => `<option value="m:${x.i}">${esc(plain(M.recordName('equipment', x.i)))}</option>`).join('');
         return `<optgroup label="Checking now">${batch.map((x, j) => (isM(x) ? `<option value="b:${j}"${x === cur ? ' selected' : ''}>${esc(x.name)}${x.i == null ? ' (new)' : ''}</option>` : '')).join('')}</optgroup>${restM ? `<optgroup label="Your equipment list">${restM}</optgroup>` : ''}`;
+      }
+      if (cur && isP(cur)) {
+        const restP = activeProducts().filter((y) => !batch.some((b) => isP(b) && b.i === y.i)).map((y) => `<option value="p:${y.i}">${esc(plain(M.recordName('products', y.i)))}</option>`).join('');
+        return `<optgroup label="Checking now">${batch.map((x, j) => (isP(x) ? `<option value="b:${j}"${x === cur ? ' selected' : ''}>${esc(titleOf(x))}${x.i == null ? ' (new)' : ''}</option>` : '')).join('')}</optgroup>${restP ? `<optgroup label="Your product list">${restP}</optgroup>` : ''}`;
       }
       const rest = activeWorkers().filter((x) => !batch.some((b) => b.i === x.i)).map((x) => `<option value="w:${x.i}">${esc(plain(x.p.name))}</option>`).join('');
       return `<optgroup label="Checking now">${inB}</optgroup>${rest ? `<optgroup label="Your worker list">${rest}</optgroup>` : ''}`;
@@ -1363,16 +1393,16 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const q = batch[wi], n = wNeeds(q), rest = batch.filter((x) => x !== q && !decided(x)).length;
       if (q.ok && n) q.ok = false; // a document undone: the worker isn't accepted any more
       // accepted or rejected already (back to them with the arrows): undone here, or on to the next
-      const N = nounOf(q), Nc = N[0].toUpperCase() + N.slice(1), its = isM(q) ? 'its' : 'their';
+      const N = nounOf(q), Nc = N[0].toUpperCase() + N.slice(1), its = isR(q) ? 'its' : 'their';
       if (decided(q)) { $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${q.ok ? `${Nc} accepted` : q.i == null ? 'Rejected: not added' : `Rejected: ${its} documents aren&rsquo;t saved`}</span><button type="button" class="btn btn-quiet btn-sm" data-wkundo>${q.ok ? `Unaccept ${N}` : 'Undo reject'}</button><button type="button" class="btn btn-primary btn-sm cmu-wk-go" data-wknext>${rest ? `Next ${N}` : 'Finish'}</button>`; return; }
       // Skip: for now only, they come back once the others are done; Reject: not added (or nothing of theirs saved)
-      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `${n === 1 ? 'One document needs' : `${n} documents need`} you` : ''}</span>${rest ? `<button type="button" class="link-btn" data-wkskip title="Come back to ${isM(q) ? 'it' : 'them'} once the others are done">Skip for now</button>` : ''}<button type="button" class="btn btn-quiet btn-sm" data-wkrej title="${q.i == null ? `Don&rsquo;t add ${isM(q) ? 'it' : 'them'}` : `Don&rsquo;t save ${its} documents`}">Reject ${N}</button><button type="button" class="btn btn-primary btn-sm cmu-wk-go" data-wkok${n ? ' disabled' : ''}>Accept ${N}</button>`;
+      $('cmu-foot').innerHTML = `<button type="button" class="link-btn" data-wkback>Back</button><span class="cmu-foot-l">${n ? `${n === 1 ? 'One document needs' : `${n} documents need`} you` : ''}</span>${rest ? `<button type="button" class="link-btn" data-wkskip title="Come back to ${isR(q) ? 'it' : 'them'} once the others are done">Skip for now</button>` : ''}<button type="button" class="btn btn-quiet btn-sm" data-wkrej title="${q.i == null ? `Don&rsquo;t add ${isR(q) ? 'it' : 'them'}` : `Don&rsquo;t save ${its} documents`}">Reject ${N}</button><button type="button" class="btn btn-primary btn-sm cmu-wk-go" data-wkok${n ? ' disabled' : ''}>Accept ${N}</button>`;
     };
     const workerStep = () => {
       const q = batch[wi]; if (!q) return;
       if (q.ok && wNeeds(q)) q.ok = false;
       const v = profOf(q), D = docsOf(q), isNew = q.i == null, c = confsOf(q), pl = pLow(q), pOpen = wOpen === 'p';
-      const N = nounOf(q), MQ = isM(q);
+      const N = nounOf(q), MQ = isR(q);
       head('ALMA', `Check each ${N}`, `${MQ ? 'Its' : 'Their'} documents, and what I read on each one. Low confidence needs you: check it against the file, then accept or reject it. High and medium confidence are up to you. Open a document to see the file beside this panel.`);
       const top = `<div class="cmu-wk-top"><span class="co-badge ${isNew ? 'b-info' : 'b-neu'}">${isNew ? `New ${N}` : 'On your list'}</span>${q.ok ? '<span class="co-badge b-ok">Accepted</span>' : q.rej ? '<span class="co-badge b-over">Rejected</span>' : q.skip ? '<span class="co-badge b-neu">Skipped for now</span>' : ''}<span class="cmu-wk-n"><button type="button" data-wprev aria-label="Previous ${N}"${wi ? '' : ' disabled'}>${PREV}</button><span>${wi + 1} of ${batch.length}</span><button type="button" data-wnext aria-label="Next ${N}"${wi < batch.length - 1 ? '' : ' disabled'}>${NEXT}</button></span></div>`;
       const reg = srcList(), lk = q.lists[0], lr = lk != null ? results[lk] : null;
@@ -1380,12 +1410,12 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const pBody = !pOpen ? '' : `<dl class="cmu-fields">${fieldsFor(q).map(([f, l, date]) => { const flag = isNew && !(q.fe && q.fe.has(f)) && !q.checked && c[f] != null && c[f] < 75; return `<div${flag ? ' class="is-flag"' : ''} data-row="p:${f}"><dt>${l}</dt><dd>${inp(`data-pf="${f}"`, v[f] || '', date, l)}${f === 'role' && q.roleWas ? `<span class="cmu-was">Was ${esc(q.roleWas)} on your list</span>` : ''}<span class="cmu-tg">${tagP(q, f)}</span></dd></div>`; }).join('')}</dl>`
         + (pl.length && !q.checked ? `<p class="cmu-why" data-why="p">${lowSay(pl, (f) => labelOf(q, f))}</p>` : '')
         + `<footer class="cmu-r-acts"><span><button type="button" class="link-btn" data-wppeek>Preview</button></span><span>${q.regOk ? `<button type="button" class="link-btn" data-pundo>Undo</button><span class="cmu-acc is-ok">${TICK}Accepted</span>` : `<button class="cmu-acc" type="button" data-pacc>${TICK}Accept</button>`}</span></footer>`;
-      const regCard = lk == null ? '' : `<section class="cmu-r cmu-wk-d${pOpen ? ' is-open' : ''}${q.regOk ? ' is-ok' : pNeeds(q) ? ' is-ask' : ''}" data-wk="p"><button type="button" class="cmu-wk-h" data-wopen="p" aria-expanded="${pOpen}"><span class="cmu-ic">${FILE}</span><span class="cmu-r-t"><b>${esc(lr && lr.slot ? lr.slot.name : MQ ? 'Equipment register' : 'Worker register')}</b><small>${esc(files[lk].name)}</small></span><span class="cmu-wk-b">${pBadge(q)}</span>${CHEV}</button>${pBody}</section>`;
+      const regCard = lk == null ? '' : `<section class="cmu-r cmu-wk-d${pOpen ? ' is-open' : ''}${q.regOk ? ' is-ok' : pNeeds(q) ? ' is-ask' : ''}" data-wk="p"><button type="button" class="cmu-wk-h" data-wopen="p" aria-expanded="${pOpen}"><span class="cmu-ic">${FILE}</span><span class="cmu-r-t"><b>${esc(lr && lr.slot ? lr.slot.name : isM(q) ? 'Equipment register' : isP(q) ? 'Product list' : 'Worker register')}</b><small>${esc(files[lk].name)}</small></span><span class="cmu-wk-b">${pBadge(q)}</span>${CHEV}</button>${pBody}</section>`;
       // their name, as in the drawing: on its own, and theirs to put right
       // Edit name: the name as a field, Done (or Enter) to leave it
       // a machine: its name, and its details as ALMA read them (a new one's, to put right; one on the list, as it is)
       const mCard = !MQ ? '' : `<section class="cmu-r cmu-wk-p cmu-wk-m"><span class="cmu-pic" aria-hidden="true">${esc(initials(titleOf(q)))}</span><b class="cmu-wk-nmt">${esc(titleOf(q))}</b></section>
-        <h3 class="cmu-h">Machine details</h3><section class="cmu-r cmu-manual"><dl class="cmu-fields">${PFM.map(([f, l]) => { const flag = isNew && !(q.fe && q.fe.has(f)) && !q.checked && c[f] != null && c[f] < 75; return `<div${flag ? ' class="is-flag"' : ''} data-row="p:${f}"><dt>${l}</dt><dd>${isNew ? inp(`data-pf="${f}"`, v[f] || '', false, l) : v[f] ? esc(v[f]) : '<span class="co-subtle">Not on file</span>'}${isNew ? `<span class="cmu-tg">${tagP(q, f)}</span>` : ''}</dd></div>`; }).join('')}</dl></section>`;
+        <h3 class="cmu-h">${isP(q) ? 'Product' : 'Machine'} details</h3><section class="cmu-r cmu-manual"><dl class="cmu-fields">${fieldsFor(q).map(([f, l]) => { const flag = isNew && !(q.fe && q.fe.has(f)) && !q.checked && c[f] != null && c[f] < 75; return `<div${flag ? ' class="is-flag"' : ''} data-row="p:${f}"><dt>${l}</dt><dd>${isNew ? inp(`data-pf="${f}"`, v[f] || '', false, l) : v[f] ? esc(v[f]) : '<span class="co-subtle">Not on file</span>'}${isNew ? `<span class="cmu-tg">${tagP(q, f)}</span>` : ''}</dd></div>`; }).join('')}</dl></section>`;
       const pCard = MQ ? mCard : `<section class="cmu-r cmu-wk-p"><span class="cmu-pic" aria-hidden="true">${esc(initials(v.name || q.name))}</span>${q.nameEdit
         ? `<input class="cmu-wk-nm is-edit" data-pf="name" value="${esc(v.name || q.name)}" aria-label="Their full name"><button type="button" class="btn btn-quiet btn-sm" data-wnmdone>Done</button>`
         : `<b class="cmu-wk-nmt">${esc(v.name || q.name)}</b>${q.fe && q.fe.has('name') ? corrB() : ''}<button type="button" class="link-btn" data-wnmedit>Edit name</button>`}</section>`;
@@ -1436,12 +1466,12 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     };
     const finish = () => {
       closePeek();
-      batch.forEach((q) => { if (q.rej) q.decision = 'no'; const v = profOf(q); if (q.i == null && !q.rej && !isM(q)) Object.assign(q, { name: (v.name || q.name).trim(), role: v.role, type: v.type, no: v.no, valid: v.valid }); });
+      batch.forEach((q) => { if (q.rej) q.decision = 'no'; const v = profOf(q); if (q.i == null && !q.rej && !isR(q)) Object.assign(q, { name: (v.name || q.name).trim(), role: v.role, type: v.type, no: v.no, valid: v.valid }); });
       numberNew(batch.filter((q) => !q.rej));
       results.forEach((r) => { if (quiet(r)) r.ok = true; if (!r.owner) return; r.wk = true; if (r.owner.rej) r.on = false; else if (r.on) r.ok = true; });
       // what no worker was found on (a company document, a file she couldn't place): the review, as before
       if (shown().length) { step = 3; paint(); $('cmu-body').scrollTop = 0; return; }
-      if (!results.some((r) => r.on && r.slot) && !batch.some((q) => q.ok)) { close(); toast(`Nothing saved: you rejected every ${batch.every(isM) ? 'machine' : 'worker'}.`); return; }
+      if (!results.some((r) => r.on && r.slot) && !batch.some((q) => q.ok)) { close(); toast(`Nothing saved: you rejected every ${batch.every(isM) ? 'machine' : batch.every(isP) ? 'product' : 'worker'}.`); return; }
       save();
     };
     const whoStep = () => {
@@ -1493,23 +1523,26 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     // (until logout) for the matrix to show what changed (js/company-details.js)
     // the machines checked one at a time, the same way ('cm-eq-changes'): and any machine on the list
     // whose documents she filed
-    const noteEqChanges = () => {
-      if (!window.CMEquipSnap) return;
-      const qs = found && found.w ? batch.filter((q) => isM(q) && q.ok) : [];
-      const onList = [...new Set(results.filter((r) => r.on && r.slot && r.slot.d && r.slot.d.area === 'equipment' && !r.slot.fresh && r.slot.i != null).map((r) => r.slot.i))];
+    // (and the products, the same way: 'cm-pr-changes')
+    const noteEqChanges = (area = 'equipment') => {
+      const SNAP = area === 'products' ? window.CMProdSnap : window.CMEquipSnap, KEY = area === 'products' ? 'cm-pr-changes' : 'cm-eq-changes', isX = area === 'products' ? isP : isM;
+      if (!SNAP) return;
+      const qs = found && found.w ? batch.filter((q) => isX(q) && q.ok) : [];
+      const onList = [...new Set(results.filter((r) => r.on && r.slot && r.slot.d && r.slot.d.area === area && !r.slot.fresh && r.slot.i != null).map((r) => r.slot.i))];
       if (!qs.length && !onList.length) return;
-      const snap = window.CMEquipSnap().rows, C = (() => { try { return JSON.parse(sessionStorage.getItem('cm-eq-changes') || 'null'); } catch (e) { return null; } })() || { before: {}, notes: {} };
+      const snap = SNAP().rows, C = (() => { try { return JSON.parse(sessionStorage.getItem(KEY) || 'null'); } catch (e) { return null; } })() || { before: {}, notes: {} };
       const note = (m, was, rs) => { if (!(m in C.before)) C.before[m] = was; C.notes[m] = (C.notes[m] || []).concat(rs.map((r) => ({ code: r.slot.code, name: plain(r.slot.name), file: r.file.name, valid: r.read ? r.read.valid : '' }))); };
       qs.forEach((q) => { const m = q.i != null ? q.i : q.ni; if (m == null) return; note(m, q.i != null ? snap[q.i] || null : null, results.filter((r) => r.owner === q && r.on && r.slot)); });
-      onList.filter((m) => !qs.some((q) => q.i === m)).forEach((m) => note(m, snap[m] || null, results.filter((r) => r.on && r.slot && !r.slot.fresh && r.slot.i === m && r.slot.d && r.slot.d.area === 'equipment')));
+      onList.filter((m) => !qs.some((q) => q.i === m)).forEach((m) => note(m, snap[m] || null, results.filter((r) => r.on && r.slot && !r.slot.fresh && r.slot.i === m && r.slot.d && r.slot.d.area === area)));
       C.at = M.today();
-      try { sessionStorage.setItem('cm-eq-changes', JSON.stringify(C)); } catch (e) {}
+      try { sessionStorage.setItem(KEY, JSON.stringify(C)); } catch (e) {}
     };
     const noteChanges = () => {
-      noteEqChanges();
+      noteEqChanges(); noteEqChanges('products');
       if (!found || !found.w || !window.CMWorkerSnap) return;
       const snap = window.CMWorkerSnap().rows, C = (() => { try { return JSON.parse(sessionStorage.getItem('cm-wk-changes') || 'null'); } catch (e) { return null; } })() || { before: {}, notes: {} };
-      batch.filter((q) => q.ok).forEach((q) => {
+      const ws = batch.filter((q) => q.ok && !isR(q)); if (!ws.length) return; // (machines and products have their own)
+      ws.forEach((q) => {
         const w = q.i != null ? q.i : q.ni; if (w == null) return;
         if (!(w in C.before)) C.before[w] = q.i != null ? snap[q.i] || null : null;
         C.notes[w] = (C.notes[w] || []).concat(results.filter((r) => r.owner === q && r.on && r.slot).map((r) => ({ code: r.slot.code, name: plain(r.slot.name), file: r.file.name, valid: r.read ? r.read.valid : '' })));
@@ -1548,10 +1581,22 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
             : { ev: 'rejected', code: s.code, name: plain(s.name), file: r.file.name, from });
         });
       }
+      const PL = window.CMProdLog;
+      if (PL) {
+        const was = {}, before = (m) => (was[m] = was[m] || PL.docs(m));
+        const newPs = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && isP(q)).sort((a, b) => (a.ni == null ? 1e9 : a.ni) - (b.ni == null ? 1e9 : b.ni)) : [];
+        newPs.forEach((q, k) => PL.add(q.ni != null ? q.ni : (M.PRODUCT || []).length + k, { ev: 'added', how: q.manual ? 'By hand' : q.byDocs ? 'From its documents' : 'From the product list' }));
+        results.filter((r) => r.slot && r.file && r.slot.d && r.slot.d.area === 'products' && (r.on || (r.owner && r.owner.ok))).forEach((r) => {
+          const s = r.slot, m = s.fresh ? s.fresh.ni : s.i; if (m == null || !PL.isPr(s.code)) return;
+          const from = s.fresh ? null : before(m)[s.code] || null;
+          PL.add(m, r.on ? { ev: 'upload', code: s.code, name: plain(s.name), file: r.file.name, from: from && !['missing', 'notuploaded', 'notrequested'].includes(from) ? from : null, conf: r.edited ? 98 : r.conf, edited: !!r.edited }
+            : { ev: 'rejected', code: s.code, name: plain(s.name), file: r.file.name, from });
+        });
+      }
       const crew = { added: [], left: [], roles: {}, names: {}, details: {} };
       ((found && found.changes) || []).filter((c) => c.decision === 'ok').forEach((c) => { crew.roles[c.i] = c.to; });
       // workers on the list, checked one at a time: what the user changed of their details
-      if (found && found.w) batch.filter((q) => q.i != null && q.ok).forEach((q) => {
+      if (found && found.w) batch.filter((q) => q.i != null && q.ok && !isR(q)).forEach((q) => { // (a machine's or a product's details aren't a worker's)
         const v = q.prof || {}, w = q.was || {}, dd = {};
         if (v.role !== w.role) crew.roles[q.i] = M.esc(v.role);
         if (v.name && v.name !== w.name) crew.names[q.i] = M.esc(v.name.trim());
@@ -1567,7 +1612,8 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const freshMs = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && isM(q)).sort((a, b) => (a.ni == null ? 1e9 : a.ni) - (b.ni == null ? 1e9 : b.ni)) : [];
       const machOf = (q) => Object.assign({}, q.prof || q.mach, { on: M.today(), how: q.manual ? '' : q.byDocs ? 'From its documents' : 'From the equipment register', manual: !!q.manual });
       // the new products, at the end of the product list, with what the list said of them
-      const freshPs = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && isP(q)) : [];
+      const freshPs = found ? found.people.filter((q) => q.i == null && q.decision === 'ok' && isP(q)).sort((a, b) => (a.ni == null ? 1e9 : a.ni) - (b.ni == null ? 1e9 : b.ni)) : [];
+      const prodOf = (q) => Object.assign({}, q.prof || q.prod, { on: M.today(), how: q.manual ? '' : q.byDocs ? 'From its documents' : 'From the product list', manual: !!q.manual });
       fresh.forEach((q) => { const v = q.prof || {}; crew.added.push([q.name, q.role || '', q.type, q.no, q.valid, M.today(), { birth: v.birth || '', nationality: v.nationality || '', tax: v.tax || '', ss: v.ss || '', address: v.address || '', since: v.since || '', employment: v.employment || '', manual: !!q.manual }]); });
       done.forEach((r, j) => {
         const s = r.slot, at = s.fresh ? s.fresh.ni : s.i, k = results.indexOf(r);
@@ -1592,29 +1638,31 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       const whose = [...new Set(done.map((r) => r.slot.who).filter(Boolean))];
       const nDet = new Set(Object.keys(crew.names).concat(Object.keys(crew.details))).size;
       const nCrew = crew.added.length + crew.left.length + Object.keys(crew.roles).length + nDet, nEq = freshMs.length, nPr = freshPs.length;
+      if (found && found.manual && isP(found.people[0])) { M.saveProducts([prodOf(found.people[0])]); try { sessionStorage.setItem('cm-upload-toast', `${esc(found.people[0].name)} added to your product list.`); } catch (e) {} location.reload(); return; }
       if (found && found.manual && isM(found.people[0])) { M.saveMachines([machOf(found.people[0])]); try { sessionStorage.setItem('cm-upload-toast', `${esc(found.people[0].name)} added to your equipment list.`); } catch (e) {} location.reload(); return; }
       if (found && found.manual) { M.saveCrew(crew); try { sessionStorage.setItem('cm-upload-toast', `${esc(found.people[0].name)} added to your worker list.`); } catch (e) {} location.reload(); return; }
-      if (kept.size || nCrew || nEq || nPr || (found && found.w && batch.some((q) => q.ok && isM(q)))) {
+      if (kept.size || nCrew || nEq || nPr || (found && found.w && batch.some((q) => q.ok && isR(q)))) {
         const parts = [done.length ? `${done.length} document${done.length === 1 ? '' : 's'} saved` : 'Nothing replaced'];
         if (kept.size) parts.push(`${kept.size} kept as ${kept.size === 1 ? 'it was' : 'they were'}`);
         if (nEq) parts.push(`${nEq} machine${nEq === 1 ? '' : 's'} added`);
         if (nPr) parts.push(`${nPr} product${nPr === 1 ? '' : 's'} added`);
         if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} added`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`, nDet && `${nDet} with new details`].filter(Boolean).join(', ')})`);
-        const nW = found && found.w ? batch.filter((q) => q.ok && !isM(q)).length : 0, nM = found && found.w ? batch.filter((q) => q.ok && isM(q)).length : 0;
+        const nW = found && found.w ? batch.filter((q) => q.ok && !isR(q)).length : 0, nM = found && found.w ? batch.filter((q) => q.ok && isM(q)).length : 0, nP = found && found.w ? batch.filter((q) => q.ok && isP(q)).length : 0;
         if (nW) parts.push(`${nW} worker${nW === 1 ? '' : 's'} with changes, marked on the table`);
         if (nM) parts.push(`${nM} machine${nM === 1 ? '' : 's'} with changes, marked on the table`);
+        if (nP) parts.push(`${nP} product${nP === 1 ? '' : 's'} with changes, marked on the table`);
         const msg = parts.join(' &middot; ') + '.';
         // the crew is part of how the pages are drawn: they come back with it, and the message after
         if (nCrew || nEq || nPr) {
           if (nEq) M.saveMachines(freshMs.map(machOf));
-          if (nPr) M.saveProducts(freshPs.map((q) => Object.assign({}, q.prof || q.prod, { on: M.today() })));
+          if (nPr) M.saveProducts(freshPs.map(prodOf));
           if (nCrew) M.saveCrew(crew);
           try { sessionStorage.setItem('cm-upload-toast', msg); } catch (e) {} location.reload(); return;
         }
         say(msg, done); return;
       }
       say((done.length === 1 ? `${esc(done[0].slot.name)}${done[0].slot.who ? ` for ${esc(done[0].slot.who)}` : ''} saved. ALMA checked it, valid until ${esc(done[0].read.valid)}.`
-        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`) + (found && found.w && batch.some((q) => q.ok) ? (() => { const n = batch.filter((q) => q.ok).length, mm = batch.filter((q) => q.ok).every(isM); return ` ${n === 1 ? `One ${mm ? 'machine' : 'worker'}` : `${n} ${mm ? 'machines' : 'workers'}`} with changes, marked on the table.`; })() : ''), done);
+        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`) + (found && found.w && batch.some((q) => q.ok) ? (() => { const n = batch.filter((q) => q.ok).length, mm = batch.filter((q) => q.ok).every(isM), pp = batch.filter((q) => q.ok).every(isP); return ` ${n === 1 ? `One ${mm ? 'machine' : pp ? 'product' : 'worker'}` : `${n} ${mm ? 'machines' : pp ? 'products' : 'workers'}`} with changes, marked on the table.`; })() : ''), done);
     };
     // the message, and the page brought up to date: by its own callback, or (a job picked up from
     // another page, which has none) by drawing it again, the message carried over
@@ -1680,14 +1728,28 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
       if (t('[data-pck]')) { const b = t('[data-pck]'), q = found.people.find((x) => x.key === b.dataset.pck); q.decision = b.checked ? 'ok' : 'no'; const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector(`[data-pck="${q.key}"]`)?.focus({ preventScroll: true }); return; }
       if (t('[data-pall]')) { const b = t('[data-pall]'), on = b.checked; pickable().filter(wMatch).forEach((q) => { q.decision = on ? 'ok' : 'no'; }); const at = $('cmu-body').scrollTop; paint(); $('cmu-body').scrollTop = at; el.querySelector('[data-pall]')?.focus({ preventScroll: true }); return; }
       if (t('[data-manual]')) {
-        const fromWho = step === 'who', mk = fromWho ? (pickable().filter(inBatch).every(isM) && pickable().some(isM) ? 'equipment' : 'workers') : R0.adding === 'equipment' ? 'equipment' : 'workers';
-        manual = fromWho || !manual || manual.ret || manual.kind !== mk ? { ret: fromWho ? 'who' : null, kind: mk, files: [], prof: Object.fromEntries((mk === 'equipment' ? MGM : MG).flatMap(([, F]) => F).map(([f, , kind]) => [f, Array.isArray(kind) ? kind[0] : ''])) } : manual;
+        const fromWho = step === 'who', inB = fromWho ? pickable().filter(inBatch) : [], mk = fromWho ? (inB.length && inB.every(isM) ? 'equipment' : inB.length && inB.every(isP) ? 'products' : 'workers') : R0.adding === 'equipment' || R0.adding === 'products' ? R0.adding : 'workers';
+        manual = fromWho || !manual || manual.ret || manual.kind !== mk ? { ret: fromWho ? 'who' : null, kind: mk, files: [], prof: Object.fromEntries((mk === 'products' ? MGP : mk === 'equipment' ? MGM : MG).flatMap(([, F]) => F).map(([f, , kind]) => [f, Array.isArray(kind) ? kind[0] : ''])) } : manual;
         step = 'manual'; paint(); el.querySelector(mk === 'equipment' ? '[data-mf="type"]' : '[data-mf="name"]')?.focus(); return;
       }
       if (t('[data-mrm]')) { manual.files.splice(+t('[data-mrm]').dataset.mrm, 1); paint(); return; }
       if (t('[data-mback]')) { step = manual && manual.ret === 'who' ? 'who' : 1; paint(); return; }
       if (t('[data-madd]')) {
         const v = manual.prof; if (!mOk(v)) return;
+        // a product: added as typed, or with its documents read and checked as any product's
+        if (mIsP()) {
+          const prod = { name: v.name.trim(), maker: (v.maker || '').trim(), ref: v.ref.trim(), family: v.family || 'Other', code: (v.code || '').trim(), standard: (v.standard || '').trim(), ce: v.ce || 'No', hazardous: v.hazardous || 'No' };
+          const at = manual.ret === 'who' ? files.length : 0;
+          const q = { key: `manualp${found ? found.people.length : 0}`, i: null, kind: 'products', byDocs: true, manual: true, name: prod.name, type: prod.maker || 'Reference', no: prod.ref, prod, prof: Object.assign({}, prod), files: manual.files.map((f, k) => at + k), lists: [], decision: 'ok', edited: true };
+          if (manual.ret === 'who') {
+            files = files.concat(manual.files); manual.files.forEach(() => found.per.push({ people: [q] }));
+            found.people.unshift(q); manual = null; step = 'who'; paint(); $('cmu-body').scrollTop = 0;
+            toast(`${esc(q.name)} added to the list, to check with the others.`); return;
+          }
+          const fl = manual.files.slice();
+          if (!fl.length) { found = { people: [q], per: [], changes: [], asked: false, manual: true }; results = []; save(); return; }
+          files = fl; found = { people: [q], per: fl.map(() => ({ people: [q] })), changes: [], unsure: [], asked: false, w: true }; readDetails(); return;
+        }
         // a machine: added as typed, or with its documents read and checked as any machine's
         if (mIsM()) {
           const mach = { type: v.type.trim(), brand: (v.brand || '').trim(), model: (v.model || '').trim(), serial: v.serial.trim(), year: (v.year || '').trim(), ref: (v.ref || '').trim(), owned: v.owned || 'Owned', plate: (v.plate || '').trim() };
@@ -1833,7 +1895,11 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         // moved to another worker: any on the list, new or not; someone not being checked yet joins the ones being checked
         const k = +ow.dataset.wown, r = results[k], [t0, n] = ow.value.split(':'); let q2;
         if (t0 === 'b') q2 = batch[+n];
-        else if (t0 === 'm') {
+        else if (t0 === 'p') {
+          const i = +n, x0 = M.PRODUCT[i];
+          q2 = found.people.find((x) => x.i === i && isP(x)) || (() => { const x = { key: 'p' + i, i, kind: 'products', byDocs: true, name: plain(x0.name), type: plain(x0.maker || 'Reference'), no: plain(x0.ref), prod: { name: plain(x0.name), maker: plain(x0.maker), ref: plain(x0.ref), family: plain(x0.family), code: plain(x0.code) }, files: [], lists: [], decision: 'ok' }; found.people.push(x); return x; })();
+          q2.decision = 'ok'; if (!batch.includes(q2)) batch.push(q2);
+        } else if (t0 === 'm') {
           const i = +n, m = M.MACHINE[i];
           q2 = found.people.find((x) => x.i === i && isM(x)) || (() => { const x = { key: 'm' + i, i, kind: 'equipment', byDocs: true, name: plain(M.recordName('equipment', i)), type: 'Serial number', no: plain(m.serial), mach: { type: plain(m.type), brand: plain(m.brand), model: plain(m.model), serial: plain(m.serial), year: String(m.yearBuilt), ref: plain(m.ref) }, files: [], lists: [], decision: 'ok' }; found.people.push(x); return x; })();
           q2.decision = 'ok'; if (!batch.includes(q2)) batch.push(q2);
@@ -1896,7 +1962,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
   };
 
   // logging out forgets what ALMA's last readings changed on the workers' matrix
-  document.addEventListener('click', (e) => { if (e.target.closest('#who-logout')) try { sessionStorage.removeItem('cm-wk-changes'); sessionStorage.removeItem('cm-eq-changes'); } catch (x) {} }, true);
+  document.addEventListener('click', (e) => { if (e.target.closest('#who-logout')) try { sessionStorage.removeItem('cm-wk-changes'); sessionStorage.removeItem('cm-eq-changes'); sessionStorage.removeItem('cm-pr-changes'); } catch (x) {} }, true);
   // a message carried over a reload (a worker list approved)
   try { const t = sessionStorage.getItem('cm-upload-toast'); if (t) { sessionStorage.removeItem('cm-upload-toast'); setTimeout(() => toast(t), 500); } } catch (e) {}
 

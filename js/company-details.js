@@ -547,7 +547,7 @@
     // an area of a company added in this session, with nothing uploaded to it yet
     const empty = area && !filtering() && !DATA.some((d) => d.area === area);
     // Workers ends with the archived ones, as Company ends with its archived documents
-    groupsEl.innerHTML = (list.length ? (area && !filtering() ? matrix(area) : '') + html : empty ? areaEmpty(area) : none()) + ((area === 'workers' || area === 'equipment') && !filtering() ? archivedTable(area) : '');
+    groupsEl.innerHTML = (list.length ? (area && !filtering() ? matrix(area) : '') + html : empty ? areaEmpty(area) : none()) + ((area === 'workers' || area === 'equipment' || (area === 'products' && M.PERSONA !== 'beatriz')) && !filtering() ? archivedTable(area) : '');
   };
 
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
@@ -581,7 +581,7 @@
     : WK_CATS.map(([k, l, sh]) => [k, l, list.filter((d) => catOf(d) === k).sort((x, y) => (LEAD.includes(y.code) ? 1 : 0) - (LEAD.includes(x.code) ? 1 : 0)), sh || l]));
   // a record's documents, as the company's: one table per category (its name and how many), the
   // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
-  const catRow = (d, i, kind) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na', wk = kind === 'workers' && i != null && !d.plain || kind === 'workers' && ['ID', 'DRV', 'CRM'].includes(d.code) || kind === 'equipment' && i != null;
+  const catRow = (d, i, kind) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na', wk = kind === 'workers' && i != null && !d.plain || kind === 'workers' && ['ID', 'DRV', 'CRM'].includes(d.code) || kind === 'equipment' && i != null || kind === 'products' && i != null && M.PERSONA !== 'beatriz';
     return `<tr class="cd-row${wk ? ' is-rosterable' : ''}"${d.spec ? ` data-drop="${d.spec}"` : ''}${wk ? ` data-wdoc="${d.code}" data-wi="${i}" data-wk="${kind}" tabindex="0" role="button" aria-label="Open ${esc(decode(d.name))}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
   const catTable = (rows, i, kind) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map((d) => catRow(d, i, kind)).join('')}</tbody></table></div>`;
   const catGroups = (per, kind, i) => byCat(per, kind).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${catTable(list, i, kind)}</div>`).join('');
@@ -640,7 +640,16 @@
     D.records.equipment.forEach((rec, i) => { if (rec.left) return; const cells = {}; m.cols.forEach((c) => { const x = m.catCell(c, i); cells[c.cat] = x ? x.st : null; }); rows[i] = { cells, overall: worstOf(Object.values(cells).filter(Boolean)) }; });
     return { rows };
   };
-  const chgState = (key = 'workers') => { try { return JSON.parse(sessionStorage.getItem(key === 'equipment' ? 'cm-eq-changes' : 'cm-wk-changes') || 'null'); } catch (e) { return null; } };
+  // and for products ('cm-pr-changes')
+  window.CMProdSnap = () => {
+    const m = mxOf('products'), rows = {}; if (!m) return { rows };
+    D.records.products.forEach((rec, i) => { if (rec.left) return; const cells = {}; m.cols.forEach((c) => { const x = m.catCell(c, i); cells[c.cat] = x ? x.st : null; }); rows[i] = { cells, overall: worstOf(Object.values(cells).filter(Boolean)) }; });
+    return { rows };
+  };
+  const chgState = (key = 'workers') => { try { return JSON.parse(sessionStorage.getItem(key === 'equipment' ? 'cm-eq-changes' : key === 'products' ? 'cm-pr-changes' : 'cm-wk-changes') || 'null'); } catch (e) { return null; } };
+  // a machine's and a product's records and words (a worker's are said apart)
+  const recOf = (kind) => (kind === 'equipment' ? MACHINE : kind === 'products' ? M.PRODUCT : PERSON);
+  const RK = { equipment: { one: 'machine', many: 'machines', list: 'equipment list', param: 'machine', pg: 'eq' }, products: { one: 'product', many: 'products', list: 'product list', param: 'product', pg: 'pr' } };
   const CHIP = (st) => (st ? `<span class="cd-chip is-${TONE[st]}"><span class="cd-dot is-${TONE[st]}"></span></span>` : '<span class="cd-chip is-none"><span class="cd-dash">&mdash;</span></span>');
   const stLabel = (st) => (st ? STATUS[st][0] : 'Not asked');
   // a worker's row against what it said before ALMA's last reading: which cells changed, and Overall
@@ -650,7 +659,7 @@
     // someone new: only where a document of theirs was read
     const read = new Set(((C.notes || {})[i] || []).map((n) => n.code));
     const changed = cells.map((cur, c) => (was ? prevOf(c) !== cur : !!cur && cols[c].docs.some((d) => read.has(d.code))));
-    const ov = was && was.overall && was.overall !== worst ? `<span class="cd-ov"><span class="co-badge ${STATUS[was.overall][1]}">${STATUS[was.overall][0]}</span><span class="cd-arr" aria-hidden="true">&rarr;</span><span class="co-badge ${STATUS[worst][1]}">${STATUS[worst][0]}</span></span>` : '';
+    const ov = was && was.overall && was.overall !== worst ? `<span class="cd-ov cd-ov-mx"><span class="co-badge ${STATUS[was.overall][1]}">${STATUS[was.overall][0]}</span><span class="cd-ov-to"><span class="cd-arr" aria-hidden="true">&rarr;</span><span class="co-badge ${STATUS[worst][1]}">${STATUS[worst][0]}</span></span></span>` : '';
     if (!changed.some(Boolean) && !ov) return null;
     return { cell: (c) => changed[c], ov,
       html: (c) => `<td class="c"><button type="button" class="cd-cell cd-chg" data-chg="${i}:${c}" data-chg-k="${key}" aria-haspopup="dialog" title="What changed">${CHIP(prevOf(c))}<span class="cd-arr" aria-hidden="true">&rarr;</span>${CHIP(cells[c])}<span class="sr-only">${cols[c].name}: ${stLabel(prevOf(c))} to ${stLabel(cells[c])}. What changed</span></button></td>` };
@@ -667,9 +676,9 @@
       const cells = wk ? info.map((x) => (x ? x.st : null)) : cols.map((d) => docSt(d, i));
       const worst = worstOf(cells.filter(Boolean));
       const [wl, wc] = STATUS[worst];
-      const CHG = people || key === 'equipment' ? chgOf(i, cells, worst, cols, key) : null;
+      const CHG = people || key === 'equipment' || (key === 'products' && M.PERSONA !== 'beatriz') ? chgOf(i, cells, worst, cols, key) : null;
       const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : key === 'products' && M.PERSONA !== 'beatriz' ? ` data-product="${i}"` : '';
-      return `<tr class="cd-row${go ? ' is-rosterable' : ''}${CHG ? ' is-chg' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}${(key === 'workers' && PERSON[i] && PERSON[i].isNew) || (key === 'equipment' && MACHINE[i] && MACHINE[i].isNew) ? ' <span class="co-badge b-info cd-new" title="Added recently">New</span>' : ''}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (CHG && CHG.cell(c) ? CHG.html(c) : s
+      return `<tr class="cd-row${go ? ' is-rosterable' : ''}${CHG ? ' is-chg' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}${(key === 'workers' && PERSON[i] && PERSON[i].isNew) || (key === 'equipment' && MACHINE[i] && MACHINE[i].isNew) || (key === 'products' && M.PERSONA !== 'beatriz' && M.PRODUCT[i] && M.PRODUCT[i].isNew) ? ' <span class="co-badge b-info cd-new" title="Added recently">New</span>' : ''}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (CHG && CHG.cell(c) ? CHG.html(c) : s
         ? wk ? `<td class="c"><button type="button" class="cd-cell" data-up="${info[c].spec}" title="${info[c].tip}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${cols[c].name} for ${recordName(key, i)}: ${info[c].tip}. Upload a document</span></button></td>`
         : `<td class="c"><button type="button" class="cd-cell" data-up="rec:${cols[c].code}:${i}" title="${STATUS[s][0]} &middot; ${NO_FILE.includes(s) ? 'upload it' : 'replace it'}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${SHORT[cols[c].code] || cols[c].name} for ${recordName(key, i)}: ${STATUS[s][0]}. ${NO_FILE.includes(s) ? 'Upload' : 'Replace'} it</span></button></td>`
         : '<td class="c"><span class="cd-dash" title="Not asked of this one">&mdash;</span></td>')).join('')}<td>${CHG && CHG.ov ? CHG.ov : `<span class="co-badge ${wc}">${wl}</span>`}</td></tr>`;
@@ -679,10 +688,10 @@
     const so = mSort[key];
     if (so) rows.sort((a, b) => (so > 0 ? b.sev - a.sev : a.sev - b.sev) || a.i - b.i);
     // in the list's order, workers added recently come first (the latest on top)
-    else if (key === 'workers' || key === 'equipment') { const nw = (i) => { const r = (key === 'workers' ? PERSON : MACHINE)[i]; return r && r.isNew ? 1 : 0; }; rows.sort((a, b) => nw(b.i) - nw(a.i) || (nw(a.i) ? b.i - a.i : a.i - b.i)); }
+    else if (key === 'workers' || key === 'equipment' || key === 'products') { const nw = (i) => { const r = recOf(key)[i]; return r && r.isNew ? 1 : 0; }; rows.sort((a, b) => nw(b.i) - nw(a.i) || (nw(a.i) ? b.i - a.i : a.i - b.i)); }
     const sortTh = `<th${so ? ` aria-sort="${so > 0 ? 'descending' : 'ascending'}"` : ''}><button type="button" class="cd-sort" data-msort="${key}" title="${!so ? 'Sort by overall: the worst first' : so > 0 ? 'Sort by overall: the best first' : 'Back to the list&rsquo;s order'}">Overall<span aria-hidden="true">${so ? (so > 0 ? '&darr;' : '&uarr;') : '&varr;'}</span></button></th>`;
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
-    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${people && window.CMUpload ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:workers">Add worker</button>' : key === 'equipment' && window.CMUpload && M.saveMachines ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:equipment">Add machine</button>' : ''}</div>
+    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${people && window.CMUpload ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:workers">Add worker</button>' : key === 'equipment' && window.CMUpload && M.saveMachines ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:equipment">Add machine</button>' : key === 'products' && window.CMUpload && M.saveProducts && M.PERSONA !== 'beatriz' ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:products">Add product</button>' : ''}</div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix${wk ? ' cd-matrix-cats' : ''}"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c">${wk ? d.name : SHORT[d.code] || esc(d.name)}</th>`).join('')}${sortTh}</tr></thead><tbody>${rows.map((r) => r.html).join('')}</tbody></table></div>
       <p class="cd-legend">${legend}${wk ? '<span><span class="cd-dot is-neu"></span>Not uploaded</span>' : ''}<span><span class="cd-dash">&mdash;</span>Not asked of them</span></p></div>`;
   };
@@ -690,17 +699,19 @@
   // Archived workers: archived from their own page (the switch there), off the list and every site,
   // their documents kept read-only. A row opens the worker, where Unarchive brings them back.
   // Archived machines, the same way: archived from the machine's page, off the list and every site
+  // Archived products, the same way again
   const archivedTable = (kind = 'workers') => {
-    const eq = kind === 'equipment', recs = eq ? MACHINE : PERSON;
+    const eq = kind !== 'workers', recs = recOf(kind);
     const list = recs.map((p, i) => ({ p, i })).filter((x) => x.p.archived)
       .sort((a, b) => (Date.parse(b.p.archived) || 0) - (Date.parse(a.p.archived) || 0));
     const kept = (i) => recordDocs(kind, i).length;
     const nm = (i) => recordName(kind, i), sub = (p, i) => (eq ? recordSub(kind, i) : p.role);
-    const rows = list.map(({ p, i }) => `<tr class="cd-row is-rosterable" data-${eq ? 'machine' : 'worker'}="${i}" tabindex="0" role="link" aria-label="Open ${nm(i)}, archived"><td><span class="n">${nm(i)}</span><span class="d">${sub(p, i)}</span></td><td class="c">${esc(p.archived)}</td><td class="c">${kept(i)} kept, read&#8209;only</td><td><span class="co-badge b-arch">Archived</span></td></tr>`).join('');
-    const W = eq ? ['machine', 'machines', 'Machine', 'equipment list', 'When a machine is sold, scrapped or returned, open it and switch on Archive machine. Its documents are kept here, read&#8209;only.', 'its', 'it']
+    const rows = list.map(({ p, i }) => `<tr class="cd-row is-rosterable" data-${eq ? RK[kind].param : 'worker'}="${i}" tabindex="0" role="link" aria-label="Open ${nm(i)}, archived"><td><span class="n">${nm(i)}</span><span class="d">${sub(p, i)}</span></td><td class="c">${esc(p.archived)}</td><td class="c">${kept(i)} kept, read&#8209;only</td><td><span class="co-badge b-arch">Archived</span></td></tr>`).join('');
+    const W = kind === 'equipment' ? ['machine', 'machines', 'Machine', 'equipment list', 'When a machine is sold, scrapped or returned, open it and switch on Archive machine. Its documents are kept here, read&#8209;only.', 'its', 'it']
+      : kind === 'products' ? ['product', 'products', 'Product', 'product list', 'When you stop supplying or using a product, open it and switch on Archive product. Its documents are kept here, read&#8209;only.', 'its', 'it']
       : ['worker', 'workers', 'Worker', 'worker list', 'When someone leaves, open them and switch on Archive worker. Their documents are kept here, read&#8209;only.', 'their', 'them'];
     return `<div class="cd-group" data-archived-${W[1]}><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Archived ${W[1]}</h3><span class="co-muted">${list.length} ${list.length === 1 ? W[0] : W[1]}</span></div>
-      ${list.length ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-arch-tbl" data-paged="${eq ? 'eq' : 'wk'}-archived"><thead><tr><th>${W[2]}</th><th class="c">Archived on</th><th class="c">Documents</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${list.length ? `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-arch-tbl" data-paged="${eq ? RK[kind].pg : 'wk'}-archived"><thead><tr><th>${W[2]}</th><th class="c">Archived on</th><th class="c">Documents</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend"><span>Archived ${W[1]} are off your ${W[3]} and every site, kept for audits: you and the clients you shared them with still see what was on file. Open one to see ${W[5]} details, or to unarchive ${W[6]}.</span></p>`
       : `<div class="co-card cd-none cd-arch-none"><b class="co-row-n">No archived ${W[1]}</b><span class="co-subtle">${W[4]}</span></div>`}</div>`;
   };
@@ -720,9 +731,10 @@
   // Every document's uploads and status changes, when, and by whom; and their own (added, archived).
   // What's done in this session (js/doc-upload.js, the archive switch) is kept in 'cm-wk-log' as it
   // happened; what was on file before is drawn from each document's dates (prototype)
-  const LOG_KEY = 'cm-wk-log', EQ_LOG_KEY = 'cm-eq-log'; // a machine's, the same way
-  const logOf = (kind) => { try { return JSON.parse(sessionStorage.getItem(kind === 'equipment' ? EQ_LOG_KEY : LOG_KEY) || '{}') || {}; } catch (e) { return {}; } };
-  const logAdd = (kind, i, ev) => { const L = logOf(kind); (L[i] = L[i] || []).push(Object.assign({ at: M.today(), t: Date.now(), by: M.me }, ev)); try { sessionStorage.setItem(kind === 'equipment' ? EQ_LOG_KEY : LOG_KEY, JSON.stringify(L)); } catch (e) {} };
+  const LOG_KEY = 'cm-wk-log', EQ_LOG_KEY = 'cm-eq-log', PR_LOG_KEY = 'cm-pr-log'; // a machine's and a product's, the same way
+  const logKey = (kind) => (kind === 'equipment' ? EQ_LOG_KEY : kind === 'products' ? PR_LOG_KEY : LOG_KEY);
+  const logOf = (kind) => { try { return JSON.parse(sessionStorage.getItem(logKey(kind)) || '{}') || {}; } catch (e) { return {}; } };
+  const logAdd = (kind, i, ev) => { const L = logOf(kind); (L[i] = L[i] || []).push(Object.assign({ at: M.today(), t: Date.now(), by: M.me }, ev)); try { sessionStorage.setItem(logKey(kind), JSON.stringify(L)); } catch (e) {} };
   const wkDocs = (i) => { const per = recordDocs('workers', i); per.unshift(idRow(i)); if (M.extraOf) per.push(...Object.keys(EXTRA).map((code) => extraRow(code, i))); return per; };
   window.CMWorkerLog = {
     add: (i, ev) => logAdd('workers', i, ev),
@@ -734,20 +746,25 @@
     docs: (i) => { const o = {}; if (MACHINE[i]) recordDocs('equipment', i).forEach((d) => { o[d.code] = d.status; }); return o; },
     isEq: (code) => DOCS.some((d) => d.code === code && d.kind === 'equipment'),
   };
+  window.CMProdLog = {
+    add: (i, ev) => logAdd('products', i, ev),
+    docs: (i) => { const o = {}; if (M.PRODUCT[i]) recordDocs('products', i).forEach((d) => { o[d.code] = d.status; }); return o; },
+    isPr: (code) => DOCS.some((d) => d.code === code && d.kind === 'products'),
+  };
   const DAY = 864e5;
   const dOf = (t) => { const n = new Date(t); return `${n.getDate()} ${M.MONTHS[n.getMonth()]} ${n.getFullYear()}`; };
   const slug = (s) => String(s).toLowerCase().replace(/&[a-z]+;/g, '').normalize('NFD').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '_');
   const logRows = (i, per, kind = 'workers') => {
-    const eq = kind === 'equipment', p = eq ? MACHINE[i] : PERSON[i], now = Date.now(), own = logOf(kind)[i] || [], ev = [];
+    const eq = kind !== 'workers', p = recOf(kind)[i], now = Date.now(), own = logOf(kind)[i] || [], ev = [];
     const upped = new Set(own.filter((e) => e.ev === 'upload').map((e) => e.code));
     const team = ['Miguel Ferreira', 'Helena Ferreira'];
-    const addedAt = Date.parse(p.addedOn || p.since) || (eq ? now - (420 + (hash('m' + i) % 600)) * DAY : now - 30 * DAY), addE = own.find((e) => e.ev === 'added'), addT = addE ? addE.t : addedAt;
+    const addedAt = Date.parse(p.addedOn || p.since) || (eq ? now - (420 + (hash(kind[0] + i) % 600)) * DAY : now - 30 * DAY), addE = own.find((e) => e.ev === 'added'), addT = addE ? addE.t : addedAt;
     // what was on file before this session
-    if (!own.some((e) => e.ev === 'added')) ev.push({ t: addedAt, ev: 'added', how: p.manual ? 'By hand' : p.isNew ? (eq ? p.how || 'From the equipment register' : 'From their documents') : '', by: p.isNew ? M.me : team[0] });
+    if (!own.some((e) => e.ev === 'added')) ev.push({ t: addedAt, ev: 'added', how: p.manual ? 'By hand' : p.isNew ? (eq ? p.how || (kind === 'products' ? 'From the product list' : 'From the equipment register') : 'From their documents') : '', by: p.isNew ? M.me : team[0] });
     per.forEach((d) => {
       if (upped.has(d.code)) return;
       const st = d.status, has = !NO_FILE.includes(st) && st !== 'na', h = hash(d.code + i), exp = Date.parse(d.exp), name = d.name;
-      const file = `${slug(d.code === 'ID' ? 'id' : name).slice(0, 28)}_${slug(eq ? String(p.model).split(/\s|&/)[0] : p.name.split(' ').pop())}.pdf`;
+      const file = `${slug(d.code === 'ID' ? 'id' : name).slice(0, 28)}_${slug(eq ? String(kind === 'products' ? p.ref || p.name : p.model).split(/\s|&/)[0] : p.name.split(' ').pop())}.pdf`;
       if (!has) { if (st === 'missing' || st === 'filemissing') ev.push({ t: Math.max(addT + 1, now - (12 + h % 40) * DAY), ev: 'asked', code: d.code, name, by: p.isNew ? M.me : team[0], to: 'missing' }); return; }
       if (p.isNew) { ev.push({ t: addedAt, ev: 'upload', code: d.code, name, file, by: M.me, from: null, to: st, conf: 78 + (h % 21) }); return; }
       let up = !Number.isNaN(exp) ? exp - 365 * DAY : now - (60 + h % 300) * DAY;
@@ -771,8 +788,8 @@
   const LST = (st) => `<span class="cd-lst">${CHIP(st)}<span>${st ? STATUS[st][0] : 'Not asked'}</span></span>`;
   const LCHG = (a, b) => `<span class="cd-lchg">${LST(a)}<span class="cd-arr" aria-hidden="true">&rarr;</span>${LST(b)}<span class="sr-only">${a ? STATUS[a][0] : ''} to ${b ? STATUS[b][0] : ''}</span></span>`;
   const logCard = (i, per, kind = 'workers') => {
-    const eq = kind === 'equipment', L = logRows(i, per, kind), first = eq ? '' : PERSON[i].name.split(' ')[0];
-    const W = eq ? ['Machine', 'equipment list'] : ['Worker', 'worker list'];
+    const eq = kind !== 'workers', L = logRows(i, per, kind), first = eq ? '' : PERSON[i].name.split(' ')[0];
+    const W = kind === 'equipment' ? ['Machine', 'equipment list'] : kind === 'products' ? ['Product', 'product list'] : ['Worker', 'worker list'];
     const who = (b) => esc(b);
     const row = (e) => {
       const [doc, sub, st] = e.ev === 'upload' ? [esc(e.name), `Uploaded &middot; ${esc(e.file)}${e.conf ? `</span><span class="d">${e.conf}% confidence &middot; ${e.edited ? 'corrected and ' : ''}approved by ${esc(e.by === 'You' ? 'you' : e.by)}` : ''}`, LCHG(e.from || 'notuploaded', e.to)]
@@ -784,8 +801,8 @@
         : [`${W[0]} unarchived`, `Back on the ${W[1]}`, dash];
       return `<tr><td><span class="n">${doc}</span>${sub ? `<span class="d">${sub}</span>` : ''}</td><td>${dOf(e.t)}</td><td>${st}</td><td>${who(e.by)}</td></tr>`;
     };
-    return `<div class="cd-group" data-wk-log><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Log</h3><span class="co-muted">${L.length} entr${L.length === 1 ? 'y' : 'ies'} &middot; every status change of ${eq ? 'this machine' : esc(first)}&rsquo;s documents, newest first</span></div>
-      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-log-tbl" data-paged="${eq ? 'eq' : 'wk'}-log-${i}"><thead><tr><th>Document</th><th>Date</th><th>Status change</th><th>By</th></tr></thead><tbody>${L.map(row).join('')}</tbody></table></div></div>`;
+    return `<div class="cd-group" data-wk-log><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Log</h3><span class="co-muted">${L.length} entr${L.length === 1 ? 'y' : 'ies'} &middot; every status change of ${eq ? `this ${RK[kind].one}` : esc(first)}&rsquo;s documents, newest first</span></div>
+      <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-log-tbl" data-paged="${eq ? RK[kind].pg : 'wk'}-log-${i}"><thead><tr><th>Document</th><th>Date</th><th>Status change</th><th>By</th></tr></thead><tbody>${L.map(row).join('')}</tbody></table></div></div>`;
   };
 
   // ---- a worker's document, in a drawer (.docd .cdd, as in Documents) --------------------------------
@@ -842,9 +859,50 @@
     if (/number/.test(n)) return `${d.code}-${(exp.match(/\d{4}/) || ['2026'])[0]}/${1000 + (h % 9000)}`;
     return '';
   };
+  // a product's: what its profile says, then what such a document reads (as ALMA reads it, js/doc-upload.js)
+  const prVal = (x, d, n, h, exp, issued, issuer) => {
+    const pl = (v) => decode(String(v || ''));
+    if (/expiry|valid until|end date/.test(n)) return exp;
+    if (/issue date/.test(n)) return issued;
+    if (/identification code|reference|^model$/.test(n)) return pl(x.ref);
+    if (/^products? covered|^product|commercial name|article group/.test(n)) return pl(x.name);
+    if (/signatory/.test(n)) return 'Head of product compliance';
+    if (/manufacturer|^operator$|installation/.test(n)) return /installation/.test(n) ? `${pl(x.maker)} plant, Portugal` : pl(x.maker);
+    if (/main characteristics/.test(n)) return ({ Cement: 'Compressive strength class 42.5R', Concrete: 'Strength class C30/37, exposure XC2', Steel: 'Yield strength 500 MPa, ductility class SD', Insulation: 'Reaction to fire A1, λ 0.036 W/mK' })[pl(x.family)] || 'As listed on the sheet';
+    if (/^version/.test(n)) return `${1 + (h % 4)}.0`;
+    if (/hazard classification/.test(n)) return x.hazardous ? 'Skin Irrit. 2; Eye Dam. 1' : 'Not classified';
+    if (/language/.test(n)) return 'Portuguese';
+    if (/supplied or used/.test(n)) return 'Used';
+    if (/intended use|conditions of use/.test(n)) return 'Construction works';
+    if (/avcp/.test(n)) return x.notifiedBody ? 'System 1+' : 'System 4';
+    if (/notified body number/.test(n)) return '1328';
+    if (/declared performances/.test(n)) return 'As listed on the declaration';
+    if (/eu rules/.test(n)) return x.ppe ? 'Regulation (EU) 2016/425 (PPE)' : 'Low Voltage Directive 2014/35/EU; RoHS 2011/65/EU';
+    if (/declaration type/.test(n)) return 'REACH';
+    if (/svhc/.test(n)) return 'No';
+    if (/\(yes\/no\)/.test(n)) return 'Yes';
+    if (/ppe category/.test(n)) return 'Category II';
+    if (/accreditation/.test(n)) return 'ISO/IEC 17025 · IPAC L0123';
+    if (/standard/.test(n)) return pl(x.standard || 'EN 15804');
+    if (/certification mark/.test(n)) return 'CERTIF product mark';
+    if (/product group|^material$/.test(n)) return pl(x.family);
+    if (/commodity/.test(n)) return 'Wood';
+    if (/country/.test(n)) return 'Portugal';
+    if (/cn code/.test(n)) return pl(x.family) === 'Cement' ? '2523 29 00' : '7214 20 00';
+    if (/production route/.test(n)) return pl(x.family) === 'Cement' ? 'Dry process kiln' : 'Electric arc furnace';
+    if (/direct embedded/.test(n)) return pl(x.family) === 'Cement' ? '0.69' : '0.32';
+    if (/indirect embedded/.test(n)) return '0.11';
+    if (/carbon price/.test(n)) return 'EU ETS';
+    if (/reporting period/.test(n)) return '2025';
+    if (/batch/.test(n)) return `L${1000 + (h % 9000)}`;
+    if (/result/.test(n)) return 'Compliant';
+    if (/body|laborator|operator|authority|institute|agency|verifier/.test(n)) return issuer || ['CERTIF', 'LNEC', 'SGS Portugal'][h % 3];
+    if (/number/.test(n)) return `${d.code}-${(exp.match(/\d{4}/) || ['2026'])[0]}/${1000 + (h % 9000)}`;
+    return '';
+  };
   const wDraw = () => {
-    const i = wAt.i, eq = wAt.kind === 'equipment', p = eq ? MACHINE[i] : PERSON[i], d = wAt.list[wAt.k], h = hash(d.code + i), cat = (DOCS.find((x) => x.code === d.code) || {}).cat || {};
-    const holder = eq ? decode(recordName('equipment', i)) : decode(p.name);
+    const i = wAt.i, eq = wAt.kind === 'equipment', pr = wAt.kind === 'products', p = recOf(wAt.kind)[i], d = wAt.list[wAt.k], h = hash(d.code + i), cat = (DOCS.find((x) => x.code === d.code) || {}).cat || {};
+    const holder = eq || pr ? decode(recordName(wAt.kind, i)) : decode(p.name);
     const has = !NO_FILE.includes(d.status) && d.status !== 'na', cn = 78 + (h % 21);
     const exp = decode(String(d.exp || '').replace(/<[^>]+>/g, '')), et = Date.parse(exp);
     const issued = Number.isNaN(et) ? `${1 + (h % 27)} ${MONTHS[h % 12]} 2025` : (() => { const x = new Date(et); x.setFullYear(x.getFullYear() - 1); return `${x.getDate()} ${MONTHS[x.getMonth()]} ${x.getFullYear()}`; })();
@@ -852,6 +910,7 @@
     const valOf = (n) => {
       n = n.toLowerCase();
       if (eq) return eqVal(p, d, n, h, Number.isNaN(et) ? '' : exp, issued, issuer);
+      if (pr) return prVal(p, d, n, h, Number.isNaN(et) ? '' : exp, issued, issuer);
       if (/expiry|valid until|end date/.test(n)) return d.code === 'ID' ? p.id[2] || exp : Number.isNaN(et) ? '' : exp;
       if (/issue date/.test(n)) return issued;
       if (/worker name|full name/.test(n)) return decode(p.name);
@@ -875,7 +934,7 @@
       if (/number|serial/.test(n)) return `${d.code}-${(exp.match(/\d{4}/) || ['2026'])[0]}/${1000 + (h % 9000)}`;
       return '';
     };
-    const file = `${decode(d.name).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${eq ? decode(p.model).split(/\s/)[0].replace(/[^A-Za-z0-9]+/g, '') : decode(p.name).split(' ').pop()}.pdf`;
+    const file = `${decode(d.name).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${eq ? decode(p.model).split(/\s/)[0].replace(/[^A-Za-z0-9]+/g, '') : pr ? decode(p.ref || p.name).split(/\s/)[0].replace(/[^A-Za-z0-9]+/g, '') : decode(p.name).split(' ').pop()}.pdf`;
     const partOf = (n) => (/date|expir|valid|until/i.test(n) ? 'Validity' : /sign|doctor/i.test(n) ? 'Signatures' : /number|serial|type|code/i.test(n) ? 'Identification' : 'Particulars');
     const fields = has ? wFieldsOf(d.code).map((x) => ({ name: x.name, type: x.type, profile: x.profile, value: valOf(x.name), conf: Math.min(99, cn + ([...x.name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 7) - 3) })).filter((x) => x.value) : [];
     const [sl, sc] = d.tag || STATUS[d.status];
@@ -883,7 +942,7 @@
     wq('wd-sub').innerHTML = `${esc(holder)} &middot; ${d.code} &middot; <span class="co-badge ${sc}">${sl}</span>`;
     wq('wd-page').textContent = has ? 'Current version' : 'No file yet';
     wq('wd-conf').innerHTML = has ? confCell(cn) : '';
-    const read = fields.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, k) => `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type || '')} &middot; ${eq ? (x.profile ? 'in the machine&rsquo;s profile' : 'shared with clients') : 'not shared with clients'}</span></td><td>${esc(x.value)}<button type="button" class="esgq-src-btn" data-wcite="${k}" aria-expanded="false" aria-controls="wd-cite-${k}">View citation</button></td><td>${confCell(x.conf)}</td></tr>
+    const read = fields.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><table class="cd-fields"><tbody>${fields.map((x, k) => `<tr><td><span class="n">${esc(x.name)}</span><span class="d">${esc(x.type || '')} &middot; ${eq || pr ? (x.profile ? `in the ${eq ? 'machine' : 'product'}&rsquo;s profile` : 'shared with clients') : 'not shared with clients'}</span></td><td>${esc(x.value)}<button type="button" class="esgq-src-btn" data-wcite="${k}" aria-expanded="false" aria-controls="wd-cite-${k}">View citation</button></td><td>${confCell(x.conf)}</td></tr>
       <tr class="cdd-cite-row" id="wd-cite-${k}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(file)}</b><span>Page 1 &middot; ${partOf(x.name)}</span></figcaption><blockquote>&ldquo;${esc(x.name)}: <mark>${esc(x.value)}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-wcite-show="${k}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>` : '';
     const facts = cat.requirement ? [['Requirement', LBL.requirement[cat.requirement] || esc(cat.requirement)], ['Renewal', esc(cat.renewal || '—')], ['Expiry', esc(cat.expiryRule || '—')], ['Legal basis', esc(cat.legalBasis || '—')]].map(([k, v]) => `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>`).join('') : '';
     const about = cat.description || facts ? `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${cat.description ? `<p class="cdd-desc">${esc(en(cat.description))}</p>` : ''}${facts ? `<dl class="pd-grid cdd-facts">${facts}</dl>` : ''}</section>` : '';
@@ -905,7 +964,7 @@
   };
   // the documents on their page, in order, from the tables (Previous / Next walk them)
   const wOpen = (i, code, kind = 'workers') => {
-    const per = kind === 'equipment' ? recordDocs('equipment', i) : wkDocs(i), codes = [...groupsEl.querySelectorAll('[data-wdoc]')].map((r) => r.dataset.wdoc);
+    const per = kind === 'workers' ? wkDocs(i) : recordDocs(kind, i), codes = [...groupsEl.querySelectorAll('[data-wdoc]')].map((r) => r.dataset.wdoc);
     const list = codes.map((c) => per.find((d) => d.code === c)).filter(Boolean);
     wAt = { i, kind, list, k: Math.max(0, list.findIndex((d) => d.code === code)) }; wBack = document.activeElement;
     wdw.hidden = false; document.documentElement.style.overflow = 'hidden'; wDraw();
@@ -1043,9 +1102,22 @@
   // one product or material: its profile (the catalog's Product profile form), its documents by
   // category, and the sites it is used on
   const renderProduct = (i) => {
-    const p = M.PRODUCT[i];
-    const per = recordDocs('products', i);
-    const [wl, wc] = STATUS[worstOf(per.map((d) => d.status))];
+    const p = M.PRODUCT[i], gone = !!p.archived;
+    const per = recordDocs('products', i).map((d) => (gone ? Object.assign(d, { spec: '' }) : d)); // kept read-only
+    const [wl, wc] = gone ? ['Archived', 'b-arch'] : STATUS[worstOf(per.map((d) => d.status))];
+    // archiving: a switch beside its name, as a machine's; on, it asks first; off, it's back
+    const sw = `<span class="cd-arch-sw"><span id="cd-arch-l-p${i}">Archive product</span><button type="button" class="co-sw" role="switch" aria-checked="${gone}" aria-labelledby="cd-arch-l-p${i}" data-archive="${i}" data-archive-k="products"><i></i></button></span>`;
+    const gonebar = gone ? `<div class="cd-arch-bar" role="status"><span><b>Archived on ${esc(p.archived)}.</b> Off your product list and every site, and ALMA doesn&rsquo;t ask for its documents. For audits, what was on file is kept, read&#8209;only: you, and the clients you shared it with, can still see it.</span><button type="button" class="btn btn-primary btn-sm" data-unarchive="${i}" data-archive-k="products">Unarchive product</button></div>` : '';
+    // where ALMA read each detail of its profile: the first document on file that has it (its
+    // technical sheet, its safety data sheet, its declaration of performance), as for a machine
+    const byTab = PR_CATS.flatMap(([k]) => per.filter((d) => prCatOf(d) === k)); // the technical sheet before the declarations
+    const cite = (re) => {
+      const d = byTab.find((x) => !NO_FILE.includes(x.status) && x.status !== 'na' && wFieldsOf(x.code).some((f) => re.test(f.name.toLowerCase())));
+      if (!d) return '';
+      const f = wFieldsOf(d.code).find((x) => re.test(x.name.toLowerCase()));
+      return `<span class="cd-pcite"><span class="co-subtle">Read from ${esc(decode(d.name))}</span><button type="button" class="esgq-src-btn" data-mcite="${i}|${d.code}|${esc(f.name)}|products">View citation</button></span>`;
+    };
+    const filed = per.some((x) => !NO_FILE.includes(x.status) && x.status !== 'na');
     // what its documents say, by category, for the profile: the badge only
     const onFile = (d) => d && !NO_FILE.includes(d.status);
     const sayP = (list) => {
@@ -1056,16 +1128,18 @@
     const inCat = (k) => per.filter((d) => prCatOf(d) === k);
     const yes = (v) => (v ? 'Yes' : 'No');
     groupsEl.innerHTML = `<div class="cd-detail cd-worker cd-machine">
-      <div class="cd-area-head"><h2 class="co-h-l">${p.name}${p.maker ? ` <span class="soft">&middot; ${p.maker}</span>` : ''}</h2><p class="co-muted">${p.code} &middot; ${p.family.toLowerCase()} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Product profile</h3><span class="co-muted">Data only, no file</span></div>
+      <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}${p.maker ? ` <span class="soft">&middot; ${p.maker}</span>` : ''}</h2><p class="co-muted">${[p.code, p.family.toLowerCase()].filter(Boolean).join(' &middot; ')} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
+      ${gonebar}
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Product profile</h3><span class="co-muted">${p.manual ? `Added ${esc(p.addedOn || p.since || '')} by hand` : p.isNew ? `Added ${esc(p.since || '')}, ${(p.how || 'from the product list').replace(/^\w/, (x) => x.toLowerCase())}` : filed ? 'Read by ALMA from its documents' : 'Data only, no file'}</span></div>
         <div class="co-card cd-card-pad"><dl class="pd-grid">
-          ${kv('Commercial name', p.name)}${kv('Manufacturer', p.maker || '<span class="co-subtle">Not on file</span>')}${kv('Manufacturer reference / model', p.ref || '<span class="co-subtle">Not on file</span>')}
-          ${kv('Internal code', p.code)}${kv('Product family', p.family)}${kv('Company&rsquo;s role', p.role)}
-          ${kv('CE marked', yes(p.ceMarked))}${kv('Hazardous product', yes(p.hazardous))}${kv('Harmonised standard', p.standard || '<span class="co-subtle">None</span>')}
+          ${kv('Commercial name', p.name + cite(/^product$|^product \(|commercial name/))}${kv('Manufacturer', p.maker ? p.maker + cite(/^manufacturer$/) : NOF)}${kv('Manufacturer reference / model', p.ref ? p.ref + cite(/^reference \/ model$|^model$|identification code/) : NOF)}
+          ${kv('Internal code', p.code || NOF)}${kv('Product family', p.family)}${kv('Company&rsquo;s role', p.role)}
+          ${kv('CE marked', yes(p.ceMarked) + (p.ceMarked ? cite(/^dop number$|^eu rules covered$/) : ''))}${kv('Hazardous product', yes(p.hazardous) + (p.hazardous ? cite(/hazard classification/) : ''))}${kv('Harmonised standard', p.standard ? p.standard + cite(/^harmonised standard/) : '<span class="co-subtle">None</span>')}
           ${PR_CATS.filter(([k]) => inCat(k).length).map(([k, l]) => kv(l, sayP(inCat(k)))).join('')}
         </dl></div></div>
       ${catGroups(per, 'products', i)}
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">On site</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${p.sites.length ? sitesCard(p.sites) : '<div class="co-card cd-none"><span class="co-subtle">Not on a site yet.</span></div>'}</div>
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${gone ? 'Was on site' : 'On site'}</h3><span class="co-muted">${p.sites.length} site${p.sites.length === 1 ? '' : 's'}</span></div>${p.sites.length ? sitesCard(p.sites) : '<div class="co-card cd-none"><span class="co-subtle">Not on a site yet.</span></div>'}</div>
+      ${logCard(i, per, 'products')}
     </div>`;
   };
 
@@ -1193,7 +1267,7 @@
   let archDlg = null, archLast = null;
   const archShut = () => { archDlg.hidden = true; document.documentElement.classList.remove('dlg-open'); if (archLast && archLast.isConnected) archLast.focus({ preventScroll: true }); };
   const askArchive = (i, kind = 'workers') => {
-    const eq = kind === 'equipment', n = recordDocs(kind, i).length, nm = eq ? recordName(kind, i) : PERSON[i].name;
+    const eq = kind !== 'workers', n = recordDocs(kind, i).length, nm = eq ? recordName(kind, i) : PERSON[i].name, one = eq ? RK[kind].one : 'worker';
     if (!archDlg) {
       archDlg = document.createElement('div'); archDlg.className = 'dlg cd-arch-dlg'; archDlg.hidden = true;
       archDlg.innerHTML = `<div class="dlg-scrim" data-ax></div><div class="dlg-card" role="alertdialog" aria-modal="true" aria-labelledby="cd-arch-t" aria-describedby="cd-arch-p">
@@ -1212,6 +1286,12 @@
           try { sessionStorage.setItem('cm-upload-toast', `${recordName('equipment', k)} is archived. It&rsquo;s in Archived machines, at the end of Equipment, with its documents.`); } catch (e) {}
           location.href = `company-details.html?area=equipment&machine=${k}`; return;
         }
+        if (archDlg.dataset.k === 'products') {
+          window.DOC_MODEL.savePrArchive(k, window.DOC_MODEL.today());
+          window.CMProdLog.add(k, { ev: 'archived' });
+          try { sessionStorage.setItem('cm-upload-toast', `${recordName('products', k)} is archived. It&rsquo;s in Archived products, at the end of Products and materials, with its documents.`); } catch (e) {}
+          location.href = `company-details.html?area=products&product=${k}`; return;
+        }
         const q = PERSON[k];
         window.DOC_MODEL.saveCrew({ archive: [k, window.DOC_MODEL.today()] });
         window.CMWorkerLog.add(k, { ev: 'archived' });
@@ -1222,13 +1302,13 @@
     }
     archDlg.dataset.i = i; archDlg.dataset.k = kind; archLast = document.activeElement;
     archDlg.querySelector('#cd-arch-t').innerHTML = `Archive ${nm}?`;
-    archDlg.querySelector('#cd-arch-go').textContent = eq ? 'Archive machine' : 'Archive worker';
-    archDlg.querySelector('#cd-arch-p').textContent = eq ? 'Do this when a machine is sold, scrapped or returned. It comes off your equipment list and off every site you have it on.' : 'Do this when someone no longer works for you. They come off your worker list and off every site you have them on.';
+    archDlg.querySelector('#cd-arch-go').textContent = `Archive ${one}`;
+    archDlg.querySelector('#cd-arch-p').textContent = kind === 'equipment' ? 'Do this when a machine is sold, scrapped or returned. It comes off your equipment list and off every site you have it on.' : kind === 'products' ? 'Do this when you stop supplying or using a product. It comes off your product list and off every site you have it on.' : 'Do this when someone no longer works for you. They come off your worker list and off every site you have them on.';
     const its = eq ? 'its' : 'their';
     archDlg.querySelector('#cd-arch-list').innerHTML = [
       `ALMA stops asking for ${its} documents, and ${eq ? 'it' : 'they'} no longer count${eq ? 's' : ''} in your compliance.`,
       `For audits, ${its} ${n} document${n === 1 ? ' is' : 's are'} kept, read&#8209;only, and stay${n === 1 ? 's' : ''} visible to you and to the clients you shared ${n === 1 ? 'it' : 'them'} with.`,
-      `You can unarchive ${eq ? 'it' : 'them'} at any time from Archived ${eq ? 'machines' : 'workers'}.`].map((t) => `<li>${t}</li>`).join('');
+      `You can unarchive ${eq ? 'it' : 'them'} at any time from Archived ${eq ? RK[kind].many : 'workers'}.`].map((t) => `<li>${t}</li>`).join('');
     archDlg.hidden = false; document.documentElement.classList.add('dlg-open');
     setTimeout(() => archDlg.querySelector('[data-ax].btn').focus(), 30);
   };
@@ -1238,6 +1318,12 @@
       window.CMEquipLog.add(i, { ev: 'unarchived' });
       try { sessionStorage.setItem('cm-upload-toast', `${recordName('equipment', i)} is back on your equipment list. ALMA asks for its documents again.`); } catch (e) {}
       location.href = `company-details.html?area=equipment&machine=${i}`; return;
+    }
+    if (kind === 'products') {
+      window.DOC_MODEL.savePrArchive(i, null);
+      window.CMProdLog.add(i, { ev: 'unarchived' });
+      try { sessionStorage.setItem('cm-upload-toast', `${recordName('products', i)} is back on your product list. ALMA asks for its documents again.`); } catch (e) {}
+      location.href = `company-details.html?area=products&product=${i}`; return;
     }
     window.DOC_MODEL.saveCrew({ unarchive: i });
     window.CMWorkerLog.add(i, { ev: 'unarchived' });
@@ -1256,7 +1342,7 @@
     pop = document.createElement('div'); pop.className = 'cd-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', `What changed: ${col.name}`);
     pop.innerHTML = `<div class="cd-pop-h"><b>${esc(col.name)}</b><button type="button" class="dlg-x" data-popx aria-label="Close">&times;</button></div>
       <p class="cd-pop-st">${badge(prev)}<span class="cd-arr" aria-hidden="true">&rarr;</span>${badge(cur)}</p>
-      ${notes.length ? `<ul class="cd-pop-l">${notes.map((n) => `<li><b>${esc(n.name)}</b><span>${n.valid && n.valid !== '—' ? `${/^\d/.test(n.valid) ? 'Valid until ' : ''}${esc(n.valid)} &middot; ` : ''}from ${esc(n.file)}</span></li>`).join('')}</ul>` : `<p class="cd-pop-n">${was ? 'Changed with the documents ALMA read.' : `New ${key === 'equipment' ? 'machine' : 'worker'}, added with the documents ALMA read.`}</p>`}
+      ${notes.length ? `<ul class="cd-pop-l">${notes.map((n) => `<li><b>${esc(n.name)}</b><span>${n.valid && n.valid !== '—' ? `${/^\d/.test(n.valid) ? 'Valid until ' : ''}${esc(n.valid)} &middot; ` : ''}from ${esc(n.file)}</span></li>`).join('')}</ul>` : `<p class="cd-pop-n">${was ? 'Changed with the documents ALMA read.' : `New ${RK[key] ? RK[key].one : 'worker'}, added with the documents ALMA read.`}</p>`}
       <p class="cd-pop-f">Read by ALMA on ${esc(C.at || today())}, checked by ${esc(me === 'You' ? 'you' : me)}.</p>`;
     document.body.appendChild(pop);
     const r = b.getBoundingClientRect(), w = pop.offsetWidth;
@@ -1267,10 +1353,10 @@
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && pop) closePop(); });
   addEventListener('scroll', closePop, { passive: true });
   groupsEl.addEventListener('click', (e) => {
-    // a machine profile's View citation: its document, at that detail's citation
+    // a machine's or a product's profile, View citation: its document, at that detail's citation
     const mc = e.target.closest('[data-mcite]');
     if (mc) {
-      const [mi, code, fname] = mc.dataset.mcite.split('|'); wOpen(+mi, code, 'equipment');
+      const [mi, code, fname, mk] = mc.dataset.mcite.split('|'); wOpen(+mi, code, mk || 'equipment');
       const row = [...wdw.querySelectorAll('.cd-fields tbody tr:not(.cdd-cite-row)')].find((tr) => (tr.querySelector('.n') || {}).textContent === decode(fname));
       const b = row && row.querySelector('[data-wcite]'); if (b) { b.click(); setTimeout(() => row.scrollIntoView({ block: 'center' }), 340); }
       return;
@@ -1416,16 +1502,17 @@
   const openArea = new URLSearchParams(location.search).get('area');
   if (openArea && AREAS.some((a) => a.key === openArea)) area = openArea;
   const openDoc = openCode && DOCS.find((d) => d.code === openCode);
-  const qs = new URLSearchParams(location.search), openWk = qs.get('worker'), openMc = qs.get('machine'), toArch = qs.has('archived');
+  const qs = new URLSearchParams(location.search), openWk = qs.get('worker'), openMc = qs.get('machine'), openPr = qs.get('product'), toArch = qs.has('archived');
   if (openWk != null && PERSON[+openWk]) { area = 'workers'; worker = +openWk; }
   if (openMc != null && MACHINE[+openMc]) { area = 'equipment'; machine = +openMc; }
-  if (openWk != null || openMc != null || toArch) { qs.delete('worker'); qs.delete('machine'); qs.delete('archived'); window.history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash); }
+  if (openPr != null && M.PERSONA !== 'beatriz' && M.PRODUCT[+openPr]) { area = 'products'; product = +openPr; }
+  if (openWk != null || openMc != null || openPr != null || toArch) { qs.delete('worker'); qs.delete('machine'); qs.delete('product'); qs.delete('archived'); window.history.replaceState(null, '', location.pathname + (qs.toString() ? '?' + qs : '') + location.hash); }
   if (openDoc) {
     area = openDoc.area;
     if (openDoc.kind && openDoc.roster.length) { detail = openDoc.id; resetDetailFilter(); }
   }
   render();
-  if (toArch) { const a = groupsEl.querySelector('[data-archived-workers], [data-archived-machines]'); if (a) setTimeout(() => scrollTo({ top: a.getBoundingClientRect().top + scrollY - 96 }), 60); }
+  if (toArch) { const a = groupsEl.querySelector('[data-archived-workers], [data-archived-machines], [data-archived-products]'); if (a) setTimeout(() => scrollTo({ top: a.getBoundingClientRect().top + scrollY - 96 }), 60); }
   if (openDoc && detail === null) {
     const arrived = groupsEl.querySelector(`[data-row-id="${openDoc.id}"]`);
     if (arrived) { arrived.scrollIntoView({ block: 'center' }); arrived.classList.add('is-arrived'); setTimeout(() => openDrawer(openDoc.id), 450); }

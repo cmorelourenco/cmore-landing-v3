@@ -222,9 +222,14 @@ window.DOC_MODEL = (() => {
   const PRREG_KEY = 'cm-pr-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
   const prRegister = () => { try { return JSON.parse(sessionStorage.getItem(PRREG_KEY) || 'null'); } catch (e) { return null; } };
   const savePrRegister = (r) => { try { sessionStorage.setItem(PRREG_KEY, JSON.stringify(r)); } catch (e) {} };
+  // products archived from their own page (js/company-details.js), { product: the day }: off the list
+  // and every site, their documents kept read-only, and back with Unarchive (as machines are)
+  const PRARCH_KEY = 'cm-pr-archived' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const prArch = (() => { try { return JSON.parse(sessionStorage.getItem(PRARCH_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const savePrArchive = (i, day) => { if (day) prArch[i] = day; else delete prArch[i]; try { sessionStorage.setItem(PRARCH_KEY, JSON.stringify(prArch)); } catch (e) {} };
   const PR_BASE = PR_BASE_M.length;
   const PRODUCTS = PERSONA !== 'beatriz' ? PR_BASE_M.map(([name, maker, ref]) => [name, `${maker} &middot; ${ref}`])
-    .concat(prAdded.map((x) => [x.name, `${x.maker || 'New'}${x.ref ? ` &middot; ${x.ref}` : ''}`])) : [
+    .concat(prAdded.map((x) => [esc(x.name), [x.maker, x.ref].filter(Boolean).map(esc).join(' &middot; ') || esc(x.code || '')])) : [
     // Beatriz's products (the same ones as on her company page and product sheets)
     ['Roasted coffee beans', 'VH&#8209;COF&#8209;201'], ['Green coffee beans', 'VH&#8209;COF&#8209;110'], ['Cocoa butter', 'VH&#8209;COC&#8209;410'],
     ['Dark chocolate couverture, 70%', 'VH&#8209;COC&#8209;702'], ['Crude palm oil', 'VH&#8209;PLM&#8209;100'], ['Refined soybean oil', 'VH&#8209;SOY&#8209;220'],
@@ -233,12 +238,14 @@ window.DOC_MODEL = (() => {
   ];
   const PRODUCT = PERSONA === 'beatriz' ? PRODUCTS.map(([name, sku]) => ({ name, sku })) : PRODUCTS.map(([name], i) => {
     const b = PR_BASE_M[i];
+    const gone = { archived: prArch[i] || '', left: !!prArch[i] };
     if (b) return Object.assign({ name, maker: b[1], ref: b[2], family: b[3], standard: b[4], code: `MAT&#8209;${101 + i * 7}`, role: 'Distributor',
-      sites: [[0, 1], [0, 2], [0, 1, 2], [1], [0], [0, 2], [2], [1], [0, 1], [2], [0, 1, 2], [0, 1, 2]][i] }, b[5]);
+      sites: [[0, 1], [0, 2], [0, 1, 2], [1], [0], [0, 2], [2], [1], [0, 1], [2], [0, 1, 2], [0, 1, 2]][i] }, b[5], gone);
     // one added from a product list: what it said of it, by its name what it is, and on no site yet
     const a = prAdded[i - PR_BASE] || {}, t = `${name} ${a.family || ''}`;
-    return { name, maker: a.maker || '', ref: a.ref || '', family: a.family || 'Other', standard: '', code: a.code || 'New', role: 'Distributor', sites: [], isNew: true, since: a.on,
-      ceMarked: /cement|mortar|block|brick|insulation|cable|tile|window|adhesive/i.test(t), hazardous: /cement|mortar|paint|sealant|adhesive|resin|primer|solvent|oil|grout/i.test(t),
+    // (added by hand: what the user said of it; CE marked and hazardous, as they said)
+    return { name, maker: esc(a.maker || ''), ref: esc(a.ref || ''), family: esc(a.family || 'Other'), standard: esc(a.standard || ''), code: esc(a.code || ''), role: 'Distributor', sites: [], isNew: true, since: a.on, addedOn: a.on, manual: !!a.manual, how: a.how || '', ...gone,
+      ceMarked: a.ce ? a.ce === 'Yes' : /cement|mortar|block|brick|insulation|cable|tile|window|adhesive/i.test(t), hazardous: a.hazardous ? a.hazardous === 'Yes' : /cement|mortar|paint|sealant|adhesive|resin|primer|solvent|oil|grout/i.test(t),
       eudr: /wood|timber|pine|plywood|board/i.test(t), cbam: /steel|cement|alumin|rebar|mesh/i.test(t), ppe: /helmet|glove|mask|boots|harness|goggles/i.test(t), batch: /concrete|steel|rebar/i.test(t) };
   });
 
@@ -777,5 +784,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { saveEqArchive, saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { saveEqArchive, savePrArchive, saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, rename, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();
