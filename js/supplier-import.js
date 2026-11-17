@@ -44,18 +44,32 @@
       return r;
     }).filter((r) => COLS.some(([k]) => r[k]));
   };
-  // prototype only: every file reads as a fresh batch of suppliers new to you and to C-MORE, made up
-  // each time (names, valid codes nobody has yet, a contact and an email), so an import always adds
-  const POOL = BEATRIZ ? [
-    ['US', 'Prairie Grain Co-op'], ['US', 'Blue Ridge Paper Supply'], ['US', 'Lakeside Mills Inc.'], ['US', 'Cascade Packaging LLC'], ['US', 'Red Mesa Logistics'],
-    ['US', 'Harbor Steel Works'], ['US', 'Oak Valley Farms'], ['US', 'Summit Cold Storage'], ['BR', 'Cooperativa Cafeeira do Cerrado'], ['BR', 'Transportes Paraná Ltda.'], ['BR', 'Embalagens Serra Azul'],
-  ] : [
-    ['PT', 'Carpintaria Lopes, Lda.'], ['PT', 'Vidraria Atlântica'], ['PT', 'Eletro Sado, Lda.'], ['PT', 'Pavimentos Silva'], ['PT', 'Pinturas Ribeiro, Lda.'], ['PT', 'Serralharia Costa & Filhos'],
-    ['PT', 'Canalizações Mondego'], ['PT', 'Telhados do Minho, Lda.'], ['PT', 'Andaimes Tejo'], ['PT', 'Climatização Algarve'], ['PT', 'Betões do Douro, S.A.'], ['PT', 'Isolamentos Ferreira'],
-    ['ES', 'Grúas Galicia S.L.'], ['ES', 'Construcciones Duero S.A.'], ['FR', 'Échafaudages Durand SARL'],
-  ];
+  // prototype only: every file reads as a fresh batch of 100 suppliers new to you and to C-MORE, made
+  // up each time (names, valid codes nobody has yet, a contact and an email), so an import always adds,
+  // and it's big. Three emails have a typo that passes the check, so those three can't be sent to.
+  const NAMES = (() => {
+    const out = [], combine = (cc, a, b, suf) => a.forEach((x, i) => b.forEach((y, k) => out.push([cc, `${x} ${y}${suf[(i + k) % suf.length]}`])));
+    if (BEATRIZ) {
+      combine('US', ['Prairie', 'Blue Ridge', 'Lakeside', 'Cascade', 'Red Mesa', 'Harbor', 'Oak Valley', 'Summit', 'Pine Creek', 'Granite', 'Silver Lake', 'Riverbend'],
+        ['Grain Co-op', 'Paper Supply', 'Mills', 'Packaging', 'Logistics', 'Steel Works', 'Farms', 'Cold Storage', 'Freight', 'Lumber'], [' LLC', ' Inc.', '']);
+      combine('BR', ['Transportes', 'Embalagens', 'Cooperativa'], ['Paraná', 'Serra Azul', 'do Cerrado'], [' Ltda.']);
+    } else {
+      combine('PT', ['Carpintaria', 'Serralharia', 'Pinturas', 'Vidraria', 'Canalizações', 'Telhados', 'Andaimes', 'Climatização', 'Betões', 'Isolamentos', 'Eletricidade', 'Pavimentos', 'Caixilharia', 'Transportes', 'Metalomecânica', 'Construções', 'Cofragens', 'Elevadores'],
+        ['Lopes', 'Atlântica', 'do Sado', 'Silva', 'Ribeiro', 'Costa', 'do Mondego', 'do Minho', 'Tejo', 'Algarve', 'do Douro', 'Ferreira', 'Martins', 'da Beira', 'Lusitana', 'Santos'], [', Lda.', ', S.A.', '']);
+      combine('ES', ['Construcciones', 'Grúas', 'Montajes', 'Instalaciones'], ['Galicia', 'Duero', 'Levante', 'Cantabria'], [' S.L.']);
+      combine('FR', ['Échafaudages', 'Menuiserie', 'Électricité', 'Plomberie'], ['Durand', 'Lefèvre', 'Moreau', 'Bernard'], [' SARL']);
+    }
+    return out;
+  })();
   const PEOPLE = BEATRIZ ? ['Dale Hughes', 'Rosa Diaz', 'Marina Alves', 'Tom Becker', 'Grace Kim', 'Luis Ortega', 'Amy Walsh']
     : ['Ana Lopes', 'Paulo Reis', 'Joana Silva', 'Rui Matos', 'Inês Costa', 'Carlos Pinto', 'Marta Sousa', 'Luis Durand', 'Elena Vidal'];
+  const TLD = { PT: 'pt', ES: 'es', FR: 'fr', US: 'com', BR: 'com.br' };
+  // the three that bounce: an email that looks right, but isn't
+  const TYPOS = [
+    (u) => [`${u}@gnail.com`, 'Looks like a typo: gnail.com, not gmail.com'],
+    (u, d) => [`${u}@${d}.co`, 'The ending looks cut short: .co, not .com'],
+    (u) => [`${u}@hotmial.com`, 'Looks like a typo: hotmial.com, not hotmail.com'],
+  ];
   const rnd = (n) => Math.floor(Math.random() * n);
   const num = (n) => Array.from({ length: n }, () => rnd(10)).join('');
   const CODE = {
@@ -65,14 +79,16 @@
   const sample = () => {
     const taken = new Set(S.list().map((x) => fold(x.name))), used = new Set();
     const mix = (l) => l.sort(() => Math.random() - 0.5), fresh = (x) => !taken.has(fold(x[1]));
-    const pool = [...mix(POOL.filter(fresh)), ...mix(POOL.filter((x) => !fresh(x)))]; // names not on your list first
-    const n = 5 + rnd(4);
-    return pool.slice(0, n).map(([cc, name], i) => {
+    const pool = [...mix(NAMES.filter(fresh)), ...mix(NAMES.filter((x) => !fresh(x)))]; // names not on your list first
+    const rows = pool.slice(0, 100).map(([cc, name], i) => {
       let code; do { code = CODE[cc](); } while (used.has(cc + code) || !A.country(cc).ok(code) || S.lookup(cc, code).mine || S.lookup(cc, code).on);
       used.add(cc + code);
       const who = PEOPLE[rnd(PEOPLE.length)], dom = fold(name).replace(/ (lda|s a|s l|sarl|llc|inc|ltda)$/, '').replace(/ /g, '');
-      return { row: i + 2, country: A.country(cc).name, code, name, contact: who, email: `${fold(who).split(' ')[0]}@${dom}.test` };
+      return { row: i + 2, country: A.country(cc).name, code, name, contact: who, email: `${fold(who).split(' ')[0]}@${dom}.${TLD[cc] || 'com'}`, u: fold(who).split(' ')[0], d: dom };
     });
+    const at = new Set(); while (at.size < Math.min(3, rows.length)) at.add(rnd(rows.length));
+    [...at].forEach((k, j) => { const r = rows[k], [email, why] = TYPOS[j](r.u, r.d); Object.assign(r, { email, bounce: why }); });
+    return rows;
   };
 
   // ---- each row, as Add a supplier would find it ---------------------------------------------------
@@ -185,13 +201,50 @@
 .si-who { display: flex; flex-wrap: wrap; gap: 0.375rem; }
 .si-who span { padding: 0.25rem 0.625rem; border-radius: 999px; background: var(--color-light-beige); font-size: 0.8125rem; color: var(--color-ink); }
 .sa-docs small .si-only { color: var(--color-ink-muted); }
-@media (max-width: 40rem) { .si-rev table { min-width: 40rem; } .si-edit { opacity: 1; } }`;
+@media (max-width: 40rem) { .si-rev table { min-width: 40rem; } .si-edit { opacity: 1; } }
+/* the drawer folds to a rail on the right at any step, as ALMA's upload drawer does (js/doc-upload.js) */
+.si-dw .docd-panel { transition: transform .32s var(--ease-brand), width .35s var(--ease-brand, ease); }
+.si-dw .si-hacts { flex: none; display: flex; align-items: center; gap: 0.375rem; }
+.si-dw.is-tucked { pointer-events: none; }
+.si-dw.is-tucked .docd-scrim { opacity: 0; }
+.si-dw.is-tucked .docd-panel { pointer-events: auto; width: 4.5rem; overflow: hidden; }
+.si-dw.is-tucked :is(.docd-head, .docd-body, .docd-foot) { display: none; }
+/* sending: a spinner, how many have gone, a bar */
+.si-sending { display: flex; align-items: center; gap: 1rem; }
+.si-spin { flex: none; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--color-light-beige); color: var(--color-coral); }
+.si-spin svg { width: 1.375rem; height: 1.375rem; animation: si-spin 0.9s linear infinite; }
+@keyframes si-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .si-spin svg { animation: none; } }
+.si-sending h4 { margin: 0; }
+.si-sending p { margin: 0.125rem 0 0; font-size: 0.875rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
+.si-sending p b { color: var(--color-ink); }
+.si-prog { height: 0.375rem; margin-top: 1rem; border-radius: 999px; background: var(--color-mid-beige); overflow: hidden; }
+.si-prog span { display: block; height: 100%; border-radius: inherit; background: var(--color-graphite); transition: width .2s linear; }
+.si-hide { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 1rem; border-radius: 0.75rem; background: var(--color-light-beige); font-size: 0.875rem; line-height: 1.45; color: var(--color-ink-muted); }
+.si-hide span { flex: 1; }
+/* sent: how many went, and the ones that didn't, with why */
+.si-res { display: flex; align-items: center; gap: 1rem; }
+.si-res-ic { flex: none; display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: var(--color-positive-subtle, #e7f2e4); color: var(--color-positive, #3d7a2c); }
+.si-res-ic.is-bad { background: color-mix(in oklab, var(--color-negative, #c0392b) 12%, transparent); color: var(--color-negative, #c0392b); }
+.si-res-ic svg { width: 1.375rem; height: 1.375rem; }
+.si-res b { display: block; font-size: 1rem; color: var(--color-ink); }
+.si-res small { display: block; margin-top: 0.125rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.si-fail { list-style: none; margin: 1rem 0 0; padding: 0; border-top: 1px solid var(--color-mid-beige); }
+.si-fail li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.125rem 1rem; padding: 0.625rem 0; border-bottom: 1px solid var(--color-mid-beige); font-size: 0.875rem; }
+.si-fail li:last-child { border-bottom: 0; padding-bottom: 0; }
+.si-fail b { font-weight: 600; color: var(--color-ink); overflow-wrap: anywhere; }
+.si-fail code { grid-column: 1; font: inherit; color: var(--color-negative, #c0392b); overflow-wrap: anywhere; }
+.si-fail small { grid-column: 1; color: var(--color-ink-subtle); }`;
   const stl = document.createElement('style'); stl.textContent = css; document.head.appendChild(stl);
 
   const XLS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13l4 5M13 13l-4 5"/></svg>';
   const PEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
   const SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
   const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  const FOLD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg>';
+  const SPIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+  const OKI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const BADI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg>';
   const DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13l2 2 4-4"/></svg>';
 
   // ---- in Add a supplier: many at once, or one by one -----------------------------------------------
@@ -306,12 +359,13 @@
 
   // ---- the drawer: the documents the suppliers picked on the list are asked for -----------------------
   const dw = document.createElement('div');
-  dw.className = 'docd sa'; dw.hidden = true;
+  dw.className = 'docd sa si-dw'; dw.hidden = true;
   dw.innerHTML = `<div class="docd-scrim" data-sid-x></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="sid-t" tabindex="-1">
       <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOC}</span><div class="docd-t"><h3 id="sid-t">Documents to ask for</h3><p id="sid-sub"></p></div>
-        <button type="button" class="dlg-x" data-sid-x aria-label="Close">${X}</button></header>
+        <span class="si-hacts"><button type="button" class="cmu-fold" data-sid-tuck aria-label="Hide the panel" title="Hide the panel">${FOLD}</button><button type="button" class="dlg-x" data-sid-x aria-label="Close">${X}</button></span></header>
       <form class="docd-body" id="sid-body" novalidate></form>
       <footer class="docd-foot" id="sid-foot"></footer>
+      <nav class="cmu-rail" aria-label="Inviting suppliers" hidden>${window.CMAlmaJob ? window.CMAlmaJob.rail() : ''}</nav>
     </aside>`;
   document.body.appendChild(dw);
   let ed = null; // { rows: [index], picked: Set }; or, inviting many, { pre: 1 (the documents) or 2 (the file), picked }
@@ -375,10 +429,90 @@
       <section class="sa-card"><label class="sa-f"><span>A note for them <i>(optional)</i></span><textarea class="sa-in" name="si-note" rows="3" placeholder="Why you&rsquo;re asking, or what it&rsquo;s for">${esc(ed.note)}</textarea></label></section>`;
     dw.querySelector('#sid-foot').innerHTML = `<span><button type="button" class="link-btn" data-sid-x>Back</button></span><span class="sa-acts"><button type="button" class="btn btn-primary btn-sm" data-sid-send>Send ${go.length} invitation${go.length === 1 ? '' : 's'}</button></span>`;
   };
+  // ---- sending them: many at once, so it shows how far it is; the drawer can fold away meanwhile ----
+  let job = null; // { go: rows, note, total, at (how many gone), sent, failed: [rows], done }
+  let tucked = false;
+  const rail = () => dw.querySelector('.cmu-rail');
+  const railPaint = () => {
+    if (!window.CMAlmaJob || !ed) return;
+    const st = job ? (job.done ? { done: true, n: job.sent, label: `Invitations sent · ${job.sent} of ${job.total}` } : { reading: true, at: job.at, total: job.total, label: `Sending invitations · ${job.at} of ${job.total}` })
+      : { label: dw.querySelector('#sid-t').textContent };
+    window.CMAlmaJob.paint(rail(), st);
+  };
+  const tuck = (on) => {
+    tucked = on;
+    dw.classList.toggle('is-tucked', on); rail().hidden = !on;
+    dw.querySelector('.docd-panel').setAttribute('aria-modal', String(!on));
+    [dw.querySelector('.docd-head'), dw.querySelector('#sid-body'), dw.querySelector('#sid-foot')].forEach((x) => { x.inert = on; });
+    document.documentElement.style.overflow = on ? '' : 'hidden';
+    if (on) { railPaint(); rail().querySelector('.cmu-fold').focus({ preventScroll: true }); }
+    else dw.querySelector('.docd-panel').focus({ preventScroll: true });
+  };
+  const sups = (n) => `${n} supplier${n === 1 ? '' : 's'}`;
+  const sendPaint = () => {
+    const b = dw.querySelector('#sid-body');
+    dw.querySelector('.docd-head .dlg-x').hidden = true; dw.querySelector('#sid-foot').hidden = !job.done; // once they start going, Continue is the only way out
+    dw.querySelector('#sid-t').textContent = 'Invite suppliers from Excel';
+    dw.querySelector('#sid-sub').textContent = job.file;
+    if (!job.done) {
+      const bar = b.querySelector('.si-prog span');
+      if (bar) { b.querySelector('#si-at').textContent = job.at; bar.style.width = `${(job.at / job.total) * 100}%`; return; }
+      b.innerHTML = `<section class="sa-card"><div class="si-sending"><span class="si-spin">${SPIN}</span><div><h4>Sending invitations</h4><p role="status"><b id="si-at">${job.at}</b> of ${job.total} sent</p></div></div>
+          <div class="si-prog" aria-hidden="true"><span style="width:${(job.at / job.total) * 100}%"></span></div></section>
+        <div class="si-hide"><span>This can take a few minutes. Hide the panel and keep working: we&rsquo;ll let you know when they&rsquo;ve all gone.</span><button type="button" class="btn btn-quiet btn-sm" data-sid-tuck>Hide panel</button></div>`;
+      dw.querySelector('#sid-foot').innerHTML = '<span></span><span class="sa-acts"></span>';
+      return;
+    }
+    const f = job.failed;
+    b.innerHTML = `<section class="sa-card"><div class="si-res"><span class="si-res-ic">${OKI}</span><span><b>${job.sent} of ${job.total} invitations sent</b><small>${sups(job.sent)} ${job.sent === 1 ? 'is' : 'are'} on your supplier list as Invited.</small></span></div></section>
+      ${f.length ? `<section class="sa-card"><div class="si-res"><span class="si-res-ic is-bad">${BADI}</span><span><b>${f.length} not sent</b><small>These emails couldn&rsquo;t be reached: they look mistyped, or don&rsquo;t exist. Check them with the supplier, then invite them from Add a supplier.</small></span></div>
+        <ul class="si-fail">${f.map((r) => `<li><b>${esc(nameOf(r))}</b><code>${esc(r.email)}</code><small>${esc(r.bounce)}</small></li>`).join('')}</ul></section>` : ''}`;
+    dw.querySelector('#sid-foot').innerHTML = '<span></span><span class="sa-acts"><button type="button" class="btn btn-primary btn-sm" data-sid-done>Continue</button></span>';
+  };
+  // a few go each moment; those added show on the page as they go
+  const sendAll = (note) => {
+    const go = bulk.rows.filter((r) => r.ok), today = A.today(), file = bulk.file;
+    job = { go, note, file, total: go.length, at: 0, sent: 0, failed: [], done: false };
+    bulk = null; paint(); // the list goes: they're being sent
+    ed = { send: true, rows: [], picked: new Set(), hide: new Set(), fOpen: false }; edPaint();
+    const step = () => {
+      if (!job) return;
+      const n = Math.min(job.total, job.at + 1 + rnd(2));
+      for (; job.at < n; job.at += 1) {
+        const r = job.go[job.at];
+        if (r.bounce) { job.failed.push(r); continue; }
+        const c = A.country(r.cc), list = A.docsOf(r.cc).filter((d) => r.docs.has(d.code)), name = nameOf(r);
+        S.addInvite({
+          id: `${S.slug(name)}-${(Date.now() + job.at).toString(36).slice(-4)}`, name, city: r.on ? r.on.city : '', services: r.on ? r.on.services : [],
+          country: c.code, countryName: c.name, idLabel: c.label, code: r.code, email: r.on ? '' : r.email.trim(), contact: r.on ? '' : String(r.contact || '').trim(),
+          onCmore: !!r.on, invited: today, note: job.note, imported: file,
+          docs: list.map((d) => d.code), required: list.filter((d) => d.req).map((d) => d.code),
+          names: Object.fromEntries(list.map((d) => [d.code, d.name])), sections: Object.fromEntries(list.map((d) => [d.code, d.home || d.section])),
+        });
+        job.sent += 1;
+      }
+      if (job.at >= job.total) {
+        job.done = true; sendPaint(); railPaint();
+        if (window.CMSupPage) window.CMSupPage.refresh();
+        if (tucked && window.CMAlmaJob) window.CMAlmaJob.toast(`${job.sent} invitation${job.sent === 1 ? '' : 's'} sent${job.failed.length ? `, ${job.failed.length} not sent` : ''}.`, ['See', () => tuck(false)]);
+        return;
+      }
+      sendPaint(); railPaint(); setTimeout(step, 110);
+    };
+    setTimeout(step, 400);
+  };
+  // Continue: the drawer goes, and the page is as after any invitation
+  const sendDone = () => {
+    const sent = job.sent, on = job.go.filter((r) => r.on && !r.bounce).length;
+    job = null; if (tucked) tuck(false); edClose();
+    if (window.CMSupPage) window.CMSupPage.refresh();
+    A.toast(`${sent} supplier${sent === 1 ? '' : 's'} invited: ${on} to your supplier list, ${sent - on} to join C‑MORE.`);
+  };
   const revState = (note = '') => ({ rows: [], rev: true, note, picked: new Set(), hide: new Set(), fOpen: false });
   // back on the summary, in the same drawer, from the documents opened by its Edit
   const revBack = () => { ed = revState(ed.note); edPaint(); dw.querySelector('#sid-body').scrollTop = 0; };
   const revOpen = () => {
+    if (job) { tuck(false); return; }
     if (!bulk || !bulk.rows.some((r) => r.ok)) return;
     ed = revState(bulk.note || ''); // the note is kept while they change the list
     edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
@@ -387,8 +521,9 @@
     setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
   };
   const edPaint = () => {
-    if (ed.rev) { revPaint(); return; }
-    if (ed.pre) { prePaint(); return; }
+    if (ed.send) { sendPaint(); railPaint(); return; }
+    if (ed.rev) { revPaint(); railPaint(); return; }
+    if (ed.pre) { prePaint(); railPaint(); return; }
     dw.querySelector('#sid-t').textContent = 'Documents to ask for';
     dw.querySelector('#sid-foot').innerHTML = `<span></span><span class="sa-acts"><button type="button" class="link-btn" data-sid-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" id="sid-go" data-sid-apply>Apply</button></span>`;
     const list = shownDocs(), g = groups(list), n = list.filter((d) => ed.picked.has(d.code)).length, rs = edRows();
@@ -416,6 +551,7 @@
     return { rows, picked: new Set([...any].filter((c) => rs.every((r) => !applies(r, c) || r.docs.has(c)))), hide: new Set(), fOpen: false };
   };
   const edOpen = (rows) => {
+    if (job) { tuck(false); return; }
     rows = rows.filter((i) => bulk.rows[i] && bulk.rows[i].ok); if (!rows.length) return;
     ed = docsState(rows);
     edBack = document.activeElement; dw.hidden = false; document.documentElement.style.overflow = 'hidden'; edPaint();
@@ -424,6 +560,7 @@
     setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
   };
   const invite = () => {
+    if (job) { tuck(false); return; }
     if (A.isOpen()) A.close();
     const list = A.docsOf(own());
     ed = { rows: [], pre: 1, picked: new Set(asked || list.filter((d) => d.req).map((d) => d.code)), hide: askedHide ? new Set(askedHide) : new Set(), fOpen: false };
@@ -433,12 +570,18 @@
     setTimeout(() => dw.querySelector('.docd-panel').focus(), 300);
   };
   const edClose = () => {
+    dw.querySelector('.docd-head .dlg-x').hidden = false; dw.querySelector('#sid-foot').hidden = false;
+    if (tucked) { tucked = false; dw.classList.remove('is-tucked'); rail().hidden = true; dw.querySelector('.docd-panel').setAttribute('aria-modal', 'true'); [dw.querySelector('.docd-head'), dw.querySelector('#sid-body'), dw.querySelector('#sid-foot')].forEach((x) => { x.inert = false; }); }
     dw.classList.remove('is-open'); document.documentElement.style.overflow = '';
     setTimeout(() => { dw.hidden = true; }, 280); ed = null; if (edBack && edBack.isConnected) edBack.focus();
   };
   dw.addEventListener('click', (e) => {
     if (!ed) return;
-    if (e.target.closest('[data-sid-x]')) { if (ed.ret) revBack(); else edClose(); return; }
+    if (e.target.closest('[data-sid-tuck]')) { tuck(true); return; }
+    if (e.target.closest('[data-untuck]')) { tuck(false); return; }
+    if (e.target.closest('[data-sid-done]')) { sendDone(); return; }
+    // while they're going, closing folds it instead; once sent, only Continue ends it
+    if (e.target.closest('[data-sid-x]')) { if (ed.send) { if (!job.done) tuck(true); return; } if (ed.ret) revBack(); else edClose(); return; }
     // Edit on the summary: the suppliers are the list on the page (its Send comes back here); the documents open here, for all of them
     const eb = e.target.closest('[data-sid-edit]');
     if (eb) {
@@ -450,7 +593,7 @@
     const fc = e.target.closest('[data-saf]'); if (fc) { const c = fc.dataset.saf; if (ed.hide.has(c)) ed.hide.delete(c); else { ed.hide.add(c); edDocs().filter((d) => !d.req && d.section === c).forEach((d) => ed.picked.delete(d.code)); } redraw(`[data-saf="${CSS.escape(c)}"]`); return; }
     if (e.target.closest('[data-saf-all]')) { ed.hide.clear(); redraw('[data-saf-btn]'); return; }
     if (ed.fOpen && !e.target.closest('.co-filt')) { ed.fOpen = false; const p = dw.querySelector('.co-filt-panel'), b = dw.querySelector('[data-saf-btn]'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); }
-    if (e.target.closest('[data-sid-send]')) { const note = ed.note.trim(); edClose(); send(note); return; }
+    if (e.target.closest('[data-sid-send]')) { sendAll(ed.note.trim()); return; }
     if (e.target.closest('[data-pre-next]')) { asked = new Set(ed.picked); askedHide = new Set(ed.hide); ed.pre = 2; edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return; }
     if (e.target.closest('[data-pre-back]')) { ed.pre = 1; edPaint(); dw.querySelector('#sid-body').scrollTop = 0; return; }
     if (e.target.closest('[data-sid-apply]')) {
@@ -470,26 +613,9 @@
     if (t.matches('[data-all]')) { shownDocs().forEach((d) => ed.picked[t.checked ? 'add' : 'delete'](d.code)); dw.querySelectorAll('[data-doc]').forEach((b) => { b.checked = t.checked; }); marks(); }
   });
   // Escape closes this drawer only (not ALMA's setup panel under it, js/guided-upload.js)
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { e.stopImmediatePropagation(); if (ed.fOpen) { ed.fOpen = false; redraw('[data-saf-btn]'); return; } if (ed.ret) revBack(); else edClose(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ed) { if (tucked) return; e.stopImmediatePropagation(); if (ed.send) { if (!job.done) tuck(true); return; } if (ed.fOpen) { ed.fOpen = false; redraw('[data-saf-btn]'); return; } if (ed.ret) revBack(); else edClose(); } });
 
   // ---- sending, and leaving --------------------------------------------------------------------------
-  const send = (note = '') => {
-    const go = bulk.rows.filter((r) => r.ok), today = A.today();
-    go.forEach((r, i) => {
-      const c = A.country(r.cc), list = A.docsOf(r.cc).filter((d) => r.docs.has(d.code)), name = nameOf(r);
-      S.addInvite({
-        id: `${S.slug(name)}-${(Date.now() + i).toString(36).slice(-4)}`, name, city: r.on ? r.on.city : '', services: r.on ? r.on.services : [],
-        country: c.code, countryName: c.name, idLabel: c.label, code: r.code, email: r.on ? '' : r.email.trim(), contact: r.on ? '' : String(r.contact || '').trim(),
-        onCmore: !!r.on, invited: today, note, imported: bulk.file,
-        docs: list.map((d) => d.code), required: list.filter((d) => d.req).map((d) => d.code),
-        names: Object.fromEntries(list.map((d) => [d.code, d.name])), sections: Object.fromEntries(list.map((d) => [d.code, d.home || d.section])),
-      });
-    });
-    const on = go.filter((r) => r.on).length;
-    bulk = null; paint();
-    if (window.CMSupPage) window.CMSupPage.refresh();
-    A.toast(`${go.length} supplier${go.length === 1 ? '' : 's'} invited: ${on} to your supplier list, ${go.length - on} to join C‑MORE.`);
-  };
   const drop = () => {
     bulk.rows = bulk.rows.filter((r, i) => !bulk.picked.has(i)); bulk.picked = new Set(); changed.clear();
     if (!bulk.rows.length) { bulk = null; paint(); A.toast('Everyone on the list was removed. Nothing was sent.'); return; }
