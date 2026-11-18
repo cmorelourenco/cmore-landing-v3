@@ -51,18 +51,34 @@
     try { email = (JSON.parse(ss('cm-person') || 'null') || {}).email || ''; } catch (e) {}
     return org === 'home' && !/^test@c-more\.test$/i.test(email);
   };
+  // the projects started here (new-project.html), kept for the tab, per company: on top of the demo's,
+  // and any company's own (the test user's, a company added in this session)
+  const ADD_KEY = (() => {
+    let org = 'home', email = '';
+    try { org = JSON.parse(ss('cm-org') || '"home"') || 'home'; } catch (e) {}
+    try { email = (JSON.parse(ss('cm-person') || 'null') || {}).email || ''; } catch (e) {}
+    const test = /^test@c-more\.test$/i.test(email);
+    return 'cm-pj-added' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`);
+  })();
+  const added = () => { if (persona() === 'beatriz') return []; try { return JSON.parse(ss(ADD_KEY) || '[]') || []; } catch (e) { return []; } };
 
   // ---- each project's documents ----
   const DOCST = { ok: 'Valid', look: 'Needs a look', miss: 'Not compliant' };
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const POOL = ['Work accident insurance', 'Social Security clearance certificate', 'Tax clearance certificate', 'Construction licence (alvará)',
     'Health and safety plan for the site', 'Workers’ medical fitness records', 'Crane inspection certificate', 'Civil liability insurance', 'Site supervisor appointment'];
-  const all = PROJECTS.map((p) => {
+  // a new project's region, with its country when it isn't in Portugal
+  const where = (p) => (p.country && p.country !== 'Portugal' ? `${p.district}, ${p.country}` : p.district);
+  // the people on a new project, each with a role (an earlier one kept just its project manager, or its owner)
+  const peopleOf = (p) => p.people || [{ role: 'Project manager', name: (p.pm && p.pm.name) || p.pm || p.owner || '', invited: !!(p.pm && p.pm.invited) }];
+  const all = added().map((p) => Object.assign({}, p, { h: hash(p.id), own: 'owner', isNew: true, docs: { asked: 0, ok: 0, look: 0, miss: 0 }, ongoing: !p.deadline, region: where(p), role: 'Owner',
+    suppliers: (p.sups || []).length, workers: 0, text: fold([p.id, p.name, p.client, ...peopleOf(p).map((x) => x.name), p.city, p.district, p.country].concat((p.sups || []).map((x) => x.name)).join(' ')) }))
+    .concat((hasProjects() ? PROJECTS : []).map((p) => {
     const h = hash(p.id), miss = p.miss, look = (h % 3 === 0 ? 1 : 0) + (miss && h % 2 ? 1 : 0), asked = 9 + (h % 9);
     const docs = { asked, ok: asked - miss - look, look, miss };
     return Object.assign({}, p, { h, docs, ongoing: !p.deadline, region: `${p.city}, ${p.district}`, role: p.own === 'owner' ? 'Owner' : 'Supplier',
       text: fold([p.id, p.name, p.client, p.sector, p.city, p.district].join(' ')) });
-  });
+  }));
   // what needs doing, for the drawer: the missing and expired ones, then those expiring before the work ends
   const itemsOf = (p) => {
     const out = [], end = p.ongoing ? NaN : Date.parse(p.deadline);
@@ -130,6 +146,19 @@
 .pjd-facts dd { margin: 0.125rem 0 0; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); }
 .pjd-facts dd small { display: block; font-size: 0.8125rem; font-weight: 400; color: var(--color-ink-subtle); }
 .pjd-steps { display: flex; gap: 0.5rem; }
+.pjd-sups { margin: 0; padding: 0; list-style: none; }
+.pjd-sups li { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid var(--color-mid-beige); }
+.pjd-sups li:first-child { padding-top: 0; } .pjd-sups li:last-child { border-bottom: 0; padding-bottom: 0; }
+.pjd-sups .n { display: block; font-size: 0.875rem; font-weight: 500; }
+.pjd-sups .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.pjd-sups .w { flex: none; font-size: 0.8125rem; color: var(--color-ink-subtle); text-align: right; white-space: nowrap; }
+/* New project: as My suppliers' Add a supplier */
+.pj-add { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.125rem; border: 0; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font: inherit; font-size: 0.875rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color .15s, transform .15s; }
+.pj-add:hover { background: var(--color-ink); color: var(--color-off-white); transform: translateY(-1px); }
+.pj-add:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+.pj-add svg { width: 1rem; height: 1rem; }
+.pj-empty .pj-add { margin-top: 0.5rem; }
+.pj-toast { position: fixed; left: 50%; bottom: 1.5rem; z-index: 120; transform: translateX(-50%); padding: 0.75rem 1.125rem; border-radius: 0.75rem; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; box-shadow: 0 12px 32px -16px rgba(0,0,0,.5); }
 @media (max-width: 40rem) { .pjd-stats, .pjd-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .pj-card, .pj-open, .pj-tbl tbody tr.pj-row { transition: none; } .pj-card:hover { transform: none; } }`;
   const style = document.createElement('style'); style.textContent = css; (document.head || document.documentElement).appendChild(style);
@@ -148,11 +177,11 @@
   const XS = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="visibility:visible"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
 
   // the Documents column, as the Documents tables' Status: the worst first, and the chevron
-  const badgeOf = (x) => (x.miss ? `<span class="co-badge b-over">${x.miss} missing</span>` : x.look ? `<span class="co-badge b-pend">${x.look} to look at</span>` : '<span class="co-badge b-ok">All valid</span>');
+  const badgeOf = (x) => (!x.asked ? '<span class="co-badge b-neu">None asked yet</span>' : x.miss ? `<span class="co-badge b-over">${x.miss} missing</span>` : x.look ? `<span class="co-badge b-pend">${x.look} to look at</span>` : '<span class="co-badge b-ok">All valid</span>');
   const rowOf = (p) => `<tr class="pj-row" tabindex="0" role="link" data-pj="${esc(p.id)}" aria-label="${esc(p.name)}, ${esc(p.id)}: open the project">`
-    + `<td><span class="n">${esc(p.name)}</span><span class="d">${esc(p.id)} &middot; ${p.role}</span></td>`
-    + `<td><span class="n">${esc(p.client)}</span><span class="d">${esc(p.sector)}</span></td>`
-    + `<td><span class="n">${esc(p.city)}</span><span class="d">${esc(p.district)}</span></td>`
+    + `<td><span class="n">${esc(p.name)}${p.isNew ? ' <span class="co-badge b-info cd-new" title="Added recently">New</span>' : ''}</span><span class="d">${esc(p.id)} &middot; ${p.role}</span></td>`
+    + `<td><span class="n">${esc(p.client)}</span><span class="d">${esc(p.sector || '')}</span></td>`
+    + (p.isNew ? `<td><span class="n">${esc(where(p))}</span><span class="d">${esc(p.address)}</span></td>` : `<td><span class="n">${esc(p.city)}</span><span class="d">${esc(p.district)}</span></td>`)
     + `<td><span class="n">${pl(p.suppliers, 'supplier')}</span><span class="d">${pl(p.workers, 'worker')}</span></td>`
     + `<td>${p.ongoing ? '<span class="co-badge b-info">Ongoing</span>' : esc(p.deadline)}</td>`
     + `<td>${badgeOf(p.docs)}</td></tr>`;
@@ -183,17 +212,22 @@
     q('#pjd-t').textContent = p.name;
     q('[data-pjd-sub]').textContent = `${p.id} · ${p.client}`;
     q('[data-pjd-bar]').textContent = p.own === 'owner' ? 'Your project' : `You supply ${p.client}`;
-    q('[data-pjd-when]').textContent = p.ongoing ? 'Ongoing' : 'Deadline ' + p.deadline;
+    q('[data-pjd-when]').textContent = p.ongoing ? 'Ongoing' : (p.isNew ? `${p.start} to ${p.deadline}` : 'Deadline ' + p.deadline);
     const stat = (cls, n, label) => `<div class="pjd-stat${cls}"><b>${n}</b><span>${label}</span></div>`;
     q('[data-pjd-body]').innerHTML = `<section class="pjd-card"><h4 class="eyebrow">Documents for this project</h4>
         <div class="pjd-stats">${stat('', x.asked, 'Asked for')}${stat(' is-ok', x.ok, 'Valid')}${stat(' is-pend', x.look, 'Needs a look')}${stat(' is-bad', x.miss, 'Not compliant')}</div>
         ${its.length ? `<ul class="pjd-list">${its.map((it) => `<li><span><span class="n">${esc(it.name)}</span><span class="d">${esc(it.sub)}</span></span><span class="co-badge ${it.cls}">${it.b}</span></li>`).join('')}</ul>
-        <p class="pjd-ok"><a class="co-link" href="company-details.html">Sort them out in Documents</a>, or drop the files on ALMA.</p>` : `<p class="pjd-ok">Every document ${esc(p.client)} asks for here is valid.</p>`}</section>
+        <p class="pjd-ok"><a class="co-link" href="company-details.html">Sort them out in Documents</a>, or drop the files on ALMA.</p>` : x.asked ? `<p class="pjd-ok">Every document ${esc(p.client)} asks for here is valid.</p>` : '<p class="pjd-ok">Nothing asked for on this project yet.</p>'}</section>
+      ${p.isNew ? `<section class="pjd-card"><h4 class="eyebrow">People on this project</h4><ul class="pjd-sups">${peopleOf(p).map((x) => `<li><span><span class="n">${esc(x.name)}</span><span class="d">${esc(x.role)}</span></span>${x.invited ? '<span class="co-badge b-neu">Invited</span>' : ''}</li>`).join('')}</ul></section>` : ''}
+      ${p.isNew ? `<section class="pjd-card"><h4 class="eyebrow">Suppliers on this project</h4>${(p.sups || []).length ? `<ul class="pjd-sups">${p.sups.map((x) => `<li><span><span class="n">${esc(x.name)}</span><span class="d">${esc(x.work)}</span></span><span class="w">${esc(x.entry)}<br>to ${esc(x.exit)}</span></li>`).join('')}</ul>` : '<p class="pjd-ok" style="margin:0">No suppliers on it yet.</p>'}</section>` : ''}
       <section class="pjd-card"><h4 class="eyebrow">About the project</h4><dl class="pjd-facts">
-        <div><dt>Client</dt><dd>${esc(p.client)}<small>${esc(p.sector)}</small></dd></div>
+        <div><dt>Client</dt><dd>${esc(p.client)}<small>${esc(p.sector || '')}</small></dd></div>
         <div><dt>Your role</dt><dd>${p.role}<small>${p.own === 'owner' ? 'You run the site' : 'Working for ' + esc(p.client)}</small></dd></div>
-        <div><dt>Region</dt><dd>${esc(p.city)}<small>${esc(p.district)}</small></dd></div>
-        <div><dt>Deadline</dt><dd>${p.ongoing ? 'Ongoing' : esc(p.deadline)}</dd></div>
+        ${p.isNew ? `<div><dt>Region</dt><dd>${esc(where(p))}<small>${esc(p.address)}</small></dd></div>
+        <div><dt>Started by</dt><dd>${esc(p.owner || '')}<small>${esc(p.on || '')}</small></dd></div>
+        <div><dt>Start date</dt><dd>${esc(p.start)}</dd></div>
+        <div><dt>End date</dt><dd>${esc(p.deadline)}</dd></div>` : `<div><dt>Region</dt><dd>${esc(p.city)}<small>${esc(p.district)}</small></dd></div>
+        <div><dt>Deadline</dt><dd>${p.ongoing ? 'Ongoing' : esc(p.deadline)}</dd></div>`}
         <div><dt>Suppliers</dt><dd>${pl(p.suppliers, 'supplier')}</dd></div>
         <div><dt>Workers</dt><dd>${pl(p.workers, 'worker')}</dd></div>
       </dl></section>`;
@@ -233,12 +267,12 @@
       if (persona() === 'beatriz') { location.replace('my-company.html?filled#products'); return; }
       const bk = document.getElementById('pj-back'); if (bk) bk.addEventListener('click', () => { location.href = 'my-company.html?filled'; });
     }
-    if (!hasProjects()) {
+    if (!all.length) {
       // none yet: on the overview the section goes; on Projects, what will be here
       const sec = table.closest('section');
       if (attention) { if (sec) sec.hidden = true; return; }
-      document.querySelectorAll('[data-pj-cards], [data-pj-tools], [data-pj-pills], [data-pj-pager-row]').forEach((n) => { n.hidden = true; });
-      card.innerHTML = `<div class="pj-empty"><span class="docd-ico" aria-hidden="true">${SVG(ICO.bag)}</span><h3>No projects yet</h3><p>When a client adds your company to one of their projects, or you start one of your own, it shows here with the documents it asks of you.</p></div>`;
+      document.querySelectorAll('[data-pj-cards], [data-pj-tools], [data-pj-pills], [data-pj-pager-row]').forEach((n) => { n.hidden = true; n.style.display = 'none'; });
+      card.innerHTML = `<div class="pj-empty"><span class="docd-ico" aria-hidden="true">${SVG(ICO.bag)}</span><h3>No projects yet</h3><p>When a client adds your company to one of their projects, or you start one of your own, it shows here with the documents it asks of you.</p><a class="pj-add" href="new-project.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>New project</a></div>`;
       return;
     }
     table.innerHTML = HEAD + '<tbody></tbody>';
@@ -364,6 +398,8 @@
     const want = new URLSearchParams(location.search).get('docs');
     if (want && Object.values(DOCST).includes(want)) f.docs.add(want);
     go(1);
+    // back from new-project.html: what was started
+    try { const t = sessionStorage.getItem('cm-pj-toast'); if (t) { sessionStorage.removeItem('cm-pj-toast'); const el = Object.assign(document.createElement('div'), { className: 'pj-toast', textContent: t }); el.setAttribute('role', 'status'); document.body.appendChild(el); setTimeout(() => el.remove(), 4200); } } catch (e) {}
     // arriving at one project (?project=FC-2026-031)
     const one = all.find((p) => p.id === new URLSearchParams(location.search).get('project'));
     if (one && shown().includes(one)) setTimeout(() => open(one, shown), 200);

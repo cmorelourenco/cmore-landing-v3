@@ -17,14 +17,16 @@
    the side menu drops what they can't open, and a page they can't open says so. It is kept for
    this tab, with a bar at the bottom to leave it.
    Prototype: the team lives in this browser and is forgotten on log out (js/company-switcher.js). */
-// Coming soon, except for Miguel's own company (the demo), where every area is open already. Read by js/company-switcher.js, js/company-details.js and js/guided-upload.js.
+// What's open: every section, for every company. The test user (test@c-more.test) has all but
+// Products and materials, still coming soon. Beatriz as she was. Read by js/company-switcher.js,
+// js/company-details.js, js/guided-upload.js, js/clients.js and js/team.js.
 window.CM_SOON_OPEN = (() => {
+  const ALL = ['ecosystem', 'workers', 'equipment', 'products', 'questionnaires', 'clients', 'projects'];
   try {
     if (document.documentElement.dataset.persona === 'beatriz') return [];
     const p = JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {};
-    if (/^test@c-more\.test$/i.test(p.email || '')) return [];
-    const org = JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-miguel') || 'null') || 'home';
-    return org === 'home' ? ['ecosystem', 'workers', 'equipment', 'products', 'questionnaires', 'clients', 'projects'] : [];
+    if (/^test@c-more\.test$/i.test(p.email || '')) return ALL.filter((k) => k !== 'products');
+    return ALL;
   } catch (e) { return []; }
 })();
 window.CMAccess = (() => {
@@ -171,7 +173,7 @@ window.CMAccess = (() => {
 
   // ---- on every page: the side menu, the page itself, and the preview bar ----------------------------
   const NAV = { Projects: 'projects', Documents: 'documents', Consents: 'consents', Questionnaires: 'questionnaires', 'C-MORE ecosystem': 'ecosystem', 'My clients': 'clients', 'My suppliers': 'suppliers', 'Team management': 'team', Settings: 'settings' };
-  const PAGE_OF = { 'projects.html': 'projects', 'company-details.html': 'documents', 'questionnaires.html': 'questionnaires', 'esg-questionnaire.html': 'questionnaires', 'esg-results.html': 'questionnaires',
+  const PAGE_OF = { 'projects.html': 'projects', 'new-project.html': 'projects', 'company-details.html': 'documents', 'questionnaires.html': 'questionnaires', 'esg-questionnaire.html': 'questionnaires', 'esg-results.html': 'questionnaires',
     'ecosystem.html': 'ecosystem', 'team.html': 'team', 'company-profile.html': 'settings', 'suppliers.html': 'suppliers', 'clients.html': 'clients' };
   const NAME_OF = { projects: 'Projects', documents: 'Documents', questionnaires: 'Questionnaires', ecosystem: 'the C‑MORE ecosystem', team: 'Team management', settings: 'Settings', suppliers: 'My suppliers', clients: 'My clients' };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

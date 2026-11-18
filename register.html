@@ -372,7 +372,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
           <button type="button" class="btn btn-sso" data-login-sso="Microsoft"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M1 1h10.5v10.5H1z"/><path fill="#7FBA00" d="M12.5 1H23v10.5H12.5z"/><path fill="#00A4EF" d="M1 12.5h10.5V23H1z"/><path fill="#FFB900" d="M12.5 12.5H23V23H12.5z"/></svg>Continue with Microsoft</button>
         </div>
         <div class="back-row" style="margin-top:1.5rem"><a class="link-btn" href="index.html" data-back>Back</a></div>
-        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button><br><button type="button" class="link-btn" data-login-try="f">Beatriz Nogueira</button><br><button type="button" class="link-btn" data-login-try="t">Test user</button> <span style="white-space:nowrap">(starts empty)</span></p>
+        <p class="hint" style="margin-top:0.75rem;text-align:center;line-height:1.6">Prototype: any password works. Log in as<br><button type="button" class="link-btn" data-login-try="m">Miguel Ferreira</button><br><button type="button" class="link-btn" data-login-try="f">Beatriz Nogueira</button><br><button type="button" class="link-btn" data-login-try="t">Test user</button> <span style="white-space:nowrap">(starts empty)</span><br><button type="button" class="link-btn" data-login-try="i">Invited supplier</button> <span style="white-space:nowrap">(test, onboarding)</span></p>
         <p class="hint" style="margin-top:0.5rem;text-align:center">New here? <a class="link-btn" href="register.html" data-to-signup>Join now</a></p>
       </section>
 
@@ -580,10 +580,14 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt' };
-  const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com' }, t: { name: 'Test User', email: 'test@c-more.test' } };
+  const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com' }, t: { name: 'Test User', email: 'test@c-more.test' }, i: { name: 'Invited Supplier', email: 'invited@c-more.test' } };
   // the test user: a new account every time. Whatever it did is wiped when it logs out (js/company-switcher.js),
   // and again when it starts, so its company always opens empty
   const isTest = (email) => (email || '').toLowerCase() === EXAMPLES.t.email;
+  // a test login for a supplier a company invited (invite.html): nothing kept from before either, and
+  // instead of the app, the invitation's onboarding; joining from it comes back here, to sign up
+  const isInvited = (email) => (email || '').toLowerCase() === EXAMPLES.i.email;
+  const INVITE = { by: 'Ferreira Construções', full: 'Ferreira Construções, Lda.' };
   const wipeAll = () => { try { [sessionStorage, localStorage].forEach((st) => Object.keys(st).filter((k) => /^cm-/.test(k) && !['cm-cookies', 'cm-lang', 'cm-sn-closed'].includes(k)).forEach((k) => st.removeItem(k))); if (window.indexedDB) indexedDB.deleteDatabase('cm-files'); } catch (e) {} };
   const initials = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
 
@@ -1035,7 +1039,14 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const liEmail = $('#login-email'), liPw = $('#login-password'), liGo = $('#login-go'), liErr = $('#login-email-err');
   const liReady = () => { liGo.disabled = !(liEmail.value.trim() && liPw.value); };
   ['input', 'change'].forEach((ev) => { liEmail.addEventListener(ev, () => { liErr.textContent = ''; liEmail.classList.remove('is-bad'); liReady(); }); liPw.addEventListener(ev, liReady); });
+  // the invited supplier: no email or password to give, straight to the invitation's first step
+  const toInvite = () => {
+    wipeAll();
+    try { sessionStorage.setItem('cm-invite', JSON.stringify(Object.assign({}, INVITE, EXAMPLES.i))); } catch (err) {}
+    toCompany('invite.html#step-1');
+  };
   document.querySelectorAll('[data-login-try]').forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.loginTry === 'i') { toInvite(); return; }
     liEmail.value = EXAMPLES[b.dataset.loginTry].email;
     liErr.textContent = ''; liEmail.classList.remove('is-bad'); liReady(); liPw.focus();
   }));
@@ -1044,6 +1055,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
     const typed = liEmail.value.trim();
     if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(typed)) { liErr.textContent = 'That does not look like an email address.'; liEmail.classList.add('is-bad'); liEmail.focus(); return; }
     liGo.disabled = true; liGo.textContent = 'Logging in…';
+    if (isInvited(typed)) { toInvite(); return; }
     // the test user has nothing kept from before: in on its empty company, where ALMA starts
     if (isTest(typed)) {
       wipeAll();
@@ -1078,9 +1090,21 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const toSignup = () => { show('signup'); mode(false); history.replaceState(null, '', 'register.html'); };
   topLink.addEventListener('click', (e) => { e.preventDefault(); (topLink.getAttribute('href') === 'register.html' ? toSignup : toLogin)(); });
   document.querySelectorAll('[data-to-signup]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); toSignup(); }));
+  // from the invitation's onboarding (invite.html): the sign-up, with who was invited and by whom
+  if (qs.has('invited')) {
+    try {
+      const v = JSON.parse(sessionStorage.getItem('cm-invite') || 'null') || Object.assign({}, INVITE, EXAMPLES.i);
+      nameIn.value = v.name || ''; emailIn.value = v.email || ''; ready();
+      document.querySelector('[data-step="signup"] .eyebrow').textContent = `Invited by ${v.by}`;
+      $('#t-signup').textContent = 'Create your account.';
+      document.querySelector('[data-step="signup"] .subtitle').textContent = `Three quick steps, then your company, and you join ${v.by}’s ecosystem.`;
+      const bk = document.querySelector('[data-step="signup"] [data-back]'); bk.setAttribute('href', 'invite.html#step-7'); bk.removeAttribute('data-back');
+      setTimeout(() => go.focus({ preventScroll: true }), 120);
+    } catch (e) {}
+  }
   if (qs.has('login')) { show('login'); mode(true); liReady(); if (!qs.has('embed')) setTimeout(() => liPw.focus({ preventScroll: true }), 120); }
 
-  if (!qs.has('embed') && !qs.has('login')) setTimeout(() => nameIn.focus({ preventScroll: true }), qs.has('from') ? 0 : 350);
+  if (!qs.has('embed') && !qs.has('login') && !qs.has('invited')) setTimeout(() => nameIn.focus({ preventScroll: true }), qs.has('from') ? 0 : 350);
 })();
 </script>
 <script src="js/lang.js"></script>

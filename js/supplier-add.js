@@ -238,8 +238,10 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
     if (focus) { const el = dw.querySelector(focus); if (el) el.focus(); }
   };
 
-  const open = () => {
+  // pre: a company already picked elsewhere (a new project's suppliers, js/project-new.js), found straight away
+  const open = (pre) => {
     f = fresh(); back = document.activeElement;
+    if (pre && pre.code) { f.country = pre.country || f.country; f.code = pre.code; find(); }
     dw.hidden = false; document.documentElement.style.overflow = 'hidden'; paint();
     setTimeout(() => dw.classList.add('is-open'), 20);
     setTimeout(() => { const c = dw.querySelector('[name="code"]'); if (c) c.focus(); }, 340);
