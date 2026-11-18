@@ -676,7 +676,9 @@
       const cells = wk ? info.map((x) => (x ? x.st : null)) : cols.map((d) => docSt(d, i));
       const worst = worstOf(cells.filter(Boolean));
       const [wl, wc] = STATUS[worst];
-      const CHG = people || key === 'equipment' || (key === 'products' && M.PERSONA !== 'beatriz') ? chgOf(i, cells, worst, cols, key) : null;
+      // a record added recently didn't exist before: nothing changed on it, so no change markers
+      const fresh = (people || key === 'equipment' || key === 'products') && recOf(key)[i] && recOf(key)[i].isNew;
+      const CHG = fresh ? null : people || key === 'equipment' || (key === 'products' && M.PERSONA !== 'beatriz') ? chgOf(i, cells, worst, cols, key) : null;
       const go = key === 'workers' ? ` data-worker="${i}"` : key === 'equipment' ? ` data-machine="${i}"` : key === 'products' && M.PERSONA !== 'beatriz' ? ` data-product="${i}"` : '';
       return `<tr class="cd-row${go ? ' is-rosterable' : ''}${CHG ? ' is-chg' : ''}"${go}${go ? ` tabindex="0" role="link" aria-label="Open ${recordName(key, i)}"` : ''} data-drop="who:${key}:${i}"><td><span class="n">${recordName(key, i)}${(key === 'workers' && PERSON[i] && PERSON[i].isNew) || (key === 'equipment' && MACHINE[i] && MACHINE[i].isNew) || (key === 'products' && M.PERSONA !== 'beatriz' && M.PRODUCT[i] && M.PRODUCT[i].isNew) ? ' <span class="co-badge b-info cd-new" title="Added recently">New</span>' : ''}</span><span class="d">${recordSub(key, i)}</span></td>${cells.map((s, c) => (CHG && CHG.cell(c) ? CHG.html(c) : s
         ? wk ? `<td class="c"><button type="button" class="cd-cell" data-up="${info[c].spec}" title="${info[c].tip}"><span class="cd-dot is-${TONE[s]}"></span><span class="sr-only">${cols[c].name} for ${recordName(key, i)}: ${info[c].tip}. Upload a document</span></button></td>`

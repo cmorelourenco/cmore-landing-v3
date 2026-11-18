@@ -1647,7 +1647,9 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         if (nEq) parts.push(`${nEq} machine${nEq === 1 ? '' : 's'} added`);
         if (nPr) parts.push(`${nPr} product${nPr === 1 ? '' : 's'} added`);
         if (nCrew) parts.push(`worker list updated (${[crew.added.length && `${crew.added.length} added`, crew.left.length && `${crew.left.length} left`, Object.keys(crew.roles).length && `${Object.keys(crew.roles).length} new role`, nDet && `${nDet} with new details`].filter(Boolean).join(', ')})`);
-        const nW = found && found.w ? batch.filter((q) => q.ok && !isR(q)).length : 0, nM = found && found.w ? batch.filter((q) => q.ok && isM(q)).length : 0, nP = found && found.w ? batch.filter((q) => q.ok && isP(q)).length : 0;
+        // only what was already on a list changed: one just added is "added", not "with changes"
+        const was = found && found.w ? batch.filter((q) => q.ok && q.i != null) : [];
+        const nW = was.filter((q) => !isR(q)).length, nM = was.filter(isM).length, nP = was.filter(isP).length;
         if (nW) parts.push(`${nW} worker${nW === 1 ? '' : 's'} with changes, marked on the table`);
         if (nM) parts.push(`${nM} machine${nM === 1 ? '' : 's'} with changes, marked on the table`);
         if (nP) parts.push(`${nP} product${nP === 1 ? '' : 's'} with changes, marked on the table`);
@@ -1662,7 +1664,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
         say(msg, done); return;
       }
       say((done.length === 1 ? `${esc(done[0].slot.name)}${done[0].slot.who ? ` for ${esc(done[0].slot.who)}` : ''} saved. ALMA checked it, valid until ${esc(done[0].read.valid)}.`
-        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`) + (found && found.w && batch.some((q) => q.ok) ? (() => { const n = batch.filter((q) => q.ok).length, mm = batch.filter((q) => q.ok).every(isM), pp = batch.filter((q) => q.ok).every(isP); return ` ${n === 1 ? `One ${mm ? 'machine' : pp ? 'product' : 'worker'}` : `${n} ${mm ? 'machines' : pp ? 'products' : 'workers'}`} with changes, marked on the table.`; })() : ''), done);
+        : `${done.length} documents saved${whose.length > 1 ? ` across ${whose.length} records` : whose.length ? ` for ${esc(whose[0])}` : ''}. ALMA checked each one.`) + (found && found.w && batch.some((q) => q.ok && q.i != null) ? (() => { const ok = batch.filter((q) => q.ok && q.i != null), n = ok.length, mm = ok.every(isM), pp = ok.every(isP); return ` ${n === 1 ? `One ${mm ? 'machine' : pp ? 'product' : 'worker'}` : `${n} ${mm ? 'machines' : pp ? 'products' : 'workers'}`} with changes, marked on the table.`; })() : ''), done);
     };
     // the message, and the page brought up to date: by its own callback, or (a job picked up from
     // another page, which has none) by drawing it again, the message carried over
