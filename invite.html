@@ -148,10 +148,11 @@ body { min-height: 0; }
 .skip { font-size: 0.875rem; }
 
 .ob-main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(1rem, 4vh, 3rem) 2rem; }
-.ob-stage { width: 100%; max-width: 72rem; flex: 1 1 auto; min-height: 0; max-height: 38rem; display: grid; }
+/* the stage keeps its natural size; on short screens the script below scales it down (zoom) to fit */
+.ob-stage { width: 100%; max-width: 72rem; flex: none; display: grid; }
 /* the demo video, under the steps on every step (js/demo-video.js opens it) */
 /* the design system's "outline" button: white, a coral rule, and all coral on hover */
-.ob-demo { flex: none; margin-top: clamp(0.5rem, 2vh, 1.5rem); background: var(--color-surface, #fff); border: 2px solid var(--color-activation); color: var(--color-ink); }
+.ob-demo { flex: none; margin-top: clamp(1rem, 3.5vh, 2.25rem); background: var(--color-surface, #fff); border: 2px solid var(--color-activation); color: var(--color-ink); }
 .ob-demo { transition: background-color .25s var(--ease-brand), border-color .25s var(--ease-brand), color .25s var(--ease-brand), box-shadow .25s var(--ease-brand); }
 .ob-demo:hover:not(:disabled) { background: var(--color-activation); border-color: var(--color-activation); color: var(--color-activation-foreground); box-shadow: var(--shadow-activate); }
 /* the play mark: a slight nudge back and forth while hovered */
@@ -159,8 +160,11 @@ body { min-height: 0; }
 .ob-demo:hover svg { color: var(--color-activation-foreground); animation: pl-nudge .9s ease-in-out infinite; }
 @keyframes pl-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .ob-demo:hover svg { animation: none; } }
-.ob-step { grid-area: 1 / 1; display: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; min-height: 0; }
-.ob-step.is-on { display: grid; animation: step-in .55s var(--ease-brand) both; }
+/* every step stays laid out in the same cell, only the current one shown: the stage is as tall as the
+   tallest step, so the stepper, content and demo button sit centred and never jump between steps */
+.ob-step { grid-area: 1 / 1; display: grid; visibility: hidden; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; min-height: 0; }
+.ob-step[hidden] { display: grid; }
+.ob-step.is-on { visibility: visible; animation: step-in .55s var(--ease-brand) both; }
 .ob-step.is-back { animation-name: step-back; }
 @keyframes step-back { from { opacity: 0; transform: translateY(-18px); } to { opacity: 1; transform: none; } }
 .ob-copy { display: flex; flex-direction: column; min-width: 0; }
@@ -219,7 +223,7 @@ body { min-height: 0; }
 .perk.dark p, .perk.dark .k { color: var(--color-sand-400); }
 
 /* 5 · your own suppliers */
-.net { position: relative; width: min(100%, 26rem); aspect-ratio: 1; max-height: 100%; }
+.net { position: relative; width: min(100%, 26rem, 50vh); aspect-ratio: 1; max-height: 100%; }
 .net svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .net .ln { stroke: var(--color-sand-400); stroke-width: 1.5; stroke-dasharray: 4 5; }
 .net .ln.new { stroke: var(--color-coral); }
@@ -231,7 +235,7 @@ body { min-height: 0; }
 .node.hub, .node.you { color: var(--color-ink); font-weight: 600; }
 
 /* 6 · ALMA */
-.alma-media { position: relative; width: min(100%, 26rem); aspect-ratio: 0.9598; max-height: 100%; pointer-events: none; }
+.alma-media { position: relative; width: min(100%, 26rem, 48vh); aspect-ratio: 0.9598; max-height: 100%; pointer-events: none; }
 
 /* 7 · join */
 .join-card { text-align: center; display: flex; flex-direction: column; align-items: center; gap: clamp(0.75rem, 2vh, 1rem); }
@@ -246,6 +250,9 @@ body { min-height: 0; }
 .ob-foot .btn { height: 2.875rem; }
 .ob-foot [data-ob-next] { justify-self: end; }
 .ob-foot [data-ob-back] { justify-self: start; }
+.ob-foot .skip { justify-self: center; }
+/* the stepper: its own band under the header */
+.ob-top { flex: none; width: 100%; max-width: 56rem; margin-bottom: clamp(1rem, 3.5vh, 2.25rem); }
 .btn-ghost { background: transparent; border-color: var(--color-line); color: var(--color-ink); }
 .btn-ghost:hover:not(:disabled) { background: var(--color-surface); }
 .btn-ghost:disabled { opacity: .4; }
@@ -263,7 +270,13 @@ body { min-height: 0; }
 .ob-steps button:hover .nd { border-color: var(--color-graphite); }
 
 /* smaller and shorter screens: the art steps back first, then the labels */
-@media (max-height: 760px) { .ob-pts li:nth-child(n+4) { display: none; } }
+@media (max-height: 760px) {
+  .ob-pts li:nth-child(n+4) { display: none; }
+  /* short screens: tighter spacing around the steps, so everything stays on one screen */
+  .ob-main { padding-block: 0.75rem; }
+  .ob-top { margin-bottom: 1rem; }
+  .ob-demo { margin-top: 1rem; }
+}
 @media (max-width: 900px) {
   .ob-step { grid-template-columns: minmax(0, 1fr); }
   .ob-art { display: none; }
@@ -272,6 +285,7 @@ body { min-height: 0; }
   .ob-foot-in { grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; padding-inline: 1.25rem; }
   .ob-main { padding-inline: 1.25rem; }
   .hdr-in { padding-inline: 1.25rem; }
+  .ob-top { margin-bottom: 2.75rem; }
 }
 @media (max-width: 520px) { .ob-steps li::before { left: calc(-50% + 1rem); right: calc(50% + 1rem); } .ob-foot .btn { padding-inline: 1rem; } }
 @media (prefers-reduced-motion: reduce) { .inv-line { animation: none; background-size: 100% 100%; } .inv-line::after { animation: none; transform: translateY(-50%) scale(1); } }
@@ -284,10 +298,11 @@ body { min-height: 0; }
 <div class="reg">
   <header class="reg-top"><div class="hdr-in">
     <a class="brand" href="index.html" aria-label="C-MORE, to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
-    <div class="top-r"><button type="button" class="link-btn skip" data-ob-skip>Skip onboarding</button><span data-lang-switch></span></div>
+    <div class="top-r"><span data-lang-switch></span></div>
   </div></header>
 
   <main class="ob-main">
+    <nav class="ob-top" aria-label="Onboarding steps"><ol class="ob-steps" id="ob-steps"></ol></nav>
     <div class="ob-stage" id="ob-stage">
 
       <section class="ob-step" data-ob="1" aria-labelledby="ob-t1">
@@ -423,7 +438,7 @@ body { min-height: 0; }
   <footer class="ob-foot">
     <div class="ob-foot-in">
       <button type="button" class="btn btn-ghost" data-ob-back>Back</button>
-      <ol class="ob-steps" id="ob-steps" aria-label="Onboarding steps"></ol>
+      <button type="button" class="link-btn skip" data-ob-skip>Skip onboarding</button>
       <button type="button" class="btn btn-primary" data-ob-next>Next</button>
     </div>
   </footer>
@@ -482,6 +497,34 @@ body { min-height: 0; }
     if (e.key === 'ArrowLeft' && at > 1) show(at - 1, -1);
   });
   show(at, 1);
+
+  // one screen, never a scroll: when the steps are taller than the room between the stepper and
+  // the demo button, scale the stage down to fit (every step is laid out, so the size never changes)
+  const main = document.querySelector('.ob-main'), stage = document.getElementById('ob-stage');
+  const top = document.querySelector('.ob-top'), demo = document.querySelector('.ob-demo');
+  const outer = (el) => { const m = getComputedStyle(el); return el.offsetHeight + parseFloat(m.marginTop) + parseFloat(m.marginBottom); };
+  let raf = 0;
+  const fit = () => {
+    raf = 0;
+    stage.style.zoom = ''; stage.style.minHeight = '';
+    const m = getComputedStyle(main);
+    const room = main.clientHeight - parseFloat(m.paddingTop) - parseFloat(m.paddingBottom) - outer(top) - outer(demo) - 6; // a few px of air
+    // the real content of each step (text, card or picture), not the orbit of the ALMA spheres
+    const span = (st) => {
+      const els = [...st.querySelectorAll('.ob-copy > *, .ob-art > *')].filter((e) => e.offsetParent !== null);
+      if (!els.length) return 0;
+      const r = els.map((e) => e.getBoundingClientRect());
+      return Math.max(...r.map((x) => x.bottom)) - Math.min(...r.map((x) => x.top));
+    };
+    const need = Math.ceil(Math.max(stage.offsetHeight, ...[...stage.children].map(span)));
+    stage.style.minHeight = need + 'px'; // the box holds the tallest step, so nothing spills onto the demo button
+    if (need > room && room > 0) stage.style.zoom = Math.max(0.5, Math.floor((room / need) * 100) / 100);
+  };
+  const refit = () => { if (!raf) raf = requestAnimationFrame(fit); };
+  addEventListener('resize', refit);
+  addEventListener('load', refit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(refit);
+  fit();
 })();
 </script>
 <script src="js/lang.js"></script>
