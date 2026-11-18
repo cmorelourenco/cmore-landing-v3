@@ -1652,6 +1652,18 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 .hero-pin.hero-tall>.container-site::before{display:none}
 .hero-pin.hero-tall .hero-cue-wrap{position:static;margin-top:1.5rem}
 /* Hero benefits: four reasons to join, one row on desktop, two by two on phones */
+/* Join now beside See the demo (js/demo-video.js opens the video). Every Join now on the page takes the demo button's size */
+/* two equal columns: See the demo on the left, Join now on the right; on phones they share the width, slimmer */
+.hero-btns{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:.75rem}
+.hero-btns .hero-demo{order:-1}
+a.cm-btn-primary.cm-btn-lg[href="register.html"],.hero-demo{height:3rem;padding-inline:1.5rem;font-size:1rem;min-width:11.25rem}
+@media (max-width:420px){.hero-btns{width:100%;max-width:21rem;gap:.5rem}.hero-btns .hero-demo,.hero-btns a.cm-btn-primary.cm-btn-lg[href="register.html"]{min-width:0;padding-inline:.5rem;gap:.375rem;font-size:.9375rem}}
+.hero-demo{background:var(--color-surface,#fff);border:2px solid var(--color-activation);color:var(--color-ink);transition:background-color .25s var(--ease-brand),border-color .25s var(--ease-brand),color .25s var(--ease-brand),box-shadow .25s var(--ease-brand)}
+.hero-demo:hover:not(:disabled){background:var(--color-activation);border-color:var(--color-activation);color:var(--color-activation-foreground);box-shadow:var(--shadow-activate)}
+.hero-demo svg{flex:none;color:var(--color-coral);transition:color .25s var(--ease-brand)}
+.hero-demo:hover svg{color:var(--color-activation-foreground);animation:pl-nudge .9s ease-in-out infinite}
+@keyframes pl-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.hero-demo:hover svg{animation:none}}
 .hero-benefits{list-style:none;margin:clamp(2.5rem,5.5vh,4rem) 0 0;padding:0;width:100%;max-width:72rem;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2rem;text-align:left}
 .hero-benefits li{display:flex;gap:0.875rem;align-items:flex-start;border-top:1px solid var(--color-line);padding-top:1rem}
 .hero-benefits svg{flex:none;width:1.5rem;height:1.5rem;color:var(--color-coral)}
@@ -1702,7 +1714,10 @@ header{top:var(--bar)!important;transition:transform .32s var(--ease-brand,ease)
 </ul>
 <div class="hero-cta" style="will-change:transform">
 <p class="hero-count" aria-label="3,600 and more members already on the C-MORE ecosystem"><span class="hero-num" aria-hidden="true"><span id="hero-count" data-to="3600">3,600</span><span class="plus">+</span></span><span class="hero-count-what">members already on the<br>C-MORE ecosystem</span></p>
+<div class="hero-btns">
 <x-import component-from-global-scope="CMOREDesignSystem_9bac62.Button" variant="primary" size="lg" href="register.html" hint-size="160px,52px">Join now</x-import>
+<button type="button" class="cm-btn hero-demo" data-demo>See the demo<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.75v6.5L15.25 12 10 8.75Z" fill="currentColor"/></svg></button>
+</div>
 </div>
 </div>
 <div class="hero-cue-wrap">
@@ -2294,6 +2309,7 @@ class Component extends DCLogic {
 
 
 <script src="js/lang.js"></script>
+<script src="js/demo-video.js"></script>
 <script src="js/account.js"></script>
 <script src="js/perks.js"></script>
 <script src="js/terms.js"></script>
