@@ -147,8 +147,18 @@ body { min-height: 0; }
 .top-r { display: flex; align-items: center; gap: 1.25rem; }
 .skip { font-size: 0.875rem; }
 
-.ob-main { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: clamp(1rem, 4vh, 3rem) 2rem; }
-.ob-stage { width: 100%; max-width: 72rem; height: 100%; max-height: 38rem; display: grid; }
+.ob-main { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(1rem, 4vh, 3rem) 2rem; }
+.ob-stage { width: 100%; max-width: 72rem; flex: 1 1 auto; min-height: 0; max-height: 38rem; display: grid; }
+/* the demo video, under the steps on every step (js/demo-video.js opens it) */
+/* the design system's "outline" button: white, a coral rule, and all coral on hover */
+.ob-demo { flex: none; margin-top: clamp(0.5rem, 2vh, 1.5rem); background: var(--color-surface, #fff); border: 2px solid var(--color-activation); color: var(--color-ink); }
+.ob-demo { transition: background-color .25s var(--ease-brand), border-color .25s var(--ease-brand), color .25s var(--ease-brand), box-shadow .25s var(--ease-brand); }
+.ob-demo:hover:not(:disabled) { background: var(--color-activation); border-color: var(--color-activation); color: var(--color-activation-foreground); box-shadow: var(--shadow-activate); }
+/* the play mark: a slight nudge back and forth while hovered */
+.ob-demo svg { color: var(--color-coral); transition: color .25s var(--ease-brand); }
+.ob-demo:hover svg { color: var(--color-activation-foreground); animation: pl-nudge .9s ease-in-out infinite; }
+@keyframes pl-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .ob-demo:hover svg { animation: none; } }
 .ob-step { grid-area: 1 / 1; display: none; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; min-height: 0; }
 .ob-step.is-on { display: grid; animation: step-in .55s var(--ease-brand) both; }
 .ob-step.is-back { animation-name: step-back; }
@@ -407,6 +417,7 @@ body { min-height: 0; }
       </section>
 
     </div>
+    <button type="button" class="btn ob-demo" data-demo>See the demo<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.75v6.5L15.25 12 10 8.75Z" fill="currentColor"/></svg></button>
   </main>
 
   <footer class="ob-foot">
@@ -466,7 +477,7 @@ body { min-height: 0; }
   document.querySelector('[data-ob-skip]').addEventListener('click', join);
   list.addEventListener('click', (e) => { const b = e.target.closest('[data-ob-go]'); if (b) { const n = +b.dataset.obGo; if (n !== at) show(n, n < at ? -1 : 1); } });
   document.addEventListener('keydown', (e) => {
-    if (e.target.closest('input, textarea, select') || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (document.querySelector('.demo-ov.is-open') || e.target.closest('input, textarea, select, video') || e.metaKey || e.ctrlKey || e.altKey) return;
     if (e.key === 'ArrowRight' && at < N) show(at + 1, 1);
     if (e.key === 'ArrowLeft' && at > 1) show(at - 1, -1);
   });
@@ -474,5 +485,6 @@ body { min-height: 0; }
 })();
 </script>
 <script src="js/lang.js"></script>
+<script src="js/demo-video.js"></script>
 </body>
 </html>
