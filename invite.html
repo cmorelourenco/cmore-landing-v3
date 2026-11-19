@@ -174,6 +174,10 @@ body { min-height: 0; }
 .ob-pts li { display: flex; gap: 0.75rem; font-size: clamp(0.9375rem, 1.9vh, 1.0625rem); line-height: 1.45; }
 .ob-pts svg { flex: none; width: 1.25rem; height: 1.25rem; margin-top: 0.1rem; }
 .ob-pts b { font-weight: 600; }
+.ob-cats-t { margin-top: clamp(1rem, 2.6vh, 1.75rem); font-size: clamp(0.9375rem, 1.9vh, 1.0625rem); font-weight: 500; color: var(--color-ink); }
+.ob-cats { list-style: none; display: grid; grid-template-columns: repeat(3, max-content); gap: 0.625rem 2.25rem; margin: clamp(0.625rem, 1.6vh, 0.875rem) 0 0; padding: 0; }
+.ob-cats li { display: inline-flex; align-items: center; gap: 0.5rem; font-size: clamp(0.9375rem, 1.9vh, 1.0625rem); color: var(--color-ink); }
+.ob-cats svg { flex: none; width: 1.25rem; height: 1.25rem; }
 .ob-art { position: relative; display: flex; align-items: center; justify-content: center; min-height: 0; height: 100%; }
 .ob-card { width: 100%; max-width: 30rem; padding: clamp(1.25rem, 3vh, 1.75rem); border-radius: 1.25rem; background: var(--color-surface); border: 1px solid var(--color-line); box-shadow: var(--shadow-raised); }
 .ob-card-h { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-subtle); }
@@ -394,6 +398,8 @@ body { min-height: 0; }
           <span class="eyebrow">What C&#8209;MORE changes</span>
           <h2 class="title" id="ob-t4">Less paperwork. <span class="soft">More time for</span> <span class="w-mark">the work</span>.</h2>
           <p class="lead">Your profile does the asking and the answering for you, with every client who&rsquo;s on C&#8209;MORE.</p>
+          <p class="ob-cats-t">Manage it all in one place, for each part of your business:</p>
+          <ul class="ob-cats"><li><svg viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Company</li><li><svg viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Workers</li><li><svg viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Equipment</li><li><svg viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Materials</li><li><svg viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Products</li></ul>
         </div>
         <div class="ob-art"><div class="perks">
           <div class="perk dark"><span class="k">01 / 04</span><h3>1 profile = 100&nbsp;clients</h3><p>Your profile is reusable: set it up once and share it with every client.</p></div>
