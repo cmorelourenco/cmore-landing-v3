@@ -627,7 +627,22 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
 .cmu-dw .docd-scrim { display: none; }
 .cmu-dw .docd-panel { pointer-events: auto; right: 40rem; width: min(40rem, calc(100vw - 45rem)); box-shadow: -24px 0 48px -24px rgba(52, 52, 52, .35); }
 @media (max-width: 75rem) { .cmu-dw { z-index: 3; } .cmu-dw .docd-panel { right: 0; width: min(40rem, 100vw); } } /* no room beside it: over it */`;
-  const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
+  // a row's ⋮ menu (its Replace, Download and Remove): over the page, under its button, right-aligned
+  const kcss = `
+.cd-kebab svg { width: 1.125rem; height: 1.125rem; }
+.cd-kebab.is-on { border-color: var(--color-ink-subtle); background: var(--color-light-beige); }
+.cd-kmenu { position: fixed; z-index: 60; min-width: 13.5rem; padding: 0.375rem; background: var(--color-surface); border-radius: 0.75rem;
+  box-shadow: 0 0 0 1px var(--color-line), 0 4px 8px rgba(52, 52, 52, .08), 0 24px 48px -12px rgba(52, 52, 52, .28); }
+.cd-kmenu[hidden] { display: none; }
+.cd-kmenu .cd-km-i { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.5rem; border: 0; border-radius: 0.375rem; background: none;
+  font: inherit; font-size: 0.875rem; text-align: left; white-space: nowrap; color: var(--color-ink); cursor: pointer; }
+.cd-kmenu .cd-km-i:hover, .cd-kmenu .cd-km-i:focus-visible { background: var(--color-light-beige); outline: none; }
+.cd-kmenu .cd-km-i svg { flex: none; width: 1rem; height: 1rem; color: var(--color-ink-subtle); }
+.cd-kmenu .cd-km-sep { height: 1px; margin: 0.25rem 0; background: var(--color-mid-beige); }
+.cd-kmenu .cd-km-i.is-bad, .cd-kmenu .cd-km-i.is-bad svg { color: var(--color-critical); }
+.cd-kmenu .cd-km-i:disabled, .cd-kmenu .cd-km-i:disabled svg { color: var(--color-sand-400); cursor: not-allowed; }
+.cd-kmenu .cd-km-i:disabled:hover { background: none; }`;
+  const style = document.createElement('style'); style.textContent = css + kcss; document.head.appendChild(style);
 
   const XI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const UP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>';
@@ -1946,13 +1961,18 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
 
   // a row's button, the same everywhere: Upload where there's no file yet, Replace where there is
   // always the icon alone, wherever it is: Upload or Replace is its accessible name and its tooltip
-  const button = (spec, has, name) => `<button type="button" class="cd-up is-icon" data-up="${esc(spec)}" title="${has ? 'Replace' : 'Upload'}${name ? ' ' + esc(plain(name)) : ''}">${UP}<span>${has ? 'Replace' : 'Upload'}</span></button>`;
+  // a document's row ends in a ⋮ menu (Replace or Upload, Download, Remove) in place of the old icons
+  const DOTS = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="10" cy="4" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg>';
+  const menuButton = (spec, name, has) => `<button type="button" class="cd-up is-icon cd-kebab" data-kmenu="${esc(spec)}"${has ? ' data-khas' : ''} aria-haspopup="menu" aria-expanded="false" title="More" aria-label="More for ${esc(plain(name || 'this document'))}">${DOTS}</button>`;
+  // every row: the menu. With no file yet, its first option uploads one and the others are greyed out
+  const button = (spec, has, name) => menuButton(spec, name, has);
 
   // any element holding [data-up] buttons and [data-drop] rows: clicks open the dialog, a file
   // dragged onto a row is ALMA's for that row
   const wire = (root, onSaved) => {
     if (!root || root.dataset.cmuWired) return; root.dataset.cmuWired = '1';
     root.addEventListener('click', (e) => {
+      const k = e.target.closest('[data-kmenu]'); if (k && root.contains(k)) { e.preventDefault(); e.stopPropagation(); kmenu.toggle(k, onSaved); return; }
       const b = e.target.closest('[data-up]'); if (!b || !root.contains(b)) return;
       e.preventDefault(); e.stopPropagation(); open(b.dataset.up, { onSaved });
     }, true);
@@ -1962,6 +1982,109 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
     root.addEventListener('dragleave', (e) => { if (!root.contains(e.relatedTarget)) mark(null); });
     root.addEventListener('drop', (e) => { const r = e.target.closest('[data-drop]'); mark(null); if (!r || !e.dataTransfer.files.length) return; e.preventDefault(); e.stopPropagation(); open(r.dataset.drop, { files: e.dataTransfer.files, onSaved }); });
   };
+
+  // ---- a row's ⋮ menu -------------------------------------------------------------------------------
+  // What a spec's file is: where it's kept (js/doc-files.js), what it's called, what's on record, and
+  // how to take it off the row. doc:<id> a company document; rec:<code>:<i> a worker's or machine's
+  // copy; rec:ID:<i> and rec:<extra>:<i> a worker's identity document and optional ones
+  const fileOf = (spec) => {
+    const [t, a, b] = String(spec).split(':'), i = +b;
+    const none = (d) => (d.requirement === 'on_request' || (d.cat && d.cat.requirement === 'on_request') ? 'notrequested' : (d.cat && d.cat.requirement === 'optional') ? 'notuploaded' : 'missing');
+    if (t === 'doc') {
+      const d = M.DOCS.find((x) => x.id === +a); if (!d || d.kind) return null;
+      return { key: d.code, name: plain(d.name), who: '', code: d.code, req: plain(d.requirement || ''), issued: d.issued, valid: d.valid, ref: plain(d.ref || ''), by: plain(d.by || ''),
+        clear: () => M.saveDoc(d.code, { fix: true, status: none(d), issued: '—', valid: '—', ref: '', by: '', note: '', vals: null, edited: false }) };
+    }
+    if (t === 'rec' && a === 'ID') {
+      const on = M.idOf(i) || {}, p = M.PERSON[i]; if (!p) return null;
+      return { key: `ID#${i}`, name: 'Identity document', who: plain(p.name), code: 'ID', req: '', issued: on.issued || '', valid: on.valid || '', ref: on.ref || '', by: on.by || '', clear: () => M.saveId(i, { file: '', valid: '', issued: '', ref: '' }) };
+    }
+    if (t === 'rec' && EXTRA_D[a]) {
+      const on = M.extraOf(a, i) || {}, p = M.PERSON[i]; if (!p) return null;
+      return { key: `${a}#${i}`, name: EXTRA_D[a].name, who: plain(p.name), code: a, req: '', issued: on.issued || '', valid: on.valid || '', ref: on.ref || '', by: on.by || '', clear: () => M.saveExtra(a, i, { file: '', valid: '', issued: '', ref: '' }) };
+    }
+    if (t === 'rec') {
+      const d = M.DOCS.find((x) => x.code === a && x.kind), r = d && d.roster.find((x) => x.i === i); if (!r) return null;
+      return { key: `${a}#${i}`, name: plain(d.name), who: plain(M.recordName(d.kind, i)), code: a, req: plain(d.requirement || ''), issued: '', valid: r.exp || '', ref: '', by: '',
+        clear: () => M.saveRecord(a, i, { status: 'missing', exp: '—' }) };
+    }
+    return null;
+  };
+  const slug = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const fileName = (f) => `${slug(f.name)}${f.who ? '-' + slug(f.who) : ''}${(String(f.issued || f.valid).match(/\d{4}/) || [''])[0] ? '-' + String(f.issued || f.valid).match(/\d{4}/)[0] : ''}.pdf`;
+  // the demo's documents were never uploaded here: Download gives a one-page PDF of what's on record
+  const standIn = (f) => {
+    const tx = (t) => String(t).replace(/[‐-―−]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/ /g, ' ').split('')
+      .map((c) => { const n = c.charCodeAt(0); return n === 40 || n === 41 || n === 92 ? '\\' + c : n >= 32 && n < 127 ? c : n < 256 ? '\\' + n.toString(8).padStart(3, '0') : '?'; }).join('');
+    const no = (v) => (v && v !== '—' ? v : '—');
+    const lines = [[18, f.name], [11, [f.code, f.req].filter(Boolean).join(' · ')], [11, `Holder: ${f.who || plain(String(M.D.company || ''))}`],
+      [11, `Issued: ${no(f.issued)}   Valid until: ${no(f.valid)}`], [11, `Reference: ${no(f.ref)}`], [11, `Issued by: ${no(f.by)}`], [9, 'C-MORE prototype: a stand-in for the file on record.']];
+    let y = 780; const body = lines.map(([sz, t], k) => { y -= k ? (sz > 11 ? 30 : 22) : 0; return `BT /F1 ${sz} Tf 56 ${y} Td (${tx(t)}) Tj ET`; }).join('\n');
+    const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+      `<< /Length ${body.length} >>\nstream\n${body}\nendstream`, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];
+    let out = '%PDF-1.4\n'; const at = objs.map((o, k) => { const n = out.length; out += `${k + 1} 0 obj\n${o}\nendobj\n`; return n; });
+    const xref = out.length; out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${at.map((n) => String(n).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    return new Blob([out], { type: 'application/pdf' });
+  };
+  const download = (spec) => {
+    const f = fileOf(spec); if (!f) return;
+    const save = (blob, name) => { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: name }); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    (window.CMFiles ? window.CMFiles.get(f.key) : Promise.resolve(null)).then((r) => (r && r.blob ? save(r.blob, r.name || fileName(f)) : save(standIn(f), fileName(f))));
+  };
+  // Remove: the file off its row and into Uncategorized documents, with what was read from it; the row
+  // is left without a file, as one moved to another document is
+  const removeIt = (spec, onSaved) => {
+    const f = fileOf(spec); if (!f || !window.CMUncat) return;
+    const label = f.who ? `${f.name} for ${f.who}` : f.name, name = fileName(f), was = { ref: f.ref, by: f.by, issued: f.issued === '—' ? '' : f.issued, valid: f.valid === '—' ? '' : f.valid };
+    const go = (stored) => {
+      f.clear();
+      const id = window.CMUncat.add(Object.assign({ file: stored || name, from: `Removed from ${label}` }, was));
+      window.CMUncat.copyFile(f.key, 'uncat:' + id);
+      toast(`${esc(label)} moved to Uncategorized documents.`);
+      if (onSaved) onSaved();
+    };
+    (window.CMFiles ? window.CMFiles.get(f.key) : Promise.resolve(null)).then((r) => go(r && r.name));
+  };
+  const kmenu = (() => {
+    const UP_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>';
+    const DL_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>';
+    const RM_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>';
+    let m = null, btn = null, spec = null, done = null;
+    const build = () => {
+      m = document.createElement('div'); m.className = 'cd-kmenu'; m.setAttribute('role', 'menu'); m.hidden = true; document.body.appendChild(m);
+      m.addEventListener('click', (e) => {
+        const it = e.target.closest('[data-k]'); if (!it || it.disabled) return;
+        const k = it.dataset.k, s = spec, cb = done; close(k !== 'remove');
+        if (k === 'replace') open(s, { onSaved: cb }); else if (k === 'download') download(s); else if (k === 'remove') removeIt(s, cb);
+      });
+      m.addEventListener('keydown', (e) => {
+        const its = [...m.querySelectorAll('.cd-km-i:not(:disabled)')], i = its.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); its[(i + (e.key === 'ArrowDown' ? 1 : its.length - 1)) % its.length].focus(); }
+        else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); its[e.key === 'Home' ? 0 : its.length - 1].focus(); }
+        else if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); close(true); }
+      });
+      document.addEventListener('click', (e) => { if (!m.hidden && !m.contains(e.target) && !e.target.closest('[data-kmenu]')) close(); });
+      addEventListener('scroll', () => close(), { passive: true, capture: true });
+      addEventListener('resize', () => close());
+    };
+    function close(back) { if (!m || m.hidden) return; m.hidden = true; if (btn) { btn.setAttribute('aria-expanded', 'false'); btn.classList.remove('is-on'); if (back && btn.isConnected) btn.focus({ preventScroll: true }); } btn = null; }
+    const toggle = (b, onSaved) => {
+      if (!m) build();
+      if (btn === b && !m.hidden) { close(true); return; }
+      close(); btn = b; spec = b.dataset.kmenu; done = onSaved;
+      // no file behind the row (missing, not uploaded, or a document kept per worker or machine): only Upload
+      const has = b.hasAttribute('data-khas') && !!fileOf(spec), canRm = has && !!window.CMUncat;
+      const off = (ok) => (ok ? '' : ' disabled aria-disabled="true"');
+      m.innerHTML = `<button type="button" class="cd-km-i" role="menuitem" data-k="replace">${UP_I}${has ? 'Replace' : 'Upload'} document</button><button type="button" class="cd-km-i" role="menuitem" data-k="download"${off(has)}>${DL_I}Download document</button>`
+        + `<div class="cd-km-sep" role="separator"></div><button type="button" class="cd-km-i is-bad" role="menuitem" data-k="remove"${off(canRm)}>${RM_I}Remove document</button>`;
+      m.setAttribute('aria-label', b.getAttribute('aria-label')); m.hidden = false;
+      b.setAttribute('aria-expanded', 'true'); b.classList.add('is-on');
+      const r = b.getBoundingClientRect(), h = m.offsetHeight, up = r.bottom + 6 + h > innerHeight - 8 && r.top - 6 - h > 8;
+      m.style.top = `${up ? r.top - 6 - h : r.bottom + 6}px`; m.style.left = `${Math.max(8, r.right - m.offsetWidth)}px`;
+      m.querySelector('.cd-km-i').focus({ preventScroll: true });
+    };
+    return { toggle, close };
+  })();
 
   // logging out forgets what ALMA's last readings changed on the workers' matrix
   document.addEventListener('click', (e) => { if (e.target.closest('#who-logout')) try { sessionStorage.removeItem('cm-wk-changes'); sessionStorage.removeItem('cm-eq-changes'); sessionStorage.removeItem('cm-pr-changes'); } catch (x) {} }, true);

@@ -813,15 +813,6 @@ body:has(#filled:not([hidden])), body:has(#empty:not([hidden])) { background: va
   font: inherit; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
 .co-menu-i { white-space: nowrap; }
 .co-menu-i:hover, .co-menu-i:focus-visible { background: var(--color-light-beige); outline: none; }
-/* a document row's ⋮ menu (js/company-details.js): over the page, under its button, right-aligned */
-.cd-kmenu { position: fixed; z-index: 60; min-width: 13.5rem; padding: 0.375rem; background: var(--color-surface); border-radius: 0.75rem;
-  box-shadow: 0 0 0 1px var(--color-line), 0 4px 8px rgba(52, 52, 52, .08), 0 24px 48px -12px rgba(52, 52, 52, .28); }
-.cd-kmenu[hidden] { display: none; }
-.cd-kmenu .co-menu-i svg { flex: none; width: 1rem; height: 1rem; color: var(--color-ink-subtle); }
-.cd-kmenu .co-menu-sep { margin: 0.25rem 0; }
-.cd-kmenu .co-menu-i.is-bad, .cd-kmenu .co-menu-i.is-bad svg { color: var(--color-critical); }
-.cd-kebab svg { width: 1.125rem; height: 1.125rem; }
-.cd-kebab.is-on { border-color: var(--color-ink-subtle); background: var(--color-light-beige); }
 /* the design system's checkbox: a square that fills graphite with a light tick */
 .co-menu-i .co-menu-c { flex: none; display: grid; place-items: center; width: 1.125rem; height: 1.125rem; margin-right: 0.25rem; border: 1.5px solid var(--color-sand-400); border-radius: 0.3125rem;
   background: var(--color-surface); color: var(--color-off-white); transition: background-color .14s ease, border-color .14s ease; }
