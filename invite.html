@@ -194,24 +194,35 @@ body { min-height: 0; }
 .inv-mail dd { margin: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* 2 · clients */
-.logos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.75rem, 2vh, 1.25rem) 1.5rem; align-items: center; justify-items: center; margin-top: clamp(1rem, 2.4vh, 1.5rem); }
+.ob-card.ob-card-logos { max-width: 36rem; }
+.logos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(0.75rem, 2vh, 1.25rem) 1.25rem; align-items: center; justify-items: center; margin-top: clamp(1rem, 2.4vh, 1.5rem); }
 .logos img { max-width: 100%; width: var(--w, 7rem); height: clamp(1.5rem, 4vh, 2.25rem); object-fit: contain; filter: grayscale(1) opacity(.62); }
 .members { display: flex; align-items: baseline; gap: 0.625rem; margin-top: clamp(1rem, 2.6vh, 1.75rem); padding-top: clamp(0.875rem, 2.2vh, 1.25rem); border-top: 1px solid var(--color-mid-beige); }
 .members strong { font-size: clamp(1.75rem, 4.4vh, 2.5rem); font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
 .members span { font-size: 0.9375rem; color: var(--color-ink-muted); }
 
-/* 3 · sharing, client by client */
-.share-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: clamp(0.625rem, 1.6vh, 0.875rem) 0; border-bottom: 1px solid var(--color-mid-beige); font-size: 0.9375rem; }
-.share-row:last-child { border-bottom: 0; padding-bottom: 0; }
-.share-row .n { display: block; font-weight: 500; }
-.share-row .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-.tgl { flex: none; position: relative; width: 2.5rem; height: 1.5rem; border-radius: 1rem; background: var(--color-sand-400); }
-.tgl::after { content: ""; position: absolute; top: 3px; left: 3px; width: 1.125rem; height: 1.125rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: transform .3s var(--ease-brand); }
-.tgl.on { background: var(--color-graphite); }
-.tgl.on::after { transform: translateX(1rem); }
-.share-to { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: clamp(0.75rem, 2vh, 1rem); }
-.chip { display: inline-flex; align-items: center; gap: 0.375rem; height: 1.875rem; padding-inline: 0.75rem; border-radius: 1rem; font-size: 0.8125rem; font-weight: 500; background: var(--color-light-beige); color: var(--color-ink-muted); }
-.chip.on { background: var(--color-graphite); color: var(--color-off-white); }
+/* 3 · sharing, client by client: a consent as on Clients (js/clients-page.js), a picture of it: all shared but one */
+.ob-card.sh { max-width: 36rem; padding: 0; overflow: hidden; }
+.sh-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: clamp(0.875rem, 2.2vh, 1.25rem) 1.25rem; }
+.sh-h b { display: block; font-size: 1.0625rem; font-weight: 600; }
+.sh-h small { display: block; margin-top: 0.25rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.sh-all { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); white-space: nowrap; }
+.sh-tbl { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.sh-tbl th { padding: 0.625rem 0.75rem; background: var(--color-light-beige); font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-ink-subtle); text-align: center; white-space: nowrap; }
+.sh-tbl td { padding: clamp(0.5rem, 1.3vh, 0.75rem) 0.75rem; border-top: 1px solid var(--color-mid-beige); text-align: center; vertical-align: middle; color: var(--color-ink-muted); white-space: nowrap; }
+.sh-tbl :is(th, td):first-child { padding-left: 1.25rem; text-align: left; white-space: normal; }
+.sh-tbl :is(th, td):last-child { padding-right: 1.25rem; text-align: right; }
+.sh-tbl .n { display: block; font-weight: 500; color: var(--color-ink); }
+.sh-tbl .d { display: block; margin-top: 0.125rem; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.sh-v { display: inline-flex; align-items: center; height: 1.375rem; margin-top: 0.375rem; padding: 0 0.5rem; border: 1px solid var(--color-line); border-radius: 9999px; font-size: 0.6875rem; color: var(--color-ink-muted); }
+.sh-ok { display: inline-flex; align-items: center; height: 1.5rem; padding: 0 0.5rem; border-radius: 0.375rem; background: #e0efd6; color: #336824; font-size: 0.75rem; font-weight: 600; }
+.sw { flex: none; display: inline-flex; width: 2.75rem; height: 1.5rem; padding: 2px; border: 0; border-radius: 0.75rem; background: #a6d8a0; vertical-align: middle; }
+.sw i { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.18); margin-left: calc(100% - 1.25rem); transition: margin-left .2s var(--ease-brand); }
+.sw[aria-checked="false"] { background: var(--color-sand-400); }
+.sw[aria-checked="false"] i { margin-left: 0; }
+.sw[aria-checked="mixed"] { background: color-mix(in oklab, #a6d8a0 50%, var(--color-sand-400)); }
+.sw[aria-checked="mixed"] i { margin-left: calc(50% - 0.625rem); }
+.sh-f { margin: 0; padding: clamp(0.75rem, 1.8vh, 0.875rem) 1.25rem; border-top: 1px solid var(--color-mid-beige); font-size: 0.8125rem; line-height: 1.45; color: var(--color-ink-muted); }
 
 /* 4 · what changes: the landing's four */
 .perks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(0.75rem, 1.8vh, 1rem); width: 100%; max-width: 32rem; }
@@ -233,6 +244,9 @@ body { min-height: 0; }
 .node.you i { background: var(--color-coral); border-color: var(--color-coral); color: var(--color-graphite); width: 3.5rem; height: 3.5rem; }
 .node.new i { border: 1.5px dashed var(--color-coral); box-shadow: none; color: var(--color-coral-deep); }
 .node.hub, .node.you { color: var(--color-ink); font-weight: 600; }
+/* the names sit on a patch of the page's ground, so the lines run behind them, not through them */
+.node .l { position: relative; padding: 0.125rem 0.5rem; border-radius: 9999px; background: var(--color-ground); line-height: 1.4; }
+.node.hub .l, .node.you .l { font-size: 0.875rem; }
 
 /* 6 · ALMA */
 .alma-media { position: relative; width: min(100%, 26rem, 48vh); aspect-ratio: 0.9598; max-height: 100%; pointer-events: none; }
@@ -330,7 +344,7 @@ body { min-height: 0; }
           <h2 class="title" id="ob-t2">All your data in one place. <span class="soft">Always available. Audit ready.</span></h2>
           <p class="lead">C&#8209;MORE is where companies and their suppliers keep everything compliance asks for: the company&rsquo;s documents, its workers&rsquo;, its equipment&rsquo;s and its products&rsquo;. Kept once, valid, and ready for every client.</p>
         </div>
-        <div class="ob-art"><div class="ob-card">
+        <div class="ob-art"><div class="ob-card ob-card-logos">
           <span class="ob-card-h">Already on C&#8209;MORE</span>
           <div class="logos">
             <img src="images/clients/astrazeneca.png" alt="AstraZeneca" style="--w:8.5rem">
@@ -342,6 +356,13 @@ body { min-height: 0; }
             <img src="images/clients/cbmm.png" alt="CBMM" style="--w:6.5rem">
             <img src="images/clients/novabase.png" alt="Novabase" style="--w:7.5rem">
             <img src="images/clients/cummins.png" alt="Cummins" style="--w:2.75rem">
+            <img src="images/clients/tecnorem.png" alt="Grupo Tecnorém" style="--w:7rem">
+            <img src="images/clients/gruppo-icm.png" alt="Gruppo ICM" style="--w:4.5rem">
+            <img src="images/clients/rodrigues-neves.png" alt="Rodrigues &amp; Neves" style="--w:9rem">
+            <img src="images/clients/vigobloco.png" alt="Vigobloco" style="--w:7rem">
+            <img src="images/clients/xplor.svg" alt="Xplor" style="--w:4.5rem">
+            <img src="images/clients/interplay.png" alt="Interplay" style="--w:8rem">
+            <img src="images/clients/mbw.png" alt="MBW, Modular Builders Worldwide" style="--w:6rem">
           </div>
           <div class="members"><strong>3,600+</strong><span>members already on the C&#8209;MORE ecosystem</span></div>
         </div></div>
@@ -358,13 +379,13 @@ body { min-height: 0; }
             <li><svg viewBox="0 0 24 24" fill="none" stroke="#f46d4f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span><b>One upload for every client,</b> instead of the same files emailed again and again.</span></li>
           </ul>
         </div>
-        <div class="ob-art"><div class="ob-card">
-          <span class="ob-card-h">Shared with <span data-inviter></span></span>
-          <div class="share-row"><span><span class="n">Certificate of incorporation</span><span class="d">Company</span></span><span class="tgl on" aria-hidden="true"></span></div>
-          <div class="share-row"><span><span class="n">Workers&rsquo; health and safety training</span><span class="d">12 workers</span></span><span class="tgl on" aria-hidden="true"></span></div>
-          <div class="share-row"><span><span class="n">Liability insurance</span><span class="d">Company</span></span><span class="tgl on" aria-hidden="true"></span></div>
-          <div class="share-row"><span><span class="n">Annual accounts</span><span class="d">Company</span></span><span class="tgl" aria-hidden="true"></span></div>
-          <div class="share-to"><span class="chip on" data-inviter></span><span class="chip">Another client</span><span class="chip">+ Add a client</span></div>
+        <div class="ob-art" aria-hidden="true"><div class="ob-card sh">
+          <div class="sh-h"><span><b>Company &amp; legal</b><small>For all your work with <span data-inviter></span> &middot; 4 documents</small></span>
+            <span class="sh-all"><span>Sharing 3 of 4</span><span class="sw" aria-checked="mixed"><i></i></span></span></div>
+          <table class="sh-tbl"><thead><tr><th>Document</th><th>They see</th><th>Expiry date</th><th>Shared</th></tr></thead><tbody>
+            <tr><td><span class="n">Commercial Registry Certificate</span><span class="d">CO-01 &middot; Identification and registration</span><span class="sh-v">Sees all 3 versions</span></td><td><span class="sh-ok">Valid</span></td><td>3 Jan 2027</td><td><span class="sw" aria-checked="true"><i></i></span></td></tr><tr><td><span class="n">Company Tax Card</span><span class="d">CO-02 &middot; Identification and registration</span><span class="sh-v">Sees 1 of 2 versions</span></td><td><span class="sh-ok">Valid</span></td><td>No expiry</td><td><span class="sw" aria-checked="true"><i></i></span></td></tr><tr><td><span class="n">Tax Clearance Certificate</span><span class="d">CO-06 &middot; Tax and social security</span><span class="sh-v">Sees 3 of 4 versions</span></td><td><span class="sh-ok">Valid</span></td><td>1 Dec 2026</td><td><span class="sw" aria-checked="true"><i></i></span></td></tr><tr><td><span class="n">Company&rsquo;s Presentation</span><span class="d">CO-19 &middot; Identification and registration</span><span class="sh-v">Sees all 2 versions</span></td><td><span class="sh-ok">Valid</span></td><td>No expiry</td><td><span class="sw" aria-checked="false"><i></i></span></td></tr>
+          </tbody></table>
+          <p class="sh-f">When you renew one, they see the new one. Switch one off and they keep what they&rsquo;ve seen, but nothing newer reaches them.</p>
         </div></div>
       </section>
 
@@ -394,13 +415,13 @@ body { min-height: 0; }
         </div>
         <div class="ob-art"><div class="net" aria-hidden="true">
           <svg viewBox="0 0 100 100" preserveAspectRatio="none"><line class="ln" x1="50" y1="14" x2="50" y2="50"/><line class="ln new" x1="50" y1="50" x2="16" y2="74"/><line class="ln new" x1="50" y1="50" x2="50" y2="88"/><line class="ln new" x1="50" y1="50" x2="84" y2="74"/><line class="ln" x1="50" y1="14" x2="14" y2="26"/><line class="ln" x1="50" y1="14" x2="86" y2="26"/></svg>
-          <span class="node hub" style="left:50%;top:14%"><i data-inviter-mono></i><span data-inviter></span></span>
-          <span class="node" style="left:14%;top:26%"><i>MS</i>Supplier</span>
-          <span class="node" style="left:86%;top:26%"><i>AL</i>Supplier</span>
-          <span class="node you" style="left:50%;top:50%"><i>You</i>Your company</span>
-          <span class="node new" style="left:16%;top:74%"><i>+</i>Your supplier</span>
-          <span class="node new" style="left:50%;top:88%"><i>+</i>Your supplier</span>
-          <span class="node new" style="left:84%;top:74%"><i>+</i>Your supplier</span>
+          <span class="node hub" style="left:50%;top:14%"><i data-inviter-mono></i><span class="l">Your client</span></span>
+          <span class="node" style="left:14%;top:26%"><i>MS</i><span class="l">Supplier</span></span>
+          <span class="node" style="left:86%;top:26%"><i>AL</i><span class="l">Supplier</span></span>
+          <span class="node you" style="left:50%;top:50%"><i>You</i><span class="l">Your company</span></span>
+          <span class="node new" style="left:16%;top:74%"><i>+</i><span class="l">Your supplier</span></span>
+          <span class="node new" style="left:50%;top:88%"><i>+</i><span class="l">Your supplier</span></span>
+          <span class="node new" style="left:84%;top:74%"><i>+</i><span class="l">Your supplier</span></span>
         </div></div>
       </section>
 
@@ -462,7 +483,7 @@ body { min-height: 0; }
       inkOpacityMobile: 0.7, radiusMobile: 0.62, scrollRot: 0.0012, pointer: 0.5, coralPoint: true });
   } catch (e) { console.error(e); }
   const get = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } };
-  const inv = Object.assign({ by: 'Ferreira Construções', full: 'Ferreira Construções, Lda.', name: 'Invited Supplier', email: 'invited@c-more.test' }, get('cm-invite') || {});
+  const inv = Object.assign({ by: 'CCER Construções', full: 'CCER Construções, Lda.', name: 'Invited Supplier', email: 'invited@c-more.test' }, get('cm-invite') || {});
   const mono = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
   document.querySelectorAll('[data-inviter]').forEach((e) => { e.textContent = inv.by; });
   document.querySelectorAll('[data-inviter-full]').forEach((e) => { e.textContent = inv.full; });

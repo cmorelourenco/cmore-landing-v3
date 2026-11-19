@@ -6,12 +6,14 @@
 <title>Add a company · C-MORE</title>
 <script>
   // who is signed in (the same rule as every signed-in page); nobody signed in goes to log in first
+  // the company was renamed (Ferreira to CCER): a login saved before that gets the new address
+  try { [[localStorage, 'cm-last-person'], [sessionStorage, 'cm-person']].forEach(function (x) { var v = x[0].getItem(x[1]), old = '@ferreira' + 'construcoes.pt'; if (v && v.indexOf(old) > -1) x[0].setItem(x[1], v.split(old).join('@ccerconstrucoes.pt')); }); } catch (e) {}
   try { var cmPerson = JSON.parse(sessionStorage.getItem('cm-person') || 'null');
     if (!cmPerson) { cmPerson = JSON.parse(localStorage.getItem('cm-last-person') || 'null');
       if (cmPerson) { sessionStorage.setItem('cm-person', JSON.stringify(cmPerson)); if (localStorage.getItem('cm-last-company') === 'filled') sessionStorage.setItem('cm-company', 'filled'); } }
   } catch (e) {}
   if (!cmPerson) location.replace('register.html?login');
-  // who is signed in: Miguel (Ferreira Construções) by default, or Beatriz (Veridian Harvest Co.)
+  // who is signed in: Miguel (CCER Construções) by default, or Beatriz (Veridian Harvest Co.)
   document.documentElement.dataset.persona = (cmPerson && /beatriz/i.test((cmPerson.email || '') + ' ' + (cmPerson.name || ''))) ? 'beatriz' : 'miguel';
 </script>
 <meta name="robots" content="noindex">

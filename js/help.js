@@ -9,7 +9,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const MAX = 3000, SHOTS = 5, MB = 10;
   const person = (() => { try { return JSON.parse(sessionStorage.getItem('cm-person')) || {}; } catch (e) { return {}; } })();
-  const mail = person.email || (beatriz ? 'beatriz@veridianharvest.com' : 'miguel@ferreiraconstrucoes.pt');
+  const mail = person.email || (beatriz ? 'beatriz@veridianharvest.com' : 'miguel@ccerconstrucoes.pt');
 
   // every area of the app, and its sections
   const AREAS = [

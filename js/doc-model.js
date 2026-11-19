@@ -305,7 +305,7 @@ window.DOC_MODEL = (() => {
   const RENTALS = { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
   const MACHINE = EQUIPMENT.map(([label, ref], i) => {
     const [type, model = ''] = label.split(' &middot; ');
-    const brand = model.split(' ')[0] === 'CM&#8209;500' ? 'Ferreira (in&#8209;house)' : model.split(/ |&#8209;/)[0].replace('Allmand', 'Allmand Bros');
+    const brand = model.split(' ')[0] === 'CM&#8209;500' ? 'CCER (in&#8209;house)' : model.split(/ |&#8209;/)[0].replace('Allmand', 'Allmand Bros');
     const operators = i === 1 ? [4, 19] : i === 0 || i === 7 ? [4] : i === 6 ? [19] : [];
     return {
       type, brand, model: model.replace(/^\S+ /, ''), ref: ref.split(' &middot; ')[0],
@@ -335,7 +335,7 @@ window.DOC_MODEL = (() => {
   // statuses in `records`: index → [status, expires] (missing ones fall back to the default).
   const DEMO = {
     miguel: {
-      company: 'Ferreira Constru&ccedil;&otilde;es, Lda.',
+      company: 'CCER Constru&ccedil;&otilde;es, Lda.',
       profile: { country: 'PT', sector: 'construction', entityType: 'company', employees: WORKERS.length, services: ['construction_work'], equipmentCount: EQUIPMENT.length, productCount: PRODUCTS.length, usClients: false },
       line: 'Portugal (EU) &middot; Construction &middot; 24 employees &middot; 12 machines',
       // what ALMA read from the company's own documents, by field name (lower case, a pattern)
@@ -354,21 +354,21 @@ window.DOC_MODEL = (() => {
         'CO-10': ['expiring', '3 Nov 2025', '3 Nov 2026', 'Asked for by 2 clients.', { ref: 'RC 77&#8209;104382', by: 'Fidelidade' }],
         'CO-11': ['valid', '14 Apr 2026', '14 Apr 2027', '', { by: 'Allianz Portugal' }],
         'CO-12': ['attention', '2 Oct 2026', '2 Oct 2027', 'I couldn&rsquo;t read the service model. Check the highlighted field.', { edited: true, by: 'Prevenir &ndash; Seguran&ccedil;a no Trabalho, Lda.' }],
-        'CO-13': ['valid', '10 Feb 2025', 'No expiry', '', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
+        'CO-13': ['valid', '10 Feb 2025', 'No expiry', '', { by: 'CCER Constru&ccedil;&otilde;es' }],
         'CO-14': ['valid', '31 Mar 2026', 'Next report, Apr 2027'],
         'CO-15': ['valid', '1 Jul 2026', '1 Jan 2027', 'Asked for by 1 client.'],
         'CO-16': ['valid', '5 May 2026', 'No expiry', '', { by: 'Sika Portugal' }],
-        'CO-19': ['valid', '1 Oct 2026', 'No expiry', 'Asked for by 1 client.', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
+        'CO-19': ['valid', '1 Oct 2026', 'No expiry', 'Asked for by 1 client.', { by: 'CCER Constru&ccedil;&otilde;es' }],
         'CO-20': ['missing', '', '', 'ULS S&atilde;o Jo&atilde;o asked on 8 Oct: download it, sign it, upload it.'],
         'CO-21': ['valid', '22 May 2025', '22 May 2028', 'ISO 9001.', { by: 'SGS' }],
         'CO-23': ['valid', '2 Feb 2026', 'No expiry', 'Asked for by 1 client.', { by: 'Millennium bcp' }],
-        'UN-11': ['valid', '15 Jan 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
-        'UN-12': ['valid', '31 Jan 2026', 'Next figures, Jan 2027', '2025 figures. Asked for by 1 client.', { by: 'Ferreira Constru&ccedil;&otilde;es', edited: true }],
+        'UN-11': ['valid', '15 Jan 2026', 'Reviewed yearly', 'Asked for by 1 client.', { by: 'CCER Constru&ccedil;&otilde;es' }],
+        'UN-12': ['valid', '31 Jan 2026', 'Next figures, Jan 2027', '2025 figures. Asked for by 1 client.', { by: 'CCER Constru&ccedil;&otilde;es', edited: true }],
         'UN-15': ['missing', '', '', 'Infraestruturas de Portugal asked on 9 Oct.'],
         'WK-01': ['valid', '30 Sep 2026', '31 Oct 2026', 'September &middot; 24 workers covered.', { by: 'Fidelidade' }],
         'WK-02': ['processing', '14 Oct 2026', '30 Nov 2026', 'September &middot; I&rsquo;m reading it now.'],
-        'WK-03': ['valid', '15 Feb 2026', 'No expiry', '4 for first aid, 3 for firefighting and evacuation.', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
-        'WK-04': ['valid', '20 Jan 2026', 'No expiry', '', { by: 'Ferreira Constru&ccedil;&otilde;es' }],
+        'WK-03': ['valid', '15 Feb 2026', 'No expiry', '4 for first aid, 3 for firefighting and evacuation.', { by: 'CCER Constru&ccedil;&otilde;es' }],
+        'WK-04': ['valid', '20 Jan 2026', 'No expiry', '', { by: 'CCER Constru&ccedil;&otilde;es' }],
       },
       perRecord: {
         'WK-11': { def: ['valid', (k) => ['12 Mar 2027', '4 Jun 2027', '20 Jan 2027'][k % 3]], over: { 5: ['expired', '30 Sep 2026'], 14: ['expiring', '2 Nov 2026'] } },

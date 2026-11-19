@@ -71,12 +71,33 @@
   const where = (p) => (p.country && p.country !== 'Portugal' ? `${p.district}, ${p.country}` : p.district);
   // the people on a new project, each with a role (an earlier one kept just its project manager, or its owner)
   const peopleOf = (p) => p.people || [{ role: 'Project manager', name: (p.pm && p.pm.name) || p.pm || p.owner || '', invited: !!(p.pm && p.pm.invited) }];
+  // ---- a client's project, as its supplier sees it -------------------------------------------------
+  // who the work is for (the project's client) and who added you: the company in the Client column
+  const FOR = { 'ME-2026-112': 'Atlântico Data Centres, S.A.', 'ME-2026-131': 'Atlântico Data Centres, S.A.', 'CF-2026-027': 'CUF', 'CF-2026-033': 'CUF', 'SN-2026-064': 'Sonae MC', 'SN-2026-071': 'Sonae MC',
+    'CS-2026-008': 'Águas do Douro e Paiva', 'AB-2026-090': 'Câmara Municipal de Braga', 'TD-2026-014': 'APDL, Port of Leixões' };
+  // the two that just added you (the bell says so, js/project-notify.js): nothing of yours on them yet
+  const NOTIFIED = ['ME-2026-131', 'SN-2026-071'];
+  // what you put on a client's project: your suppliers, and the workers, machines and materials you
+  // bring, each with the documents you share for it (null: all it has on file). Kept for the tab; until
+  // you change it, the ones you'd already been on carry some of your crew and machines
+  const TEAM_KEY = (id) => 'cm-pj-team-' + id;
+  const teamOf = (p) => {
+    try { const t = JSON.parse(ss(TEAM_KEY(p.id)) || 'null'); if (t) return t; } catch (e) {}
+    const h = hash(p.id), pick = (n, of, step) => Array.from({ length: Math.min(n, of) }, (_, k) => ({ i: (h + k * step) % of, share: null }));
+    if (NOTIFIED.includes(p.id)) return { subs: [], workers: [], equipment: [], products: [] };
+    return { subs: [], workers: pick(p.workers, 24, 7), equipment: pick(1 + (h % 3), 12, 5), products: pick(1 + (h % 2), 6, 1) };
+  };
+  const saveTeam = (id, t) => { try { sessionStorage.setItem(TEAM_KEY(id), JSON.stringify(t)); } catch (e) {} };
+
   const all = added().map((p) => Object.assign({}, p, { h: hash(p.id), own: 'owner', isNew: true, docs: { asked: 0, ok: 0, look: 0, miss: 0 }, ongoing: !p.deadline, region: where(p), role: 'Owner',
     suppliers: (p.sups || []).length, workers: 0, text: fold([p.id, p.name, p.client, ...peopleOf(p).map((x) => x.name), p.city, p.district, p.country].concat((p.sups || []).map((x) => x.name)).join(' ')) }))
     .concat((hasProjects() ? PROJECTS : []).map((p) => {
     const h = hash(p.id), miss = p.miss, look = (h % 3 === 0 ? 1 : 0) + (miss && h % 2 ? 1 : 0), asked = 9 + (h % 9);
     const docs = { asked, ok: asked - miss - look, look, miss };
+    // a client's project: the Team column counts what you put on it (you don't see the rest of the team)
+    const mine = p.own === 'supplier' ? teamOf(p) : null;
     return Object.assign({}, p, { h, docs, ongoing: !p.deadline, region: `${p.city}, ${p.district}`, role: p.own === 'owner' ? 'Owner' : 'Supplier',
+      forClient: FOR[p.id] || p.client, isNotified: NOTIFIED.includes(p.id), ...(mine ? { suppliers: mine.subs.length, workers: mine.workers.length } : {}),
       text: fold([p.id, p.name, p.client, p.sector, p.city, p.district].join(' ')) });
   }));
   // what needs doing, for the drawer: the missing and expired ones, then those expiring before the work ends
@@ -171,15 +192,13 @@
     miss: '<path d="M12 9v3.75m0 3.75h.008v.008H12v-.008ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>',
     bag: '<path d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0"/>',
   };
-  const PREV = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/></svg>';
-  const XI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
   const XS = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="visibility:visible"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
 
   // the Documents column, as the Documents tables' Status: the worst first, and the chevron
   const badgeOf = (x) => (!x.asked ? '<span class="co-badge b-neu">None asked yet</span>' : x.miss ? `<span class="co-badge b-over">${x.miss} missing</span>` : x.look ? `<span class="co-badge b-pend">${x.look} to look at</span>` : '<span class="co-badge b-ok">All valid</span>');
   const rowOf = (p) => `<tr class="pj-row" tabindex="0" role="link" data-pj="${esc(p.id)}" aria-label="${esc(p.name)}, ${esc(p.id)}: open the project">`
-    + `<td><span class="n">${esc(p.name)}${p.isNew ? ' <span class="co-badge b-info cd-new" title="Added recently">New</span>' : ''}</span><span class="d">${esc(p.id)} &middot; ${p.role}</span></td>`
+    + `<td><span class="n">${esc(p.name)}${p.isNew || p.isNotified ? ` <span class="co-badge b-info cd-new" title="${p.isNotified ? 'You were just added to it' : 'Added recently'}">New</span>` : ''}</span><span class="d">${esc(p.id)} &middot; ${p.role}</span></td>`
     + `<td><span class="n">${esc(p.client)}</span><span class="d">${esc(p.sector || '')}</span></td>`
     + (p.isNew ? `<td><span class="n">${esc(where(p))}</span><span class="d">${esc(p.address)}</span></td>` : `<td><span class="n">${esc(p.city)}</span><span class="d">${esc(p.district)}</span></td>`)
     + `<td><span class="n">${pl(p.suppliers, 'supplier')}</span><span class="d">${pl(p.workers, 'worker')}</span></td>`
@@ -187,72 +206,13 @@
     + `<td>${badgeOf(p.docs)}</td></tr>`;
   const HEAD = '<thead><tr><th>Project</th><th>Client</th><th>Region</th><th>Team</th><th>Deadline</th><th>Documents</th></tr></thead>';
 
-  // ---- the drawer: how the project's documents stand and what to do, then the project itself ----
-  let dw = null, list = () => [], at = -1, back = null;
-  const drawer = () => {
-    if (dw) return dw;
-    dw = document.createElement('div'); dw.className = 'docd'; dw.hidden = true;
-    dw.innerHTML = `<div class="docd-scrim" data-pjd-x></div><aside class="docd-panel" role="dialog" aria-modal="true" aria-labelledby="pjd-t" tabindex="-1">
-      <header class="docd-head"><span class="docd-ico" aria-hidden="true">${SVG(ICO.bag)}</span><div class="docd-t"><h3 id="pjd-t"></h3><p data-pjd-sub></p></div><button type="button" class="dlg-x" data-pjd-x aria-label="Close the project">${XI}</button></header>
-      <div class="docd-bar"><span data-pjd-bar></span><span data-pjd-when></span></div>
-      <div class="docd-body" data-pjd-body></div>
-      <footer class="docd-foot"><span class="pjd-steps"><button type="button" class="docd-step" data-pjd-step="-1">${PREV}Previous project</button><button type="button" class="docd-step is-next" data-pjd-step="1">Next project${PREV}</button></span><span data-pjd-of></span></footer>
-    </aside>`;
-    document.body.appendChild(dw);
-    dw.addEventListener('click', (e) => {
-      if (e.target.closest('[data-pjd-x]')) { close(); return; }
-      const s = e.target.closest('[data-pjd-step]'); if (s && !s.disabled) { at += +s.dataset.pjdStep; paintDrawer(); }
-    });
-    addEventListener('keydown', (e) => { if (e.key === 'Escape' && !dw.hidden && dw.classList.contains('is-open')) close(); });
-    return dw;
-  };
-  const paintDrawer = () => {
-    const l = list(), p = l[at]; if (!p) return;
-    const x = p.docs, its = itemsOf(p), q = (s) => dw.querySelector(s);
-    q('#pjd-t').textContent = p.name;
-    q('[data-pjd-sub]').textContent = `${p.id} · ${p.client}`;
-    q('[data-pjd-bar]').textContent = p.own === 'owner' ? 'Your project' : `You supply ${p.client}`;
-    q('[data-pjd-when]').textContent = p.ongoing ? 'Ongoing' : (p.isNew ? `${p.start} to ${p.deadline}` : 'Deadline ' + p.deadline);
-    const stat = (cls, n, label) => `<div class="pjd-stat${cls}"><b>${n}</b><span>${label}</span></div>`;
-    q('[data-pjd-body]').innerHTML = `<section class="pjd-card"><h4 class="eyebrow">Documents for this project</h4>
-        <div class="pjd-stats">${stat('', x.asked, 'Asked for')}${stat(' is-ok', x.ok, 'Valid')}${stat(' is-pend', x.look, 'Needs a look')}${stat(' is-bad', x.miss, 'Not compliant')}</div>
-        ${its.length ? `<ul class="pjd-list">${its.map((it) => `<li><span><span class="n">${esc(it.name)}</span><span class="d">${esc(it.sub)}</span></span><span class="co-badge ${it.cls}">${it.b}</span></li>`).join('')}</ul>
-        <p class="pjd-ok"><a class="co-link" href="company-details.html">Sort them out in Documents</a>, or drop the files on ALMA.</p>` : x.asked ? `<p class="pjd-ok">Every document ${esc(p.client)} asks for here is valid.</p>` : '<p class="pjd-ok">Nothing asked for on this project yet.</p>'}</section>
-      ${p.isNew ? `<section class="pjd-card"><h4 class="eyebrow">People on this project</h4><ul class="pjd-sups">${peopleOf(p).map((x) => `<li><span><span class="n">${esc(x.name)}</span><span class="d">${esc(x.role)}</span></span>${x.invited ? '<span class="co-badge b-neu">Invited</span>' : ''}</li>`).join('')}</ul></section>` : ''}
-      ${p.isNew ? `<section class="pjd-card"><h4 class="eyebrow">Suppliers on this project</h4>${(p.sups || []).length ? `<ul class="pjd-sups">${p.sups.map((x) => `<li><span><span class="n">${esc(x.name)}</span><span class="d">${esc(x.work)}</span></span><span class="w">${esc(x.entry)}<br>to ${esc(x.exit)}</span></li>`).join('')}</ul>` : '<p class="pjd-ok" style="margin:0">No suppliers on it yet.</p>'}</section>` : ''}
-      <section class="pjd-card"><h4 class="eyebrow">About the project</h4><dl class="pjd-facts">
-        <div><dt>Client</dt><dd>${esc(p.client)}<small>${esc(p.sector || '')}</small></dd></div>
-        <div><dt>Your role</dt><dd>${p.role}<small>${p.own === 'owner' ? 'You run the site' : 'Working for ' + esc(p.client)}</small></dd></div>
-        ${p.isNew ? `<div><dt>Region</dt><dd>${esc(where(p))}<small>${esc(p.address)}</small></dd></div>
-        <div><dt>Started by</dt><dd>${esc(p.owner || '')}<small>${esc(p.on || '')}</small></dd></div>
-        <div><dt>Start date</dt><dd>${esc(p.start)}</dd></div>
-        <div><dt>End date</dt><dd>${esc(p.deadline)}</dd></div>` : `<div><dt>Region</dt><dd>${esc(p.city)}<small>${esc(p.district)}</small></dd></div>
-        <div><dt>Deadline</dt><dd>${p.ongoing ? 'Ongoing' : esc(p.deadline)}</dd></div>`}
-        <div><dt>Suppliers</dt><dd>${pl(p.suppliers, 'supplier')}</dd></div>
-        <div><dt>Workers</dt><dd>${pl(p.workers, 'worker')}</dd></div>
-      </dl></section>`;
-    q('[data-pjd-body]').scrollTop = 0;
-    q('[data-pjd-of]').textContent = `${at + 1} of ${l.length}`;
-    q('[data-pjd-step="-1"]').disabled = at === 0;
-    q('[data-pjd-step="1"]').disabled = at === l.length - 1;
-  };
-  const open = (p, from) => {
-    drawer(); list = from; at = list().indexOf(p); if (at < 0) return;
-    back = document.activeElement; paintDrawer();
-    dw.hidden = false; void dw.offsetWidth; dw.classList.add('is-open'); document.documentElement.style.overflow = 'hidden';
-    setTimeout(() => dw.querySelector('.docd-panel').focus({ preventScroll: true }), 30);
-  };
-  const close = () => {
-    if (!dw || dw.hidden) return;
-    dw.classList.remove('is-open'); document.documentElement.style.overflow = '';
-    setTimeout(() => { if (!dw.classList.contains('is-open')) dw.hidden = true; }, 320);
-    if (back && back.isConnected && back !== document.body) back.focus({ preventScroll: true }); else if (dw.contains(document.activeElement)) document.activeElement.blur();
-  };
+  // ---- a project opens its own page (project.html): the owner's view, or a supplier's ----
+  const open = (p) => { location.href = `project.html?id=${encodeURIComponent(p.id)}`; };
   // a row opens its project, by click or Enter / Space
-  const wireRows = (body, from) => {
+  const wireRows = (body) => {
     const hit = (e) => { const r = e.target.closest('tr.pj-row'); return r && all.find((p) => p.id === r.dataset.pj); };
-    body.addEventListener('click', (e) => { if (e.target.closest('a, button')) return; const p = hit(e); if (p) open(p, from); });
-    body.addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const p = hit(e); if (!p) return; e.preventDefault(); open(p, from); });
+    body.addEventListener('click', (e) => { if (e.target.closest('a, button')) return; const p = hit(e); if (p) open(p); });
+    body.addEventListener('keydown', (e) => { if (e.key !== 'Enter' && e.key !== ' ') return; const p = hit(e); if (!p) return; e.preventDefault(); open(p); });
   };
 
   // ---- the pages ----
@@ -283,7 +243,7 @@
       const need = mine.filter((p) => p.docs.miss || p.docs.look).sort(worst);
       body.innerHTML = need.length ? need.map(rowOf).join('') : '<tr><td colspan="6" class="pj-none">Every project&rsquo;s documents are in order.</td></tr>';
       const n = document.querySelector('[data-pj-need]'); if (n) n.textContent = need.length ? `${pl(need.length, 'project')} of ${mine.length} need${need.length === 1 ? 's' : ''} attention` : `All ${mine.length} projects are in order`;
-      wireRows(body, () => need);
+      wireRows(body);
       return;
     }
 
@@ -393,17 +353,23 @@
       go(+b.dataset.to, true);
       const d = nav.getBoundingClientRect().top - was; if (Math.abs(d) > 0.5) scrollTo({ top: scrollY + d, behavior: 'instant' });
     });
-    wireRows(body, shown);
+    wireRows(body);
     // arriving with a filter (the overview's "View all"): ?docs=Not compliant
     const want = new URLSearchParams(location.search).get('docs');
     if (want && Object.values(DOCST).includes(want)) f.docs.add(want);
     go(1);
     // back from new-project.html: what was started
     try { const t = sessionStorage.getItem('cm-pj-toast'); if (t) { sessionStorage.removeItem('cm-pj-toast'); const el = Object.assign(document.createElement('div'), { className: 'pj-toast', textContent: t }); el.setAttribute('role', 'status'); document.body.appendChild(el); setTimeout(() => el.remove(), 4200); } } catch (e) {}
-    // arriving at one project (?project=FC-2026-031)
+    // an older link to one project (?project=FC-2026-031): its page
     const one = all.find((p) => p.id === new URLSearchParams(location.search).get('project'));
-    if (one && shown().includes(one)) setTimeout(() => open(one, shown), 200);
+    if (one && mine.includes(one)) { location.replace(`project.html?id=${encodeURIComponent(one.id)}`); return; }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
-  window.CMProjects = { all: () => all.slice(), open: (id) => { const p = all.find((x) => x.id === id); if (p) open(p, () => all); } };
+  // the kinds of work a supplier does on a project: what's picked from the list, with a line of detail if you want one
+  const WORK_TYPES = ['Civil works', 'Demolition', 'Earthworks and excavation', 'Foundations', 'Concrete and formwork', 'Structural steel', 'Masonry',
+    'Carpentry and joinery', 'Roofing', 'Waterproofing and insulation', 'Façades and glazing', 'Drywall and ceilings', 'Flooring and tiling', 'Painting and finishes',
+    'Electrical installations', 'Plumbing and drainage', 'HVAC', 'Fire protection', 'Lifts and escalators', 'Telecoms and security systems',
+    'Scaffolding', 'Crane and lifting services', 'Landscaping', 'Site cleaning', 'Site security', 'Waste management', 'Transport and logistics', 'Other'];
+  const workText = (x) => { const t = (x && x.work) || '', d = ((x && x.detail) || '').trim(); return t === 'Other' ? d || 'Other' : [t, d].filter(Boolean).join(' · '); };
+  window.CMProjects = { WORK_TYPES, workText, all: () => all.slice(), open: (id) => { const p = all.find((x) => x.id === id); if (p) open(p); }, teamOf, saveTeam, NOTIFIED, where, peopleOf, itemsOf, hasProjects, pl };
 })();

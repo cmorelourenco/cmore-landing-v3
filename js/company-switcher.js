@@ -16,7 +16,7 @@
   const ROLE = { owner: 'Owner', admin: 'Admin', manager: 'Manager', user: 'User' };
 
   const HOME = {
-    miguel: { id: 'home', name: 'Ferreira Construções, Lda.', logo: '<img src="images/ferreira-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
+    miguel: { id: 'home', name: 'CCER Construções, Lda.', logo: '<img src="images/ccer-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
     beatriz: { id: 'home', name: 'Veridian Harvest Co.', logo: '<span class="cs-mono cs-leaf"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg></span>', state: 'filled', country: 'US', sector: 'Other' },
   }[persona];
   // the test user (register.html) starts from nothing every time: logging out wipes all the demo

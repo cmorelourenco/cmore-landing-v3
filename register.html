@@ -559,6 +559,10 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
 <script src="js/company-id.js"></script>
 <script>
+  // the company was renamed (Ferreira to CCER): a login saved before that gets the new address
+  try { [[localStorage, 'cm-last-person'], [sessionStorage, 'cm-person']].forEach(function (x) { var v = x[0].getItem(x[1]), old = '@ferreira' + 'construcoes.pt'; if (v && v.indexOf(old) > -1) x[0].setItem(x[1], v.split(old).join('@ccerconstrucoes.pt')); }); } catch (e) {}
+</script>
+<script>
 (() => {
   const qs = new URLSearchParams(location.search);
   if (qs.has('embed')) document.documentElement.classList.add('embedded');
@@ -579,7 +583,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   };
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ferreiraconstrucoes.pt' };
+  const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ccerconstrucoes.pt' };
   const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com' }, t: { name: 'Test User', email: 'test@c-more.test' }, i: { name: 'Invited Supplier', email: 'invited@c-more.test' } };
   // the test user: a new account every time. Whatever it did is wiped when it logs out (js/company-switcher.js),
   // and again when it starts, so its company always opens empty
@@ -587,7 +591,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   // a test login for a supplier a company invited (invite.html): nothing kept from before either, and
   // instead of the app, the invitation's onboarding; joining from it comes back here, to sign up
   const isInvited = (email) => (email || '').toLowerCase() === EXAMPLES.i.email;
-  const INVITE = { by: 'Ferreira Construções', full: 'Ferreira Construções, Lda.' };
+  const INVITE = { by: 'CCER Construções', full: 'CCER Construções, Lda.' };
   const wipeAll = () => { try { [sessionStorage, localStorage].forEach((st) => Object.keys(st).filter((k) => /^cm-/.test(k) && !['cm-cookies', 'cm-lang', 'cm-sn-closed'].includes(k)).forEach((k) => st.removeItem(k))); if (window.indexedDB) indexedDB.deleteDatabase('cm-files'); } catch (e) {} };
   const initials = (s) => (s.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('') || 'C').toUpperCase();
 

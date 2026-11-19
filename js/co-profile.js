@@ -64,12 +64,12 @@ window.CO_PROFILE = (() => {
   // ---- whose profile -----------------------------------------------------------------------------
   const DEFAULTS = {
     miguel: {
-      country: 'Portugal', tax: '514228930', name: 'Ferreira Construções, Lda.', trading: 'Ferreira Construções', form: 'private', formOther: '',
+      country: 'Portugal', tax: '514228930', name: 'CCER Construções, Lda.', trading: 'CCER Construções', form: 'private', formOther: '',
       hqElsewhere: '', hqCountry: '', street: 'Rua do Freixo 1071', postcode: '4300-219', city: 'Porto', region: 'Porto',
       sector: 'F', sectors2: '', subsectors: '', cae: ['41200 · Construction of residential and non-residential buildings', '43210 · Electrical installation'], exports: 'no',
       employees: '10-49', employeesYear: YEARS[1], revenue: '2-10', revenueYear: YEARS[1], currency: 'EUR', structure: 'independent', parentOrg: '', parentCountry: '', parentVat: '',
-      email: 'geral@ferreiraconstrucoes.pt', cc: '+351', phone: '22 600 4180', website: 'ferreiraconstrucoes.pt',
-      logo: 'images/ferreira-logo.webp',
+      email: 'geral@ccerconstrucoes.pt', cc: '+351', phone: '22 600 4180', website: 'ccerconstrucoes.pt',
+      logo: 'images/ccer-logo.webp',
       consents: [
         // a request that came as a notification (js/consent-notify.js): what it's called there (ask),
         // and the documents it covers (codes); one document opens that document, more the consents

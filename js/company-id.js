@@ -43,7 +43,7 @@ window.CMCompanyId = (() => {
   const shown = (c, v) => esc(plain(c, v)).replace(/^(\d{2})-(\d{7})$/, '$1&#8209;$2');
   // the companies already on C-MORE: only a logo and a name, nothing that would help someone fish
   const ON_CMORE = {
-    'PT:514228930': { name: 'Ferreira Constru&ccedil;&otilde;es, Lda.', logo: 'images/ferreira-logo.webp', home: 'miguel' },
+    'PT:514228930': { name: 'CCER Constru&ccedil;&otilde;es, Lda.', logo: 'images/ccer-logo.webp', home: 'miguel' },
     'US:714482019': { name: 'Veridian Harvest Co.', logo: 'images/veridian-logo.svg', home: 'beatriz' },
   };
   const find = (c, v) => ON_CMORE[`${c}:${clean(c, v)}`] || null;

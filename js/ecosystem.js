@@ -31,7 +31,7 @@
     ['Liberty Mechanical', 'Philadelphia', 'Philadelphia County', 'Pennsylvania', US, ['Plumbing', 'HVAC'], 58, 0, 0, 2025],
     ['Main Line Masonry', 'Bryn Mawr', 'Montgomery County', 'Pennsylvania', US, ['Masonry'], 19, 0, 0, 2026],
     ['Schuylkill Steel Works', 'Norristown', 'Montgomery County', 'Pennsylvania', US, ['Welding', 'Steel erection'], 44, 1, 0, 2025],
-    // Ferreira's own suppliers, around Porto
+    // CCER's own suppliers, around Porto
     ['Siderúrgica do Ave', 'Guimarães', 'Ave', 'Braga', PT, ['Welding', 'Steel erection'], 48, 0, 1, 2025],
     ['Betões do Douro', 'Penafiel', 'Tâmega e Sousa', 'Porto', PT, ['Concrete', 'Masonry'], 62, 0, 1, 2025],
     ['Madeiras do Norte', 'Paredes', 'Tâmega e Sousa', 'Porto', PT, ['Lumber supply', 'Carpentry'], 21, 2, 1, 2026],

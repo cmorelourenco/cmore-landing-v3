@@ -103,10 +103,10 @@ window.CMAccess = (() => {
     { name: 'Lena Hoffmann', email: 'lena@veridianharvest.com', role: 'manager', since: 'Jul 2026', title: 'Sourcing manager, cocoa', groups: ['g-src'] },
     { name: 'Marcus Bell', email: 'marcus.bell@bellcpa.com', role: 'user', since: 'Aug 2026', title: 'Accountant, external', groups: ['g-fin'] },
   ] : [
-    { name: me.name, email: me.email || 'miguel@ferreiraconstrucoes.pt', role: 'owner', you: true },
-    { name: 'Helena Ferreira', email: 'helena@ferreiraconstrucoes.pt', role: 'admin', since: 'Mar 2026' },
-    { name: 'Nuno Silva', email: 'nuno.silva@ferreiraconstrucoes.pt', role: 'manager', since: 'Apr 2026', title: 'Safety officer', groups: ['g-hs'] },
-    { name: 'Sofia Marques', email: 'sofia.marques@ferreiraconstrucoes.pt', role: 'manager', since: 'May 2026', title: 'People & payroll', groups: ['g-hr'] },
+    { name: me.name, email: me.email || 'miguel@ccerconstrucoes.pt', role: 'owner', you: true },
+    { name: 'Helena Ferreira', email: 'helena@ccerconstrucoes.pt', role: 'admin', since: 'Mar 2026' },
+    { name: 'Nuno Silva', email: 'nuno.silva@ccerconstrucoes.pt', role: 'manager', since: 'Apr 2026', title: 'Safety officer', groups: ['g-hs'] },
+    { name: 'Sofia Marques', email: 'sofia.marques@ccerconstrucoes.pt', role: 'manager', since: 'May 2026', title: 'People & payroll', groups: ['g-hr'] },
     { name: 'Ana Rocha', email: 'ana.rocha@contabilidade-rocha.pt', role: 'user', since: 'Jun 2026', title: 'Accountant, external', groups: ['g-fin'] },
   ]);
   // an older demo's team: super admin is owner, Member is user, projects gave way to groups
@@ -130,7 +130,7 @@ window.CMAccess = (() => {
     const t = all()[id];
     if (t) return fix(t);
     // a company you add starts with just you, as its owner, and the usual groups, empty
-    return { members: id === 'home' && !test ? SEED() : [{ name: me.name, email: me.email || (persona === 'beatriz' ? 'beatriz@veridianharvest.com' : 'miguel@ferreiraconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
+    return { members: id === 'home' && !test ? SEED() : [{ name: me.name, email: me.email || (persona === 'beatriz' ? 'beatriz@veridianharvest.com' : 'miguel@ccerconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
   };
   const save = (id, t) => { const a = all(); a[id] = t; set(localStorage, KEY, a); };
   const orgId = () => get(sessionStorage, 'cm-org', null) || get(localStorage, 'cm-last-org-' + persona, null) || 'home';

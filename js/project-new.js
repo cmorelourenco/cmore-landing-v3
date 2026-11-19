@@ -93,6 +93,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
 .np-sup-h .n { font-size: 0.9375rem; font-weight: 600; }
 .np-sup-h .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .np-sup-h-r { display: flex; align-items: center; gap: 1rem; flex: none; }
+.np-work .np-err:not(:empty) + .np-in { margin-top: 0.125rem; }
 .np-sup-g { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem 1rem; }
 .np-empty { padding: 1.25rem; border: 1px dashed var(--color-sand-400); border-radius: 0.75rem; font-size: 0.875rem; color: var(--color-ink-subtle); text-align: center; }
 .np-card .btn:disabled { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
@@ -195,12 +196,19 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
       + (!yours.length && !others.length ? '<p class="np-none">No company matches that.</p>' : '')
       + `<button type="button" class="np-opt np-opt-inv" data-np-inv="">${PLUS}<span>Invite a company that isn&rsquo;t on C&#8209;MORE</span></button>`;
   };
+  // the work: its type from the list, and a line under it for the details (needed only for "Other")
+  const TYPES = (window.CMProjects && window.CMProjects.WORK_TYPES) || ['Other'];
+  const work = (x, k, e) => `<div class="np-f np-work"><label for="np-s${k}-work">Work to be performed</label>
+      <select class="np-in${e.work ? ' is-bad' : ''}" id="np-s${k}-work" data-np-s="${k}" name="work"${e.work ? ` aria-invalid="true" aria-describedby="np-s${k}-work-e"` : ''}>${x.work ? '' : '<option value="" selected>Choose the type of work</option>'}${TYPES.map((t) => `<option${t === x.work ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <span class="np-err" id="np-s${k}-work-e">${e.work || ''}</span>
+      <input class="np-in${e.detail ? ' is-bad' : ''}" id="np-s${k}-detail" type="text" data-np-s="${k}" name="detail" value="${esc(x.detail)}" placeholder="${x.work === 'Other' ? 'Say what they&rsquo;ll do' : 'Add details, e.g. 2nd floor, east wing (optional)'}" aria-label="Details of the work${x.work === 'Other' ? '' : ' (optional)'}"${e.detail ? ` aria-invalid="true" aria-describedby="np-s${k}-detail-e"` : ''} autocomplete="off">
+      <span class="np-err" id="np-s${k}-detail-e">${e.detail || ''}</span></div>`;
   const supRow = (x, k) => {
     const s = mine().find((y) => y.id === x.id), [bl, bc] = s ? STAT(s) : ['', ''], e = x.errs || {};
-    const i = (n, l, type, ph) => `<div class="np-f"><label for="np-s${k}-${n}">${l}</label><input class="np-in${e[n] ? ' is-bad' : ''}" id="np-s${k}-${n}" type="${type}" data-np-s="${k}" name="${n}" value="${esc(x[n])}"${ph ? ` placeholder="${esc(ph)}"` : ''}${type === 'date' ? ` min="${f.start}" max="${f.end}"` : ''} autocomplete="off"><span class="np-err">${e[n] || ''}</span></div>`;
+    const i = (n, l, type, ph) => `<div class="np-f"><label for="np-s${k}-${n}">${l}</label><input class="np-in${e[n] ? ' is-bad' : ''}" id="np-s${k}-${n}" type="${type}" data-np-s="${k}" name="${n}" value="${esc(x[n])}"${ph ? ` placeholder="${esc(ph)}"` : ''}${type === 'date' ? ` min="${f.start}" max="${f.end}"` : ''} autocomplete="off"><span class="np-err" id="np-s${k}-${n}-e">${e[n] || ''}</span></div>`;
     return `<li class="np-sup"><div class="np-sup-h"><span><span class="n">${esc(x.name)}</span><span class="d">${esc(s ? [s.city, (s.services || []).join(', ')].filter(Boolean).join(' · ') : '')}</span></span>
         <span class="np-sup-h-r">${bl ? `<span class="co-badge ${bc}">${bl}</span>` : ''}<button type="button" class="link-btn" data-np-rm="${k}" aria-label="Remove ${esc(x.name)} from the project">Remove</button></span></div>
-      <div class="np-sup-g">${i('work', 'Work to be performed', 'text', 'e.g. Electrical installation, 2nd floor')}${i('entry', 'Entry date', 'date')}${i('exit', 'Exit date', 'date')}</div></li>`;
+      <div class="np-sup-g">${work(x, k, e)}${i('entry', 'Entry date', 'date')}${i('exit', 'Exit date', 'date')}</div></li>`;
   };
   const step2 = () => `<section class="co-card np-card" aria-labelledby="np-h2">
       <div class="np-card-h"><span class="np-step">Step 2 of 2 &middot; ${esc(f.name)}</span><h2 id="np-h2">Suppliers on the project</h2><p class="co-muted">Pick them from your suppliers or from the companies on C&#8209;MORE, or invite one. Then, for each, the work it does and when it&rsquo;s on site, between ${fmt(f.start)} and ${fmt(f.end)}.</p></div>
@@ -214,7 +222,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     let ok = true;
     f.sups.forEach((x) => {
       const e = {};
-      if (!x.work.trim()) e.work = 'Say what they&rsquo;ll do.';
+      if (!x.work) e.work = 'Choose the type of work.'; else if (x.work === 'Other' && !x.detail.trim()) e.detail = 'Say what they&rsquo;ll do.';
       if (!x.entry) e.entry = 'Choose the entry date.'; else if (x.entry < f.start || x.entry > f.end) e.entry = 'Within the project&rsquo;s dates.';
       if (!x.exit) e.exit = 'Choose the exit date.'; else if (x.exit < f.start || x.exit > f.end) e.exit = 'Within the project&rsquo;s dates.'; else if (x.entry && x.exit < x.entry) e.exit = 'Before the entry date.';
       x.errs = e; if (Object.keys(e).length) ok = false;
@@ -227,7 +235,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     if (focus) { const el = box.querySelector(focus); if (el) el.focus({ preventScroll: true }); }
   };
   const paintMenu = () => { const m = box.querySelector('#np-menu'), q = box.querySelector('#np-q'); if (!m) return; m.hidden = !f.open; m.innerHTML = f.open ? menu() : ''; q.setAttribute('aria-expanded', String(f.open)); };
-  const addSup = (s) => { if (f.sups.some((x) => x.id === s.id)) return; f.sups.push({ id: s.id, name: s.name, work: '', entry: f.start, exit: f.end }); f.q = ''; f.open = false; paint(`#np-s${f.sups.length - 1}-work`); };
+  const addSup = (s) => { if (f.sups.some((x) => x.id === s.id)) return; f.sups.push({ id: s.id, name: s.name, work: '', detail: '', entry: f.start, exit: f.end }); f.q = ''; f.open = false; paint(`#np-s${f.sups.length - 1}-work`); };
   const toTop = () => { const h = document.querySelector('.np-card'); if (h && h.getBoundingClientRect().top < 0) h.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
 
   // invited from here (js/supplier-add.js): on your list, and on the project
@@ -242,7 +250,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   box.addEventListener('input', (e) => {
     const t = e.target;
     if (t.id === 'np-q') { f.q = t.value; f.open = true; paintMenu(); return; }
-    if (t.dataset.npS != null) { const x = f.sups[+t.dataset.npS]; x[t.name] = t.value; if (x.errs && x.errs[t.name]) { delete x.errs[t.name]; t.classList.remove('is-bad'); const er = t.parentNode.querySelector('.np-err'); if (er) er.textContent = ''; } return; }
+    if (t.dataset.npS != null) { const x = f.sups[+t.dataset.npS]; x[t.name] = t.value; if (x.errs && x.errs[t.name]) { delete x.errs[t.name]; t.classList.remove('is-bad'); const er = document.getElementById(`${t.id}-e`); if (er) er.textContent = ''; } return; }
     if (t.dataset.npP != null) { const x = f.people[+t.dataset.npP]; if (t.tagName === 'SELECT') return; x[t.name] = t.value; if (x.errs[t.name]) { delete x.errs[t.name]; t.classList.remove('is-bad'); t.removeAttribute('aria-invalid'); const er = document.getElementById(`${t.id}-e`); if (er) er.textContent = ''; } return; }
     if (t.name === 'country') return; // on change, below
     if (t.name && t.name in f) { f[t.name] = t.value; if (f.errs[t.name]) { delete f.errs[t.name]; t.classList.remove('is-bad'); t.removeAttribute('aria-invalid'); const er = document.getElementById(`np-${t.name}-e`); if (er) er.textContent = ''; } }
@@ -250,6 +258,8 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   box.addEventListener('change', (e) => {
     const t = e.target;
     if (t.name === 'district') f.district = t.value;
+    // the type of work: "Other" makes the details line the work itself, so its placeholder says so
+    if (t.dataset.npS != null && t.name === 'work') { const k = +t.dataset.npS, x = f.sups[k]; x.work = t.value; if (x.errs) { delete x.errs.work; delete x.errs.detail; } paint(`#np-s${k}-work`); return; }
     if (t.dataset.npP != null && t.tagName === 'SELECT') { const i = +t.dataset.npP, x = f.people[i]; x[t.name] = t.value; x.errs = {}; paint(t.name === 'who' && x.who === 'new' ? `#np-p${i}-name` : `#${t.id}`); }
     // another country: its regions aren't Portugal's districts, so the region is asked again
     if (t.name === 'country') { const was = f.country === 'Portugal'; f.country = t.value; if (was !== (f.country === 'Portugal')) { f.district = ''; delete f.errs.district; paint('#np-country'); } }
@@ -280,7 +290,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     if (e.target.closest('[data-np-save]')) {
       if (!check2()) { paint(); const bad = box.querySelector('.is-bad'); if (bad) bad.focus(); return; }
       const p = { id: f.id.trim(), name: f.name.trim(), client: f.client.trim(), country: f.country, district: f.district.trim(), address: f.address.trim(), start: fmt(f.start), deadline: fmt(f.end),
-        owner, people: f.people.map(whoOf), on: fmt(new Date().toISOString().slice(0, 10)), sups: f.sups.map((x) => ({ id: x.id, name: x.name, work: x.work.trim(), entry: fmt(x.entry), exit: fmt(x.exit) })) };
+        owner, people: f.people.map(whoOf), on: fmt(new Date().toISOString().slice(0, 10)), sups: f.sups.map((x) => ({ id: x.id, name: x.name, work: x.work, detail: x.detail.trim(), entry: fmt(x.entry), exit: fmt(x.exit) })) };
       try {
         // people invited here: each invite waits on Team, as one sent from there (once, whatever their roles)
         const fresh = p.people.filter((x) => x.invited && f.people.some((y) => y.who === 'new' && y.email.trim().toLowerCase() === x.email));
@@ -291,9 +301,9 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
         }
         sessionStorage.setItem(KEY, JSON.stringify([p].concat(get(KEY) || [])));
         const n = p.sups.length;
-        sessionStorage.setItem('cm-pj-toast', `${p.name} is created${n ? `, with ${n} supplier${n === 1 ? '' : 's'}` : ''}.`);
+        sessionStorage.setItem('cm-pj-toast', `${p.name} is created${n ? `. ${n === 1 ? 'Your supplier is' : `Each of your ${n} suppliers is`} notified` : ''}.`);
       } catch (err) {}
-      location.href = `projects.html?project=${encodeURIComponent(p.id)}`;
+      location.href = `project.html?id=${encodeURIComponent(p.id)}`;
     }
   });
   paint();
