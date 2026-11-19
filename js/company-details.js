@@ -110,6 +110,10 @@
       <p class="cdd-desc">${c.state === 'accepted' ? 'From today, along with each new version while your consent stands. You can stop sharing at any time from your consents.' : 'We let them know. If they ask again, you&rsquo;ll get a new notification.'}</p></section>`);
     return cards.join('') + done.join('');
   };
+  // a company document with a file: a menu (⋮) at the end of its row, in place of the Replace icon:
+  // Replace (the upload, as before), Download, and Remove (into Uncategorized documents)
+  const hasFile = (d) => !d.kind && d.status !== 'archived' && d.status !== 'processing' && !NO_FILE.includes(d.status);
+  const DOTS = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="10" cy="4" r="1.6"/><circle cx="10" cy="10" r="1.6"/><circle cx="10" cy="16" r="1.6"/></svg>';
   const row = (d) => {
     const [label, cls] = STATUS[d.status];
     const hasRoster = !!(d.kind && d.roster.length);
@@ -141,7 +145,7 @@
       `<td>${d.valid === '—' ? dash : window.DOC_MODEL.expHtml(d.valid)}</td>` +
       `<td>${confCell(hasRoster ? rosterConf(d) : confOf(d))}</td>` +
       `<td><span class="co-badge ${cls}">${label}</span></td>` +
-      `<td class="cd-ed"><span class="cd-ed-in">${naB}${up}${hasRoster ? opener : ''}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
+      `<td class="cd-ed"><span class="cd-ed-in">${naB}${canUp && hasFile(d) && window.CMUpload ? `<button type="button" class="cd-up is-icon cd-kebab" data-kebab="${d.id}" aria-haspopup="menu" aria-expanded="false" title="More" aria-label="More for ${esc(decode(d.name))}">${DOTS}</button>` : up}${hasRoster ? opener : ''}</span></td></tr>` + noteRow + (isOpen ? history(d) : '');
   };
 
   // a row opened by its chevron: the current version, then each one it replaced, newest first;
@@ -1216,6 +1220,81 @@
     tools.querySelector('.co-tools-clear').hidden = !(n || f.q);
   }
 
+  // Download: the file uploaded for it, or (the demo's documents, never uploaded here) a stand-in PDF
+  // with what's on record, under the name the drawer gives the file
+  const fileNameOf = (d) => `${decode(d.name).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '')}-${(String(d.issued).match(/\d{4}/) || [''])[0]}.pdf`.replace(/-\.pdf$/, '.pdf');
+  const standIn = (d) => {
+    const tx = (t) => String(t).replace(/[‐-―−]/g, '-').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/ /g, ' ').split('')
+      .map((c) => { const n = c.charCodeAt(0); return n === 40 || n === 41 || n === 92 ? '\\' + c : n >= 32 && n < 127 ? c : n < 256 ? '\\' + n.toString(8).padStart(3, '0') : '?'; }).join('');
+    const txt = (h) => decode(String(h || '—')).replace(/<[^>]+>/g, '');
+    const lines = [[18, decode(d.name)], [11, `${d.code} · ${txt(d.requirement)}`], [11, `Holder: ${txt(window.DOC_MODEL.D.company)}`],
+      [11, `Issued: ${d.issued}   Valid until: ${d.valid}`], [11, `Reference: ${txt(d.ref)}`], [11, `Issued by: ${txt(d.by)}`], [9, 'C-MORE prototype: a stand-in for the file on record.']];
+    let y = 780; const body = lines.map(([sz, t], i) => { y -= i ? (sz > 11 ? 30 : 22) : 0; return `BT /F1 ${sz} Tf 56 ${y} Td (${tx(t)}) Tj ET`; }).join('\n');
+    const objs = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+      `<< /Length ${body.length} >>\nstream\n${body}\nendstream`, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];
+    let out = '%PDF-1.4\n'; const at = objs.map((o, i) => { const k = out.length; out += `${i + 1} 0 obj\n${o}\nendobj\n`; return k; });
+    const xref = out.length; out += `xref\n0 ${objs.length + 1}\n0000000000 65535 f \n${at.map((k) => String(k).padStart(10, '0') + ' 00000 n \n').join('')}trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    return new Blob([out], { type: 'application/pdf' });
+  };
+  const downloadDoc = (d) => {
+    if (!d) return;
+    const save = (blob, name) => { const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: name }); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    (window.CMFiles ? window.CMFiles.get(d.code) : Promise.resolve(null)).then((r) => (r && r.blob ? save(r.blob, r.name || fileNameOf(d)) : save(standIn(d), fileNameOf(d))));
+  };
+  // Remove: out of its row, into Uncategorized documents (its file and what was read from it), and
+  // the document goes back to having none, as when a file is moved to another document
+  const removeDoc = (d) => {
+    if (!d || !window.CMUncat) return;
+    const MD = window.DOC_MODEL, c = d.cat, none = c.requirement === 'on_request' ? 'notrequested' : c.requirement === 'optional' ? 'notuploaded' : 'missing';
+    const plainOf = (h) => decode(String(h || '')).replace(/<[^>]+>/g, '');
+    const name = decode(d.name), file = fileNameOf(d), was = { ref: plainOf(d.ref), by: plainOf(d.by), issued: d.issued === '—' ? '' : d.issued, valid: d.valid === '—' ? '' : d.valid };
+    open.delete(d.id);
+    MD.saveDoc(d.code, { fix: true, status: none, issued: '—', valid: '—', ref: '', by: '', note: '', vals: null, edited: false });
+    const id = window.CMUncat.add(Object.assign({ file, from: `Removed from ${name}` }, was));
+    window.CMUncat.copyFile(d.code, 'uncat:' + id);
+    if (window.CMAlmaJob && window.CMAlmaJob.toast) window.CMAlmaJob.toast(`${esc(name)} moved to Uncategorized documents.`);
+    render(); syncCards();
+  };
+  // the menu itself: one for the page, opened under the row's ⋮ (above it, near the bottom of the
+  // window), over everything, so the table's scroll never clips it
+  const kebab = (() => {
+    const UP_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>';
+    const DL_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>';
+    const RM_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>';
+    const m = document.createElement('div'); m.className = 'cd-kmenu'; m.setAttribute('role', 'menu'); m.hidden = true;
+    m.innerHTML = `<button type="button" class="co-menu-i" role="menuitem" data-k="replace">${UP_I}Replace document</button><button type="button" class="co-menu-i" role="menuitem" data-k="download">${DL_I}Download document</button><div class="co-menu-sep" role="separator"></div><button type="button" class="co-menu-i is-bad" role="menuitem" data-k="remove">${RM_I}Remove document</button>`;
+    document.body.appendChild(m);
+    let btn = null, id = null;
+    const close = (back) => { if (m.hidden) return; m.hidden = true; if (btn) { btn.setAttribute('aria-expanded', 'false'); btn.classList.remove('is-on'); if (back && btn.isConnected) btn.focus({ preventScroll: true }); } btn = null; };
+    const place = () => {
+      const r = btn.getBoundingClientRect(), h = m.offsetHeight, up = r.bottom + 6 + h > innerHeight - 8 && r.top - 6 - h > 8;
+      m.style.top = `${up ? r.top - 6 - h : r.bottom + 6}px`; m.style.left = `${Math.max(8, r.right - m.offsetWidth)}px`;
+    };
+    const toggle = (b) => {
+      if (btn === b && !m.hidden) { close(true); return; }
+      close(); btn = b; id = +b.dataset.kebab; m.hidden = false; m.setAttribute('aria-label', b.getAttribute('aria-label'));
+      b.setAttribute('aria-expanded', 'true'); b.classList.add('is-on'); place();
+      m.querySelector('.co-menu-i').focus({ preventScroll: true });
+    };
+    m.addEventListener('click', (e) => {
+      const it = e.target.closest('[data-k]'); if (!it) return;
+      const d = docById(id), k = it.dataset.k; close(k !== 'remove');
+      if (k === 'replace' && window.CMUpload) window.CMUpload.open(`doc:${d.id}`, { onSaved: () => { render(); syncCards(); } });
+      else if (k === 'download') downloadDoc(d);
+      else if (k === 'remove') removeDoc(d);
+    });
+    m.addEventListener('keydown', (e) => {
+      const its = [...m.querySelectorAll('.co-menu-i')], i = its.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); its[(i + (e.key === 'ArrowDown' ? 1 : its.length - 1)) % its.length].focus(); }
+      else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); its[e.key === 'Home' ? 0 : its.length - 1].focus(); }
+      else if (e.key === 'Escape' || e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); close(true); }
+    });
+    document.addEventListener('click', (e) => { if (!m.hidden && !m.contains(e.target) && !e.target.closest('[data-kebab]')) close(); });
+    addEventListener('scroll', () => close(), { passive: true, capture: true });
+    addEventListener('resize', () => close());
+    return { toggle, close };
+  })();
+
   const toTop = () => scrollTo({ top: 0, behavior: 'smooth' });
   // a file sorted, or one more ALMA couldn't place: the page again (js/doc-sort.js)
   document.addEventListener('cm-uncat', () => render());
@@ -1370,6 +1449,7 @@
     const naq = e.target.closest('[data-na]'); if (naq) { openDrawer(+naq.dataset.na, 0, true); return; }
     const rc = e.target.closest('[data-row-cite]'); if (rc) { const [id, k] = rc.dataset.rowCite.split(':').map(Number); openDrawer(id, 0, false, k); return; }
     const nt = e.target.closest('[data-note-for]'); if (nt) { const d = docById(+nt.dataset.noteFor); if (d.kind && d.roster.length) { area = d.area; detail = d.id; detailQ = ''; resetDetailFilter(); render(); toTop(); } else openDrawer(d.id); return; }
+    const kb = e.target.closest('[data-kebab]'); if (kb) { kebab.toggle(kb); return; }
     const doc = e.target.closest('[data-open]'); if (doc) { openDrawer(+doc.dataset.open); return; }
     const dBtn = e.target.closest('[data-dfilt-btn]'); if (dBtn) {
       detailFiltOpen = !detailFiltOpen; renderDetail(detail);
