@@ -31,8 +31,8 @@
    Prototype: nothing is uploaded; what was read and accepted is kept for this tab, per company. */
 (() => {
   const O = window.CMOrgs, CAT = window.DOC_CATALOG, R = window.DocRules, DM = window.DOC_MODEL;
-  // a document's name: the company's own, if it renamed it (DOC_MODEL.rename), else the catalog's
-  const dn = (d) => { const m = DM && DM.DOCS && DM.DOCS.find((x) => x.code === d.code && x.name0); return m && m.name !== m.name0 ? m.name : d.name.en; };
+  // a document's name: the catalog's
+  const dn = (d) => d.name.en;
   // not open at launch (js/company-switcher.js styles the badge)
   const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment', 'products'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) });
   const soon = (k) => (SOON.areas.includes(k) ? ' ' + SOON.badge : '');
@@ -1032,20 +1032,12 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
     document.body.appendChild(dwEl);
     const dq = (id) => dwEl.querySelector('#' + id);
     let peek = null, peekBack = null;
-    // its name, from the pencil in the title: a document's is the company's name for it from now on
-    // (everywhere it shows); one in Uncategorized keeps it until it's filed
-    if (window.CMRename) window.CMRename.wire(dwEl, (name) => {
-      if (String(peek).startsWith('u:')) { if (U) U.update(peek.slice(2), { name }); }
-      else if (DM.rename) DM.rename(peek, name);
-      paintPeek(); paint();
-      const b = dwEl.querySelector('[data-rn]'); if (b) b.focus();
-    });
     const company = esc(org.name), taxShown = taxNo.replace(/^(\d{3})(\d{3})(\d{3})$/, '$1 $2 $3');
     const whatCard = (key, cur, lead) => (PICK ? `<section class="cdd-card"><h4 class="eyebrow">What it is</h4><p class="cdd-desc">${lead}</p>${PICK.html(key, cur, { uncat: !!cur })}<div class="gs-dp-acts"><button type="button" class="btn btn-quiet btn-sm" data-dwrefile disabled>${cur ? 'Move it there' : 'File it'}</button></div></section>` : '');
     const paintPeek = () => {
       if (String(peek).startsWith('u:')) {
         const x = U && U.get(peek.slice(2)); if (!x) { closePeek(); return; }
-        dq('gs-dw-t').innerHTML = window.CMRename ? window.CMRename.title(x.name || x.file) : esc(x.name || x.file);
+        dq('gs-dw-t').innerHTML = esc(x.name || x.file);
         dq('gs-dw-sub').textContent = `${x.name ? x.file + ' · ' : ''}Uncategorized · uploaded on ${x.at}`;
         dq('gs-dw-conf').innerHTML = '<span class="co-badge b-pend">Couldn&rsquo;t tell</span>';
         dq('gs-dw-body').innerHTML = '<div class="cmf-slot" id="gs-dw-file"></div>' + whatCard('gp-u', '', 'I couldn&rsquo;t tell which document this is. Choose its category, then its section, then the document, and I file it there.');
@@ -1068,7 +1060,7 @@ button.gs-rej:hover { border-color: var(--color-coral-deep); color: var(--color-
         + `<td>${tag(conf(fl, i))}</td></tr>`
         // the citation: a row of its own under the field's, the table's full width, opened in place
         + `<tr class="cdd-cite-row" id="gs-cite-${i}" hidden><td colspan="3"><figure class="esgq-src cdd-src"><figcaption><b>${esc(f.file)}</b><span>Page 1 &middot; ${/date|until/i.test(n) ? 'Validity' : /code|reference|nipc|tax/i.test(n) ? 'Identification' : 'Particulars'}</span></figcaption><blockquote>&ldquo;${n}: <mark${fl ? ' class="is-flag"' : ''}>${fl ? '[cut off at the edge of the scan]' : v}</mark>&rdquo;</blockquote><button type="button" class="esgq-src-open" data-show="${i}">Show on the page</button></figure></td></tr>`).join('')}</tbody></table></section>`;
-      dq('gs-dw-t').innerHTML = window.CMRename ? window.CMRename.title(dn(d)) : esc(dn(d));
+      dq('gs-dw-t').innerHTML = esc(dn(d));
       dq('gs-dw-sub').innerHTML = `${esc(f.file)} &middot; ${esc(DM.LBL.requirement[d.requirement] || '')}`;
       dq('gs-dw-conf').innerHTML = f.edited ? '<span class="co-badge b-neu">' + DM.corrected() + '</span>' : confTag(f);
       // the page as she read it, and the file itself one click away (js/doc-files.js)
