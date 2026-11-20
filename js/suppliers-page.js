@@ -34,6 +34,14 @@
 .sp-mx .sp-row:hover td:first-child, .sp-mx .sp-row:focus-visible td:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
 .co-sup-sec .sp-glance { margin-bottom: 0; }
+/* the company's risk, a column of the matrix: its value as a tag, with its colour's dot */
+.sp-mx th.sp-risk-c { color: var(--color-ink); }
+.sp-mx th.sp-risk-c .sp-risk-sc { display: block; margin-top: 0.125rem; font-size: 0.625rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--color-ink-subtle); white-space: nowrap; }
+.sp-mx td.sp-risk-c { min-width: 6.5rem; }
+.sp-risk-v { display: inline-flex; align-items: center; }
+/* each colour's dot, as in the matrix: orange and red tags are close, the dots tell them apart */
+.sp-risk-dot { flex: none; width: 0.5rem; height: 0.5rem; margin-right: 0.375rem; border-radius: 50%; }
+.sp-risk-dot.is-green { background: var(--color-ok-deep, #8ccb86); } .sp-risk-dot.is-yellow { background: #e7b04a; } .sp-risk-dot.is-orange { background: #e07a3a; } .sp-risk-dot.is-red { background: var(--color-critical); }
 .co-sup-sec .co-sup-add { grid-column: 1; justify-self: start; }
 .co-sup-none { display: grid; gap: 0.25rem; padding: 1.25rem 1.5rem; }
 .cd-dot.is-wait { background: transparent; border: 2px dashed var(--color-sand-400); box-sizing: border-box; }
@@ -60,6 +68,8 @@
 /* the page's one action: solid graphite, as tall as the search and the filters (coral stays for ALMA's own calls) */
 .sp-add { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.125rem; border: 0; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color .15s, transform .15s; }
 .sp-add:hover { background: var(--color-ink); transform: translateY(-1px); }
+.sp-add.sp-add-q { background: var(--color-surface); color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-line); }
+.sp-add.sp-add-q:hover { background: var(--color-light-beige); }
 .sp-add:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
 .sp-add svg { width: 1rem; height: 1rem; }
 .sp-card.is-invited { border-style: dashed; background: var(--color-light-beige); }
@@ -197,6 +207,7 @@
   const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return GROUP[overall(x, a)[0]] - GROUP[overall(y, b)[0]] || y.bad - x.bad || y.soon - x.soon || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
   const matrix = (shown, bare) => {
+    const rk = bare || document.documentElement.dataset.persona === 'beatriz' ? null : risks()[0] || null;
     const cols = [...new Set(shown.flatMap((s) => s.consents.flatMap((c) => c.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
     const cell = (s, a) => {
       const of = (state) => s.consents.filter((c) => c.state === state).flatMap((c) => c.docs).filter((d) => d.cat === a);
@@ -211,12 +222,39 @@
       if (of('pending').length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
       return `<td class="c"><span class="cd-dash" title="Not asked of them">&mdash;</span></td>`;
     };
-    const rows = shown.map((s) => { const [l, c] = overall(S.stats(s), s); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc([s.services[0], s.city].filter(Boolean).join(' · '))}</span></td>${cols.map((a) => cell(s, a)).join('')}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
+    const rows = shown.map((s) => { const [l, c] = overall(S.stats(s), s); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc([s.services[0], s.city].filter(Boolean).join(' · '))}</span></td>${cols.map((a) => cell(s, a)).join('')}${rk ? riskCell(s, rk) : ''}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].concat(shown.some((s) => s.status === 'removed') ? [['off', 'Consent removed']] : []).map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
-      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span></p></section>`;
+      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}${rk ? riskTh(rk) : ''}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${rk ? `<span><b>${esc(rk.name)}</b>&nbsp;each supplier&rsquo;s place on your risk scale (${esc(ends(rk))}), from how many of its required fields their documents meet</span>` : ''}</p></section>`;
   };
+  // ---- the risk: what the company considers a risk, one setup for every supplier (new-risk.html, js/risk-new.js), and each supplier's
+  // value on it. Prototype: a value follows how many of the risk's required fields the supplier's
+  // documents meet, made up the same each time (fewer when its papers are behind); the share met is
+  // placed on the risk's scale, all met at its lowest value. A supplier that shares nothing yet isn't rated.
+  const riskKey = () => { const g = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }; const p = g('cm-person') || {}, org = g('cm-org') || 'home', test = /^test@c-more\.test$/i.test(p.email || ''); return 'cm-risks' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`); };
+  const risks = () => { try { return JSON.parse(sessionStorage.getItem(riskKey()) || '[]') || []; } catch (e) { return []; } };
+  const hsh = (t) => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
+  const rate = (s, r) => {
+    if (s.status === 'invited' || !s.consents.some((c) => c.state === 'given')) return null;
+    const k = S.stats(s), p = k.bad ? 0.55 : k.soon ? 0.75 : 0.94;
+    let req = 0, met = 0;
+    r.docs.forEach((d) => {
+      const has = hsh(`${s.id}|${r.id}|${d.id}`) > (k.bad ? 0.3 : k.soon ? 0.12 : 0.03);
+      d.fields.filter((x) => x.req).forEach((x) => { req += 1; if (has && hsh(`${s.id}|${d.id}|${x.name}`) < p) met += 1; });
+    });
+    if (!req) return null;
+    const n = r.levels.length, i = Math.round((1 - met / req) * (n - 1));
+    return { level: r.levels[i], met, req };
+  };
+  const RISK_C = { green: 'b-ok', yellow: 'b-pend', orange: 'b-warn', red: 'b-over' };
+  // what a value means on its own: a number with its top (7/10), the scale's two ends in the header
+  const valOf = (r, l) => (r.scale.kind === 'num' ? `${l.label}/${r.scale.to}` : l.label);
+  const ends = (r) => { const l = r.levels; return r.scale.kind === 'num' ? `${l[0].label} lowest · ${l[l.length - 1].label} highest risk` : `${l[0].label} → ${l[l.length - 1].label}`; };
+  const riskCell = (s, r) => { const v = rate(s, r); return v ? `<td class="c sp-risk-c"><span class="co-badge sp-risk-v ${RISK_C[v.level.color]}" title="${esc(r.name)}: ${esc(valOf(r, v.level))} on your scale (${esc(ends(r))}). ${v.met} of ${v.req} required fields met."><span class="sp-risk-dot is-${v.level.color}"></span>${esc(valOf(r, v.level))}</span></td>` : `<td class="c sp-risk-c"><span class="cd-dash" title="${esc(r.name)}: nothing shared yet to rate">&mdash;</span></td>`; };
+  const riskTh = (r) => `<th class="c sp-risk-c" title="Your risk: ${esc(r.name)}">${esc(r.name)}<span class="sp-risk-sc">${esc(ends(r))}</span></th>`;
+  try { const t = sessionStorage.getItem('cm-risk-toast'); if (t) { sessionStorage.removeItem('cm-risk-toast'); setTimeout(() => { if (window.CMAlmaJob && window.CMAlmaJob.toast) window.CMAlmaJob.toast(esc(t)); const r = document.querySelector('.sp-glance'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 400); } } catch (e) {}
+
   const list = () => {
     const is = { attention: (s) => S.stats(s).bad > 0 || s.status === 'removed', invited: (s) => s.status === 'invited', pending: (s) => s.status === 'pending' };
     const all = S.list(), n = { all: all.length, attention: all.filter(is.attention).length, invited: all.filter(is.invited).length, pending: all.filter(is.pending).length };
@@ -227,7 +265,7 @@
     const F = [['all', 'All'], ['attention', 'Need attention'], ['invited', 'Invited'], ['pending', 'Pending consent']];
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
         <div class="sp-tools-r"><div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div>
-        <button type="button" class="sp-add" data-sup-add><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Add a supplier</button></div></div>
+        ${document.documentElement.dataset.persona === 'beatriz' ? '' : (() => { const r = risks()[0]; return r ? `<a class="sp-add sp-add-q" href="new-risk.html?id=${encodeURIComponent(r.id)}">Edit your risk</a>` : '<a class="sp-add sp-add-q" href="new-risk.html">Set up your risk</a>'; })()}<button type="button" class="sp-add" data-sup-add><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Add a supplier</button></div></div>
       ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
   };
 
