@@ -41,7 +41,6 @@
 .sp-risk-v { display: inline-flex; align-items: center; }
 /* each colour's dot, as in the matrix: orange and red tags are close, the dots tell them apart */
 .sp-risk-dot { flex: none; width: 0.5rem; height: 0.5rem; margin-right: 0.375rem; border-radius: 50%; }
-.sp-risk-dot.is-green { background: var(--color-ok-deep, #8ccb86); } .sp-risk-dot.is-yellow { background: #e7b04a; } .sp-risk-dot.is-orange { background: #e07a3a; } .sp-risk-dot.is-red { background: var(--color-critical); }
 .co-sup-sec .co-sup-add { grid-column: 1; justify-self: start; }
 .co-sup-none { display: grid; gap: 0.25rem; padding: 1.25rem 1.5rem; }
 .cd-dot.is-wait { background: transparent; border: 2px dashed var(--color-sand-400); box-sizing: border-box; }
@@ -226,32 +225,36 @@
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].concat(shown.some((s) => s.status === 'removed') ? [['off', 'Consent removed']] : []).map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
       <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}${rk ? riskTh(rk) : ''}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${rk ? `<span><b>${esc(rk.name)}</b>&nbsp;each supplier&rsquo;s place on your risk scale (${esc(ends(rk))}), from how many of its required fields their documents meet</span>` : ''}</p></section>`;
+      <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${rk ? `<span><b>${esc(rk.name)}</b>&nbsp;each supplier&rsquo;s level on your risk (${esc(ends(rk))}), from the cases you set for each level; hover one to see why</span>` : ''}</p></section>`;
   };
   // ---- the risk: what the company considers a risk, one setup for every supplier (new-risk.html, js/risk-new.js), and each supplier's
-  // value on it. Prototype: a value follows how many of the risk's required fields the supplier's
-  // documents meet, made up the same each time (fewer when its papers are behind); the share met is
-  // placed on the risk's scale, all met at its lowest value. A supplier that shares nothing yet isn't rated.
+  // level on it. Each level has the cases that put a supplier there (a document missing or shared, a
+  // field OK or not); the highest-risk level with a case that fits wins, else the level the company
+  // picked for "fits no case". Prototype: whether a supplier shared a document, and each field is OK,
+  // is made up the same each time (less so when its papers are behind). A supplier that shares
+  // nothing yet isn't placed.
   const riskKey = () => { const g = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }; const p = g('cm-person') || {}, org = g('cm-org') || 'home', test = /^test@c-more\.test$/i.test(p.email || ''); return 'cm-risks' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`); };
   const risks = () => { try { return JSON.parse(sessionStorage.getItem(riskKey()) || '[]') || []; } catch (e) { return []; } };
   const hsh = (t) => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
   const rate = (s, r) => {
     if (s.status === 'invited' || !s.consents.some((c) => c.state === 'given')) return null;
     const k = S.stats(s), p = k.bad ? 0.55 : k.soon ? 0.75 : 0.94;
-    let req = 0, met = 0;
-    r.docs.forEach((d) => {
-      const has = hsh(`${s.id}|${r.id}|${d.id}`) > (k.bad ? 0.3 : k.soon ? 0.12 : 0.03);
-      d.fields.filter((x) => x.req).forEach((x) => { req += 1; if (has && hsh(`${s.id}|${d.id}|${x.name}`) < p) met += 1; });
-    });
-    if (!req) return null;
-    const n = r.levels.length, i = Math.round((1 - met / req) * (n - 1));
-    return { level: r.levels[i], met, req };
+    if (!r.levels.some((l) => (l.rules || []).length)) return null;
+    const shared = (id) => hsh(`${s.id}|${r.id}|${id}`) > (k.bad ? 0.3 : k.soon ? 0.12 : 0.03);
+    const ok = (id, n) => shared(id) && hsh(`${s.id}|${id}|${n}`) < p;
+    const fits = (c) => (c.is === 'missing' ? !shared(c.doc) : c.is === 'shared' ? shared(c.doc) : c.is === 'ok' ? ok(c.doc, c.field) : !ok(c.doc, c.field));
+    for (let i = r.levels.length - 1; i >= 0; i--) { const ru = (r.levels[i].rules || []).find((x) => x.length && x.every(fits)); if (ru) return { level: r.levels[i], why: ru }; }
+    return { level: r.levels[r.otherwise || 0] || r.levels[0], why: null };
   };
-  const RISK_C = { green: 'b-ok', yellow: 'b-pend', orange: 'b-warn', red: 'b-over' };
+  // a case in words: "Compliance Declaration is missing and Code of Conduct: Audit and verification rights accepted is not OK"
+  const caseText = (ru) => ru.map((c) => { const d = (window.CM_RISK_DOCS || []).find((x) => x.id === c.doc), dn = d ? d.name : c.doc, sh = window.CM_RISK_SHORT || ((x) => x);
+    return c.field == null ? `${dn} is ${c.is === 'missing' ? 'missing' : 'shared'}` : `${dn}: ${sh(c.field)} is ${c.is === 'ok' ? 'OK' : 'not OK'}`; }).join(' and ');
+  // a level's colour: one of the ten (js/risk-docs.js), the four of before mapped onto them
+  const rkc = (c) => (window.CM_RISK_COLOR ? window.CM_RISK_COLOR(c) : c);
   // what a value means on its own: a number with its top (7/10), the scale's two ends in the header
   const valOf = (r, l) => (r.scale.kind === 'num' ? `${l.label}/${r.scale.to}` : l.label);
   const ends = (r) => { const l = r.levels; return r.scale.kind === 'num' ? `${l[0].label} lowest · ${l[l.length - 1].label} highest risk` : `${l[0].label} → ${l[l.length - 1].label}`; };
-  const riskCell = (s, r) => { const v = rate(s, r); return v ? `<td class="c sp-risk-c"><span class="co-badge sp-risk-v ${RISK_C[v.level.color]}" title="${esc(r.name)}: ${esc(valOf(r, v.level))} on your scale (${esc(ends(r))}). ${v.met} of ${v.req} required fields met."><span class="sp-risk-dot is-${v.level.color}"></span>${esc(valOf(r, v.level))}</span></td>` : `<td class="c sp-risk-c"><span class="cd-dash" title="${esc(r.name)}: nothing shared yet to rate">&mdash;</span></td>`; };
+  const riskCell = (s, r) => { const v = rate(s, r); return v ? `<td class="c sp-risk-c"><span class="co-badge sp-risk-v rk-t-${rkc(v.level.color)}" title="${esc(r.name)}: ${esc(valOf(r, v.level))} on your levels (${esc(ends(r))}). ${esc(v.why ? caseText(v.why) + '.' : 'Fits none of your cases.')}"><span class="sp-risk-dot rk-d-${rkc(v.level.color)}"></span>${esc(valOf(r, v.level))}</span></td>` : `<td class="c sp-risk-c"><span class="cd-dash" title="${esc(r.name)}: nothing shared yet to place them">&mdash;</span></td>`; };
   const riskTh = (r) => `<th class="c sp-risk-c" title="Your risk: ${esc(r.name)}">${esc(r.name)}<span class="sp-risk-sc">${esc(ends(r))}</span></th>`;
   try { const t = sessionStorage.getItem('cm-risk-toast'); if (t) { sessionStorage.removeItem('cm-risk-toast'); setTimeout(() => { if (window.CMAlmaJob && window.CMAlmaJob.toast) window.CMAlmaJob.toast(esc(t)); const r = document.querySelector('.sp-glance'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 400); } } catch (e) {}
 

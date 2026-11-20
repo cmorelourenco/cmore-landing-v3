@@ -541,3 +541,48 @@ window.CM_RISK_DOCS = [
   ]
  }
 ];
+/* For now, a short list to build a risk on: seven documents, and four of what ALMA reads from each
+   (an index into its fields), with when that field counts as OK.
+   window.CM_RISK_PICK: [{ id, fields: [{ i, ok }] }]; window.CM_RISK_SHORT(name): a field's name
+   without its brackets ("Anti-corruption policy (Y/N)" → "Anti-corruption policy"). */
+window.CM_RISK_PICK = [
+ { id: "R08", fields: [{ i: 1, ok: "Yes" }, { i: 3, ok: "None" }, { i: 5, ok: "Not listed" }, { i: 8, ok: "Not expired" }] },
+ { id: "R10", fields: [{ i: 4, ok: "Yes, all of them" }, { i: 6, ok: "Yes" }, { i: 15, ok: "Yes" }, { i: 23, ok: "Not expired" }] },
+ { id: "R11", fields: [{ i: 2, ok: "Yes" }, { i: 4, ok: "Described" }, { i: 8, ok: "Yes" }, { i: 10, ok: "Not expired" }] },
+ { id: "R12", fields: [{ i: 4, ok: "Yes" }, { i: 7, ok: "Yes" }, { i: 9, ok: "Yes" }, { i: 19, ok: "Not expired" }] },
+ { id: "R13", fields: [{ i: 4, ok: "No critical ones" }, { i: 5, ok: "Yes" }, { i: 6, ok: "Yes" }, { i: 9, ok: "Not expired" }] },
+ { id: "R15", fields: [{ i: 2, ok: "All of them" }, { i: 9, ok: "Yes" }, { i: 13, ok: "Yes" }, { i: 17, ok: "Not expired" }] },
+ { id: "R09", fields: [{ i: 0, ok: "Yes" }, { i: 4, ok: "Yes" }, { i: 5, ok: "Yes" }, { i: 9, ok: "Not expired" }] }
+];
+window.CM_RISK_SHORT = (n) => String(n).replace(/\s*\([^)]*\)/g, "").trim();
+/* The ten colours a risk's levels can take, from dark green (lowest risk) to dark red (highest).
+   The light green, yellow, orange and red ones are the app's tags (css/tags.css) and matrix dots;
+   the six between are in the same family. window.CM_RISK_COLORS: [{ id, name }]; each id has a tag
+   class (.rk-t-<id>: background and text) and a dot class (.rk-d-<id>), in both themes.
+   CM_RISK_COLOR(id) also takes the four colours of before (green, yellow, orange, red). */
+window.CM_RISK_COLORS = [
+ { id: "c1", name: "Dark green" }, { id: "c2", name: "Green" }, { id: "c3", name: "Light green" }, { id: "c4", name: "Lime" }, { id: "c5", name: "Yellow" },
+ { id: "c6", name: "Amber" }, { id: "c7", name: "Orange" }, { id: "c8", name: "Dark orange" }, { id: "c9", name: "Red" }, { id: "c10", name: "Dark red" }
+];
+window.CM_RISK_COLOR = (c) => ({ green: "c3", yellow: "c5", orange: "c7", red: "c9" }[c] || (window.CM_RISK_COLORS.some((x) => x.id === c) ? c : "c3"));
+(() => {
+  if (document.getElementById("rk-colors")) return;
+  // [id, light bg, light fg, dot, dark bg, dark fg, dark dot]; null: the app's own tag colours
+  const P = [
+    ["c1", "#c9e3bd", "#1f4a14", "#2f6b23", "#2e5a22", "#eaf8e2", "#5f9a4c"],
+    ["c2", "#d5eacb", "#2a5c1d", "#4f9a3f", "#3d6f2f", "#f0fbea", "#76b061"],
+    ["c3", "var(--tag-green-bg)", "var(--tag-green-fg)", "var(--color-ok-deep, #8ccb86)"],
+    ["c4", "#eef0c4", "#545d07", "#b9c64a", "#6b7420", "#fbfde8", "#c5d25a"],
+    ["c5", "var(--tag-yellow-bg)", "var(--tag-yellow-fg)", "#e7b04a"],
+    ["c6", "#fde6bf", "#7d4a00", "#e8962f", "#b8761c", "#fff6e6", "#eea444"],
+    ["c7", "var(--tag-orange-bg)", "var(--tag-orange-fg)", "#e07a3a"],
+    ["c8", "#f9d6c4", "#8c2f0c", "#cc5426", "#a3401c", "#fff0e8", "#e06a3a"],
+    ["c9", "var(--tag-red-bg)", "var(--tag-red-fg)", "#b3261e", null, null, "#e0473e"],
+    ["c10", "#f0c9c6", "#6e1410", "#7a1712", "#7e1c1f", "#ffecec", "#b8302f"]
+  ];
+  const s = document.createElement("style"); s.id = "rk-colors";
+  s.textContent = P.map(([id, bg, fg, dot, dbg, dfg, ddot]) => `.rk-t-${id} { background: ${bg}; color: ${fg}; } .rk-d-${id} { background: ${dot}; }`
+    + (dbg ? ` html[data-theme="dark"] .rk-t-${id} { background: ${dbg}; color: ${dfg}; }` : "")
+    + (ddot ? ` html[data-theme="dark"] .rk-d-${id} { background: ${ddot}; }` : "")).join("\n");
+  document.head.appendChild(s);
+})();
