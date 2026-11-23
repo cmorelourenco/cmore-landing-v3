@@ -18,6 +18,49 @@
 .sp-filt button { padding: 0.375rem 0.875rem; border: 0; border-radius: 0.4375rem; background: none; font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; }
 .sp-filt button[aria-pressed="true"] { background: var(--color-graphite); color: var(--color-off-white); }
 .sp-filt b { margin-left: 0.375rem; font-weight: 600; opacity: .7; }
+/* My suppliers' Filter: the design system's, as on the company's documents (company-details.html) */
+.co-filt { position: relative; }
+/* The design system's filter: a ghost button opening a menu of checkbox items
+   (Flux's dropdown + menu.checkbox), headings between groups, floating shadow. */
+.co-filt-btn { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 0.75rem; border: 0; border-radius: 0.5rem; background: transparent;
+  font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink); cursor: pointer; transition: background-color .14s ease; }
+.co-filt-btn:hover, .co-filt-btn[aria-expanded="true"] { background: var(--color-mid-beige); }
+.co-filt-btn > svg { width: 1rem; height: 1rem; color: var(--color-ink-subtle); }
+.co-filt-chev { transition: transform .2s var(--ease-brand); }
+.co-filt-btn[aria-expanded="true"] .co-filt-chev { transform: rotate(180deg); }
+.co-filt-n { display: grid; place-items: center; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3125rem; border-radius: 9999px; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.6875rem; font-weight: 700; }
+.co-filt-n[hidden] { display: none; }
+.co-filt-panel { position: absolute; right: 0; top: calc(100% + 0.375rem); z-index: 40; min-width: 20rem; overflow: hidden; padding: 0.375rem 0.5rem;
+  background: var(--color-surface); border-radius: 0.75rem;
+  /* it opens over the table, so it lifts clearly off it: a hairline, a close shadow and a wide soft one */
+  box-shadow: 0 0 0 1px var(--color-line), 0 4px 8px rgba(52, 52, 52, .08), 0 24px 48px -12px rgba(52, 52, 52, .28); }
+.co-filt-panel[hidden] { display: none; }
+.co-menu-h { padding: 0.5rem 0.5rem 0.25rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-subtle); }
+.co-menu-sep { height: 1px; margin: 0.5rem 0; background: var(--color-mid-beige); }
+/* the list scrolls inside the panel's padding, so options never run up to its edge */
+.co-filt-list { max-height: 24rem; overflow-y: auto; overscroll-behavior: contain; padding-block: 0.75rem; scroll-padding-block: 1rem;
+  /* rows fade out before they reach the panel's edge, top and bottom */
+  -webkit-mask-image: linear-gradient(transparent, #000 0.875rem, #000 calc(100% - 0.875rem), transparent);
+          mask-image: linear-gradient(transparent, #000 0.875rem, #000 calc(100% - 0.875rem), transparent); }
+.co-menu-i { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.4375rem 0.5rem; border: 0; border-radius: 0.375rem; background: none; text-align: left;
+  font: inherit; font-size: 0.875rem; color: var(--color-ink); cursor: pointer; }
+.co-menu-i { white-space: nowrap; }
+.co-menu-i:hover, .co-menu-i:focus-visible { background: var(--color-light-beige); outline: none; }
+/* the design system's checkbox: a square that fills graphite with a light tick */
+.co-menu-i .co-menu-c { flex: none; display: grid; place-items: center; width: 1.125rem; height: 1.125rem; margin-right: 0.25rem; border: 1.5px solid var(--color-sand-400); border-radius: 0.3125rem;
+  background: var(--color-surface); color: var(--color-off-white); transition: background-color .14s ease, border-color .14s ease; }
+.co-menu-i:hover .co-menu-c { border-color: var(--color-sand-500); }
+.co-menu-i .co-menu-c svg { width: 0.8125rem; height: 0.8125rem; visibility: hidden; }
+.co-menu-i[aria-checked="true"] .co-menu-c { background: var(--color-graphite); border-color: var(--color-graphite); }
+.co-menu-i[aria-checked="true"] .co-menu-c svg { visibility: visible; }
+.co-menu-i[data-clear] .co-menu-c, .co-menu-i[data-dclear] .co-menu-c { border: 0; background: none; color: var(--color-ink-subtle); }
+.co-tools .co-tools-clear { font-size: 0.875rem; }
+.co-tools .co-tools-clear[hidden] { display: none; }
+.co-menu-i small { margin-left: auto; padding-left: 1rem; font-size: 0.75rem; color: var(--color-ink-subtle); font-variant-numeric: tabular-nums; }
+.sp-tools .co-tools-clear { font-size: 0.875rem; }
+/* on a phone the button wraps to the left: the menu opens from its left edge, within the screen */
+@media (max-width: 40rem) { .sp-tools .co-filt-panel { left: 0; right: auto; min-width: min(20rem, calc(100vw - 2rem)); } }
+.sp-tools .co-tools-clear[hidden] { display: none; }
 .sp-glance { margin-bottom: 2rem; }
 .sp-glance-h, .sp-cards-h { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
 .sp-glance-h h2, .sp-cards-h { font-size: 1.125rem; font-weight: 600; }
@@ -167,7 +210,13 @@
   const head = document.getElementById('sup-head'), crumb = document.getElementById('sup-crumb');
 
   // ---- the suppliers, as cards ---------------------------------------------------------------------
-  let filt = 'all', q = '';
+  const TICK = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd"/></svg>';
+  const XS = '<svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="visibility:visible"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>';
+  const FILT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>';
+  const CHEV = '<svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>';
+  // the search, and the Filter: the statuses ticked (any of them), and whether its menu is open
+  let q = '';
+  const fs = new Set(); let fOpen = false;
   // the matrix's sort, by Overall: 1 the worst first (the list's own order), -1 the best first
   let mxSort = 1;
   const stTag = (s) => { const [l, c] = S.SUP_STATUS[s.status]; return `<span class="co-badge ${c}">${l}</span>`; };
@@ -273,17 +322,20 @@
   try { const t = sessionStorage.getItem('cm-risk-toast'); if (t) { sessionStorage.removeItem('cm-risk-toast'); setTimeout(() => { if (window.CMAlmaJob && window.CMAlmaJob.toast) window.CMAlmaJob.toast(esc(t)); const r = document.querySelector('.sp-glance'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 400); } } catch (e) {}
 
   const list = () => {
-    const is = { attention: (s) => S.stats(s).bad > 0 || s.status === 'removed', invited: (s) => s.status === 'invited', pending: (s) => s.status === 'pending' };
-    const all = S.list(), n = { all: all.length, attention: all.filter(is.attention).length, invited: all.filter(is.invited).length, pending: all.filter(is.pending).length };
+    const all = S.list();
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-    const shown = all.filter((s) => (filt === 'all' || is[filt](s)) && (!q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q))))
+    const st = (s) => overall(S.stats(s), s)[0], hit = (s) => !q || fold(`${s.name} ${s.city} ${s.services.join(' ')}`).includes(fold(q));
+    const shown = all.filter((s) => hit(s) && (!fs.size || fs.has(st(s))))
       // alerts first, then in order, then waiting on a consent, then invited
       .sort(urgent);
-    const F = [['all', 'All'], ['attention', 'Need attention'], ['invited', 'Invited'], ['pending', 'Pending consent']];
+    // the Filter's options: each status a supplier is in, in the matrix's order, with how many (with the search)
+    const opts = Object.keys(GROUP).filter((g) => all.some((s) => st(s) === g));
+    const menu = `<div class="co-filt-list"><div class="co-menu-h">Status</div>${opts.map((g) => `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${fs.has(g)}" data-fv="${esc(g)}"><span class="co-menu-c">${TICK}</span>${esc(g)}<small>${all.filter((s) => hit(s) && st(s) === g).length}</small></button>`).join('')}<div class="co-menu-sep" role="separator"></div><button type="button" class="co-menu-i" role="menuitem" data-fclear${fs.size ? '' : ' disabled'}><span class="co-menu-c">${XS}</span>Clear filters</button></div>`;
+    const filter = `<button type="button" class="link-btn co-tools-clear" data-fclear${fs.size || q ? '' : ' hidden'}>Clear filters</button><div class="co-filt"><button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="${fOpen}" data-filt-btn>${FILT}Filter<span class="co-filt-n"${fs.size ? '' : ' hidden'}>${fs.size}</span>${CHEV}</button><div class="co-filt-panel" role="menu" aria-label="Filter suppliers"${fOpen ? '' : ' hidden'}>${menu}</div></div>`;
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
-        <div class="sp-tools-r"><div class="sp-filt" role="group" aria-label="Show">${F.map(([k, l]) => `<button type="button" data-f="${k}" aria-pressed="${filt === k}">${l}<b>${n[k]}</b></button>`).join('')}</div>
+        <div class="sp-tools-r">${filter}
         ${document.documentElement.dataset.persona === 'beatriz' ? '' : (() => { const r = risks()[0]; return r ? `<a class="sp-add sp-add-q" href="new-risk.html?id=${encodeURIComponent(r.id)}">Edit your risk</a>` : '<a class="sp-add sp-add-q" href="new-risk.html">Set up your risk</a>'; })()}<button type="button" class="sp-add" data-sup-add><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Add a supplier</button></div></div>
-      ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that.</div>'}`;
+      ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that. <button type="button" class="link-btn" data-fclear>Clear the search and filters</button></div>'}`;
   };
 
   // ---- the company homepage: the same matrix, the ones to chase first, each row to its supplier --------
@@ -529,8 +581,20 @@
   window.CMSupPage = { refresh: () => { if (!sup) list(); }, reload, sup, addLog, today, nudge: (k) => nudge(k), sentToday: (k) => sentToday(k) };
 
   box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
+  // the Filter's menu closes on a click elsewhere, or Escape; arrows move through its options
+  const closeF = () => { if (!fOpen) return; fOpen = false; const p = box.querySelector('.co-filt-panel'), b = box.querySelector('[data-filt-btn]'); if (p) p.hidden = true; if (b) b.setAttribute('aria-expanded', 'false'); };
+  document.addEventListener('click', (e) => { if (fOpen && !e.target.closest('.co-filt')) closeF(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fOpen) { closeF(); const b = box.querySelector('[data-filt-btn]'); if (b) b.focus(); } });
+  box.addEventListener('keydown', (e) => {
+    if ((e.key !== 'ArrowDown' && e.key !== 'ArrowUp') || !e.target.closest('.co-filt-panel')) return;
+    e.preventDefault();
+    const items = [...box.querySelectorAll('.co-filt-panel .co-menu-i:not(:disabled)')], i = items.indexOf(document.activeElement);
+    items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+  });
   box.addEventListener('click', (e) => {
-    const f = e.target.closest('[data-f]'); if (f) { filt = f.dataset.f; list(); return; }
+    if (e.target.closest('[data-filt-btn]')) { fOpen = !fOpen; list(); const b = box.querySelector(fOpen && e.detail === 0 ? '.co-filt-panel .co-menu-i' : '[data-filt-btn]'); if (b) b.focus({ preventScroll: true }); return; }
+    const fv = e.target.closest('[data-fv]'); if (fv) { const v = fv.dataset.fv, top = box.querySelector('.co-filt-list').scrollTop; fs.has(v) ? fs.delete(v) : fs.add(v); list(); const l = box.querySelector('.co-filt-list'); if (l) l.scrollTop = top; const again = box.querySelector(`[data-fv="${CSS.escape(v)}"]`); if (again) again.focus({ preventScroll: true }); return; }
+    const fc = e.target.closest('[data-fclear]'); if (fc && !fc.disabled) { const inMenu = !!fc.closest('.co-filt-panel'); fs.clear(); if (!inMenu) q = ''; list(); const b = box.querySelector(inMenu ? '.co-filt-panel .co-menu-i' : '[data-filt-btn]'); if (b) b.focus({ preventScroll: true }); return; }
     const r = e.target.closest('[data-remind]');
     if (!r) return;
     if (sentToday(r.dataset.remind)) { quiet(r); return; }
