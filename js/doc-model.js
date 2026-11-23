@@ -104,10 +104,50 @@ window.DOC_MODEL = (() => {
   // Miguel's: a Portuguese construction company with its own crews and machines (Company, Workers,
   // Equipment). Products would appear for a company that supplies materials; this one doesn't.
   // who is signed in (the page's head decides): Miguel's company, or Beatriz's (Veridian Harvest Co.)
-  const PERSONA = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
+  const PERSONA = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel');
+  // Walmart's (the hidden test user, rian@walmart.com): a US retailer with Miguel's areas, its stores
+  // and distribution centre as its sites. Its associates, machines and private-brand products, below,
+  // in the same shapes as Miguel's; everything of Miguel's stays as it is.
+  const WM = PERSONA === 'walmart';
+  // [name, job category], on site 0 (Supercenter #1023), 1 (Neighborhood Market #5341), 2 (DC #6094)
+  const WM_WORKERS = [
+    ['Jessica Morgan', 'Store manager'], ['Marcus Reed', 'Assistant manager'], ['Tyler Brooks', 'Forklift operator'],
+    ['Ashley Nguyen', 'Pharmacist'], ['Daniel Ortiz', 'Reach truck operator'], ['Brittany Cole', 'Deli associate'],
+    ['Kevin Patel', 'Truck driver (CDL)'], ['Samantha Price', 'Cashier'], ['Jordan Hayes', 'Stocker'],
+    ['Maria Gonzalez', 'Bakery associate'], ['Chris Walker', 'Maintenance technician'], ['Destiny Robinson', 'Produce associate'],
+    ['Brandon Lee', 'Order filler'], ['Megan Foster', 'Asset protection associate'], ['Luis Ramirez', 'Truck driver (CDL)'],
+    ['Hannah Kim', 'Pharmacy technician'], ['Robert Johnson', 'Meat cutter'], ['Emily Davis', 'Cashier'],
+    ['Anthony Scott', 'Forklift operator'], ['Olivia Martinez', 'Online pickup associate'], ['James Wilson', 'Department manager'],
+    ['Taylor Bennett', 'Deli associate'], ['Nathan Hughes', 'Stocker'], ['Rachel Turner', 'People lead'],
+  ];
+  const WM_SITES = [[0], [0], [2], [0], [2], [0], [2], [1], [1], [1], [0, 1], [0], [2], [0], [2], [0], [0], [0], [2], [1], [1], [1], [0], [0, 1, 2]];
+  const WM_OPERATORS = [2, 4, 12, 18], WM_DRIVERS = [6, 14], WM_FOOD = [5, 9, 11, 16, 21];
+  const WM_EQUIPMENT = [
+    ['Forklift &middot; Toyota 8FGU25', 'WM&#8209;EQ&#8209;014'], ['Reach truck &middot; Raymond 7500', 'WM&#8209;EQ&#8209;022'],
+    ['Electric pallet jack &middot; Crown WP 3200', 'WM&#8209;EQ&#8209;031'], ['Order picker &middot; Crown SP 3500', 'WM&#8209;EQ&#8209;027'],
+    ['Tractor &middot; Freightliner Cascadia', 'WM&#8209;TR&#8209;0418'], ['Refrigerated trailer &middot; Utility 3000R', 'WM&#8209;TL&#8209;0733'],
+    ['Box truck &middot; Isuzu NPR', 'WM&#8209;TR&#8209;0102'], ['Walk&#8209;in freezer &middot; Hussmann WF&#8209;20', 'WM&#8209;RF&#8209;005'],
+    ['Refrigerated display cases &middot; Hussmann Excel', 'WM&#8209;RF&#8209;011'], ['Floor scrubber &middot; Tennant T7', 'WM&#8209;EQ&#8209;040'],
+    ['Cardboard baler &middot; Harris HRB&#8209;60', 'WM&#8209;EQ&#8209;046'], ['Rooftop HVAC unit &middot; Carrier 50XC', 'WM&#8209;EQ&#8209;052'],
+  ];
+  // private-brand products: [name, maker, reference, family, standard, what they are]
+  const WM_PRODUCTS = [
+    ['Great Value Whole Milk, 1 gal', 'Ozark Valley Dairy', 'GV&#8209;MLK&#8209;128', 'Dairy', 'FDA Grade &ldquo;A&rdquo; PMO', { food: true, batch: true }],
+    ['Great Value Large White Eggs, 18 ct', 'Heartland Egg Farms', 'GV&#8209;EGG&#8209;18', 'Eggs', '21 CFR 118', { food: true }],
+    ['Great Value Creamy Peanut Butter, 40 oz', 'Southern Nut Processors', 'GV&#8209;PB&#8209;40', 'Pantry', '', { food: true }],
+    ['Marketside Caesar Salad Kit', 'Valley Fresh Packers', 'MS&#8209;SAL&#8209;CK', 'Produce', 'FSMA Produce Safety Rule', { food: true }],
+    ['Equate Ibuprofen 200 mg, 100 ct', 'Midwest Pharma Labs', 'EQ&#8209;IBU&#8209;100', 'Health', 'FDA OTC monograph', {}],
+    ['Equate Hand Sanitizer, 8 fl oz', 'Midwest Pharma Labs', 'EQ&#8209;HS&#8209;08', 'Health', '', { hazardous: true }],
+    ['Great Value Bleach, 121 fl oz', 'Gulf Coast Chemical Co.', 'GV&#8209;BLE&#8209;121', 'Household', 'EPA FIFRA', { hazardous: true }],
+    ['Mainstays 12&#8209;Cup Coffee Maker', 'Pacific Rim Appliances', 'MS&#8209;CM&#8209;12', 'Home', 'UL 1082', { consumer: true }],
+    ['Parent&rsquo;s Choice Diapers, size 3', 'Northwoods Hygiene', 'PC&#8209;DIA&#8209;3', 'Baby', '', { consumer: true }],
+    ['Ozark Trail 4&#8209;Person Tent', 'Summit Outdoor Mfg.', 'OT&#8209;TNT&#8209;4', 'Outdoor', 'CPAI&#8209;84', { consumer: true, textile: true }],
+    ['Time and Tru Cotton T&#8209;Shirt', 'Carolina Knits', 'TT&#8209;TEE&#8209;01', 'Apparel', '16 CFR 1610', { consumer: true, textile: true, cotton: true }],
+    ['Great Value Pepperoni Pizza, frozen', 'Heartland Foods Co.', 'GV&#8209;PZ&#8209;PEP', 'Frozen', '', { food: true }],
+  ];
 
   // Miguel's crew: [name, job category]
-  const WORKERS = [
+  const WORKERS = WM ? WM_WORKERS : [
     ['Carlos Pinto', 'Foreman'], ['Miguel Alves', 'Carpenter'], ['Tiago Sousa', 'Electrician'],
     ['Bruno Ferreira', 'Laborer'], ['Ricardo Lopes', 'Crane operator'], ['Andr&eacute; Costa', 'Welder'],
     ['Paulo Martins', 'Laborer'], ['Nuno Silva', 'Safety officer'], ['Diogo Pereira', 'Carpenter'],
@@ -120,12 +160,12 @@ window.DOC_MODEL = (() => {
   // the crew as changed by a new worker list, once the user approved it (js/doc-upload.js): who
   // joined (added at the end, so everyone else keeps their documents), who left, whose job changed.
   // Kept for this tab.
-  const CREW_KEY = 'cm-crew' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const CREW_KEY = 'cm-crew' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   // archived: archived by hand from a worker's page (js/company-details.js), { worker: the day }:
   // off the list like one who left, their documents kept read-only, and back with Unarchive
   const crew = (() => { try { return Object.assign({ added: [], left: [], roles: {}, archived: {}, names: {}, details: {} }, JSON.parse(sessionStorage.getItem(CREW_KEY) || 'null') || {}); } catch (e) { return { added: [], left: [], roles: {}, archived: {}, names: {}, details: {} }; } })();
   const CREW_BASE = WORKERS.length;
-  if (PERSONA === 'miguel') {
+  if (PERSONA !== 'beatriz') {
     // a worker added from their documents: [name, job, ID type, ID number, ID valid until, added on];
     // their job may be set later
     crew.added.forEach(([n, r]) => WORKERS.push([n, r || 'Job not set yet']));
@@ -145,20 +185,20 @@ window.DOC_MODEL = (() => {
   };
   // ---- what ALMA read about each worker from the files themselves (js/doc-upload.js) ------------
   // their identity document (citizen card, passport): { type, no, valid, file, on }, by worker
-  const IDS_KEY = 'cm-worker-ids' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const IDS_KEY = 'cm-worker-ids' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const ids = (() => { try { return JSON.parse(sessionStorage.getItem(IDS_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveId = (i, patch) => { ids[i] = Object.assign(ids[i] || {}, patch); try { sessionStorage.setItem(IDS_KEY, JSON.stringify(ids)); } catch (e) {} };
   const idOf = (i) => ids[i] || null;
   // their optional documents, outside the catalog: a driving licence (DRV), a criminal record
   // certificate (CRM). { [code]: { [worker]: { valid, file, on } } }
-  const EXTRA_KEY = 'cm-worker-extra' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const EXTRA_KEY = 'cm-worker-extra' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const extras = (() => { try { return JSON.parse(sessionStorage.getItem(EXTRA_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveExtra = (code, i, patch) => { extras[code] = extras[code] || {}; extras[code][i] = Object.assign(extras[code][i] || {}, patch); try { sessionStorage.setItem(EXTRA_KEY, JSON.stringify(extras)); } catch (e) {} };
   const extraOf = (code, i) => (extras[code] && extras[code][i]) || null;
   // who a document for all workers names (the payroll insurance, the social security declaration,
   // the emergency designations): by document, the workers on it. Until a new one is read, the ones on
   // file name everyone who was on the list before (not who joined since); the designations, seven
-  const LISTS_KEY = 'cm-wk-lists' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const LISTS_KEY = 'cm-wk-lists' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const lists = (() => { try { return JSON.parse(sessionStorage.getItem(LISTS_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveList = (code, who) => { lists[code] = who; try { sessionStorage.setItem(LISTS_KEY, JSON.stringify(lists)); } catch (e) {} };
   const DESIGNATED = { 0: 'first aid', 7: 'first aid', 16: 'first aid', 23: 'first aid', 1: 'firefighting and evacuation', 10: 'firefighting and evacuation', 20: 'firefighting and evacuation' };
@@ -168,10 +208,10 @@ window.DOC_MODEL = (() => {
     return i < CREW_BASE;
   };
   // the worker register a site keeps (Registo de trabalhadores): the last one ALMA read, { file, on, n }
-  const REG_KEY = 'cm-wk-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const REG_KEY = 'cm-wk-register' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const register = () => { try { return JSON.parse(sessionStorage.getItem(REG_KEY) || 'null'); } catch (e) { return null; } };
   const saveRegister = (r) => { try { sessionStorage.setItem(REG_KEY, JSON.stringify(r)); } catch (e) {} };
-  const EQUIPMENT = [
+  const EQUIPMENT = WM ? WM_EQUIPMENT : [
     ['Excavator &middot; CAT 320', 'EQ&#8209;014'], ['Tower crane &middot; Liebherr 1060', 'EQ&#8209;002'],
     ['Scissor lift &middot; Genie GS&#8209;1932', 'EQ&#8209;021'], ['Welding set &middot; Lincoln 210', 'EQ&#8209;033'],
     ['Concrete mixer &middot; CM&#8209;500', 'EQ&#8209;009 &middot; built 1991'], ['Plate compactor &middot; CP&#8209;120', 'EQ&#8209;041'],
@@ -182,24 +222,24 @@ window.DOC_MODEL = (() => {
   // machines added from an equipment register ALMA read (js/doc-upload.js): { type, brand, model,
   // serial, year, ref, owned, on }, at the end of the list, with what the register said of them
   const EQ_BASE = EQUIPMENT.length;
-  const EQ_KEY = 'cm-eq-added' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const EQ_KEY = 'cm-eq-added' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const eqAdded = (() => { try { return JSON.parse(sessionStorage.getItem(EQ_KEY) || '[]') || []; } catch (e) { return []; } })();
   if (PERSONA !== 'beatriz') eqAdded.forEach((m) => EQUIPMENT.push([`${m.type}${m.brand || m.model ? ` &middot; ${[m.brand, m.model].filter(Boolean).join(' ')}` : ''}`, m.ref || `Serial ${esc(m.serial || '')}`]));
   const saveMachines = (list) => { try { sessionStorage.setItem(EQ_KEY, JSON.stringify(eqAdded.concat(list))); } catch (e) {} };
   // machines archived from their own page (js/company-details.js), { machine: the day }: off the list
   // and every site, their documents kept read-only, and back with Unarchive (as workers are)
-  const EQARCH_KEY = 'cm-eq-archived' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const EQARCH_KEY = 'cm-eq-archived' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const eqArch = (() => { try { return JSON.parse(sessionStorage.getItem(EQARCH_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveEqArchive = (i, day) => { if (day) eqArch[i] = day; else delete eqArch[i]; try { sessionStorage.setItem(EQARCH_KEY, JSON.stringify(eqArch)); } catch (e) {} };
   // the equipment register (Registo de equipamentos): the last one ALMA read, { file, on, n }
-  const EQREG_KEY = 'cm-eq-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const EQREG_KEY = 'cm-eq-register' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const eqRegister = () => { try { return JSON.parse(sessionStorage.getItem(EQREG_KEY) || 'null'); } catch (e) { return null; } };
   const saveEqRegister = (r) => { try { sessionStorage.setItem(EQREG_KEY, JSON.stringify(r)); } catch (e) {} };
   // the products and materials a company supplies or uses, one per row in Products and materials.
   // Miguel's: what his crews build with (the catalog's Product profile form: commercial name,
   // manufacturer, reference, family, harmonised standard), and what the product list's optional
   // documents are about (js/product-docs.js)
-  const PR_BASE_M = [
+  const PR_BASE_M = WM ? WM_PRODUCTS : [
     ['Portland cement CEM II/A&#8209;L 42.5R', 'Secil', 'CEM II/A&#8209;L 42.5R', 'Cement', 'EN 197&#8209;1', { ceMarked: true, notifiedBody: true, hazardous: true, cbam: true }],
     ['Ready&#8209;mix concrete C30/37', 'Bet&atilde;o Liz', 'C30/37 XC2 S3', 'Concrete', 'EN 206', { hazardous: true, batch: true }],
     ['Reinforcing steel A500 NR SD', 'Megasa', 'A500 NR SD &Oslash;12', 'Steel', 'LNEC E 460', { cbam: true, batch: true }],
@@ -215,16 +255,16 @@ window.DOC_MODEL = (() => {
   ];
   // products added from a product list ALMA read (js/doc-upload.js): { name, maker, ref, family, code, on },
   // at the end of the list, with what the list said of them
-  const PR_KEY = 'cm-pr-added' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const PR_KEY = 'cm-pr-added' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const prAdded = (() => { try { return JSON.parse(sessionStorage.getItem(PR_KEY) || '[]') || []; } catch (e) { return []; } })();
   const saveProducts = (list) => { try { sessionStorage.setItem(PR_KEY, JSON.stringify(prAdded.concat(list))); } catch (e) {} };
   // the product list (Lista de materiais): the last one ALMA read, { file, on, n }
-  const PRREG_KEY = 'cm-pr-register' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const PRREG_KEY = 'cm-pr-register' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const prRegister = () => { try { return JSON.parse(sessionStorage.getItem(PRREG_KEY) || 'null'); } catch (e) { return null; } };
   const savePrRegister = (r) => { try { sessionStorage.setItem(PRREG_KEY, JSON.stringify(r)); } catch (e) {} };
   // products archived from their own page (js/company-details.js), { product: the day }: off the list
   // and every site, their documents kept read-only, and back with Unarchive (as machines are)
-  const PRARCH_KEY = 'cm-pr-archived' + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const PRARCH_KEY = 'cm-pr-archived' + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const prArch = (() => { try { return JSON.parse(sessionStorage.getItem(PRARCH_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const savePrArchive = (i, day) => { if (day) prArch[i] = day; else delete prArch[i]; try { sessionStorage.setItem(PRARCH_KEY, JSON.stringify(prArch)); } catch (e) {} };
   const PR_BASE = PR_BASE_M.length;
@@ -239,7 +279,7 @@ window.DOC_MODEL = (() => {
   const PRODUCT = PERSONA === 'beatriz' ? PRODUCTS.map(([name, sku]) => ({ name, sku })) : PRODUCTS.map(([name], i) => {
     const b = PR_BASE_M[i];
     const gone = { archived: prArch[i] || '', left: !!prArch[i] };
-    if (b) return Object.assign({ name, maker: b[1], ref: b[2], family: b[3], standard: b[4], code: `MAT&#8209;${101 + i * 7}`, role: 'Distributor',
+    if (b) return Object.assign({ name, maker: b[1], ref: b[2], family: b[3], standard: b[4], code: WM ? `SKU&#8209;${5601 + i * 37}` : `MAT&#8209;${101 + i * 7}`, role: WM ? 'Private brand' : 'Distributor',
       sites: [[0, 1], [0, 2], [0, 1, 2], [1], [0], [0, 2], [2], [1], [0, 1], [2], [0, 1, 2], [0, 1, 2]][i] }, b[5], gone);
     // one added from a product list: what it said of it, by its name what it is, and on no site yet
     const a = prAdded[i - PR_BASE] || {}, t = `${name} ${a.family || ''}`;
@@ -251,11 +291,11 @@ window.DOC_MODEL = (() => {
 
   // each worker's profile (the catalog's Worker profile form): made up but consistent. Two are
   // Brazilian, so the rules ask them for a residence permit (WK-16); everyone else is EU.
-  const NONEU = { 9: ['Brazilian', 'BR', 'Residence permit (temporary)', 'AR&#8209;2207&#8209;4419', '12 Mar 2028', 'valid'], 21: ['Brazilian', 'BR', 'Residence permit (temporary)', 'AR&#8209;2305&#8209;1186', '4 Nov 2026', 'expiring'] };
-  const SPECIAL_RISK = [2, 11, 13, 4, 19]; // electricians, rigger, plumber on gas lines, crane operators
-  const OPERATORS = [4, 19, 3, 7]; // hold an operator certificate for a machine that needs one
-  const STREETS = ['Rua de Santa Catarina 214, 4000&#8209;447 Porto', 'Avenida da Boavista 1180, 4100&#8209;113 Porto', 'Rua do Bonjardim 52, 4000&#8209;124 Porto', 'Rua Costa Cabral 731, 4200&#8209;211 Porto', 'Rua de Cedofeita 389, 4050&#8209;181 Porto', 'Avenida Fern&atilde;o de Magalh&atilde;es 1520, 4350&#8209;155 Porto'];
-  const SITES = ['Hospital de S&atilde;o Jo&atilde;o, new east wing &middot; ULS S&atilde;o Jo&atilde;o', 'EN13 resurfacing, Vila do Conde &middot; Infraestruturas de Portugal', 'Escola Secund&aacute;ria Garcia de Orta &middot; Parque Escolar'];
+  const NONEU = WM ? {} : { 9: ['Brazilian', 'BR', 'Residence permit (temporary)', 'AR&#8209;2207&#8209;4419', '12 Mar 2028', 'valid'], 21: ['Brazilian', 'BR', 'Residence permit (temporary)', 'AR&#8209;2305&#8209;1186', '4 Nov 2026', 'expiring'] };
+  const SPECIAL_RISK = WM ? [] : [2, 11, 13, 4, 19]; // electricians, rigger, plumber on gas lines, crane operators
+  const OPERATORS = WM ? WM_OPERATORS : [4, 19, 3, 7]; // hold an operator certificate for a machine that needs one
+  const STREETS = WM ? ['1408 W Walnut St, Rogers, AR 72756', '2201 SE 14th St, Bentonville, AR 72712', '904 N 13th St, Rogers, AR 72756', '3517 W Olive St, Rogers, AR 72756', '611 SW D St, Bentonville, AR 72712', '1920 S Bellview Rd, Rogers, AR 72758'] : ['Rua de Santa Catarina 214, 4000&#8209;447 Porto', 'Avenida da Boavista 1180, 4100&#8209;113 Porto', 'Rua do Bonjardim 52, 4000&#8209;124 Porto', 'Rua Costa Cabral 731, 4200&#8209;211 Porto', 'Rua de Cedofeita 389, 4050&#8209;181 Porto', 'Avenida Fern&atilde;o de Magalh&atilde;es 1520, 4350&#8209;155 Porto'];
+  const SITES = WM ? ['Supercenter #1023, Rogers, AR &middot; Walmart U.S.', 'Neighborhood Market #5341, Bentonville, AR &middot; Walmart U.S.', 'Distribution Center #6094, Bentonville, AR &middot; Walmart Logistics'] : ['Hospital de S&atilde;o Jo&atilde;o, new east wing &middot; ULS S&atilde;o Jo&atilde;o', 'EN13 resurfacing, Vila do Conde &middot; Infraestruturas de Portugal', 'Escola Secund&aacute;ria Garcia de Orta &middot; Parque Escolar'];
   // a Portuguese tax number (NIF) with its real check digit, so it reads like one
   const nif = (i) => { const d = String(2 + (i % 3)) + String(31000000 + i * 271937).slice(-7); const s = [...d].reduce((a, c, k) => a + c * (9 - k), 0) % 11; return d + (s < 2 ? 0 : 11 - s); };
   const PERSON = WORKERS.map(([name, role], i) => {
@@ -277,6 +317,15 @@ window.DOC_MODEL = (() => {
       // what the rules read (doc-rules.js FACTS)
       specialRisk: SPECIAL_RISK.includes(i), certifiedOperator: OPERATORS.includes(i), employmentType: i % 6 === 5 ? 'fixed_term' : 'permanent',
     };
+    // Walmart's associates: American, a US ID and SSN (masked), full or part time, and what the US
+    // documents read of them (js/doc-rules.js): forklift operators, commercial drivers, food handlers
+    if (WM && i < CREW_BASE) {
+      const ssn = `***&#8209;**&#8209;${String(4821 + i * 397).slice(-4)}`;
+      Object.assign(p, { nationalityName: 'American', nationality: 'US', tax: `SSN ${ssn}`, ss: ssn, sites: WM_SITES[i],
+        id: [i % 4 === 3 ? 'U.S. passport' : 'Driver’s license (Arkansas)', i % 4 === 3 ? String(568000000 + i * 40213) : `9${String(81400000 + i * 52731).slice(-8)}`, `${4 + i % 20} ${MONTHS[(i * 7) % 12]} ${2028 + i % 5}`],
+        employment: i % 5 === 4 ? 'Part&#8209;time' : 'Full&#8209;time', employmentType: 'permanent',
+        certifiedOperator: WM_OPERATORS.includes(i), cdlDriver: WM_DRIVERS.includes(i), foodHandler: WM_FOOD.includes(i) });
+    }
     // added from their documents: the ID ALMA read, the day they were added; an ID read since, over it
     if (add[2]) { p.id = [add[2], add[3], add[4]]; p.since = add[5] || p.since; p.employment = 'Permanent contract'; p.sites = [0]; }
     // a passport, not a citizen card: where they're from is still to check (not taken as Portuguese)
@@ -302,7 +351,7 @@ window.DOC_MODEL = (() => {
     return p;
   });
   // each machine's profile (the catalog's Equipment profile form)
-  const RENTALS = { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
+  const RENTALS = WM ? { 4: 'Leased &middot; Ryder, full service', 6: 'Leased &middot; Penske, monthly' } : { 2: 'Rented &middot; Loxam, monthly', 9: 'Rented &middot; Kiloutou, by the week' };
   const MACHINE = EQUIPMENT.map(([label, ref], i) => {
     const [type, model = ''] = label.split(' &middot; ');
     const brand = model.split(' ')[0] === 'CM&#8209;500' ? 'CCER (in&#8209;house)' : model.split(/ |&#8209;/)[0].replace('Allmand', 'Allmand Bros');
@@ -327,6 +376,15 @@ window.DOC_MODEL = (() => {
     if (!a) return m;
     return Object.assign(m, { type: a.type, brand: a.brand, model: a.model, serial: a.serial, yearBuilt: +a.year || null, ref: a.ref || '', owned: a.owned || 'Owned', certified: false, operators: [], sites: [0], hours: null, isNew: true, since: a.on, manual: !!a.manual, how: a.how || '', plate: a.plate || '', addedOn: a.on,
       measuring: /level|laser|measur/i.test(a.type), road: /truck|dumper|tractor/i.test(a.type), lifting: /crane|lift|loader|hoist|forklift/i.test(a.type), pressure: /compressor/i.test(a.type), portableElectrical: /welding|cutter|bender|generator|light tower|laser/i.test(a.type) });
+  });
+
+  // Walmart's machines: who operates them, which are on the road, which hold refrigerant, and where
+  if (WM) MACHINE.forEach((m, i) => {
+    if (i >= EQ_BASE) { m.poweredTruck = /forklift|reach truck|pallet|order picker/i.test(m.type); m.refrigerant = /freezer|refrigerated|cooler/i.test(m.type); return; }
+    const ops = [[2, 18], [4], [12], [12], [6, 14], [], [6], [], [], [], [], []][i];
+    Object.assign(m, { operators: ops, certified: i <= 3, poweredTruck: i <= 3, road: i >= 4 && i <= 6, refrigerant: i === 7 || i === 8, lifting: false, pressure: false, portableElectrical: false, measuring: false,
+      plate: { 4: 'AR 4DF&#8209;219', 5: 'AR 7TR&#8209;0441', 6: 'AR 2BX&#8209;118' }[i] || '', yearBuilt: [2021, 2019, 2022, 2020, 2023, 2021, 2020, 2017, 2019, 2022, 2016, 2018][i],
+      sites: [[2], [2], [0], [2], [2], [2], [0], [0], [1], [0], [0], [1]][i], hours: i >= 4 && i <= 8 ? null : 2140 + i * 611 });
   });
 
   // Each document's state: [status, issued, expires, note, { ref, by, edited }]. A document
@@ -436,6 +494,95 @@ window.DOC_MODEL = (() => {
       ],
     },
   };
+  // Walmart's: a US retailer (the hidden test user). Its documents are the US ones: the company's,
+  // and its associates', machines' and products' (tools/catalog-us-extra.py)
+  DEMO.walmart = {
+    company: 'Walmart Inc.',
+    profile: { country: 'US', sector: 'other', entityType: 'company', employees: WORKERS.length, services: [], equipmentCount: EQUIPMENT.length, productCount: PRODUCTS.length, usClients: true },
+    line: 'United States &middot; Retail &middot; 24 associates &middot; 12 machines and vehicles',
+    facts: { 'ein|tax number|tin': '71&#8209;0415188', 'address': '702 SW 8th St, Bentonville, AR 72716', 'state|jurisdiction': 'Delaware',
+      'naics|activity codes': 'NAICS 455211, 445110, 493110', 'entity type|classification': 'Corporation', 'officers|representative': 'Rian Walsh (Supplier Compliance Director)' },
+    records: { workers: PERSON, equipment: MACHINE, products: PRODUCT },
+    state: {
+      'UN-01': ['valid', '6 Feb 2026', '6 Feb 2027', '', { ref: '2153721', by: 'Delaware Division of Corporations' }],
+      'UN-02': ['valid', '31 Oct 1969', 'No expiry', '', { ref: '0726935', by: 'Delaware Division of Corporations' }],
+      'UN-03': ['valid', '12 Jan 2026', 'No expiry', '', { ref: 'EIN 71&#8209;0415188', by: 'Walmart Inc.' }],
+      'UN-05': ['expiring', '1 Dec 2025', '1 Dec 2026', 'The general liability policy ends in 8 days.', { ref: 'ACORD 25 &middot; 2025&#8209;40917', by: 'Aon Risk Services', edited: true }],
+      'UN-07': ['valid', '3 Mar 2026', 'No expiry', '', { by: 'Walmart Inc.' }],
+      'UN-09': ['valid', '15 Apr 2026', '15 Apr 2027', 'Type II, no exceptions.', { by: 'Ernst &amp; Young LLP' }],
+      'UN-10': ['valid', '20 May 2026', '20 May 2027', 'Gold medal, 70/100.', { ref: 'EV&#8209;2026&#8209;10482', by: 'EcoVadis' }],
+      'UN-11': ['valid', '8 Jan 2026', 'Reviewed yearly', 'Asked for by 2 clients.', { by: 'Walmart Inc.' }],
+      'UN-12': ['valid', '31 Jan 2026', 'Next figures, Jan 2027', '2025 figures.', { by: 'Walmart Inc.', edited: true }],
+      'UN-13': ['valid', '1 Feb 2026', '1 Feb 2027', 'Posted at every store and DC, Feb to Apr.', { by: 'Walmart Inc.' }],
+      'UN-14': ['missing', '', '', 'Heartland Shopping Centers asked on 12 Nov.'],
+      'UN-15': ['valid', '19 Mar 2026', 'Next year&rsquo;s, Mar 2027', 'FY 2026 annual report (10&#8209;K), audited.', { by: 'Ernst &amp; Young LLP' }],
+      'UN-18': ['valid', '15 Jan 2026', 'Reviewed yearly', '', { by: 'Walmart Inc.' }],
+      'UN-19': ['attention', '30 Oct 2026', 'Next report, Oct 2027', 'I couldn&rsquo;t read the Scope 3 total. Check the highlighted field.', { by: 'Walmart Inc.' }],
+      'UN-22': ['valid', '28 Feb 2026', 'Reviewed yearly', '', { by: 'Walmart Inc.' }],
+      'UN-25': ['valid', '10 Jun 2026', 'Reviewed yearly', '', { by: 'Walmart Inc.' }],
+      'UN-26': ['valid', '10 Jun 2026', 'Reviewed yearly', '', { by: 'Walmart Inc.' }],
+      'UN-27': ['expired', '1 Nov 2025', '1 Nov 2026', 'Expired 1 November. Drop the renewed one on me.', { by: 'Chubb' }],
+      'UN-31': ['valid', '2 Mar 2026', 'Reviewed yearly', '', { by: 'Walmart Inc.' }],
+      'UN-38': ['valid', '15 Jan 2026', '15 Jan 2027', '2026 log &middot; 24 associates trained.', { by: 'Walmart Inc.' }],
+    },
+    perRecord: {
+      // the associates
+      'UN-33': { def: ['valid', () => 'No expiry'], over: { 19: ['missing'] } },
+      'UN-34': { def: ['valid', (k) => ['14 Mar 2028', '2 Jun 2027', '20 Jan 2029'][k % 3]], over: { 18: ['expired', '14 Nov 2026'] } },
+      'UN-35': { def: ['valid', (k) => ['12 Mar 2028', '4 Jun 2027', '20 Jan 2028'][k % 3]], over: { 9: ['expiring', '5 Dec 2026'] } },
+      'UN-36': { def: ['valid', () => '18 Aug 2027'], over: { 14: ['expiring', '1 Dec 2026'] } },
+      'UN-37': { def: ['valid', () => '30 Apr 2030'] },
+      'WD-06': { have: [10, 23], def: ['valid', () => 'No expiry'] },
+      'WD-09': { have: [0, 13], def: ['valid', () => '9 Sep 2027'] },
+      // the machines and vehicles
+      'UN-39': { def: ['valid', () => '2 Mar 2027'], over: { 1: ['attention', '2 Mar 2027'] } },
+      'UN-40': { def: ['valid', () => '12 Sep 2027'], over: { 5: ['expired', '20 Nov 2026'] } },
+      'UN-41': { def: ['valid', () => '15 Jan 2027'], over: { 8: ['expiring', '4 Dec 2026'] } },
+      'UN-42': { def: ['valid', () => '15 Feb 2027'] },
+      // the products
+      'PR-03': { def: ['valid', () => 'No expiry'], over: { 11: ['missing'] } },
+      'PR-04': { def: ['valid', () => 'No expiry'], over: { 6: ['attention', 'No expiry'] } },
+      'UN-43': { def: ['valid', () => 'No expiry'], over: { 8: ['missing'] } },
+      'UN-44': { def: ['valid', () => '31 Dec 2026'] },
+      'UN-29': { requested: [7], def: ['valid', () => '30 Jun 2027'] },
+      'UN-30': { requested: [5, 6, 10], def: ['valid', () => 'No expiry'], over: { 10: ['missing'] } },
+      'PD-01': { have: [0, 3], def: ['valid', () => 'No expiry'] },
+      'PD-09': { have: [10], def: ['valid', () => 'No expiry'] },
+      'PD-12': { have: [2, 11], def: ['valid', () => 'No expiry'] },
+    },
+    archive: [
+      ['UN-05', 'Version of 1 Dec 2024', 'Replaced 1 Dec 2025'],
+      ['UN-01', 'Version of 5 Feb 2025', 'Replaced 6 Feb 2026'],
+      ['UN-38', '2025 log', 'Replaced 15 Jan 2026'],
+      ['UN-40', 'Tractor &middot; inspection of Sep 2025', 'Replaced 12 Sep 2026'],
+    ],
+  };
+  // AJ Lee's (the hidden supplier test user, reached from Rian's account menu): Carolina Knits, an apparel
+  // maker in North Carolina and one of Walmart's suppliers (js/suppliers.js). What Walmart sees of it is
+  // what's here: its company and legal papers, and its sustainability statements (the human rights one
+  // expiring). Walmart's corrective action plan (js/cap.js) asks it for more.
+  DEMO.ajlee = {
+    company: 'Carolina Knits, Inc.',
+    profile: { country: 'US', sector: 'other', entityType: 'company', employees: 310, services: [], equipmentCount: 0, productCount: 0, usClients: true },
+    line: 'United States &middot; Apparel manufacturing &middot; 310 employees',
+    facts: { 'ein|tax number|tin': '56&#8209;2209471', 'address': '1200 Battleground Ave, Greensboro, NC 27408', 'state|jurisdiction': 'North Carolina',
+      'naics|activity codes': 'NAICS 315120, 315250', 'entity type|classification': 'Corporation', 'officers|representative': 'AJ Lee (Compliance manager)' },
+    records: { workers: [], equipment: [], products: [] },
+    state: {
+      'UN-01': ['valid', '9 Mar 2026', '9 Mar 2027', '', { ref: '0418822', by: 'North Carolina Secretary of State' }],
+      'UN-02': ['valid', '2 Apr 1998', 'No expiry', '', { ref: '0418822', by: 'North Carolina Secretary of State' }],
+      'UN-03': ['valid', '14 Jan 2026', 'No expiry', '', { ref: 'EIN 56&#8209;2209471', by: 'Carolina Knits, Inc.' }],
+      'UN-05': ['valid', '1 Jul 2026', '1 Jul 2027', '', { ref: 'ACORD 25 &middot; 2026&#8209;7781', by: 'Lockton Companies' }],
+      'UN-11': ['valid', '12 Feb 2026', 'Reviewed yearly', '', { by: 'Carolina Knits, Inc.' }],
+      'UN-15': ['valid', '30 Apr 2026', 'Next year&rsquo;s, Apr 2027', 'FY 2025.', { by: 'Carolina Knits, Inc.' }],
+      'UN-18': ['valid', '5 Jan 2026', 'Reviewed yearly', 'Shared with Walmart.', { by: 'Carolina Knits, Inc.' }],
+      'UN-19': ['valid', '20 Mar 2026', 'Next report, Mar 2027', 'Shared with Walmart.', { by: 'Carolina Knits, Inc.' }],
+      'UN-22': ['expiring', '6 Dec 2025', '6 Dec 2026', 'Shared with Walmart. The 2026 statement is due by 6 December.', { by: 'Carolina Knits, Inc.' }],
+      'UN-31': ['valid', '2 Feb 2026', 'Reviewed yearly', '', { by: 'Carolina Knits, Inc.' }],
+    },
+    perRecord: {},
+    archive: [['UN-22', 'Version of 6 Dec 2024', 'Replaced 6 Dec 2025']],
+  };
   // ---- a company added in this session (new-company.html) ---------------------------------------
   // Its documents are the ones it uploaded and accepted in ALMA's guided upload
   // (js/guided-upload.js). In Company it also sees what that setup asks of it and it hasn't
@@ -505,6 +652,10 @@ window.DOC_MODEL = (() => {
     equipment: { title: 'Equipment', sub: 'Every machine: conformity, inspections, maintenance and manuals.', long: 'Where you&rsquo;ll find all your equipment documentation: every machine you bring, its checks and its paperwork.', icon: '<path d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17 2.496 24.03m8.924-8.86-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m0 0a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276a4.5 4.5 0 0 1-4.486 6.336l-.144-.004"/>' },
     products: { title: 'Products and materials', sub: 'Every product and material: technical and safety sheets, declarations, certificates.', long: 'Where you&rsquo;ll find the documents for each product and material you supply or use: technical and safety sheets, declarations and certificates.', icon: '<path d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"/>' },
   };
+  // a retailer's are its products, not materials
+  if (WM) Object.assign(AREA_META.workers, { sub: 'Right to work, training, certifications and food safety: what each associate is cleared for.', long: 'Where you&rsquo;ll find all your associates&rsquo; documentation: their right to work, training and certifications, and what each one is cleared for.' });
+  if (WM) Object.assign(AREA_META.equipment, { sub: 'Every forklift, vehicle and refrigeration unit: inspections and maintenance.', long: 'Where you&rsquo;ll find all your equipment documentation: every forklift, vehicle and refrigeration unit, its inspections and its maintenance.' });
+  if (WM) Object.assign(AREA_META.products, { title: 'Products', sub: 'Every private-brand product: certificates, safety data sheets, food registrations.', long: 'Where you&rsquo;ll find the documents for each of your private-brand products: certificates of conformity, safety data sheets and food facility registrations.' });
   // which records a per-record level is about, and what to call them
   const LEVEL_OF = { per_worker: 'workers', per_equipment: 'equipment', per_product: 'products' };
   const NOUN = { workers: ['worker', 'workers'], equipment: ['machine', 'machines'], products: ['product', 'products'] };
@@ -525,7 +676,7 @@ window.DOC_MODEL = (() => {
   // a document filed again (dropped on ALMA, uploaded from any table, on any page): its new state,
   // kept for this tab, so the Documents page and the company homepage both see it. A worker's or a
   // machine's own copy of a per-record document is kept under '<code>#<record>'.
-  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const UP_KEY = 'cm-doc-updates' + (ORG ? '-' + ORG.id : '') + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const updates = (() => { try { return JSON.parse(sessionStorage.getItem(UP_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const keepUpdates = () => { try { sessionStorage.setItem(UP_KEY, JSON.stringify(updates)); } catch (e) {} };
   const companyOptional = (country) => window.CM_COMPANY_DOCS.optional(country);
@@ -536,7 +687,13 @@ window.DOC_MODEL = (() => {
   // and anything else the company has already filed; nothing more
   const OPT = companyOptional(PROFILE.country), optOf = Object.fromEntries(OPT.map((d) => [d.code, d]));
   const filedHere = (code) => D.state[code] && !['missing', 'na'].includes(D.state[code][0]);
+  // the US documents for workers, machines and products added with the Walmart test user
+  // (tools/catalog-us-extra.py) stay out of Beatriz's demo, which was set up before them
+  const US_EXTRA = ['UN-33', 'UN-34', 'UN-35', 'UN-36', 'UN-37', 'UN-38', 'UN-39', 'UN-40', 'UN-41', 'UN-42', 'UN-43', 'UN-44'];
   const shown = R.documentsFor(CAT, PROFILE, ORG ? { phases: ['MVP', 'Registration'] } : undefined).filter((x) => !x.doc.countries || x.doc.countries.includes(PROFILE.country))
+    .filter((x) => PERSONA !== 'beatriz' || !US_EXTRA.includes(x.doc.code))
+    // AJ Lee's company (Carolina Knits, a supplier of Walmart's) has only its company documents here
+    .filter((x) => PERSONA !== 'ajlee' || x.doc.category === 'company')
     .filter(({ doc: c }) => c.category !== 'company' || (!optOf[c.code] && (c.requirement === 'mandatory' || filedHere(c.code))))
     .concat(OPT.map((d) => ({ doc: d, ask: false }))); // in the list's order
   const REGS = new Set(ORG ? companyMandatory(PROFILE.country).map((d) => d.code) : []);
@@ -633,7 +790,7 @@ window.DOC_MODEL = (() => {
   // Only a 'Mandatory if applicable' document can be marked Not applicable, always with a reason
   // the company's clients will see; it then counts as compliant, and it can be undone (back to
   // what it was). Prototype: marks are kept for this tab (sessionStorage), on top of the demo's.
-  const NA_KEY = 'cm-na' + (ORG ? '-' + ORG.id : '') + (PERSONA === 'beatriz' ? '-beatriz' : '');
+  const NA_KEY = 'cm-na' + (ORG ? '-' + ORG.id : '') + (PERSONA !== 'miguel' ? '-' + PERSONA : '');
   const naMarks = (() => { try { return JSON.parse(sessionStorage.getItem(NA_KEY) || '{}') || {}; } catch (e) { return {}; } })();
   const saveNa = () => { try { sessionStorage.setItem(NA_KEY, JSON.stringify(naMarks)); } catch (e) {} };
   const me = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || 'You'; } catch (e) { return 'You'; } })();
@@ -703,7 +860,8 @@ window.DOC_MODEL = (() => {
     const step = monthly ? 1 : /6|six/.test(r) ? 6 : /3 years/.test(r) ? 36 : /1.2 years/.test(r) ? 18 : /change|revision|amend|plan|client|entry|delivery|transport|assembly|posting|product/.test(r) || !r ? 0 : 12;
     const n = monthly ? 4 : step ? 2 + (h % 2) : 1;
     const gap = step || 14 + (h % 18);
-    const who = monthly ? ['Ana Rocha, accountant', 'Ana Rocha, accountant', 'Miguel Ferreira'] : ['Miguel Ferreira', 'Helena Ferreira'];
+    const who = PERSONA === 'ajlee' ? ['AJ Lee', 'Morgan Ellis'] : WM ? (monthly ? ['Lisa Park, compliance analyst', 'Lisa Park, compliance analyst', 'Rian Walsh'] : ['Rian Walsh', 'Dana Whitfield']) // (Walmart's own people)
+      : monthly ? ['Ana Rocha, accountant', 'Ana Rocha, accountant', 'Miguel Ferreira'] : ['Miguel Ferreira', 'Helena Ferreira'];
     const out = [];
     let replacedOn = first;
     for (let k = 1; k <= n; k++) {

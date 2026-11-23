@@ -21,7 +21,8 @@
      'who:<kind>:<i>'    any of one worker's or machine's documents
      'area:<key>'        any per-record document of a section (the matrix)
      'all'               anything the company is asked for
-   window.CMUpload.open(spec, { files, onSaved }), CMUpload.can(spec).
+     'codes:<c1>,<c2>'   some of the company's documents (a client's corrective action plan, js/cap.js)
+   window.CMUpload.open(spec, { files, onSaved, title, lead }), CMUpload.can(spec).
    Prototype: what ALMA reads is made up from the file's name and the document it lands on. */
 window.CMUpload = (() => {
   const M = window.DOC_MODEL; if (!M) return null;
@@ -94,6 +95,11 @@ window.CMUpload = (() => {
     const [t, a, b] = String(spec).split(':');
     if ((t === 'rec' || t === 'doc') && !resolve.inner) { resolve.inner = true; try { const r = resolve(spec), d = t === 'doc' ? M.DOCS.find((x) => x.id === +a) : M.DOCS.find((x) => x.code === a); return widen(r, d ? d.area : 'workers'); } finally { resolve.inner = false; } }
     const D = M.DOCS.filter(live);
+    if (t === 'codes') {
+      // asked for by the client, so one not uploaded yet is missing here, not optional
+      const pool = String(a || '').split(',').map((c) => D.find((x) => x.code === c && !x.kind)).filter(Boolean).map(docSlot).map((sl) => Object.assign(sl, { status: sl.status === 'notuploaded' ? 'missing' : sl.status }));
+      return pool.length ? { pool, focus: null, title: 'Upload documents', lead: 'ALMA reads each one, checks which document it is and that it&rsquo;s still valid, and files it.' } : null;
+    }
     if (t === 'doc') {
       const d = M.DOCS.find((x) => x.id === +a); if (!d) return null;
       if (d.kind) return { pool: rosterSlots(d), focus: null, title: `${plain(d.name)}`, lead: `One per ${M.NOUN[d.kind][0]}. ALMA reads whose name is on each file and files it for them.` };
@@ -674,6 +680,7 @@ button.cmu-acc:disabled { opacity: .45; cursor: default; }
 
   const open = (spec, opts = {}) => {
     const R0 = resolve(spec); if (!R0 || !R0.pool.length) return false;
+    if (opts.title) R0.title = opts.title; if (opts.lead) R0.lead = opts.lead;
     let { pool } = R0; const { focus } = R0;
     // who ALMA found on the files (identify), once read; the new people the user adds go on the list
     // after anything already added, in the order they're shown

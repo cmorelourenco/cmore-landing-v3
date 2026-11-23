@@ -20,10 +20,10 @@ window.CMFiles = (() => {
   }));
   // and never left waiting: past a few seconds, a file reads as not there, so its drawer says so
   const soon = (p, ms = 4000) => Promise.race([p, new Promise((res) => setTimeout(() => res(null), ms))]);
-  const beatriz = document.documentElement.dataset.persona === 'beatriz';
-  const org = () => { try { return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + (beatriz ? 'beatriz' : 'miguel')) || 'null') || 'home'; } catch (e) { return 'home'; } };
-  // Beatriz's files are kept apart from Miguel's (both companies are 'home' to their person)
-  const key = (code) => `${beatriz ? 'beatriz:' : ''}${org()}:${code}`;
+  const who = { beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel';
+  const org = () => { try { return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + who) || 'null') || 'home'; } catch (e) { return 'home'; } };
+  // Beatriz's and Walmart's files are kept apart from Miguel's (each company is 'home' to its person)
+  const key = (code) => `${who !== 'miguel' ? who + ':' : ''}${org()}:${code}`;
   const put = (code, file) => (!file ? Promise.resolve(false) : db().then((d) => new Promise((res) => {
     const tx = d.transaction(STORE, 'readwrite');
     tx.objectStore(STORE).put({ name: file.name, type: file.type || '', size: file.size || 0, blob: file, at: Date.now() }, key(code));

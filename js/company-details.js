@@ -750,7 +750,7 @@
   const logRows = (i, per, kind = 'workers') => {
     const eq = kind !== 'workers', p = recOf(kind)[i], now = Date.now(), own = logOf(kind)[i] || [], ev = [];
     const upped = new Set(own.filter((e) => e.ev === 'upload').map((e) => e.code));
-    const team = ['Miguel Ferreira', 'Helena Ferreira'];
+    const team = M.PERSONA === 'ajlee' ? ['AJ Lee', 'Morgan Ellis'] : M.PERSONA === 'walmart' ? ['Rian Walsh', 'Dana Whitfield'] : ['Miguel Ferreira', 'Helena Ferreira'];
     const addedAt = Date.parse(p.addedOn || p.since) || (eq ? now - (420 + (hash(kind[0] + i) % 600)) * DAY : now - 30 * DAY), addE = own.find((e) => e.ev === 'added'), addT = addE ? addE.t : addedAt;
     // what was on file before this session
     if (!own.some((e) => e.ev === 'added')) ev.push({ t: addedAt, ev: 'added', how: p.manual ? 'By hand' : p.isNew ? (eq ? p.how || (kind === 'products' ? 'From the product list' : 'From the equipment register') : 'From their documents') : '', by: p.isNew ? M.me : team[0] });
@@ -1031,7 +1031,7 @@
           ${kv('Home address', p.address || NOF)}${kv('Employment', p.employment ? `${p.employment}${p.since ? `, since ${p.since}` : ''}` : NOF)}
           ${kv('Identification', p.id[1] ? `${p.id[0]} &middot; ${p.id[1]}${p.id[2] ? `<br><span class="co-subtle">valid until ${p.id[2]}${idf && idf.file ? ' &middot; read by ALMA from their document' : ''}</span>` : ''}` : NOF)}
           ${kv('Right to work', right)}
-          ${kv('Health', said('WK-11', 'Fit for work'))}${kv('Training and qualifications', quals.length ? quals.map((d) => `${esc(d.name)}${d.status === 'valid' ? '' : ` <span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>`}`).join('<br>') : '<span class="co-subtle">None on file</span>')}
+          ${kv('Health', M.PERSONA === 'walmart' ? said('UN-35', 'Food handler card valid') : said('WK-11', 'Fit for work'))}${kv('Training and qualifications', quals.length ? quals.map((d) => `${esc(d.name)}${d.status === 'valid' ? '' : ` <span class="co-badge ${STATUS[d.status][1]}">${STATUS[d.status][0]}</span>`}`).join('<br>') : '<span class="co-subtle">None on file</span>')}
           ${kv('Personal protective equipment', said('WK-15', 'Delivered'))}${kv('Driving', said('DRV', 'Licence valid'))}${kv('Other', docOf('CRM') && !NO_FILE.includes(docOf('CRM').status) ? `Criminal record certificate<br>${said('CRM', 'Valid')}` : '<span class="co-subtle">Nothing on file</span>')}
         </dl></div></div>
       ${docGroups}

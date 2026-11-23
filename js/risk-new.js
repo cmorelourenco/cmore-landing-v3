@@ -27,7 +27,7 @@
 
   // where it's kept: per company, as projects are
   const person = get('cm-person') || {}, org = get('cm-org') || 'home', test = /^test@c-more\.test$/i.test(person.email || '');
-  const KEY = 'cm-risks' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`);
+  const KEY = 'cm-risks' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`) + ({ walmart: '-walmart', ajlee: '-ajlee' }[document.documentElement.dataset.persona] || ''); // (Walmart's kept apart)
   const saved = () => get(KEY) || [];
 
   // the ten colours, dark green to dark red (js/risk-docs.js CM_RISK_COLORS)

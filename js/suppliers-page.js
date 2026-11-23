@@ -115,6 +115,13 @@
 .sp-foot svg { width: 1rem; height: 1rem; color: var(--color-ink); }
 .sp-none { padding: 2.5rem 1.5rem; text-align: center; color: var(--color-ink-subtle); }
 .sp-tools-r { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
+/* the Walmart test user's corrective action plans: a button at the right of the page's title, level with its top */
+.sp-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem 2rem; }
+.sp-head-row > .sp-add { flex: none; margin-top: 0.25rem; }
+a.sp-add { text-decoration: none; }
+/* the corrective action plan's: white, its words underlined in coral (as links in text are) */
+a.sp-add[data-cap-add] { text-decoration: underline; text-decoration-color: var(--color-coral); text-decoration-thickness: 2px; text-underline-offset: 0.3em; }
+@media (max-width: 40rem) { .sp-head-row { flex-direction: column; } }
 /* the page's one action: solid graphite, as tall as the search and the filters (coral stays for ALMA's own calls) */
 .sp-add { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.125rem; border: 0; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: background-color .15s, transform .15s; }
 .sp-add:hover { background: var(--color-ink); transform: translateY(-1px); }
@@ -301,7 +308,7 @@
   // picked for "fits no case". Prototype: whether a supplier shared a document, and each field is OK,
   // is made up the same each time (less so when its papers are behind). A supplier that shares
   // nothing yet isn't placed.
-  const riskKey = () => { const g = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }; const p = g('cm-person') || {}, org = g('cm-org') || 'home', test = /^test@c-more\.test$/i.test(p.email || ''); return 'cm-risks' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`); };
+  const riskKey = () => { const g = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } }; const p = g('cm-person') || {}, org = g('cm-org') || 'home', test = /^test@c-more\.test$/i.test(p.email || ''); return 'cm-risks' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`) + ({ walmart: '-walmart', ajlee: '-ajlee' }[document.documentElement.dataset.persona] || ''); };
   const risks = () => { try { return JSON.parse(sessionStorage.getItem(riskKey()) || '[]') || []; } catch (e) { return []; } };
   const hsh = (t) => { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; };
   const rate = (s, r) => {
@@ -326,6 +333,15 @@
   const riskTh = (r) => `<th class="c sp-risk-c" title="Your risk: ${esc(r.name)}">${esc(r.name)}<span class="sp-risk-sc">${esc(ends(r))}</span></th>`;
   try { const t = sessionStorage.getItem('cm-risk-toast'); if (t) { sessionStorage.removeItem('cm-risk-toast'); setTimeout(() => { if (window.CMAlmaJob && window.CMAlmaJob.toast) window.CMAlmaJob.toast(esc(t)); const r = document.querySelector('.sp-glance'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 400); } } catch (e) {}
 
+  // the Walmart test user's corrective action plans: at the right of the title, on the list only
+  if (!sup && head && head.querySelector('h1') && document.documentElement.dataset.persona === 'walmart' && !document.querySelector('[data-cap-add]')) {
+    // level with the top of the heading (Your suppliers), not the eyebrow above it
+    const h1 = head.querySelector('h1'), row = document.createElement('div'); row.className = 'sp-head-row';
+    h1.before(row); row.append(h1); head.style.maxWidth = 'none';
+    // once there is one (js/cap.js), it opens it to be changed
+    const has = (() => { try { return !!JSON.parse(sessionStorage.getItem('cm-cap-walmart') || localStorage.getItem('cm-cap-walmart') || 'null'); } catch (e) { return false; } })();
+    row.insertAdjacentHTML('beforeend', `<a class="sp-add sp-add-q" href="new-cap.html" data-cap-add>${has ? 'Edit your corrective action plan' : 'Add a corrective action plan'}</a>`);
+  }
   const list = () => {
     const all = S.list();
     const fold = (t) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -345,7 +361,7 @@
 
   // ---- the company homepage: the same matrix, the ones to chase first, each row to its supplier --------
   // only the demo company has suppliers yet; a company added in this session has none to show
-  const orgOf = () => { try { const p = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel'; return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + p) || 'null') || 'home'; } catch (e) { return 'home'; } };
+  const orgOf = () => { try { const p = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel'); return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + p) || 'null') || 'home'; } catch (e) { return 'home'; } };
   let paintHome = null;
   if (home && orgOf() !== 'home') home.closest('section').hidden = true;
   else if (home) {

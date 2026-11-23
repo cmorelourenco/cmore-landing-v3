@@ -14,7 +14,9 @@
   } catch (e) {}
   if (!cmPerson) location.replace('register.html?login');
   // who is signed in: Miguel (CCER Construções) by default, or Beatriz (Veridian Harvest Co.)
-  document.documentElement.dataset.persona = (cmPerson && /beatriz/i.test((cmPerson.email || '') + ' ' + (cmPerson.name || ''))) ? 'beatriz' : 'miguel';
+  // (or Rian at Walmart, a hidden test user: only by the email rian@walmart.com; or AJ Lee at Carolina
+  // Knits, one of Walmart's suppliers, reached from Rian's account menu)
+  document.documentElement.dataset.persona = (cmPerson && /^rian@walmart\.com$/i.test((cmPerson.email || '').trim())) ? 'walmart' : (cmPerson && /^aj\.lee@carolinaknits\.com$/i.test((cmPerson.email || '').trim())) ? 'ajlee' : (cmPerson && /beatriz/i.test((cmPerson.email || '') + ' ' + (cmPerson.name || ''))) ? 'beatriz' : 'miguel';
 </script>
 <meta name="robots" content="noindex">
 <style>
@@ -448,6 +450,7 @@ select.input { appearance: none; padding-right: 2.5rem; cursor: pointer;
 </div>
 
 <script src="js/app-3.js"></script>
+<script src="js/cap.js"></script>
 <script src="js/company-switcher.js"></script>
 <script>
 (() => {

@@ -92,12 +92,40 @@ window.CO_PROFILE = (() => {
         { name: 'Belgian Cocoa Works NV', state: 'accepted', what: 'Product overview, carbon footprint reports', when: 'Since 12 Aug 2026' },
       ],
     },
+    // AJ Lee's (the hidden supplier test user): Carolina Knits, one of Walmart's suppliers
+    ajlee: {
+      country: 'United States', tax: '56-2209471', name: 'Carolina Knits, Inc.', trading: 'Carolina Knits', form: 'private', formOther: '',
+      hqElsewhere: '', hqCountry: '', street: '1200 Battleground Ave', postcode: '27408', city: 'Greensboro', region: 'NC',
+      sector: 'C', sectors2: '', subsectors: '14', cae: [], exports: 'no',
+      employees: '250-499', employeesYear: YEARS[1], revenue: '50-450', revenueYear: YEARS[1], currency: 'USD', structure: 'independent', parentOrg: '', parentCountry: '', parentVat: '',
+      email: 'info@carolinaknits.com', cc: '+1', phone: '(336) 555-0147', website: 'carolinaknits.com',
+      logo: 'images/carolina-knits-logo.svg',
+      consents: [
+        { name: 'Blue Ridge Outfitters', id: 'blueridge-coi', state: 'pending', what: 'certificate of insurance', when: 'Asked 3 days ago', ask: 'your certificate of insurance', codes: ['UN-05'] },
+        { name: 'Walmart Inc.', state: 'accepted', what: 'Company & legal, Sustainability, Product compliance', when: 'Since 15 Jun 2022' },
+      ],
+    },
+    // the hidden test user's (rian@walmart.com): a US retailer; the ones asking to see its documents are
+    // landlords and partners
+    walmart: {
+      country: 'United States', tax: '71-0415188', name: 'Walmart Inc.', trading: 'Walmart', form: 'public', formOther: '',
+      hqElsewhere: '', hqCountry: '', street: '702 SW 8th St', postcode: '72716', city: 'Bentonville', region: 'AR',
+      sector: 'G', sectors2: 'H', subsectors: '47,52', cae: [], exports: 'no',
+      employees: '5000+', employeesYear: YEARS[1], revenue: '450+', revenueYear: YEARS[1], currency: 'USD', structure: 'independent', parentOrg: '', parentCountry: '', parentVat: '',
+      email: 'supplier.compliance@walmart.com', cc: '+1', phone: '(479) 555-0118', website: 'walmart.com',
+      logo: '',
+      consents: [
+        { name: 'Heartland Shopping Centers', id: 'heartland-coi', state: 'pending', what: 'certificate of insurance, experience modification rate letter', when: 'Asked 2 days ago', ask: 'your insurance and safety record', codes: ['UN-05', 'UN-14'] },
+        { name: 'Brightway Pharmacy Network', id: 'brightway-soc2', state: 'pending', what: 'SOC 2 Type II report, information security policy', when: 'Asked 4 days ago', ask: 'your security reports', codes: ['UN-09', 'UN-25'] },
+        { name: 'Lakeshore Mall Partners', state: 'accepted', what: 'Company & legal, Insurance', when: 'Since 3 Mar 2025' },
+      ],
+    },
   };
   const BLANK = { country: '', tax: '', name: '', trading: '', form: '', formOther: '', hqElsewhere: '', hqCountry: '', street: '', postcode: '', city: '', region: '',
     sector: '', sectors2: '', cae: [], exports: '', employees: '', employeesYear: YEARS[1], revenue: '', revenueYear: YEARS[1], currency: 'EUR', structure: '', parentOrg: '', parentCountry: '', parentVat: '',
     email: '', cc: '+351', phone: '', website: '', logo: '', consents: [] };
   // which demo person is signed in (the page's head decides): Miguel's company, or Beatriz's
-  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
+  const persona = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel');
   const person = get(sessionStorage, 'cm-person', null) || {};
   // the test user (register.html): a new company, known only by its country and tax number so far
   const TEST = /^test@c-more\.test$/i.test(person.email || '');

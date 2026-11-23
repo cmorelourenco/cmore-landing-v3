@@ -14,10 +14,24 @@ window.CM_SUPPLIERS = (() => {
   // Beatriz (Veridian Harvest Co.) buys commodities: her suppliers are farms, cooperatives and mills, and
   // a consent covers one of her products where Miguel's covers one of his projects
   const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
-  const PROJECTS = BEATRIZ ? { rc: 'Roasted coffee beans', cb: 'Cocoa butter', dc: 'Dark chocolate couverture, 70%', cpo: 'Crude palm oil', soy: 'Refined soybean oil', rub: 'Natural rubber sheets (RSS3)' } : { sj: 'São João Hospital, east wing', en13: 'EN13 resurfacing, Vila do Conde', go: 'Garcia de Orta school renovation', qb: 'Quinta da Boavista apartments' };
+  // Walmart (the hidden test user, rian@walmart.com) buys for its stores: its suppliers are vendors of
+  // food, household goods and services, and a consent covers one of its stores or DCs
+  const WALMART = document.documentElement.dataset.persona === 'walmart';
+  // AJ Lee's company (Carolina Knits, a supplier of Walmart's) has a few suppliers of its own
+  const AJ = document.documentElement.dataset.persona === 'ajlee';
+  const PROJECTS = AJ ? {} : WALMART ? { s1023: 'Supercenter #1023, Rogers', nm5341: 'Neighborhood Market #5341, Bentonville', dc6094: 'Distribution Center #6094, Bentonville', dc7036: 'Distribution Center #7036, Searcy' } : BEATRIZ ? { rc: 'Roasted coffee beans', cb: 'Cocoa butter', dc: 'Dark chocolate couverture, 70%', cpo: 'Crude palm oil', soy: 'Refined soybean oil', rub: 'Natural rubber sheets (RSS3)' } : { sj: 'São João Hospital, east wing', en13: 'EN13 resurfacing, Vila do Conde', go: 'Garcia de Orta school renovation', qb: 'Quinta da Boavista apartments' };
 
   // what a consent can cover, and the documents that come with it
-  const SETS = BEATRIZ ? {
+  const SETS = WALMART || AJ ? {
+    legal: ['Company & legal', ['UN-01', 'UN-02', 'UN-03']],
+    insurance: ['Insurance', ['UN-05', 'UN-27']],
+    workers: ['Workers on site', ['UN-33', 'UN-34', 'UN-36', 'UN-37']],
+    hs: ['Health & safety', ['UN-11', 'UN-12', 'UN-13']],
+    food: ['Food safety', ['UN-44', 'PD-12']],
+    products: ['Product compliance', ['UN-43', 'UN-30']],
+    esg: ['Sustainability', ['UN-18', 'UN-19', 'UN-22']],
+    certs: ['Certifications', ['UN-10']],
+  } : BEATRIZ ? {
     legal: ['Company & legal', ['UN-01', 'UN-02', 'UN-03']],
     insurance: ['Insurance', ['UN-05']],
     esg: ['Sustainability', ['UN-18', 'UN-19', 'UN-22']],
@@ -36,7 +50,42 @@ window.CM_SUPPLIERS = (() => {
   //   consents: [set, project (or null for all projects), granted, state, removed]  — state: given | pending | removed
   //     (removed: they stopped sharing it, on that date; you no longer see its documents)
   //   problems: { code: [status, expiry, note] } — anything not valid
-  const RAW = BEATRIZ ? [
+  const RAW = AJ ? [
+    ['Piedmont Cotton Mills', 'Gastonia, North Carolina', ['Cotton yarn'], 180, '2023', '56-1730482', 'sales@piedmontcottonmills.com',
+      [['legal', null, '8 May 2023', 'given'], ['esg', null, '8 May 2023', 'given']], { 'UN-22': ['missing', '', 'No human rights statement shared yet.'] }],
+    ['Blue Dye Works', 'Burlington, North Carolina', ['Dyeing', 'Finishing'], 95, '2024', '56-2981145', 'office@bluedyeworks.com',
+      [['legal', null, '19 Feb 2024', 'given'], ['insurance', null, '19 Feb 2024', 'given']], {}],
+    ['Triad Trims & Labels', 'High Point, North Carolina', ['Labels', 'Trims'], 40, '2025', '56-3017764', 'orders@triadtrims.com',
+      [['legal', null, '2 Sep 2025', 'given']], {}],
+  ] : WALMART ? [
+    ['Ozark Valley Dairy', 'Springfield, Missouri', ['Milk', 'Dairy'], 420, '2019', '43-1827730', 'compliance@ozarkvalleydairy.com',
+      [['legal', null, '14 Mar 2019', 'given'], ['insurance', null, '14 Mar 2019', 'given'], ['food', 'dc7036', '2 Feb 2024', 'given'], ['hs', 'dc7036', '18 Nov 2026', 'pending']],
+      { 'UN-05': ['expired', '31 Oct 2026', 'Expired 31 October. ALMA asked them for the renewed COI.'], 'UN-44': ['missing', '', 'Their FDA facility registration wasn’t renewed in time.'] }],
+    ['Bentonville Freight Lines', 'Bentonville, Arkansas', ['Freight', 'Trucking'], 640, '2021', '71-0552917', 'safety@bentonvillefreight.com',
+      [['legal', null, '6 Jan 2021', 'given'], ['insurance', null, '6 Jan 2021', 'given'], ['workers', 'dc6094', '6 Jan 2021', 'given']],
+      { 'UN-36': ['expired', '15 Nov 2026', 'Two drivers on DC #6094 have an expired DOT medical card.'], 'UN-34': ['expiring', '2 Dec 2026', ''] }],
+    ['Gulf Coast Chemical Co.', 'Houston, Texas', ['Cleaning chemicals'], 180, '2022', '76-0418833', 'regulatory@gulfcoastchem.com',
+      [['legal', null, '9 May 2022', 'given'], ['products', null, '9 May 2022', 'given'], ['insurance', null, '20 Nov 2026', 'pending']],
+      { 'UN-30': ['missing', '', 'No Proposition 65 statement yet for the new bleach formula.'] }],
+    ['Heartland Egg Farms', 'Des Moines, Iowa', ['Shell eggs'], 260, '2020', '42-1190364', 'quality@heartlandeggs.com',
+      [['legal', null, '3 Aug 2020', 'given'], ['food', 'dc7036', '3 Aug 2020', 'given'], ['certs', null, '3 Aug 2020', 'given']], { 'UN-44': ['expiring', '31 Dec 2026', 'Their biennial renewal is due by 31 December.'] }],
+    ['Pacific Rim Appliances', 'Ontario, California', ['Small appliances'], 95, '2023', '95-4471820', 'compliance@pacificrimappliances.com',
+      [['legal', null, '11 Apr 2023', 'given'], ['products', null, '11 Apr 2023', 'given'], ['insurance', null, '11 Apr 2023', 'given']], { 'UN-43': ['processing', '', 'New certificate for the 2027 coffee maker, ALMA is reading it.'] }],
+    ['Valley Fresh Packers', 'Salinas, California', ['Fresh-cut produce', 'Salad kits'], 530, '2021', '94-3306712', 'foodsafety@valleyfreshpackers.com',
+      [['legal', null, '20 Sep 2021', 'given'], ['insurance', null, '20 Sep 2021', 'given'], ['food', 'dc7036', '20 Sep 2021', 'given'], ['esg', null, '20 Sep 2021', 'given']], {}],
+    ['Summit Outdoor Mfg.', 'Boise, Idaho', ['Tents', 'Camping gear'], 140, '2024', '82-0391156', 'ops@summitoutdoormfg.com',
+      [['legal', null, '2 Feb 2024', 'given'], ['products', null, '2 Feb 2024', 'given'], ['certs', null, '2 Feb 2024', 'given']], {}],
+    ['Carolina Knits', 'Greensboro, North Carolina', ['Apparel', 'Cotton knitwear'], 310, '2022', '56-2209471', 'sustainability@carolinaknits.com',
+      [['legal', null, '15 Jun 2022', 'given'], ['esg', null, '15 Jun 2022', 'given'], ['products', null, '15 Jun 2022', 'given']], { 'UN-22': ['expiring', '6 Dec 2026', ''] }],
+    ['Northwoods Hygiene', 'Green Bay, Wisconsin', ['Diapers', 'Baby wipes'], 220, '2023', '39-1884025', 'quality@northwoodshygiene.com',
+      [['legal', null, '7 Mar 2023', 'given'], ['products', null, '7 Mar 2023', 'given'], ['insurance', null, '7 Mar 2023', 'given']], {}],
+    ['Arkansas Facility Services', 'Little Rock, Arkansas', ['Janitorial', 'Floor care'], 85, '2025', '71-0884312', 'office@arfacilityservices.com',
+      [['legal', null, '10 Oct 2025', 'given'], ['workers', 's1023', '16 Nov 2026', 'pending'], ['insurance', null, '16 Nov 2026', 'pending']], {}],
+    ['Midwest Pharma Labs', 'Indianapolis, Indiana', ['OTC medicines', 'Hand sanitizer'], 400, '2020', '35-2041178', 'regulatory@midwestpharmalabs.com',
+      [['legal', null, '1 Jul 2020', 'removed', '30 Oct 2026'], ['certs', null, '1 Jul 2020', 'removed', '30 Oct 2026']], {}],
+    ['Heartland Foods Co.', 'Omaha, Nebraska', ['Frozen foods'], 350, '2026', '47-0675219', 'qa@heartlandfoodsco.com',
+      [['legal', null, '12 Nov 2026', 'pending']], {}],
+  ] : BEATRIZ ? [
     ['Asankragwa Cocoa Farmers', 'Tarkwa, Ghana', ['Cocoa beans'], 840, '2025', 'C0004518272', 'office@asankragwacocoa.org',
       [['legal', null, '4 Mar 2025', 'given'], ['esg', 'cb', '4 Mar 2025', 'given'], ['hs', 'cb', '19 Oct 2026', 'pending']],
       { 'UN-22': ['missing', '', 'Geolocation is missing for 3 plots. ALMA asked them for it.'], 'UN-19': ['expired', '30 Sep 2026', 'Expired 30 September: the 2026 report is on its way.'] }],
@@ -154,10 +203,10 @@ window.CM_SUPPLIERS = (() => {
   // always had; a company added in this session (or the test user's own) starts with none, and
   // keeps its own
   const get = (st, k) => { try { return JSON.parse(st.getItem(k) || 'null'); } catch (e) { return null; } };
-  const ORG = get(sessionStorage, 'cm-org') || get(localStorage, 'cm-last-org-' + (BEATRIZ ? 'beatriz' : 'miguel')) || 'home';
+  const ORG = get(sessionStorage, 'cm-org') || get(localStorage, 'cm-last-org-' + (AJ ? 'ajlee' : WALMART ? 'walmart' : BEATRIZ ? 'beatriz' : 'miguel')) || 'home';
   const TEST = /^test@c-more\.test$/i.test((get(sessionStorage, 'cm-person') || {}).email || '');
   const DEMO = ORG === 'home' && !TEST;
-  const ADD_KEY = 'cm-sup-added' + (BEATRIZ ? '-beatriz' : '') + (DEMO ? '' : `-${TEST ? 'test-' : ''}${ORG}`);
+  const ADD_KEY = 'cm-sup-added' + (AJ ? '-ajlee' : WALMART ? '-walmart' : BEATRIZ ? '-beatriz' : '') + (DEMO ? '' : `-${TEST ? 'test-' : ''}${ORG}`);
   const added = () => { try { return JSON.parse(sessionStorage.getItem(ADD_KEY) || '[]') || []; } catch (e) { return []; } };
   const fromInvite = (a) => ({
     id: a.id, name: a.name, city: a.city || a.countryName, services: a.services || [], workers: null, since: a.invited.split(' ').pop(), nipc: a.code, email: a.email,
@@ -222,7 +271,7 @@ window.CM_SUPPLIERS = (() => {
     return { shared: uniq.length, bad, soon, ok, pct: uniq.length ? Math.round((ok / uniq.length) * 100) : 0, given: s.consents.filter((c) => c.state === 'given').length, pending: s.consents.filter((c) => c.state === 'pending').length, removed: s.consents.filter((c) => c.state === 'removed').length };
   };
   // the words that differ between the two: what a supplier's tax number is called, and what a consent is for
-  const WORDS = BEATRIZ ? { id: 'Tax ID', scope: 'products' }
+  const WORDS = AJ ? { id: 'EIN', scope: 'orders' } : WALMART ? { id: 'EIN', scope: 'stores' } : BEATRIZ ? { id: 'Tax ID', scope: 'products' }
     : { id: 'NIPC', scope: 'projects' };
   return { WORDS, CATS, DEMO, PROJECTS, addAsk, list: all, byId: (id) => all().find((s) => s.id === id) || null, stats, STATUS, SUP_STATUS, addInvite, lookup, slug, ON_CMORE };
 })();

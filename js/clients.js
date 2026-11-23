@@ -22,7 +22,34 @@ window.CM_CLIENTS = (() => {
   // [name, sector, city, contact, client since, consents]
   //   consent: [title, project or null, granted (or asked, when pending), state, codes, on (stopped / declined), profile name (a request the homepage answers too)]
   //   a code with a year ('CO-06@2024') asks for that year's version of it, as well as or instead of the current one
-  const RAW = OPEN ? [
+  // the hidden Walmart test user's (rian@walmart.com): landlords and partners that ask to see its documents
+  const RAW_WM = [
+    ['Heartland Shopping Centers', 'Commercial real estate', 'Kansas City', 'tenants@heartlandcenters.com', '2023', [
+      ['Insurance', 'Supercenter #2752, Overland Park', '6 Jun 2023', 'given', ['UN-05', 'UN-27']],
+      ['Insurance and safety record', null, ago(2), 'pending', ['UN-05', 'UN-14', 'UN-05@2025'], null, 'Heartland Shopping Centers']]],
+    ['Brightway Pharmacy Network', 'Healthcare', 'Nashville', 'vendors@brightwayrx.com', '2024', [
+      ['Company & legal', null, '14 Feb 2024', 'given', ['UN-01', 'UN-02', 'UN-03']],
+      ['Information security', null, ago(4), 'pending', ['UN-09', 'UN-25'], null, 'Brightway Pharmacy Network']]],
+    ['Lakeshore Mall Partners', 'Commercial real estate', 'Chicago', 'leasing@lakeshoremall.com', '2025', [
+      ['Company & legal', null, '3 Mar 2025', 'given', ['UN-01', 'UN-02', 'UN-03'], null, 'Lakeshore Mall Partners'],
+      ['Insurance', null, '3 Mar 2025', 'given', ['UN-05', 'UN-27']]]],
+    ['Summit Realty Trust', 'Commercial real estate', 'Dallas', 'compliance@summitrealtytrust.com', '2022', [
+      ['Health and safety', 'Supercenter #0965, Plano', '11 Jan 2026', 'given', ['UN-11', 'UN-12', 'UN-13']],
+      ['Sustainability', null, '11 Jan 2026', 'given', ['UN-18', 'UN-19', 'UN-22']]]],
+    ['Prairie State Health Plan', 'Healthcare', 'Oklahoma City', 'network@prairiestatehealth.com', '2024', [
+      ['Financial', null, '20 Sep 2024', 'given', ['UN-15', 'UN-10']]]],
+    ['Gateway Outlet Properties', 'Commercial real estate', 'St. Louis', 'leases@gatewayoutlets.com', '2021', [
+      ['Company & legal', null, '5 May 2021', 'stopped', ['UN-01', 'UN-03'], '30 Sep 2026']]],
+  ];
+  // AJ Lee's (Carolina Knits): Walmart, which sees what it shares with it (js/suppliers.js), and one asking
+  const RAW_AJ = [
+    ['Walmart Inc.', 'Retail', 'Bentonville', 'supplier.compliance@walmart.com', '2022', [
+      ['Company & legal', null, '15 Jun 2022', 'given', ['UN-01', 'UN-02', 'UN-03'], null, 'Walmart Inc.'],
+      ['Sustainability', null, '15 Jun 2022', 'given', ['UN-18', 'UN-19', 'UN-22']]]],
+    ['Blue Ridge Outfitters', 'Retail', 'Asheville', 'vendors@blueridgeoutfitters.com', '2025', [
+      ['Insurance', null, ago(3), 'pending', ['UN-05'], null, 'Blue Ridge Outfitters']]],
+  ];
+  const RAW = document.documentElement.dataset.persona === 'ajlee' ? RAW_AJ : document.documentElement.dataset.persona === 'walmart' ? RAW_WM : OPEN ? [
     ['CUF', 'Healthcare', 'Lisbon', 'fornecedores@cuf.pt', '2024', [
       ['Company & legal', 'Hospital CUF Porto, new wing', '4 Sep 2025', 'given', ['CO-01', 'CO-02', 'CO-03', 'CO-06', 'CO-07'], null, 'CUF'],
       ['Insurance', 'Hospital CUF Porto, new wing', '4 Sep 2025', 'given', ['CO-08', 'CO-10', 'CO-11'], null, 'CUF']]],
@@ -60,7 +87,7 @@ window.CM_CLIENTS = (() => {
   };
 
   // what you did here, kept for the tab: { consentId: { state, on } }
-  const KEY = 'cm-clients' + (document.documentElement.dataset.persona === 'beatriz' ? '-beatriz' : '');
+  const KEY = 'cm-clients' + ({ beatriz: '-beatriz', walmart: '-walmart', ajlee: '-ajlee' }[document.documentElement.dataset.persona] || '');
   const mine = () => { try { return JSON.parse(sessionStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
   const keep = (m) => { try { sessionStorage.setItem(KEY, JSON.stringify(m)); } catch (e) {} };
   // documents you switched off under a consent you keep: { consentId: { code: the day you did } }

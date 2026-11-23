@@ -5,7 +5,7 @@
    Prototype: companies you add live in this browser (localStorage), per demo person; the one
    you're in lives in this tab (sessionStorage), and the pages read cm-company as they already do. */
 (() => {
-  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel'; // the two demo people (the page's head decides)
+  const persona = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel'); // the two demo people (the page's head decides)
   const get = (store, k, d) => { try { const v = store.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
   const set = (store, k, v) => { try { store.setItem(k, JSON.stringify(v)); } catch (e) {} };
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -18,6 +18,10 @@
   const HOME = {
     miguel: { id: 'home', name: 'CCER Construções, Lda.', logo: '<img src="images/ccer-logo.webp" alt="">', state: 'filled', country: 'PT', sector: 'Construction' },
     beatriz: { id: 'home', name: 'Veridian Harvest Co.', logo: '<span class="cs-mono cs-leaf"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 39c-13-4-17-17-9-29 6 6 9 18 9 29Z" fill="#fff"/><path d="M24 39c13-4 17-17 9-29-6 6-9 18-9 29Z" fill="#fff" fill-opacity=".82"/><circle cx="24" cy="40.5" r="2" fill="#fff"/></svg></span>', state: 'filled', country: 'US', sector: 'Other' },
+    // the hidden test user (rian@walmart.com): a US retailer, its stores as its projects
+    // AJ Lee's (the hidden supplier test user): Carolina Knits, one of Walmart's suppliers
+    ajlee: { id: 'home', name: 'Carolina Knits, Inc.', logo: '<img src="images/carolina-knits-logo.svg" alt="">', state: 'filled', country: 'US', sector: 'Other' },
+    walmart: { id: 'home', name: 'Walmart Inc.', logo: '<span class="cs-mono cs-spark"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="#ffc220"><rect x="21.75" y="5" width="4.5" height="13" rx="2.25" transform="rotate(0 24 24)"/><rect x="21.75" y="5" width="4.5" height="13" rx="2.25" transform="rotate(60 24 24)"/><rect x="21.75" y="5" width="4.5" height="13" rx="2.25" transform="rotate(120 24 24)"/><rect x="21.75" y="5" width="4.5" height="13" rx="2.25" transform="rotate(180 24 24)"/><rect x="21.75" y="5" width="4.5" height="13" rx="2.25" transform="rotate(240 24 24)"/><rect x="21.75" y="5" width="4.5" height="13" rx="2.25" transform="rotate(300 24 24)"/></g></svg></span>', state: 'filled', country: 'US', sector: 'Other' },
   }[persona];
   // the test user (register.html) starts from nothing every time: logging out wipes all the demo
   // kept in this browser, whoever it belonged to; only cookies, language and the side menu stay.
@@ -63,7 +67,7 @@
   const forget = () => {
     try {
       if (TEST) wipe();
-      ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
+      ['miguel', 'beatriz', 'walmart', 'ajlee'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p)));
       ['cm-org', 'cm-newco-paid', 'cm-newco-id', 'cm-na', 'cm-doc-updates', 'cm-view-as'].forEach((k) => sessionStorage.removeItem(k));
       // and what was filed for the companies added (their guided upload, marks and updates), and
       // the crew changes approved from a worker list (js/doc-upload.js)
@@ -124,6 +128,8 @@
 .cs-logo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .cs-leaf { background: linear-gradient(155deg, #4a9636, var(--color-positive) 60%, #2f5f23); }
 .cs-leaf svg { width: 62%; height: 62%; }
+.cs-spark { background: #0071ce; }
+.cs-spark svg { width: 70%; height: 70%; }
 .cs-mono { display: grid; place-items: center; width: 100%; height: 100%; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.875rem; font-weight: 600; }
 .cs-id { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
 .cs-id b { font-size: 0.875rem; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -231,7 +237,7 @@ html[data-sn="rail"] .cs-id, html[data-sn="rail"] .cs-chev { display: none; }
   if (window.DOC_MODEL && window.DOC_MODEL.AREAS) {
     areas = window.DOC_MODEL.AREAS.map((a) => [a.key, a.title]);
     try { sessionStorage.setItem(KEY, JSON.stringify(areas)); } catch (e) {}
-  } else areas = read() || (O.persona === 'beatriz' ? [['company', 'Company'], ['products', 'Products']] : [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['products', 'Products and materials']]);
+  } else areas = read() || (O.persona === 'beatriz' ? [['company', 'Company'], ['products', 'Products']] : [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['products', O.persona === 'walmart' ? 'Products' : 'Products and materials']]).filter((a) => O.persona !== 'ajlee' || a[0] === 'company');
   if (!areas.length) return;
   const css = `
 .sn-sub { display: grid; gap: 1px; margin: 0.125rem 0 0.375rem; padding-left: 2.75rem; }

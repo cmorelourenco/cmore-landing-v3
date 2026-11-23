@@ -30,7 +30,7 @@ window.CM_SOON_OPEN = (() => {
   } catch (e) { return []; }
 })();
 window.CMAccess = (() => {
-  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
+  const persona = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel');
   const KEY = 'cm-team-' + persona; // { orgId: { members: [...], invites: [...], groups: [...] } }
   const AS_KEY = 'cm-view-as';
   const get = (store, k, d) => { try { const v = store.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -65,7 +65,7 @@ window.CMAccess = (() => {
   // a page can be given whole, or only some of it: some of Documents' sections (the catalog's, as
   // the page groups them), or some of the projects. A group's scope = { page: [parts] }; a page
   // with no scope is given whole
-  const PROJECTS = persona === 'beatriz' ? [] : [['FC-2026-031', 'São João Hospital, east wing'], ['FC-2026-018', 'EN13 resurfacing, Vila do Conde'], ['FC-2025-047', 'Garcia de Orta secondary school renovation'], ['FC-2026-052', 'Quinta da Boavista apartments'], ['ME-2026-112', 'Data centre shell, Building B'], ['CF-2026-027', 'Clinic fit-out, level 3'], ['SN-2026-064', 'Warehouse expansion'], ['FC-2026-044', 'NorteShopping parking deck'], ['FC-2026-009', 'Riverside office fit-out'], ['ME-2026-131', 'Data centre shell, Building C'], ['FC-2025-061', 'Maia fire station no. 2'], ['FC-2026-023', 'Almeida Garrett library expansion'], ['CS-2026-008', 'Lever water treatment upgrade'], ['FC-2026-058', 'Gondomar medical offices'], ['CF-2026-033', 'Imaging suite, ground floor'], ['FC-2026-036', 'Campanhã station canopy'], ['AB-2026-090', 'School gym, Braga'], ['FC-2025-052', 'Valongo community centre'], ['SN-2026-071', 'Cold storage annex'], ['FC-2026-061', 'Póvoa seafront boardwalk repairs'], ['TD-2026-014', 'Leixões cruise terminal works'], ['FC-2026-064', 'Valongo logistics platform slab'], ['FC-2026-067', 'Braga clinic renovation']];
+  const PROJECTS = persona === 'beatriz' ? [] : persona === 'walmart' || persona === 'ajlee' ? [] : [['FC-2026-031', 'São João Hospital, east wing'], ['FC-2026-018', 'EN13 resurfacing, Vila do Conde'], ['FC-2025-047', 'Garcia de Orta secondary school renovation'], ['FC-2026-052', 'Quinta da Boavista apartments'], ['ME-2026-112', 'Data centre shell, Building B'], ['CF-2026-027', 'Clinic fit-out, level 3'], ['SN-2026-064', 'Warehouse expansion'], ['FC-2026-044', 'NorteShopping parking deck'], ['FC-2026-009', 'Riverside office fit-out'], ['ME-2026-131', 'Data centre shell, Building C'], ['FC-2025-061', 'Maia fire station no. 2'], ['FC-2026-023', 'Almeida Garrett library expansion'], ['CS-2026-008', 'Lever water treatment upgrade'], ['FC-2026-058', 'Gondomar medical offices'], ['CF-2026-033', 'Imaging suite, ground floor'], ['FC-2026-036', 'Campanhã station canopy'], ['AB-2026-090', 'School gym, Braga'], ['FC-2025-052', 'Valongo community centre'], ['SN-2026-071', 'Cold storage annex'], ['FC-2026-061', 'Póvoa seafront boardwalk repairs'], ['TD-2026-014', 'Leixões cruise terminal works'], ['FC-2026-064', 'Valongo logistics platform slab'], ['FC-2026-067', 'Braga clinic renovation']];
   const PARTS = {
     'documents.company': ['Identification and registration', 'Licences', 'Tax and social security', 'Insurance', 'Health and safety', 'Declarations', 'Certifications', 'Information security', 'Financial', 'Public contracts', 'ESG and sustainability'],
     'documents.workers': ['Insurance', 'Social security', 'Emergency', 'Training', 'Health', 'PPE', 'Legal status', 'Posted workers'],
@@ -75,8 +75,18 @@ window.CMAccess = (() => {
   if (PROJECTS.length) PARTS.projects = PROJECTS.map((p) => p[0]);
   const PART_NAME = (page, k) => (page === 'projects' ? ((PROJECTS.find((p) => p[0] === k) || [k, k])[1]) : k);
   const PART_NOUN = (page) => (page === 'projects' ? ['project', 'projects'] : ['section', 'sections']);
-  // Beatriz's company exports commodities: its groups follow sourcing, not sites
-  const DEFAULT_GROUPS = () => (persona === 'beatriz' ? [
+  // Beatriz's company exports commodities: its groups follow sourcing, not sites. Walmart's (the hidden
+  // test user) follow how a retailer runs: stores, supply chain, people, and food safety
+  const DEFAULT_GROUPS = () => (persona === 'ajlee' ? [
+    { id: 'g-comp', name: 'Compliance', content: ['documents.company', 'consents', 'questionnaires'] },
+    { id: 'g-sales', name: 'Sales', content: ['clients', 'consents'] },
+    { id: 'g-buy', name: 'Purchasing', content: ['suppliers'] },
+  ] : persona === 'walmart' ? [
+    { id: 'g-sc', name: 'Supplier compliance', content: ['suppliers', 'documents.products', 'consents'] },
+    { id: 'g-ops', name: 'Store operations', content: ['documents.equipment', 'documents.workers'] },
+    { id: 'g-ppl', name: 'People', content: ['documents.workers'] },
+    { id: 'g-food', name: 'Food safety', content: ['documents.products', 'documents.workers', 'suppliers'], scope: { 'documents.products': ['Food'] } },
+  ] : persona === 'beatriz' ? [
     { id: 'g-src', name: 'Sourcing', content: ['documents.products', 'suppliers'] },
     { id: 'g-fin', name: 'Finance', content: ['documents.company', 'consents'] },
     { id: 'g-sus', name: 'Sustainability', content: ['documents.products', 'questionnaires'] },
@@ -92,11 +102,22 @@ window.CMAccess = (() => {
   const OLD = { registration: 'documents.company', tax: 'documents.company', insurance: 'documents.company', hs: 'documents.company', certifications: 'documents.company',
     data: 'documents.company', contracts: 'documents.company', workers: 'documents.workers', equipment: 'documents.equipment', questionnaires: 'questionnaires', consents: 'consents' };
 
-  const me = Object.assign({ name: persona === 'beatriz' ? 'Beatriz Nogueira' : 'Miguel Ferreira', email: '' }, get(sessionStorage, 'cm-person', {}) || {});
+  const me = Object.assign({ name: { beatriz: 'Beatriz Nogueira', walmart: 'Rian Walsh', ajlee: 'AJ Lee' }[persona] || 'Miguel Ferreira', email: '' }, get(sessionStorage, 'cm-person', {}) || {});
   // the test user (register.html) starts alone in its company: none of the demo's people
   const test = /^test@c-more\.test$/i.test(me.email || '');
   // the people already on the demo company
-  const SEED = () => (persona === 'beatriz' ? [
+  const SEED = () => (persona === 'ajlee' ? [
+    { name: me.name, email: me.email || 'aj.lee@carolinaknits.com', role: 'owner', you: true, title: 'Compliance manager' },
+    { name: 'Morgan Ellis', email: 'morgan.ellis@carolinaknits.com', role: 'admin', since: 'Feb 2026', title: 'Operations director' },
+    { name: 'Priya Shah', email: 'priya.shah@carolinaknits.com', role: 'manager', since: 'May 2026', title: 'Key accounts, Walmart', groups: ['g-sales'] },
+  ] : persona === 'walmart' ? [
+    { name: me.name, email: me.email || 'rian@walmart.com', role: 'owner', you: true, title: 'Supplier Compliance Director' },
+    { name: 'Dana Whitfield', email: 'dana.whitfield@walmart.com', role: 'admin', since: 'Jan 2026', title: 'Senior manager, responsible sourcing' },
+    { name: 'Carlos Medina', email: 'carlos.medina@walmart.com', role: 'manager', since: 'Mar 2026', title: 'Store operations, Region 12', groups: ['g-ops'] },
+    { name: 'Aisha Grant', email: 'aisha.grant@walmart.com', role: 'manager', since: 'Apr 2026', title: 'Food safety manager', groups: ['g-food'] },
+    { name: 'Ben Thornton', email: 'ben.thornton@walmart.com', role: 'manager', since: 'Jun 2026', title: 'People partner', groups: ['g-ppl'] },
+    { name: 'Lisa Park', email: 'lisa.park@walmart.com', role: 'user', since: 'Aug 2026', title: 'Supplier compliance analyst', groups: ['g-sc'] },
+  ] : persona === 'beatriz' ? [
     { name: me.name, email: me.email || 'beatriz@veridianharvest.com', role: 'owner', you: true },
     { name: 'Daniel Okafor', email: 'daniel@veridianharvest.com', role: 'admin', since: 'Feb 2026', title: 'Head of sourcing' },
     { name: 'Priya Raman', email: 'priya@veridianharvest.com', role: 'manager', since: 'May 2026', title: 'Sustainability analyst', groups: ['g-sus'] },
@@ -130,7 +151,7 @@ window.CMAccess = (() => {
     const t = all()[id];
     if (t) return fix(t);
     // a company you add starts with just you, as its owner, and the usual groups, empty
-    return { members: id === 'home' && !test ? SEED() : [{ name: me.name, email: me.email || (persona === 'beatriz' ? 'beatriz@veridianharvest.com' : 'miguel@ccerconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
+    return { members: id === 'home' && !test ? SEED() : [{ name: me.name, email: me.email || ({ beatriz: 'beatriz@veridianharvest.com', walmart: 'rian@walmart.com', ajlee: 'aj.lee@carolinaknits.com' }[persona] || 'miguel@ccerconstrucoes.pt'), role: 'owner', you: true }], invites: [], groups: DEFAULT_GROUPS() };
   };
   const save = (id, t) => { const a = all(); a[id] = t; set(localStorage, KEY, a); };
   const orgId = () => get(sessionStorage, 'cm-org', null) || get(localStorage, 'cm-last-org-' + persona, null) || 'home';

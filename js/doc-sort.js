@@ -104,7 +104,7 @@
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 
   // ---- Uncategorized documents: the store -------------------------------------------------------------
-  const KEY = 'cm-uncat' + (DM.ORG ? '-' + DM.ORG.id : '') + (DM.PERSONA === 'beatriz' ? '-beatriz' : '');
+  const KEY = 'cm-uncat' + (DM.ORG ? '-' + DM.ORG.id : '') + (DM.PERSONA !== 'miguel' ? '-' + DM.PERSONA : '');
   const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY) || '[]') || []; } catch (e) { return []; } };
   const save = (l) => { try { sessionStorage.setItem(KEY, JSON.stringify(l)); } catch (e) {} document.dispatchEvent(new CustomEvent('cm-uncat')); };
   const list = () => load();

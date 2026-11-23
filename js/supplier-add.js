@@ -14,6 +14,8 @@
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const ini = (n) => n.split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('') || '?';
   const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
+  // Walmart (the hidden test user) is a US company too: its suppliers are asked for the US documents
+  const US = BEATRIZ || ['walmart', 'ajlee'].includes(document.documentElement.dataset.persona);
 
   // each country's company code: what it's called, an example, and when it looks right
   const digits = (n) => (v) => new RegExp(`^\\d{${n}}$`).test(v);
@@ -138,7 +140,7 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
 
   // the flow's state
   let f = null, back = null;
-  const fresh = () => ({ step: 1, country: BEATRIZ ? 'US' : 'PT', code: '', err: '', found: null, name: '', email: '', contact: '', errs: {}, picked: null, note: '', hide: new Set(), fOpen: false });
+  const fresh = () => ({ step: 1, country: US ? 'US' : 'PT', code: '', err: '', found: null, name: '', email: '', contact: '', errs: {}, picked: null, note: '', hide: new Set(), fOpen: false });
   const docsOf = (cc) => {
     const req = D.mandatory(cc).map((d) => ({ code: d.code, name: d.name.en, section: 'Mandatory', home: d.section.en, req: true }));
     const opt = D.optional(cc).filter((d) => !req.some((r) => r.code === d.code)).map((d) => ({ code: d.code, name: d.name.en, section: d.section.en, req: false }));
@@ -337,7 +339,7 @@ textarea.sa-in { height: auto; padding: 0.625rem 0.875rem; resize: vertical; }
   document.addEventListener('click', (e) => { if (e.target.closest('[data-sup-add]')) { e.preventDefault(); if (f && tucked) tuck(false); else open(); } });
   // folded, it goes with you: leave the page and it's kept for the tab (another page shows its rail,
   // js/alma-job.js); back here, it comes back as it was, folded, or opened from that rail
-  const KEY = 'cm-sup-add' + (BEATRIZ ? '-beatriz' : '');
+  const KEY = 'cm-sup-add' + (BEATRIZ ? '-beatriz' : US ? '-' + document.documentElement.dataset.persona : '');
   window.addEventListener('pagehide', () => {
     if (!f || !tucked) return;
     try { sessionStorage.setItem(KEY, JSON.stringify({ f: Object.assign({}, f, { picked: f.picked ? [...f.picked] : null, hide: [...f.hide], fOpen: false, ret: f.ret ? Object.assign({}, f.ret, { picked: f.ret.picked ? [...f.ret.picked] : null, hide: [...f.ret.hide] }) : null }), label: railLabel() })); } catch (e) {}

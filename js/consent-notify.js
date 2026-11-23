@@ -10,7 +10,7 @@
    window.CMConsents: pending(), forDoc(code), answer(id, yes), hrefOf(request), single(request). */
 window.CMConsents = (() => {
   const P = window.CO_PROFILE; if (!P) return null;
-  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
+  const persona = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel');
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const RKEY = 'cm-consent-read-' + persona;
   const readSet = () => { try { return new Set(JSON.parse(sessionStorage.getItem(RKEY)) || []); } catch (e) { return new Set(); } };
@@ -33,7 +33,7 @@ window.CMConsents = (() => {
   const list = nt && (nt.querySelector(`.nt-list.persona-${persona}-only`) || nt.querySelector('.nt-list'));
   const items = new Map(); // request id -> its notification
   const recount = () => {
-    const n = [...document.querySelectorAll('#nt .nt-item.is-unread')].filter((i) => !i.closest(`.persona-${persona === 'beatriz' ? 'miguel' : 'beatriz'}-only`)).length;
+    const n = [...document.querySelectorAll('#nt .nt-item.is-unread')].filter((i) => !i.closest(`.nt-list[class*="persona-"]:not(.persona-${persona}-only)`)).length;
     document.querySelectorAll('[data-sn-count]').forEach((c) => { c.textContent = n; if (!n) c.hidden = true; else if (c.dataset.esgShow) c.hidden = false; });
     const bell = document.getElementById('hdr-bell'); if (bell) bell.setAttribute('aria-label', n ? `Notifications, ${n} new` : 'Notifications');
   };

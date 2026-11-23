@@ -111,8 +111,22 @@
     'Diamond State Builders', 'Garden State Contractors', 'Liberty Mechanical', 'Chesapeake HVAC', 'Construções Tejo', 'Construcciones Meseta',
     'Bayern Stahlbau', 'Rhein Dach', 'Isar Elektrotechnik', 'Harbor Point Builders'];
   const slug = (t) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/&/g, ' ').split(/[^a-z0-9]+/).filter((w) => w && w !== 'heating').join('-');
+  // the hidden Walmart test user (rian@walmart.com): its own suppliers are the ones in its ecosystem,
+  // not Miguel's around Porto
+  const WM = document.documentElement.dataset.persona === 'walmart';
+  if (WM) RAW.push(
+    ['Ozark Valley Dairy', 'Springfield', 'Greene County', 'Missouri', US, ['Milk', 'Dairy'], 420, 2, 'wm', 2025],
+    ['Bentonville Freight Lines', 'Bentonville', 'Benton County', 'Arkansas', US, ['Freight', 'Trucking'], 640, 2, 'wm', 2025],
+    ['Gulf Coast Chemical Co.', 'Houston', 'Harris County', 'Texas', US, ['Cleaning chemicals'], 180, 1, 'wm', 2025],
+    ['Heartland Egg Farms', 'Des Moines', 'Polk County', 'Iowa', US, ['Shell eggs'], 260, 0, 'wm', 2025],
+    ['Pacific Rim Appliances', 'Ontario', 'San Bernardino County', 'California', US, ['Small appliances'], 95, 0, 'wm', 2026],
+    ['Valley Fresh Packers', 'Salinas', 'Monterey County', 'California', US, ['Fresh-cut produce'], 530, 0, 'wm', 2025],
+    ['Summit Outdoor Mfg.', 'Boise', 'Ada County', 'Idaho', US, ['Tents', 'Camping gear'], 140, 0, 'wm', 2026],
+    ['Carolina Knits', 'Greensboro', 'Guilford County', 'North Carolina', US, ['Apparel'], 310, 0, 'wm', 2025],
+    ['Northwoods Hygiene', 'Green Bay', 'Brown County', 'Wisconsin', US, ['Diapers', 'Baby wipes'], 220, 0, 'wm', 2026],
+    ['Arkansas Facility Services', 'Little Rock', 'Pulaski County', 'Arkansas', US, ['Janitorial', 'Floor care'], 85, 0, 'wm', 2026]);
   const SUP = RAW.map(([name, city, region, state, country, services, workers, pending, mine, since], id) => ({
-    id, name, city, region, state, country, services, workers, pending, mine: !!mine, since, sent: false,
+    id, name, city, region, state, country, services, workers, pending, mine: WM ? mine === 'wm' : document.documentElement.dataset.persona === 'ajlee' ? false : !!mine, since, sent: false,
     logo: LOGOS.includes(name) ? `images/suppliers/${slug(name)}.svg` : '',
     ini: name.replace(/[^A-Za-zÀ-ÿ ]/g, ' ').split(/\s+/).filter((w) => w && !/^(of|do|de|and|co)$/i.test(w)).slice(0, 2).map((w) => w[0]).join('').toUpperCase(),
   }));

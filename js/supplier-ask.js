@@ -8,6 +8,8 @@
   if (!sup || !A || sup.status === 'invited') return;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
+  // Walmart (the hidden test user) is a US company too: its suppliers are asked for the US documents
+  const US = BEATRIZ || ['walmart', 'ajlee'].includes(document.documentElement.dataset.persona);
   const removed = sup.consents.filter((c) => c.state === 'removed');
   if (!removed.length) return;
 
@@ -27,7 +29,7 @@
   // (for their country) that isn't already shared with you or waiting for their answer
   const busy = new Set(sup.consents.filter((c) => c.state !== 'removed').flatMap((c) => c.codes || c.docs.map((d) => d.code)));
   const inRemoved = new Set(removed.flatMap((c) => c.docs.map((d) => d.code)));
-  const more = A.docsOf(BEATRIZ ? 'US' : 'PT').filter((d) => !busy.has(d.code) && !inRemoved.has(d.code))
+  const more = A.docsOf(US ? 'US' : 'PT').filter((d) => !busy.has(d.code) && !inRemoved.has(d.code))
     .reduce((g, d) => { const k = d.req ? d.home : d.section; (g[k] = g[k] || []).push(d); return g; }, {});
   const GROUPS = removed.map((c) => ({ key: c.id, title: c.title, sub: `${c.project ? `For ${c.project}` : 'For all your projects'} · removed on ${c.removed}`, removed: true, docs: c.docs.map((d) => ({ code: d.code, name: d.name, req: /mandatory/i.test(d.requirement) })) }))
     .concat(Object.entries(more).map(([sec, l]) => ({ key: `more:${sec}`, title: sec, docs: l })));

@@ -41,6 +41,14 @@
     'product.notified_body': (p, x) => !!x.notifiedBody,
     'product.hazardous': (p, x) => !!x.hazardous,
     'product.other_eu_rules': (p, x) => !!x.otherEuRules,
+    // the US documents for workers, machines and products (tools/catalog-us-extra.py)
+    'worker.food_handler': (p, w) => !!w.foodHandler,
+    'worker.cdl_driver': (p, w) => !!w.cdlDriver,
+    'equipment.powered_truck': (p, e) => !!e.poweredTruck,
+    'equipment.road': (p, e) => !!e.road,
+    'equipment.refrigerant': (p, e) => !!e.refrigerant,
+    'product.consumer': (p, x) => !!x.consumer,
+    'product.food': (p, x) => !!x.food,
   };
   const subjectOf = (key) => (key && key.includes('.') ? key.split('.')[0] : 'company');
 

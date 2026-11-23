@@ -9,12 +9,12 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const MAX = 3000, SHOTS = 5, MB = 10;
   const person = (() => { try { return JSON.parse(sessionStorage.getItem('cm-person')) || {}; } catch (e) { return {}; } })();
-  const mail = person.email || (beatriz ? 'beatriz@veridianharvest.com' : 'miguel@ccerconstrucoes.pt');
+  const mail = person.email || (beatriz ? 'beatriz@veridianharvest.com' : document.documentElement.dataset.persona === 'walmart' ? 'rian@walmart.com' : document.documentElement.dataset.persona === 'ajlee' ? 'aj.lee@carolinaknits.com' : 'miguel@ccerconstrucoes.pt');
 
   // every area of the app, and its sections
   const AREAS = [
     ['Company overview', ['The homepage', beatriz ? 'Product overview' : 'Project overview', 'Documents requiring attention', 'Suppliers needing attention', 'Who asked for your consents']],
-    ['Documents', ['All documents', 'Company', 'Workers', 'Equipment'].concat(beatriz ? ['Products'] : []).concat(['Uploading and checking files', 'Marking a document not applicable'])],
+    ['Documents', ['All documents', 'Company', 'Workers', 'Equipment'].concat(beatriz || document.documentElement.dataset.persona === 'walmart' ? ['Products'] : []).concat(['Uploading and checking files', 'Marking a document not applicable'])],
     ['Questionnaires', ['The list of questionnaires', 'Answering a questionnaire', 'Results and score']],
     ['Notifications', ['The bell and its list', 'Emails we send']],
     ['C‑MORE ecosystem', ['Searching for companies', 'A company’s page', 'Connecting with a company']],

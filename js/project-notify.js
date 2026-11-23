@@ -6,7 +6,8 @@
    window.CMProjectNotes: markRead(id). */
 window.CMProjectNotes = (() => {
   const none = { markRead: () => {} };
-  if (document.documentElement.dataset.persona === 'beatriz') return none;
+  // (Beatriz deals in products; the hidden test users, Walmart and AJ Lee, have no projects)
+  if (['beatriz', 'walmart', 'ajlee'].includes(document.documentElement.dataset.persona)) return none;
   const get = (k) => { try { return JSON.parse(sessionStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   // the demo company's own projects: not the test user's, not a company added in this session
   if ((get('cm-org') || 'home') !== 'home' || /^test@c-more\.test$/i.test((get('cm-person') || {}).email || '')) return none;

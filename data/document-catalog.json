@@ -232,6 +232,55 @@
    "kind": "answer",
    "question": "Are workers housed for this site?",
    "drivenBy": "Site allocation"
+  },
+  {
+   "key": "worker.food_handler",
+   "subject": "worker",
+   "kind": "fact",
+   "question": "Does this worker handle unpackaged food?",
+   "drivenBy": "Worker profile · Job category"
+  },
+  {
+   "key": "worker.cdl_driver",
+   "subject": "worker",
+   "kind": "fact",
+   "question": "Does this worker drive a commercial motor vehicle?",
+   "drivenBy": "Worker profile · Job category"
+  },
+  {
+   "key": "equipment.powered_truck",
+   "subject": "equipment",
+   "kind": "fact",
+   "question": "Is it a powered industrial truck (forklift, reach truck, pallet jack)?",
+   "drivenBy": "Equipment profile · Equipment type"
+  },
+  {
+   "key": "equipment.road",
+   "subject": "equipment",
+   "kind": "fact",
+   "question": "Is it a commercial motor vehicle on public roads?",
+   "drivenBy": "Equipment profile · Equipment type"
+  },
+  {
+   "key": "equipment.refrigerant",
+   "subject": "equipment",
+   "kind": "fact",
+   "question": "Does it hold 50 lb or more of refrigerant?",
+   "drivenBy": "Equipment profile · Equipment type"
+  },
+  {
+   "key": "product.consumer",
+   "subject": "product",
+   "kind": "fact",
+   "question": "Is it a consumer product under CPSC rules?",
+   "drivenBy": "Product profile · Product family"
+  },
+  {
+   "key": "product.food",
+   "subject": "product",
+   "kind": "fact",
+   "question": "Is it a food product?",
+   "drivenBy": "Product profile · Product family"
   }
  ],
  "docs": [
@@ -7598,6 +7647,907 @@
      "extractedByAlma": true,
      "editableByUser": true,
      "visibleToClients": false
+    }
+   ]
+  },
+  {
+   "code": "UN-33",
+   "category": "workers",
+   "section": {
+    "en": "Right to work",
+    "pt": "Direito ao trabalho"
+   },
+   "name": {
+    "en": "Form I-9 (Employment Eligibility Verification)",
+    "pt": "Formulário I-9 (Verificação de Elegibilidade)"
+   },
+   "description": {
+    "en": "The federal form every US employer completes for each hire, verifying identity and authorization to work.",
+    "pt": "Formulário federal que o empregador americano preenche em cada contratação, a verificar a identidade e a autorização de trabalho."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "has_employees",
+   "appliesWhen": "If the company has employees",
+   "level": "per_worker",
+   "hasIssueDate": true,
+   "expiryRule": "No expiry (reverify when the work authorization ends)",
+   "renewal": "On reverification",
+   "checks": "Name = worker; Sections 1 and 2 complete; signed by employer",
+   "sharing": "restricted",
+   "phase": "MVP",
+   "legalBasis": "Immigration Reform and Control Act; 8 CFR 274a.2",
+   "titles": "Form I-9; Employment Eligibility Verification",
+   "usuallyIssuedBy": "Employer (USCIS form)",
+   "recognitionCues": "Form I-9; USCIS; List A / List B / List C documents; Section 2",
+   "confusedWith": [],
+   "fields": [
+    {
+     "name": "Worker name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Citizenship / immigration status",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Work authorization expires",
+     "type": "Date",
+     "requiredToSave": false,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issue date (Section 2 completed)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    }
+   ]
+  },
+  {
+   "code": "UN-34",
+   "category": "workers",
+   "section": {
+    "en": "Training and qualifications",
+    "pt": "Formação e qualificações"
+   },
+   "name": {
+    "en": "Powered Industrial Truck Operator Certification",
+    "pt": "Certificação de Operador de Empilhador"
+   },
+   "description": {
+    "en": "Employer certification that a worker was trained and evaluated to drive a forklift, reach truck or pallet jack.",
+    "pt": "Certificação do empregador de que o trabalhador foi formado e avaliado para conduzir empilhadores ou porta-paletes."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "worker.certified_operator",
+   "appliesWhen": "If the worker operates a powered industrial truck",
+   "level": "per_worker",
+   "hasIssueDate": true,
+   "expiryRule": "Issue date + 3 years",
+   "renewal": "Every 3 years",
+   "checks": "Name = worker; truck type; evaluator named; evaluation within 3 years",
+   "sharing": "restricted",
+   "phase": "MVP",
+   "legalBasis": "OSHA 29 CFR 1910.178(l)",
+   "titles": "Forklift operator certification; PIT certificate",
+   "usuallyIssuedBy": "Employer or training provider",
+   "recognitionCues": "Forklift; powered industrial truck; operator evaluation; 1910.178",
+   "confusedWith": [
+    "UN-38"
+   ],
+   "fields": [
+    {
+     "name": "Worker name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Truck type",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Evaluator",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issue date (evaluation date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    }
+   ]
+  },
+  {
+   "code": "UN-35",
+   "category": "workers",
+   "section": {
+    "en": "Health",
+    "pt": "Saúde"
+   },
+   "name": {
+    "en": "Food Handler Card",
+    "pt": "Cartão de Manipulador de Alimentos"
+   },
+   "description": {
+    "en": "Card showing a worker completed an accredited food safety course, needed to handle unpackaged food.",
+    "pt": "Cartão que mostra que o trabalhador fez um curso acreditado de segurança alimentar, necessário para manipular alimentos não embalados."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "worker.food_handler",
+   "appliesWhen": "If the worker handles unpackaged food",
+   "level": "per_worker",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document",
+   "renewal": "Every 2–3 years, by state",
+   "checks": "Name = worker; accredited (ANAB) provider; in date",
+   "sharing": "restricted",
+   "phase": "MVP",
+   "legalBasis": "State and county food codes (FDA Food Code 2-103.11)",
+   "titles": "Food handler card; Food handler's permit",
+   "usuallyIssuedBy": "ANAB-accredited training provider",
+   "recognitionCues": "Food handler; ServSafe; ANAB; card number",
+   "confusedWith": [],
+   "fields": [
+    {
+     "name": "Worker name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Card number",
+     "type": "Text",
+     "requiredToSave": false,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issuing state / county",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    }
+   ]
+  },
+  {
+   "code": "UN-36",
+   "category": "workers",
+   "section": {
+    "en": "Driving",
+    "pt": "Condução"
+   },
+   "name": {
+    "en": "DOT Medical Examiner's Certificate",
+    "pt": "Certificado Médico DOT"
+   },
+   "description": {
+    "en": "Certificate from a registered medical examiner that a commercial driver is physically qualified to drive.",
+    "pt": "Certificado de um médico registado de que o motorista profissional está fisicamente apto para conduzir."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "worker.cdl_driver",
+   "appliesWhen": "If the worker drives a commercial motor vehicle",
+   "level": "per_worker",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document (up to 2 years)",
+   "renewal": "Every 2 years at most",
+   "checks": "Name = worker; examiner on the National Registry; in date",
+   "sharing": "restricted",
+   "phase": "MVP",
+   "legalBasis": "FMCSA 49 CFR 391.41–391.43",
+   "titles": "Medical Examiner's Certificate (MCSA-5876); DOT medical card",
+   "usuallyIssuedBy": "FMCSA-registered medical examiner",
+   "recognitionCues": "MCSA-5876; National Registry number; DOT physical",
+   "confusedWith": [
+    "UN-37"
+   ],
+   "fields": [
+    {
+     "name": "Worker name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Examiner registry number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issue date (exam date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    }
+   ]
+  },
+  {
+   "code": "UN-37",
+   "category": "workers",
+   "section": {
+    "en": "Driving",
+    "pt": "Condução"
+   },
+   "name": {
+    "en": "Commercial Driver's License (CDL)",
+    "pt": "Carta de Condução Profissional (CDL)"
+   },
+   "description": {
+    "en": "The state licence to drive a commercial motor vehicle, with its class and endorsements.",
+    "pt": "Licença estadual para conduzir um veículo comercial, com a classe e as habilitações."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "worker.cdl_driver",
+   "appliesWhen": "If the worker drives a commercial motor vehicle",
+   "level": "per_worker",
+   "hasIssueDate": true,
+   "expiryRule": "Printed on the document",
+   "renewal": "By state, usually every 4–8 years",
+   "checks": "Name = worker; class matches the vehicle; in date",
+   "sharing": "restricted",
+   "phase": "MVP",
+   "legalBasis": "FMCSA 49 CFR Part 383",
+   "titles": "Commercial Driver's License; CDL Class A",
+   "usuallyIssuedBy": "State driver licensing agency",
+   "recognitionCues": "CDL; Class A; endorsements; restrictions",
+   "confusedWith": [
+    "UN-36"
+   ],
+   "fields": [
+    {
+     "name": "Worker name",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Licence number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Class and endorsements",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Issuing state",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": false
+    }
+   ]
+  },
+  {
+   "code": "UN-38",
+   "category": "workers",
+   "section": {
+    "en": "Training and qualifications",
+    "pt": "Formação e qualificações"
+   },
+   "name": {
+    "en": "Annual Safety Training Log",
+    "pt": "Registo Anual de Formação em Segurança"
+   },
+   "description": {
+    "en": "The year's safety trainings and who attended them: hazard communication, emergency action, lifting.",
+    "pt": "As formações de segurança do ano e quem as frequentou."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "has_employees",
+   "appliesWhen": "If the company has employees",
+   "level": "all_workers",
+   "hasIssueDate": true,
+   "expiryRule": "Issue date + 1 year",
+   "renewal": "Annual",
+   "checks": "Year = this year; every worker listed",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "OSHA 29 CFR 1910.38, 1910.1200(h)",
+   "titles": "Safety training log; Training attendance record",
+   "usuallyIssuedBy": "Company",
+   "recognitionCues": "Training log; attendance; HazCom; emergency action plan",
+   "confusedWith": [
+    "UN-34"
+   ],
+   "fields": [
+    {
+     "name": "Year",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Trainings held",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Workers trained",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-39",
+   "category": "equipment",
+   "section": {
+    "en": "Inspections",
+    "pt": "Inspeções"
+   },
+   "name": {
+    "en": "Powered Industrial Truck Inspection Record",
+    "pt": "Registo de Inspeção de Empilhador"
+   },
+   "description": {
+    "en": "The record of the checks a forklift, reach truck or pallet jack gets before each shift, and its last full inspection.",
+    "pt": "O registo das verificações que um empilhador ou porta-paletes tem antes de cada turno e da última inspeção completa."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "equipment.powered_truck",
+   "appliesWhen": "If it is a powered industrial truck",
+   "level": "per_equipment",
+   "hasIssueDate": true,
+   "expiryRule": "Next inspection",
+   "renewal": "Daily checks; full inspection yearly",
+   "checks": "Truck = record; result = pass; defects closed",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "OSHA 29 CFR 1910.178(q)(7)",
+   "titles": "Forklift inspection checklist; PIT inspection record",
+   "usuallyIssuedBy": "Company or service provider",
+   "recognitionCues": "Pre-shift checklist; forklift; serial number; defects",
+   "confusedWith": [
+    "UN-40"
+   ],
+   "fields": [
+    {
+     "name": "Truck serial number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Result (pass / fail)",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Inspector",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (inspection date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (next inspection)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-40",
+   "category": "equipment",
+   "section": {
+    "en": "Inspections",
+    "pt": "Inspeções"
+   },
+   "name": {
+    "en": "DOT Annual Vehicle Inspection Report",
+    "pt": "Relatório de Inspeção Anual DOT"
+   },
+   "description": {
+    "en": "The yearly inspection every commercial motor vehicle needs, by a qualified inspector.",
+    "pt": "A inspeção anual de que cada veículo comercial precisa, feita por um inspetor qualificado."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "equipment.road",
+   "appliesWhen": "If it is a commercial motor vehicle",
+   "level": "per_equipment",
+   "hasIssueDate": true,
+   "expiryRule": "Issue date + 1 year",
+   "renewal": "Annual",
+   "checks": "Vehicle = record (VIN); result = pass; inspector qualified",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "FMCSA 49 CFR 396.17",
+   "titles": "Annual vehicle inspection report; DOT inspection",
+   "usuallyIssuedBy": "Qualified inspector",
+   "recognitionCues": "Annual inspection; VIN; 396.17; inspector qualification",
+   "confusedWith": [
+    "UN-39"
+   ],
+   "fields": [
+    {
+     "name": "VIN",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Result (pass / fail)",
+     "type": "List",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Inspector",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (inspection date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-41",
+   "category": "equipment",
+   "section": {
+    "en": "Specific equipment",
+    "pt": "Equipamento específico"
+   },
+   "name": {
+    "en": "Refrigerant Leak Inspection Record",
+    "pt": "Registo de Inspeção de Fugas de Refrigerante"
+   },
+   "description": {
+    "en": "Leak checks and repairs on refrigeration that holds 50 lb or more of refrigerant, by a certified technician.",
+    "pt": "Verificações e reparações de fugas em equipamentos de frio com 50 lb ou mais de refrigerante."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "equipment.refrigerant",
+   "appliesWhen": "If it holds 50 lb or more of refrigerant",
+   "level": "per_equipment",
+   "hasIssueDate": true,
+   "expiryRule": "Next inspection",
+   "renewal": "Quarterly or yearly, by charge size",
+   "checks": "Unit = record; technician EPA 608 certified; leak rate under the threshold",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "EPA Clean Air Act Section 608; 40 CFR 82.157",
+   "titles": "Refrigerant leak inspection; Section 608 service record",
+   "usuallyIssuedBy": "EPA 608-certified technician",
+   "recognitionCues": "Leak rate; refrigerant charge; Section 608; technician certification",
+   "confusedWith": [],
+   "fields": [
+    {
+     "name": "Unit",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Refrigerant and charge (lb)",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Leak rate",
+     "type": "Number",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Technician certification number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (inspection date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (next inspection)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-42",
+   "category": "equipment",
+   "section": {
+    "en": "Maintenance",
+    "pt": "Manutenção"
+   },
+   "name": {
+    "en": "Equipment Maintenance Record",
+    "pt": "Registo de Manutenção"
+   },
+   "description": {
+    "en": "The service history of a machine or vehicle: what was done, when, and when it is next due.",
+    "pt": "O histórico de manutenção de uma máquina ou veículo."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "own_equipment",
+   "appliesWhen": "If the company has its own equipment",
+   "level": "per_equipment",
+   "hasIssueDate": true,
+   "expiryRule": "Next maintenance",
+   "renewal": "Per manufacturer plan",
+   "checks": "Equipment = record; last service in the plan",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "OSHA 29 CFR 1910.178(q); FMCSA 49 CFR 396.3",
+   "titles": "Maintenance log; Service record",
+   "usuallyIssuedBy": "Company or service provider",
+   "recognitionCues": "Service; work order; next service due",
+   "confusedWith": [
+    "UN-39",
+    "UN-40"
+   ],
+   "fields": [
+    {
+     "name": "Work done",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date (service date)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date (next service)",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-43",
+   "category": "products",
+   "section": {
+    "en": "Compliance",
+    "pt": "Conformidade"
+   },
+   "name": {
+    "en": "General Certificate of Conformity (CPSC)",
+    "pt": "Certificado Geral de Conformidade (CPSC)"
+   },
+   "description": {
+    "en": "The importer's or manufacturer's certificate that a consumer product meets the CPSC rules that apply to it.",
+    "pt": "Certificado do importador ou fabricante de que um produto de consumo cumpre as regras CPSC."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "product.consumer",
+   "appliesWhen": "If it is a consumer product under CPSC rules",
+   "level": "per_product",
+   "hasIssueDate": true,
+   "expiryRule": "No expiry (new one on change)",
+   "renewal": "On change",
+   "checks": "Product = record; rules cited; testing lab named",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "Consumer Product Safety Improvement Act §102; 16 CFR 1110",
+   "titles": "General Certificate of Conformity; GCC; Children’s Product Certificate",
+   "usuallyIssuedBy": "Importer or manufacturer",
+   "recognitionCues": "GCC; CPSC; 16 CFR; testing laboratory",
+   "confusedWith": [
+    "UN-29"
+   ],
+   "fields": [
+    {
+     "name": "Product",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Rules certified",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Testing laboratory",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    }
+   ]
+  },
+  {
+   "code": "UN-44",
+   "category": "products",
+   "section": {
+    "en": "Food",
+    "pt": "Alimentar"
+   },
+   "name": {
+    "en": "FDA Food Facility Registration",
+    "pt": "Registo FDA da Instalação Alimentar"
+   },
+   "description": {
+    "en": "The FDA registration of the facility that makes, packs or holds a food product, renewed every other year.",
+    "pt": "O registo na FDA da instalação que produz, embala ou armazena um produto alimentar."
+   },
+   "scope": [
+    "US"
+   ],
+   "sectors": "any",
+   "requirement": "if_applicable",
+   "condition": "product.food",
+   "appliesWhen": "If it is a food product",
+   "level": "per_product",
+   "hasIssueDate": true,
+   "expiryRule": "End of the next renewal period (31 Dec, even years)",
+   "renewal": "Every 2 years",
+   "checks": "Facility = the product’s maker; registration current",
+   "sharing": "standard",
+   "phase": "MVP",
+   "legalBasis": "FD&C Act §415; 21 CFR Part 1 Subpart H",
+   "titles": "FDA food facility registration; FFR",
+   "usuallyIssuedBy": "U.S. Food and Drug Administration",
+   "recognitionCues": "FDA registration number; food facility; biennial renewal",
+   "confusedWith": [],
+   "fields": [
+    {
+     "name": "Product",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Facility",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Registration number",
+     "type": "Text",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Issue date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
+    },
+    {
+     "name": "Expiry date",
+     "type": "Date",
+     "requiredToSave": true,
+     "extractedByAlma": true,
+     "editableByUser": true,
+     "visibleToClients": true
     }
    ]
   }

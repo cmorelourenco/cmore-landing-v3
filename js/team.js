@@ -785,7 +785,7 @@
   };
   // prototype only: any file reads as a list of 20 to 30 made-up people, for every user, so the
   // bulk invite can be tried without preparing a spreadsheet. Beatriz's (a US company) are American
-  const US = document.documentElement.dataset.persona === 'beatriz';
+  const US = ['beatriz', 'walmart', 'ajlee'].includes(document.documentElement.dataset.persona);
   const FIRST = US ? ['Emily', 'James', 'Olivia', 'Michael', 'Ava', 'Daniel', 'Sophia', 'Ethan', 'Grace', 'Noah', 'Chloe', 'Ryan', 'Hannah', 'Lucas', 'Megan', 'Tyler', 'Lauren', 'Jacob', 'Natalie', 'Kevin', 'Abigail', 'Brandon', 'Madison', 'Austin', 'Rachel', 'Justin', 'Kayla', 'Aaron', 'Victoria', 'Logan'] : ['Ana', 'Bruno', 'Carla', 'Diogo', 'Eva', 'Filipe', 'Gabriela', 'Hugo', 'Inês', 'João', 'Leonor', 'Marco', 'Nádia', 'Óscar', 'Paula', 'Rui', 'Sara', 'Tiago', 'Vera', 'Xavier', 'Beatriz', 'Carlos', 'Daniela', 'Pedro', 'Marta', 'Rita', 'André', 'Joana', 'Luís', 'Sofia'];
   const LAST = US ? ['Johnson', 'Miller', 'Davis', 'Garcia', 'Wilson', 'Anderson', 'Thomas', 'Moore', 'Jackson', 'Martin', 'Thompson', 'White', 'Harris', 'Clark', 'Lewis'] : ['Costa', 'Pereira', 'Santos', 'Oliveira', 'Rodrigues', 'Martins', 'Sousa', 'Fernandes', 'Gomes', 'Lopes', 'Almeida', 'Ribeiro', 'Carvalho', 'Teixeira', 'Moreira'];
   const fakeRows = (t) => {

@@ -15,6 +15,8 @@
   const head = document.getElementById('pjp-head'), body = document.getElementById('pjp-body');
   if (!head || !body || !PJ) return;
   if (document.documentElement.dataset.persona === 'beatriz') { location.replace('my-company.html?filled#products'); return; }
+  // the hidden test users (Walmart, AJ Lee) have no projects
+  if (['walmart', 'ajlee'].includes(document.documentElement.dataset.persona)) { location.replace('my-company.html?filled'); return; }
 
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const hash = (t) => { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return Math.abs(h); };

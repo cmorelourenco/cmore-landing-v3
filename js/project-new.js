@@ -9,6 +9,8 @@
 (() => {
   const box = document.getElementById('np-body'); if (!box) return;
   if (document.documentElement.dataset.persona === 'beatriz') { location.replace('my-company.html?filled#products'); return; }
+  // the hidden test users (Walmart, AJ Lee) have no projects
+  if (['walmart', 'ajlee'].includes(document.documentElement.dataset.persona)) { location.replace('my-company.html?filled'); return; }
   const S = window.CM_SUPPLIERS;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const fold = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();

@@ -6,7 +6,7 @@
    Loaded after js/consent-notify.js and before each page's notifications script, so it is counted. */
 (() => {
   const P = window.CO_PROFILE; if (!P || !P.subsMissing) return;
-  const persona = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
+  const persona = ({ beatriz: 'beatriz', walmart: 'walmart', ajlee: 'ajlee' }[document.documentElement.dataset.persona] || 'miguel');
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const RKEY = 'cm-profile-note-read-' + persona;
   const isRead = () => { try { return sessionStorage.getItem(RKEY) === '1'; } catch (e) { return false; } };
@@ -18,7 +18,7 @@
   const names = (m) => m.map((k) => P.label(P.SECTORS, k));
 
   const recount = () => {
-    const n = [...document.querySelectorAll('#nt .nt-item.is-unread')].filter((i) => !i.closest(`.persona-${persona === 'beatriz' ? 'miguel' : 'beatriz'}-only`)).length;
+    const n = [...document.querySelectorAll('#nt .nt-item.is-unread')].filter((i) => !i.closest(`.nt-list[class*="persona-"]:not(.persona-${persona}-only)`)).length;
     document.querySelectorAll('[data-sn-count]').forEach((c) => { c.textContent = n; if (!n) c.hidden = true; else if (c.dataset.esgShow) c.hidden = false; });
     const bell = document.getElementById('hdr-bell'); if (bell) bell.setAttribute('aria-label', n ? `Notifications, ${n} new` : 'Notifications');
   };

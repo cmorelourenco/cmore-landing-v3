@@ -45,8 +45,9 @@ window.CMAlmaJob = (() => {
 .cmj { position: fixed; top: 0; right: 0; bottom: 0; z-index: 100; width: 4.5rem; background: var(--color-surface, #fff); border-left: 1px solid var(--color-line); box-shadow: -24px 0 60px -30px rgba(52, 52, 52, .35); }`;
   const st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st);
 
-  const beatriz = () => document.documentElement.dataset.persona === 'beatriz';
-  const KEY = () => 'cm-alma-job' + (beatriz() ? '-beatriz' : '');
+  // kept per person: Miguel's under the plain key, Beatriz's and Walmart's (the hidden test user) apart
+  const sfx = () => ({ beatriz: '-beatriz', walmart: '-walmart', ajlee: '-ajlee' }[document.documentElement.dataset.persona] || '');
+  const KEY = () => 'cm-alma-job' + sfx();
   const get = () => { try { return JSON.parse(sessionStorage.getItem(KEY())) || null; } catch (e) { return null; } };
   const save = (job) => { try { sessionStorage.setItem(KEY(), JSON.stringify(job)); } catch (e) {} };
   const clear = () => { try { sessionStorage.removeItem(KEY()); } catch (e) {} };
@@ -109,7 +110,7 @@ window.CMAlmaJob = (() => {
   // Their scripts are brought in, those this page doesn't have, in the order My suppliers loads them
   (() => {
     if (!document.querySelector('.sn-foot')) return;
-    const kept = (k) => { try { return !!JSON.parse(sessionStorage.getItem(k + (beatriz() ? '-beatriz' : ''))); } catch (e) { return false; } };
+    const kept = (k) => { try { return !!JSON.parse(sessionStorage.getItem(k + sfx())); } catch (e) { return false; } };
     if (!kept('cm-sup-add') && !kept('cm-sup-invite')) return;
     const NEED = ['doc-catalog', 'worker-docs', 'equipment-docs', 'product-docs', 'doc-rules', 'company-docs', 'suppliers', 'supplier-add', 'supplier-import'];
     const go = () => {

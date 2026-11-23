@@ -25,7 +25,8 @@ window.HOME_DOCS = (() => {
     if (d.note) return d.note;
     return d.status === 'missing' ? (M.canNa(d) ? 'Not uploaded yet, or mark it not applicable.' : 'Not uploaded yet.') : '';
   };
-  const supplierRows = [...tbl.tBodies[0].rows].filter((r) => !r.dataset.code).map((r) => r.outerHTML).join('');
+  // (the two in the page are Miguel's suppliers': not the Walmart test user's)
+  const supplierRows = ['walmart', 'ajlee'].includes(document.documentElement.dataset.persona) ? '' : [...tbl.tBodies[0].rows].filter((r) => !r.dataset.code).map((r) => r.outerHTML).join('');
   const go = (code) => { location.href = `company-details.html?open=${encodeURIComponent(code)}`; };
 
   // Profile completion is the setup's (js/guided-upload.js, for a new company). The demo company's

@@ -572,7 +572,7 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
   const $ = (s) => document.querySelector(s);
   // a login starts clean: companies added in an earlier session (and cards added with them) are
   // gone, as they are after Log out — only each person's main company is part of the demo
-  const forgetCompanies = () => { try { ['miguel', 'beatriz'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
+  const forgetCompanies = () => { try { ['miguel', 'beatriz', 'walmart', 'ajlee'].forEach((p) => ['cm-orgs-', 'cm-org-links-', 'cm-last-org-', 'cm-cards-', 'cm-team-'].forEach((k) => localStorage.removeItem(k + p))); ['cm-org', 'cm-newco-paid', 'cm-na', 'cm-doc-updates'].forEach((k) => sessionStorage.removeItem(k)); } catch (e) {} };
 
   // ---- steps ---------------------------------------------------------------
   const show = (name) => {
@@ -584,7 +584,11 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const EXAMPLE = { name: 'Miguel Ferreira', email: 'miguel@ccerconstrucoes.pt' };
-  const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com' }, t: { name: 'Test User', email: 'test@c-more.test' }, i: { name: 'Invited Supplier', email: 'invited@c-more.test' } };
+  const EXAMPLES = { m: EXAMPLE, f: { name: 'Beatriz Nogueira', email: 'beatriz@veridianharvest.com' }, t: { name: 'Test User', email: 'test@c-more.test' },
+    // a hidden test user, not in "Log in as": only its email signs in as it (Walmart, a US retailer)
+    w: { name: 'Rian Walsh', email: 'rian@walmart.com' },
+    // and one of its suppliers, also reached from Rian's account menu
+    a: { name: 'AJ Lee', email: 'aj.lee@carolinaknits.com' }, i: { name: 'Invited Supplier', email: 'invited@c-more.test' } };
   // the test user: a new account every time. Whatever it did is wiped when it logs out (js/company-switcher.js),
   // and again when it starts, so its company always opens empty
   const isTest = (email) => (email || '').toLowerCase() === EXAMPLES.t.email;
@@ -1068,8 +1072,9 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
       toCompany('my-company.html?page');
       return;
     }
-    // Beatriz's email logs in as her; any other logs in as Miguel, the demo's default
-    const match = typed.toLowerCase() === EXAMPLES.f.email ? EXAMPLES.f : EXAMPLES.m;
+    // Beatriz's email logs in as her, Rian's (the hidden Walmart test user) as Rian; any other logs in
+    // as Miguel, the demo's default
+    const match = typed.toLowerCase() === EXAMPLES.f.email ? EXAMPLES.f : typed.toLowerCase() === EXAMPLES.w.email ? EXAMPLES.w : typed.toLowerCase() === EXAMPLES.a.email ? EXAMPLES.a : EXAMPLES.m;
     // remembered for this browser too, so a link opened in a new tab is still this person
     try { const who = JSON.stringify({ ...match, via: 'Email' }); sessionStorage.setItem('cm-person', who); sessionStorage.removeItem('cm-esg'); forgetCompanies(); localStorage.setItem('cm-last-person', who); localStorage.setItem('cm-last-company', 'filled'); } catch (err) {}
     await wait(600);

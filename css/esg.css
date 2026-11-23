@@ -948,6 +948,13 @@ html[data-persona="beatriz"] .persona-miguel-only { display: none !important; }
 html:not([data-persona="beatriz"]) .persona-beatriz-only { display: none !important; }
 /* blocks that belong to Miguel's demo company only: left alone for him, hidden for Beatriz */
 html[data-persona="beatriz"] [data-only="miguel"] { display: none !important; }
+/* the hidden test users: Rian at Walmart (rian@walmart.com) and AJ Lee at Carolina Knits, one of its
+   suppliers. Neither has Miguel's content (nor Projects); each has its own */
+html:is([data-persona="walmart"], [data-persona="ajlee"]) :is(.persona-miguel-only, [data-only="miguel"]) { display: none !important; }
+html:not([data-persona="walmart"]) .persona-walmart-only { display: none !important; }
+html:not([data-persona="ajlee"]) .persona-ajlee-only { display: none !important; }
+/* (and a few words that are everyone else's, Beatriz's included, in place of theirs) */
+html:is([data-persona="walmart"], [data-persona="ajlee"]) .persona-walmart-hide { display: none !important; }
 
 /* ---- moving between pages: one smooth cross-fade, not a blank frame ----
    The browser keeps the page on screen until the next one is ready, then fades between them. The

@@ -16,6 +16,8 @@
   if (!P || !P.sup || !A || !S || !S.addAsk) return;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
+  // Walmart (the hidden test user) is a US company too: its suppliers are asked for the US documents
+  const US = BEATRIZ || ['walmart', 'ajlee'].includes(document.documentElement.dataset.persona);
 
   const st = document.createElement('style');
   st.textContent = `
@@ -83,7 +85,7 @@
     const by = (state) => new Map(sup.consents.filter((c) => c.state === state).flatMap((c) => (c.codes || []).concat(c.docs.map((d) => d.code)).map((k) => [k, c])));
     const inv = sup.status === 'invited', shared = by('given'), waiting = by(inv ? 'none' : 'pending'), gone = by('removed');
     const asked = inv ? new Set(sup.consents[0].docs.map((d) => d.code)) : null;
-    DOCS = A.docsOf(inv ? sup.invite.country : BEATRIZ ? 'US' : 'PT').map((d) => {
+    DOCS = A.docsOf(inv ? sup.invite.country : US ? 'US' : 'PT').map((d) => {
       const x = Object.assign({}, d);
       if (shared.has(d.code)) { x.off = true; x.why = '<em>Shared with you</em>'; }
       else if (asked && asked.has(d.code)) { x.off = true; x.why = '<em class="is-wait">In your invitation</em>'; }

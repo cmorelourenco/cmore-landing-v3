@@ -16,6 +16,8 @@
   const fold = (t) => String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
   const ini = (n) => (String(n || '?').split(/\s+/).filter((w) => /^[A-ZÀ-Ý]/.test(w)).slice(0, 2).map((w) => w[0]).join('') || '?');
   const BEATRIZ = document.documentElement.dataset.persona === 'beatriz';
+  // Walmart (the hidden test user) is a US company too: its suppliers are asked for the US documents
+  const US = BEATRIZ || ['walmart', 'ajlee'].includes(document.documentElement.dataset.persona);
   const SHEETJS = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
   let lib = null;
   const sheetjs = () => lib || (lib = new Promise((ok, no) => {
@@ -51,7 +53,7 @@
   // and it's big. Three emails have a typo that passes the check, so those three can't be sent to.
   const NAMES = (() => {
     const out = [], combine = (cc, a, b, suf) => a.forEach((x, i) => b.forEach((y, k) => out.push([cc, `${x} ${y}${suf[(i + k) % suf.length]}`])));
-    if (BEATRIZ) {
+    if (US) {
       combine('US', ['Prairie', 'Blue Ridge', 'Lakeside', 'Cascade', 'Red Mesa', 'Harbor', 'Oak Valley', 'Summit', 'Pine Creek', 'Granite', 'Silver Lake', 'Riverbend'],
         ['Grain Co-op', 'Paper Supply', 'Mills', 'Packaging', 'Logistics', 'Steel Works', 'Farms', 'Cold Storage', 'Freight', 'Lumber'], [' LLC', ' Inc.', '']);
       combine('BR', ['Transportes', 'Embalagens', 'Cooperativa'], ['Paraná', 'Serra Azul', 'do Cerrado'], [' Ltda.']);
@@ -63,7 +65,7 @@
     }
     return out;
   })();
-  const PEOPLE = BEATRIZ ? ['Dale Hughes', 'Rosa Diaz', 'Marina Alves', 'Tom Becker', 'Grace Kim', 'Luis Ortega', 'Amy Walsh']
+  const PEOPLE = US ? ['Dale Hughes', 'Rosa Diaz', 'Marina Alves', 'Tom Becker', 'Grace Kim', 'Luis Ortega', 'Amy Walsh']
     : ['Ana Lopes', 'Paulo Reis', 'Joana Silva', 'Rui Matos', 'Inês Costa', 'Carlos Pinto', 'Marta Sousa', 'Luis Durand', 'Elena Vidal'];
   const TLD = { PT: 'pt', ES: 'es', FR: 'fr', US: 'com', BR: 'com.br' };
   // the three that bounce: an email that looks right, but isn't
@@ -337,7 +339,7 @@
     if (b) b.disabled = true;
     try {
       const XL = await sheetjs(), wb = XL.utils.book_new();
-      const ws = XL.utils.aoa_to_sheet([HEAD, BEATRIZ ? ['United States', '12-3456789', 'Example Farms LLC', 'Jane Smith', 'jane@example.com'] : ['Portugal', '509 812 333', 'Exemplo, Lda.', 'Joana Silva', 'joana.silva@example.com']]);
+      const ws = XL.utils.aoa_to_sheet([HEAD, US ? ['United States', '12-3456789', 'Example Farms LLC', 'Jane Smith', 'jane@example.com'] : ['Portugal', '509 812 333', 'Exemplo, Lda.', 'Joana Silva', 'joana.silva@example.com']]);
       ws['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 32 }, { wch: 24 }, { wch: 32 }];
       XL.utils.book_append_sheet(wb, ws, 'Suppliers');
       const how = XL.utils.aoa_to_sheet([['How to fill it in'], [],
@@ -368,7 +370,7 @@
   let ed = null; // { rows: [index], picked: Set }; or, inviting many, { pre: 1 (the documents) or 2 (the file), picked }
   // inviting many: the documents chosen for all of them, before the file (kept for another file)
   let asked = null, askedHide = null;
-  const own = () => { const o = window.CMOrgs && window.CMOrgs.current(); return (o && o.country) || (BEATRIZ ? 'US' : 'PT'); };
+  const own = () => { const o = window.CMOrgs && window.CMOrgs.current(); return (o && o.country) || (US ? 'US' : 'PT'); };
   const edRows = () => ed.rows.map((i) => bulk.rows[i]);
   // what any of them can be asked for: mandatory where it's mandatory in a supplier's own country,
   // and each one asked only of the suppliers in a country it applies to
@@ -663,7 +665,7 @@
 
   // ---- folded, it goes with you: leave the page and it's kept for the tab (another page shows its rail,
   // js/alma-job.js); back here, the drawer and the list come back as they were, folded or opened ----------
-  const KEY = 'cm-sup-invite' + (BEATRIZ ? '-beatriz' : '');
+  const KEY = 'cm-sup-invite' + (BEATRIZ ? '-beatriz' : US ? '-' + document.documentElement.dataset.persona : '');
   const rowsOut = (l) => l.map((r) => Object.assign({}, r, { docs: [...r.docs] }));
   const rowsIn = (l) => l.map((r) => Object.assign({}, r, { docs: new Set(r.docs) }));
   const keep = () => {

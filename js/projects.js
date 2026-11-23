@@ -45,7 +45,7 @@
   const ss = (k) => { try { return sessionStorage.getItem(k); } catch (e) { return null; } };
   const persona = () => document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel';
   const hasProjects = () => {
-    if (persona() === 'beatriz') return false;
+    if (persona() === 'beatriz' || ['beatriz', 'walmart', 'ajlee'].includes(document.documentElement.dataset.persona)) return false; // (nor the hidden test users)
     let org = 'home', email = '';
     try { org = JSON.parse(ss('cm-org') || '"home"') || 'home'; } catch (e) {}
     try { email = (JSON.parse(ss('cm-person') || 'null') || {}).email || ''; } catch (e) {}
@@ -60,7 +60,7 @@
     const test = /^test@c-more\.test$/i.test(email);
     return 'cm-pj-added' + (org === 'home' && !test ? '' : `-${test ? 'test-' : ''}${org}`);
   })();
-  const added = () => { if (persona() === 'beatriz') return []; try { return JSON.parse(ss(ADD_KEY) || '[]') || []; } catch (e) { return []; } };
+  const added = () => { if (['beatriz', 'walmart', 'ajlee'].includes(document.documentElement.dataset.persona)) return []; try { return JSON.parse(ss(ADD_KEY) || '[]') || []; } catch (e) { return []; } };
 
   // ---- each project's documents ----
   const DOCST = { ok: 'Valid', look: 'Needs a look', miss: 'Not compliant' };
@@ -225,6 +225,8 @@
     if (!attention) {
       // Beatriz's company has products, not projects: her own page
       if (persona() === 'beatriz') { location.replace('my-company.html?filled#products'); return; }
+      // the hidden test users (Walmart, AJ Lee) have no projects
+      if (['beatriz', 'walmart', 'ajlee'].includes(document.documentElement.dataset.persona)) { location.replace('my-company.html?filled'); return; }
       const bk = document.getElementById('pj-back'); if (bk) bk.addEventListener('click', () => { location.href = 'my-company.html?filled'; });
     }
     if (!all.length) {
