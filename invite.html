@@ -72,11 +72,8 @@ a { color: var(--color-ink); text-decoration-color: var(--color-activation); tex
 @media (min-width: 64rem) { .hdr-in { padding-inline: 2.5rem; } }
 
 /* the logo file, at the landing header's size; the link carries the accessible name */
-.brand { display: flex; align-items: center; gap: 0.75rem; flex: none; line-height: 0; text-decoration: none; }
+.brand { display: block; flex: none; line-height: 0; text-decoration: none; }
 .brand img { display: block; width: 6.8rem; height: 1.25rem; }
-/* SGS, on the right of C-MORE, past a hairline */
-.brand img.brand-sgs { width: auto; height: 1.75rem; padding-left: 0.75rem; border-left: 1px solid var(--color-line); }
-@media (max-width: 768px) { .brand img.brand-sgs { display: none; } } /* no room on phones */
 .top-link { font-size: 0.875rem; color: var(--color-ink-subtle); text-decoration: none; }
 .top-link:hover { color: var(--color-ink); }
 .top-link b { font-weight: 500; color: var(--color-ink); }
@@ -325,7 +322,7 @@ body { min-height: 0; }
 <canvas class="bg-sphere" id="bg-sphere" aria-hidden="true"></canvas>
 <div class="reg">
   <header class="reg-top"><div class="hdr-in">
-    <a class="brand" href="index.html" aria-label="C-MORE, to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"><img class="brand-sgs" src="images/sgs-logo.png" alt="" width="60" height="28"></a>
+    <a class="brand" href="index.html" aria-label="C-MORE, to the landing"><img src="images/cmore-logo.svg" alt="" width="109" height="20"></a>
     <div class="top-r"><span data-lang-switch></span></div>
   </div></header>
 
