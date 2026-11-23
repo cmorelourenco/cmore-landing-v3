@@ -260,6 +260,7 @@ html[data-sn="rail"] .sn-sub { display: none; }`;
 // the company homepage, as the side menu's Company overview opens it (the empty one for a company
 // with nothing in it yet: a test user's lands there, its setup already skipped)
 const cmSoonHome = () => { const a = document.querySelector('.sn-item[title="Company overview"]'); const h = a && a.getAttribute('href'); return h && h !== '#' ? h : 'my-company.html?filled'; };
+window.CM_BETA = '<span class="cm-soon cm-beta">Beta</span>';
 window.CM_SOON = {
   badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment', 'products'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)),
   // instead of the feature itself: an empty state, ALMA big, saying it's on its way
@@ -297,6 +298,8 @@ document.addEventListener('click', (e) => {
 /* in the menu, the badge always sits in the same spot: under the label */
 .sn-sub a.has-soon { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.1875rem; height: auto; min-height: 2rem; padding-block: 0.3125rem; }
 .sn-sub .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5625rem; font-weight: 600; }
+/* Beta: on the label's line, right after it, in the yellow */
+html .sn-sub .cm-soon.cm-beta { margin-left: 0.5rem; background: var(--tag-yellow-bg, #fbeab0); color: var(--tag-yellow-fg, #6b4f00); }
 .sn-item.has-soon { height: auto; min-height: 2.625rem; padding-block: 0.375rem; }
 .sn-item.has-soon .sn-l { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1875rem; }
 .sn-item.has-soon .cm-soon { height: 1rem; padding: 0 0.3125rem; font-size: 0.5625rem; }
@@ -367,4 +370,6 @@ html[data-sn="rail"] .sn-item.has-soon { height: 2.625rem; padding-block: 0; }
     if (l) { it.classList.add('has-soon'); put(l); }
   });
   window.CM_SOON.areas.forEach((k) => { const a = document.querySelector(`.sn-sub a[data-sn-area="${k}"]`); if (a) { a.classList.add('has-soon'); put(a); } });
+  // Workers, once open, is in beta: the same badge, saying so
+  if (!window.CM_SOON.areas.includes('workers')) { const a = document.querySelector('.sn-sub a[data-sn-area="workers"]'); if (a && !a.querySelector('.cm-beta')) a.insertAdjacentHTML('beforeend', window.CM_BETA); }
 })();

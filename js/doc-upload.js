@@ -529,6 +529,12 @@ html[data-theme="dark"] .cmu-to select { background-image: url("data:image/svg+x
 .cd-cell:hover, .cd-cell:focus-visible { background: var(--color-light-beige); outline: none; box-shadow: inset 0 0 0 1px var(--color-ink-subtle); }
 .cd-area-head-up { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .cd-group-k .cd-group-up { margin-left: auto; }
+/* Workers' beta note, under the title: a grey stripe the container's width */
+.cd-beta { display: flex; align-items: flex-start; gap: 0.625rem; margin: -1rem 0 2rem; padding: 0.875rem 1.125rem; border-radius: 0.75rem; background: var(--color-surface-sunken); color: var(--color-ink); font-size: 0.875rem; line-height: 1.5; }
+.cd-beta[hidden] { display: none; }
+.cd-beta svg { flex: none; width: 1.125rem; height: 1.125rem; margin-top: 0.125rem; color: var(--color-ink-subtle); }
+.cd-beta b { font-weight: 600; }
+.cd-beta a { color: var(--color-ink); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 /* Documents' Add worker / machine / product, on the tools row: as Projects' New project (js/projects.js .pj-add) */
 .cd-add { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.125rem; border: 0; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font: inherit; font-size: 0.875rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color .15s, transform .15s; }
 .cd-add:hover { background: var(--color-ink); color: var(--color-off-white); transform: translateY(-1px); }

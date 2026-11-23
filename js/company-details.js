@@ -1158,6 +1158,28 @@
   // not open at launch: its badge (js/company-switcher.js)
   const SOON = (window.CM_SOON || { badge: '<span class="cm-soon">Coming soon</span>', areas: ['workers', 'equipment', 'products'].filter((k) => !(window.CM_SOON_OPEN || []).includes(k)) }); // this page draws before js/company-switcher.js loads
   const soon = (k) => (SOON.areas.includes(k) ? SOON.badge : '');
+  // the first time on Workers (this tab): ALMA says it's in beta, and whom to write to, as the stripe does
+  const betaHello = () => {
+    const seen = () => { try { return !!sessionStorage.getItem('cm-beta-workers-seen'); } catch (e) { return true; } };
+    if (seen() || document.querySelector('.cd-beta-dlg')) return;
+    setTimeout(() => {
+      // something else open (a dialog or a drawer): not over it; it shows the next time instead
+      if (seen() || [...document.querySelectorAll('.dlg, .docd-panel')].some((x) => x.getClientRects().length)) return;
+      try { sessionStorage.setItem('cm-beta-workers-seen', '1'); } catch (e) { return; }
+      const d = document.createElement('div'), last = document.activeElement;
+      d.className = 'dlg cd-beta-dlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'cd-beta-h'); d.setAttribute('aria-describedby', 'cd-beta-p');
+      d.innerHTML = `<div class="dlg-scrim" data-bx></div><div class="dlg-card">
+        <button type="button" class="dlg-x" data-bx aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="dlg-head"><span class="dlg-alma is-big" aria-hidden="true">${(window.ESG && window.ESG.SPHERES) || ''}</span><span class="eyebrow">ALMA</span><h2 id="cd-beta-h">Workers is a beta feature</h2>
+          <p id="cd-beta-p">I&rsquo;m still learning this one, so some things may not work as they should yet. If you encounter any issues or problems, please contact us at <a href="mailto:carina@thecmorecompany.com">carina@thecmorecompany.com</a>.</p></div>
+        <div class="dlg-foot is-center"><button type="button" class="btn btn-primary" data-bx>Got it</button></div></div>`;
+      document.body.appendChild(d); document.documentElement.classList.add('dlg-open');
+      const close = () => { d.remove(); document.documentElement.classList.remove('dlg-open'); if (last && last.focus) last.focus({ preventScroll: true }); };
+      d.addEventListener('click', (e) => { if (e.target.closest('[data-bx]')) close(); });
+      d.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+      setTimeout(() => { const b = d.querySelector('.btn-primary'); if (b) b.focus(); }, 120);
+    }, 400);
+  };
   const updateHeader = () => {
     const a = area ? AREAS.find((x) => x.key === area) : null;
     const doc = detail !== null ? docById(detail) : null;
@@ -1185,6 +1207,13 @@
     h2.innerHTML = a ? a.title + (soon(a.key) ? ' ' + soon(a.key) : '') : 'All company documents';
     const fresh = window.DOC_MODEL.ORG; // a company added in this session: only what it uploaded
     sub.innerHTML = a ? a.long : fresh ? `The documents you&rsquo;ve uploaded, kept in one profile so any client finds the same set. Your profile: <b class="cd-profile">${D.line}</b>.` : `Every document the C&#8209;MORE catalog asks of a company like yours, kept in one profile so any client finds the same set. Chosen from your profile: <b class="cd-profile">${D.line}</b>.`;
+    const beta = a && a.key === 'workers' && !soon(a.key);
+    let bs = document.getElementById('cd-beta');
+    if (beta && !bs) { bs = document.createElement('p'); bs.id = 'cd-beta'; bs.className = 'cd-beta'; bs.setAttribute('role', 'note');
+      bs.innerHTML = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="7.25"/><path d="M10 9v4.5"/><circle cx="10" cy="6.25" r=".5" fill="currentColor"/></svg><span><b>Workers is a beta feature.</b> If you encounter any issues or problems, please contact us at <a href="mailto:carina@thecmorecompany.com">carina@thecmorecompany.com</a>.</span>`;
+      sub.closest('.co-sec-head').after(bs); }
+    if (bs) bs.hidden = !beta;
+    if (beta) betaHello();
     counts(a ? DOCS.filter((d) => d.area === a.key) : DOCS);
     document.getElementById('cd-card-total-d').textContent = fresh ? (a ? `Every document you've uploaded in ${a.title.toLowerCase()}.` : 'Every document you’ve uploaded.') : a ? `Every document asked of you in ${a.title.toLowerCase()}.` : 'Every document asked of you, from your profile.';
     if (fresh) { const h = document.querySelector('#cd-card-total-d') && document.querySelector('#cd-card-total-d').closest('.cd-card'); const l = h && h.querySelector('.cd-card-h span'); if (l) l.textContent = 'On file'; }
