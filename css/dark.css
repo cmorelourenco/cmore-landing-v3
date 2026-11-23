@@ -51,7 +51,7 @@ html[data-theme="dark"], html[data-theme="dark"] body { background: #222222 !imp
 html[data-theme="dark"] .mesh__web { opacity: 0.06; }
 
 /* the wordmark is graphite: off-white on the dark */
-html[data-theme="dark"] .brand img, html[data-theme="dark"] img[src$="cmore-logo.svg"] { filter: invert(1) brightness(1.6); }
+html[data-theme="dark"] .brand img:not(.brand-sgs), html[data-theme="dark"] img[src$="cmore-logo.svg"] { filter: invert(1) brightness(1.6); }
 
 /* shadows read as light on grey: deeper, softer */
 html[data-theme="dark"] .co-card, html[data-theme="dark"] .cdd-card { box-shadow: 0 1px 2px rgba(0, 0, 0, .35); }

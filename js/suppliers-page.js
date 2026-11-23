@@ -72,15 +72,18 @@
 .sp-mx th.c { font-size: 0.6875rem; line-height: 1.3; }
 .sp-mx th.c, .sp-mx td.c { padding-inline: 0.375rem; min-width: 4.25rem; }
 /* a column per kind of document can run wide: the supplier stays in view while it scrolls */
-.sp-mx th:first-child, .sp-mx td:first-child { min-width: 12.25rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
+.sp-mx th:first-child, .sp-mx td:first-child { width: 12.25rem; min-width: 12.25rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
 .sp-mx th:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-row:hover td:first-child, .sp-mx .sp-row:focus-visible td:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
+/* Supplier, Overall and the risk keep their widths whichever suppliers are shown (a filter, a search),
+   so the columns between don't move: Overall as wide as its longest status */
+.sp-mx th.sp-mx-o, .sp-mx td.sp-mx-o { width: 11.5rem; min-width: 11.5rem; }
 .co-sup-sec .sp-glance { margin-bottom: 0; }
 /* the company's risk, a column of the matrix: its value as a tag, with its colour's dot */
 .sp-mx th.sp-risk-c { color: var(--color-ink); }
 .sp-mx th.sp-risk-c .sp-risk-sc { display: block; margin-top: 0.125rem; font-size: 0.625rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--color-ink-subtle); white-space: nowrap; }
-.sp-mx td.sp-risk-c { min-width: 6.5rem; }
+.sp-mx td.sp-risk-c, .sp-mx th.sp-risk-c { width: 7rem; min-width: 6.5rem; }
 .sp-risk-v { display: inline-flex; align-items: center; }
 /* Overall sorts: the worst first (as the list comes), a click for the best first and back; as the
    company's documents matrix (css/esg.css .cd-sort) */
@@ -263,10 +266,12 @@
   const GROUP = { 'Needs attention': 0, 'Consent removed': 1, 'Expiring or in review': 2, 'All in order': 3, 'Pending consent': 4, Invited: 5 };
   const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return GROUP[overall(x, a)[0]] - GROUP[overall(y, b)[0]] || y.bad - x.bad || y.soon - x.soon || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
-  const matrix = (list, bare) => {
+  // its columns: every kind of document asked of the suppliers in `every` (all of them on My suppliers,
+  // so filtering never takes a column away)
+  const matrix = (list, bare, every = list) => {
     let shown = list;
     const rk = bare || document.documentElement.dataset.persona === 'beatriz' ? null : risks()[0] || null;
-    const cols = [...new Set(shown.flatMap((s) => s.consents.flatMap((c) => c.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
+    const cols = [...new Set(every.flatMap((s) => s.consents.flatMap((c) => c.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
     const cell = (s, a) => {
       const of = (state) => s.consents.filter((c) => c.state === state).flatMap((c) => c.docs).filter((d) => d.cat === a);
       const docs = [...new Map(of('given').map((d) => [d.code, d])).values()];
@@ -335,7 +340,7 @@
     box.innerHTML = `<div class="sp-tools"><label class="sp-search"><span class="sr-only">Search your suppliers</span><input class="input" type="search" id="sp-q" placeholder="Search by name, city or service" value="${esc(q)}" autocomplete="off"></label>
         <div class="sp-tools-r">${filter}
         ${document.documentElement.dataset.persona === 'beatriz' ? '' : (() => { const r = risks()[0]; return r ? `<a class="sp-add sp-add-q" href="new-risk.html?id=${encodeURIComponent(r.id)}">Edit your risk</a>` : '<a class="sp-add sp-add-q" href="new-risk.html">Set up your risk</a>'; })()}<button type="button" class="sp-add" data-sup-add><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>Add a supplier</button></div></div>
-      ${shown.length ? matrix(shown) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that. <button type="button" class="link-btn" data-fclear>Clear the search and filters</button></div>'}`;
+      ${shown.length ? matrix(shown, false, all) + `<h2 class="sp-cards-h">Your suppliers</h2><ul class="sp-grid" aria-label="Your suppliers">${shown.map(card).join('')}</ul>` : '<div class="co-card sp-none">No supplier matches that. <button type="button" class="link-btn" data-fclear>Clear the search and filters</button></div>'}`;
   };
 
   // ---- the company homepage: the same matrix, the ones to chase first, each row to its supplier --------
