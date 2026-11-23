@@ -527,6 +527,18 @@
     const empty = area && !filtering() && !DATA.some((d) => d.area === area);
     // Workers ends with the archived ones, as Company ends with its archived documents
     groupsEl.innerHTML = (list.length ? (area && !filtering() ? matrix(area) : '') + html : empty ? areaEmpty(area) : none()) + ((area === 'workers' || area === 'equipment' || (area === 'products' && M.PERSONA !== 'beatriz')) && !filtering() ? archivedTable(area) : '');
+    addBtn();
+  };
+
+  // Add worker, Add machine, Add product: on the tools row, right of the Filter, as Projects' New project
+  const PLUS = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>';
+  const addBtn = () => {
+    const r = tools.querySelector('.co-tools-r'); if (!r) return;
+    const up = !window.CMUpload ? null : area === 'workers' ? ['add:workers', 'Add worker'] : area === 'equipment' && M.saveMachines ? ['add:equipment', 'Add machine'] : area === 'products' && M.saveProducts && M.PERSONA !== 'beatriz' ? ['add:products', 'Add product'] : null;
+    let b = r.querySelector('.cd-add');
+    if (!up) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement('button'); b.type = 'button'; b.className = 'cd-add'; r.appendChild(b); window.CMUpload.wire(r, () => { render(); syncCards(); }); }
+    b.dataset.up = up[0]; b.innerHTML = PLUS + up[1];
   };
 
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
@@ -672,7 +684,7 @@
     else if (key === 'workers' || key === 'equipment' || key === 'products') { const nw = (i) => { const r = recOf(key)[i]; return r && r.isNew ? 1 : 0; }; rows.sort((a, b) => nw(b.i) - nw(a.i) || (nw(a.i) ? b.i - a.i : a.i - b.i)); }
     const sortTh = `<th${so ? ` aria-sort="${so > 0 ? 'descending' : 'ascending'}"` : ''}><button type="button" class="cd-sort" data-msort="${key}" title="${!so ? 'Sort by overall: the worst first' : so > 0 ? 'Sort by overall: the best first' : 'Back to the list&rsquo;s order'}">Overall<span aria-hidden="true">${so ? (so > 0 ? '&darr;' : '&uarr;') : '&varr;'}</span></button></th>`;
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['warn', 'Needs attention'], ['bad', 'Missing or expired']].map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
-    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span>${people && window.CMUpload ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:workers">Add worker</button>' : key === 'equipment' && window.CMUpload && M.saveMachines ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:equipment">Add machine</button>' : key === 'products' && window.CMUpload && M.saveProducts && M.PERSONA !== 'beatriz' ? '<button type="button" class="btn btn-quiet btn-sm cd-group-up" data-up="add:products">Add product</button>' : ''}</div>
+    return `<div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${label}</h3><span class="co-muted">${recs.filter((r) => !r.left).length} ${NOUN[key][1]}</span></div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-matrix${wk ? ' cd-matrix-cats' : ''}"><thead><tr><th>${NOUN[key][0][0].toUpperCase() + NOUN[key][0].slice(1)}</th>${cols.map((d) => `<th class="c">${wk ? d.name : SHORT[d.code] || esc(d.name)}</th>`).join('')}${sortTh}</tr></thead><tbody>${rows.map((r) => r.html).join('')}</tbody></table></div>
       <p class="cd-legend">${legend}${wk ? '<span><span class="cd-dot is-neu"></span>Not uploaded</span>' : ''}<span><span class="cd-dash">&mdash;</span>Not asked of them</span></p></div>`;
   };

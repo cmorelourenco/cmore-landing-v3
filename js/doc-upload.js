@@ -529,6 +529,11 @@ html[data-theme="dark"] .cmu-to select { background-image: url("data:image/svg+x
 .cd-cell:hover, .cd-cell:focus-visible { background: var(--color-light-beige); outline: none; box-shadow: inset 0 0 0 1px var(--color-ink-subtle); }
 .cd-area-head-up { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .cd-group-k .cd-group-up { margin-left: auto; }
+/* Documents' Add worker / machine / product, on the tools row: as Projects' New project (js/projects.js .pj-add) */
+.cd-add { display: inline-flex; align-items: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.125rem; border: 0; border-radius: 0.625rem; background: var(--color-graphite); color: var(--color-off-white); font: inherit; font-size: 0.875rem; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color .15s, transform .15s; }
+.cd-add:hover { background: var(--color-ink); color: var(--color-off-white); transform: translateY(-1px); }
+.cd-add:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+.cd-add svg { width: 1rem; height: 1rem; }
 .cd-wk-tbl .cd-ed { white-space: nowrap; text-align: right; }
 [data-drop].is-drop > td { background: var(--color-coral-tint, #fdf1ee) !important; }
 [data-drop].is-drop > td:first-child { box-shadow: inset 3px 0 0 var(--color-coral); }
