@@ -29,7 +29,7 @@
 .sp-mx th.c { font-size: 0.6875rem; line-height: 1.3; }
 .sp-mx th.c, .sp-mx td.c { padding-inline: 0.375rem; min-width: 4.25rem; }
 /* a column per kind of document can run wide: the supplier stays in view while it scrolls */
-.sp-mx th:first-child, .sp-mx td:first-child { min-width: 13rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
+.sp-mx th:first-child, .sp-mx td:first-child { min-width: 12.25rem; position: sticky; left: 0; z-index: 1; background: var(--color-surface); }
 .sp-mx th:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-row:hover td:first-child, .sp-mx .sp-row:focus-visible td:first-child { background: var(--color-light-beige); }
 .sp-mx .sp-mx-o { text-align: right; white-space: nowrap; }
@@ -39,6 +39,11 @@
 .sp-mx th.sp-risk-c .sp-risk-sc { display: block; margin-top: 0.125rem; font-size: 0.625rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--color-ink-subtle); white-space: nowrap; }
 .sp-mx td.sp-risk-c { min-width: 6.5rem; }
 .sp-risk-v { display: inline-flex; align-items: center; }
+/* Overall sorts: the worst first (as the list comes), a click for the best first and back; as the
+   company's documents matrix (css/esg.css .cd-sort) */
+.sp-mx .cd-sort .l { opacity: 1; }
+.sp-mx th:not([aria-sort]) .cd-sort .a { opacity: .35; }
+.sp-mx th[aria-sort] { color: var(--color-ink); }
 /* each colour's dot, as in the matrix: orange and red tags are close, the dots tell them apart */
 .sp-risk-dot { flex: none; width: 0.5rem; height: 0.5rem; margin-right: 0.375rem; border-radius: 50%; }
 .co-sup-sec .co-sup-add { grid-column: 1; justify-self: start; }
@@ -163,6 +168,8 @@
 
   // ---- the suppliers, as cards ---------------------------------------------------------------------
   let filt = 'all', q = '';
+  // the matrix's sort, by Overall: 1 the worst first (the list's own order), -1 the best first
+  let mxSort = 1;
   const stTag = (s) => { const [l, c] = S.SUP_STATUS[s.status]; return `<span class="co-badge ${c}">${l}</span>`; };
   const card = (s) => {
     const k = S.stats(s), warn = k.bad > 0;
@@ -194,8 +201,10 @@
   };
   // at a glance: a row per supplier, a column per kind of document (as the invite groups them), the worst status in each
   // the long ones, shorter over their column (the full name on hover)
-  const SHORT = { 'Identification and registration': 'Registration', 'Tax and social security': 'Tax &amp; social security', 'Health and safety': 'Health &amp; safety',
-    'ESG and sustainability': 'ESG', 'Information security': 'Info security' };
+  const SHORT = { 'Identification and registration': 'Registration', 'Tax and social security': 'Tax &amp;<br>social&nbsp;security', 'Health and safety': 'Health &amp; safety',
+    'ESG and sustainability': 'ESG', 'Information security': 'Info security',
+    // "on site" kept together on its own line, under the first word
+    'Workers on site': 'Workers<br>on&nbsp;site', 'Equipment on site': 'Equipment<br>on&nbsp;site' };
   const catAt = (c) => (S.CATS.includes(c) ? S.CATS.indexOf(c) : S.CATS.length);
   const TONE = { valid: 'ok', expiring: 'pend', processing: 'pend', missing: 'bad', expired: 'bad' };
   const RANKS = { valid: 0, processing: 1, expiring: 1, missing: 2, expired: 2 };
@@ -205,7 +214,8 @@
   const GROUP = { 'Needs attention': 0, 'Consent removed': 1, 'Expiring or in review': 2, 'All in order': 3, 'Pending consent': 4, Invited: 5 };
   const urgent = (a, b) => { const x = S.stats(a), y = S.stats(b); return GROUP[overall(x, a)[0]] - GROUP[overall(y, b)[0]] || y.bad - x.bad || y.soon - x.soon || a.name.localeCompare(b.name); };
   // the matrix; on the company homepage (bare) without its own heading, the page's section has one
-  const matrix = (shown, bare) => {
+  const matrix = (list, bare) => {
+    let shown = list;
     const rk = bare || document.documentElement.dataset.persona === 'beatriz' ? null : risks()[0] || null;
     const cols = [...new Set(shown.flatMap((s) => s.consents.flatMap((c) => c.docs.map((d) => d.cat))))].sort((a, b) => catAt(a) - catAt(b));
     const cell = (s, a) => {
@@ -221,10 +231,14 @@
       if (of('pending').length) return `<td class="c"><span class="cd-dot is-wait" title="${esc(a)}: waiting for their answer"></span><span class="sr-only">${esc(a)}: waiting for their answer</span></td>`;
       return `<td class="c"><span class="cd-dash" title="Not asked of them">&mdash;</span></td>`;
     };
+    // the list comes the worst first already; the best first when asked (ties keep the list's order)
+    if (mxSort < 0) { const at = new Map(shown.map((x, i) => [x, i])), g = (x) => GROUP[overall(S.stats(x), x)[0]]; shown = shown.slice().sort((a, b) => mxSort * (g(a) - g(b)) || at.get(a) - at.get(b)); }
+    const next = mxSort > 0 ? 'the best first' : 'the worst first';
+    const sortTh = `<th class="sp-mx-o" aria-sort="${mxSort > 0 ? 'descending' : 'ascending'}"><button type="button" class="cd-sort" data-mx-sort title="Sort by overall: ${next}"><span class="l">Overall</span><span class="a" aria-hidden="true">${mxSort > 0 ? '&darr;' : '&uarr;'}</span></button></th>`;
     const rows = shown.map((s) => { const [l, c] = overall(S.stats(s), s); return `<tr class="sp-row" data-sup="${esc(s.id)}" tabindex="0" role="link" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(s.name)}</span><span class="d">${esc([s.services[0], s.city].filter(Boolean).join(' · '))}</span></td>${cols.map((a) => cell(s, a)).join('')}${rk ? riskCell(s, rk) : ''}<td class="sp-mx-o"><span class="co-badge ${c}">${l}</span></td></tr>`; }).join('');
     const legend = [['ok', 'All valid'], ['pend', 'Expiring or in review'], ['bad', 'Missing or expired'], ['wait', 'Waiting for their answer']].concat(shown.some((s) => s.status === 'removed') ? [['off', 'Consent removed']] : []).map(([c, l]) => `<span><span class="cd-dot is-${c}"></span>${l}</span>`).join('');
     return `<section class="sp-glance"${bare ? ' aria-label="Your suppliers at a glance"' : ' aria-labelledby="sp-glance-h"'}>${bare ? '' : `<div class="sp-glance-h"><h2 id="sp-glance-h">At a glance</h2><span>${shown.length} supplier${shown.length === 1 ? '' : 's'}</span></div>`}
-      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}${rk ? riskTh(rk) : ''}<th class="sp-mx-o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="sp-consent sp-mx-wrap"><table class="sp-tbl sp-mx"><thead><tr><th>Supplier</th>${cols.map((a) => `<th class="c" title="${esc(a)}">${SHORT[a] || esc(a)}</th>`).join('')}${rk ? riskTh(rk) : ''}${sortTh}</tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked of them</span>${rk ? `<span><b>${esc(rk.name)}</b>&nbsp;each supplier&rsquo;s level on your risk (${esc(ends(rk))}), from the cases you set for each level; hover one to see why</span>` : ''}</p></section>`;
   };
   // ---- the risk: what the company considers a risk, one setup for every supplier (new-risk.html, js/risk-new.js), and each supplier's
@@ -275,14 +289,16 @@
   // ---- the company homepage: the same matrix, the ones to chase first, each row to its supplier --------
   // only the demo company has suppliers yet; a company added in this session has none to show
   const orgOf = () => { try { const p = document.documentElement.dataset.persona === 'beatriz' ? 'beatriz' : 'miguel'; return JSON.parse(sessionStorage.getItem('cm-org') || 'null') || JSON.parse(localStorage.getItem('cm-last-org-' + p) || 'null') || 'home'; } catch (e) { return 'home'; } };
+  let paintHome = null;
   if (home && orgOf() !== 'home') home.closest('section').hidden = true;
   else if (home) {
     // only the ones with an alert: something missing or expired, expiring or in review
     const all = S.list(), alert = all.filter((s) => { const k = S.stats(s); return k.bad || k.soon || s.status === 'removed'; }).sort(urgent);
     const add = '<a class="btn co-btn-light btn-sm co-sup-add" href="suppliers.html?add">Add a supplier</a>'; // the flow, on My suppliers (js/supplier-add.js)
-    home.innerHTML = (alert.length ? matrix(alert, true) : `<div class="co-card co-sup-none"><b class="co-row-n">All your suppliers are in order</b><span class="co-subtle">Nothing missing, expired or expiring across your ${all.length} suppliers.</span></div>`)
+    paintHome = () => { home.innerHTML = (alert.length ? matrix(alert, true) : `<div class="co-card co-sup-none"><b class="co-row-n">All your suppliers are in order</b><span class="co-subtle">Nothing missing, expired or expiring across your ${all.length} suppliers.</span></div>`)
       // as under the homepage's other tables: View all on the right
-      + `<div class="co-pager-row">${add}<a href="suppliers.html" class="co-link co-pager-all">View all ${all.length} suppliers</a></div>`;
+      + `<div class="co-pager-row">${add}<a href="suppliers.html" class="co-link co-pager-all">View all ${all.length} suppliers</a></div>`; };
+    paintHome();
     const go = (r) => { location.href = `suppliers.html?id=${encodeURIComponent(r.dataset.sup)}`; };
     home.addEventListener('click', (e) => { const g = e.target.closest('[data-sup]'); if (g) go(g); });
     home.addEventListener('keydown', (e) => { const g = e.target.closest('[data-sup]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(g); } });
@@ -313,6 +329,13 @@
     fresh.addEventListener('click', (e) => { const g = e.target.closest('[data-sup]'); if (g) go(g); });
     fresh.addEventListener('keydown', (e) => { const g = e.target.closest('[data-sup]'); if (g && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(g); } });
   }
+  let relist = null;
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-mx-sort]'); if (!b) return;
+    mxSort = -mxSort;
+    if (relist) relist(); if (paintHome) paintHome(); if (fresh && fresh.isConnected) paintFresh();
+    const again = document.querySelector('[data-mx-sort]'); if (again) again.focus({ preventScroll: true });
+  });
   if (!box) return;
 
   // ---- the consent log: when each was asked for, given, removed, and what happened to its documents --
@@ -502,6 +525,7 @@
   // a supplier just added (js/supplier-add.js); asking again for consents (js/supplier-ask.js)
   // after you ask them for more documents (js/supplier-docs.js): their page again, with the new request
   const reload = () => { if (!sup) return; sup = S.byId(id) || sup; window.CMSupPage.sup = sup; const y = scrollY; page(sup); box.querySelectorAll('[data-remind]').forEach((b) => { if (sentToday(b.dataset.remind)) quiet(b); }); scrollTo(0, y); };
+  relist = () => { if (!sup) list(); };
   window.CMSupPage = { refresh: () => { if (!sup) list(); }, reload, sup, addLog, today, nudge: (k) => nudge(k), sentToday: (k) => sentToday(k) };
 
   box.addEventListener('input', (e) => { if (e.target.id === 'sp-q') { q = e.target.value; const at = e.target.selectionStart; list(); const i = document.getElementById('sp-q'); i.focus(); i.setSelectionRange(at, at); } });
