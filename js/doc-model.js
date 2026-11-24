@@ -330,7 +330,7 @@ window.DOC_MODEL = (() => {
     if (add[2]) { p.id = [add[2], add[3], add[4]]; p.since = add[5] || p.since; p.employment = 'Permanent contract'; p.sites = [0]; }
     // a passport, not a citizen card: where they're from is still to check (not taken as Portuguese)
     if (add[2] === 'Passport') p.passportOnly = true;
-    if (add.length && !add[1]) p.roleUnset = true;
+    if (add.length && !add[1] && !crew.roles[i]) p.roleUnset = true;
     // and the details ALMA read for them (and the user checked) when they were added
     // (and for someone on the list, the details the user changed when their documents were checked)
     const x = Object.assign({}, add[6] || {}, crew.details[i] || {});
@@ -338,6 +338,13 @@ window.DOC_MODEL = (() => {
       ['birth', 'address', 'tax', 'ss'].forEach((k) => { if (x[k]) p[k] = x[k]; });
       if (x.since) p.since = x.since;
       if (x.nationality) { p.nationalityName = x.nationality; p.nationality = /portug/i.test(x.nationality) ? 'PT' : ''; p.nationalityRead = true; if (p.nationality === 'PT') p.passportOnly = false; }
+      // what the user changed on their profile (js/company-details.js, Edit): their employment and ID,
+      // and where they're from read as a country the rules know
+      if (x.edited) {
+        if (x.nationality) { const n = x.nationality; p.nationality = /portug/i.test(n) ? 'PT' : /americ|united states|\bus\b/i.test(n) ? 'US' : /spani|spain/i.test(n) ? 'ES' : /brazil/i.test(n) ? 'BR' : /french|france/i.test(n) ? 'FR' : /german/i.test(n) ? 'DE' : p.nationality; p.passportOnly = false; }
+        if (x.employment != null) { p.employment = x.employment; p.employmentType = /fixed|temporary/i.test(x.employment) ? 'fixed_term' : 'permanent'; }
+        if (x.idNo != null) p.id = [x.idType || '', x.idNo, x.idValid || ''];
+      }
     }
     // added by hand: what the user typed, and nothing else (what they left out is not on file)
     if (x.manual) {

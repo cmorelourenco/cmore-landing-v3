@@ -791,6 +791,7 @@
         : e.ev === 'rejected' ? [esc(e.name), `Upload rejected &middot; ${esc(e.file)} not filed`, `${LST(e.from || 'notuploaded')}<span class="cd-lno">No change</span>`]
         : e.ev === 'added' ? [`${W[0]} added`, e.how || '', dash]
         : e.ev === 'archived' ? [`${W[0]} archived`, `Off the ${W[1]} and every site`, dash]
+        : e.ev === 'edited' ? ['Profile edited', esc(e.what || ''), dash]
         : [`${W[0]} unarchived`, `Back on the ${W[1]}`, dash];
       return `<tr><td><span class="n">${doc}</span>${sub ? `<span class="d">${sub}</span>` : ''}</td><td>${dOf(e.t)}</td><td>${st}</td><td>${who(e.by)}</td></tr>`;
     };
@@ -1024,8 +1025,8 @@
       <div class="cd-area-head cd-arch-head"><div><h2 class="co-h-l">${p.name}</h2><p class="co-muted">${p.role} &middot; ${p.employment ? `${p.employment.toLowerCase()}${p.since ? ` since ${p.since}` : ''}` : `added ${p.addedOn || p.since}`} &middot; <span class="co-badge ${wc}">${wl}</span></p></div>${sw}</div>
       ${gonebar}
       ${gone ? '' : `<p class="cd-restricted"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>Restricted personal data. Clients see it only while ${p.name.split(' ')[0]} is on one of their sites.</p>`}
-      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Worker profile</h3><span class="co-muted">${p.manual ? `Added ${esc(p.addedOn)} by hand` : p.isNew ? `Added ${esc(p.since)}, from their documents` : 'Data only, no file'}</span></div>
-        <div class="co-card cd-card-pad"><dl class="pd-grid">
+      <div class="cd-group"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Worker profile</h3><span class="co-muted">${p.manual ? `Added ${esc(p.addedOn)} by hand` : p.isNew ? `Added ${esc(p.since)}, from their documents` : 'Data only, no file'}</span>${gone || !M.saveCrew ? '' : `<button type="button" class="btn co-btn-light btn-sm wk-edit-b" data-wk-edit="${i}"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 3.5 3 3L7 16H4v-3l9.5-9.5Z"/></svg>Edit profile</button>`}</div>
+        <div class="co-card cd-card-pad" data-wk-prof="${i}"><dl class="pd-grid">
           ${kv('Full name', p.name)}${kv('Job category', p.roleUnset ? '<span class="co-subtle">Not set yet</span>' : p.role)}${kv('Nationality', p.passportOnly && !p.nationalityRead ? '<span class="co-subtle">Not read yet</span>' : p.nationalityName || NOF)}
           ${kv('Birth date', p.birth || NOF)}${kv('Tax number', p.tax || NOF)}${kv('Social security number', p.ss || NOF)}
           ${kv('Home address', p.address || NOF)}${kv('Employment', p.employment ? `${p.employment}${p.since ? `, since ${p.since}` : ''}` : NOF)}
@@ -1334,6 +1335,66 @@
     archDlg.hidden = false; document.documentElement.classList.add('dlg-open');
     setTimeout(() => archDlg.querySelector('[data-ax].btn').focus(), 30);
   };
+  // ---- editing a worker's profile: the card turns into its form; Save keeps it (DOC_MODEL.saveCrew,
+  // for the tab), logs it and shows the worker again; Cancel puts the card back ----
+  const decodeH = (h) => { const t = document.createElement('textarea'); t.innerHTML = String(h || ''); return t.value; };
+  const EMPLOY = ['Permanent contract', 'Fixed‑term contract', 'Full‑time', 'Part‑time', 'Temporary', 'Self‑employed'];
+  const WF = [['name', 'Full name', 'full'], ['address', 'Home address', 'full'], ['role', 'Job category'], ['nationality', 'Nationality'], ['birth', 'Birth date', '', 'e.g. 4 Jul 1990'], ['tax', 'Tax number'], ['ss', 'Social security number'],
+    ['employment', 'Employment'], ['since', 'Since', '', 'e.g. 1 Mar 2024'], ['idType', 'ID document'], ['idNo', 'ID number'], ['idValid', 'ID valid until', '', 'e.g. 12 Mar 2031']];
+  if (!document.getElementById('wk-edit-css')) {
+    const st = document.createElement('style'); st.id = 'wk-edit-css';
+    st.textContent = `.wk-edit-b { display: inline-flex; align-items: center; gap: 0.375rem; margin-left: auto; flex: none; }
+.wk-edit-b svg { width: 0.9375rem; height: 0.9375rem; }
+.wk-edit-b[hidden] { display: none; }
+.wk-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+.wk-form .full { grid-column: 1 / -1; }
+.wk-f { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+.wk-f label { font-size: 0.8125rem; font-weight: 600; }
+.wk-in { width: 100%; height: 2.75rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-off-white); font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; }
+.wk-in:hover { border-color: var(--color-sand-400); }
+.wk-in:focus { border-color: var(--color-graphite); background: var(--color-surface); }
+.wk-in.is-bad { border-color: var(--color-critical); }
+select.wk-in { appearance: none; padding-right: 2.25rem; cursor: pointer; background: var(--color-off-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 1rem; }
+.wk-err { font-size: 0.8125rem; color: var(--color-critical); }
+.wk-err:empty { display: none; }
+.wk-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--color-mid-beige); }
+@media (max-width: 40rem) { .wk-form { grid-template-columns: minmax(0, 1fr); } }`;
+    document.head.appendChild(st);
+  }
+  const wkVals = (i) => { const p = PERSON[i]; return { name: p.name, role: p.roleUnset ? '' : p.role, nationality: p.nationalityName, birth: p.birth, tax: p.tax, ss: p.ss, address: p.address, employment: p.employment, since: p.since, idType: p.id[0], idNo: p.id[1], idValid: p.id[2] }; };
+  const editWorker = (i) => {
+    const card = groupsEl.querySelector(`[data-wk-prof="${i}"]`); if (!card) return;
+    const v = wkVals(i);
+    const field = ([k, l, cls, ph]) => {
+      const val = decodeH(v[k]);
+      const input = k === 'employment'
+        ? `<select class="wk-in" id="wk-${k}" data-wk-f="${k}">${(EMPLOY.includes(val) || !val ? EMPLOY : [val].concat(EMPLOY)).map((o) => `<option${o === val ? ' selected' : ''}>${esc(o)}</option>`).join('')}${val ? '' : '<option value="" selected>Not set</option>'}</select>`
+        : `<input class="wk-in" id="wk-${k}" data-wk-f="${k}" value="${esc(val)}"${ph ? ` placeholder="${ph}"` : ''} autocomplete="off">`;
+      return `<div class="wk-f${cls ? ' ' + cls : ''}"><label for="wk-${k}">${l}</label>${input}${k === 'name' ? '<span class="wk-err" id="wk-err"></span>' : ''}</div>`;
+    };
+    card.innerHTML = `<form class="wk-form" data-wk-form="${i}" novalidate>${WF.map(field).join('')}
+      <div class="wk-foot"><button type="button" class="link-btn" data-wk-cancel="${i}">Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save changes</button></div></form>`;
+    const b = groupsEl.querySelector(`[data-wk-edit="${i}"]`); if (b) b.hidden = true;
+    card.querySelector('#wk-name').focus();
+    card.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nv = {}; card.querySelectorAll('[data-wk-f]').forEach((x) => { nv[x.dataset.wkF] = x.value.trim(); });
+      if (!nv.name) { const n = card.querySelector('#wk-name'); n.classList.add('is-bad'); card.querySelector('#wk-err').textContent = 'Give their full name.'; n.focus(); return; }
+      const label = Object.fromEntries(WF.map(([k, l]) => [k, l]));
+      const changed = WF.map(([k]) => k).filter((k) => nv[k] !== decodeH(v[k]));
+      if (!changed.length) { renderWorker(i); return; }
+      const patch = { names: {}, roles: {}, details: {} }, d = { edited: true };
+      changed.forEach((k) => { const val = esc(nv[k]);
+        if (k === 'name') patch.names[i] = val; else if (k === 'role') patch.roles[i] = val; else d[k] = val; });
+      // the ID goes as one: type, number and date, as they are on the form
+      if (changed.some((k) => /^id/.test(k))) { d.idType = esc(nv.idType); d.idNo = esc(nv.idNo); d.idValid = esc(nv.idValid); }
+      patch.details[i] = d;
+      M.saveCrew(patch);
+      if (window.CMWorkerLog) window.CMWorkerLog.add(i, { ev: 'edited', what: changed.map((k) => label[k]).join(', ') });
+      try { sessionStorage.setItem('cm-upload-toast', `${esc(nv.name)}&rsquo;s profile is saved.`); } catch (err) {}
+      location.href = `company-details.html?area=workers&worker=${i}`;
+    });
+  };
   const unarchive = (i, kind = 'workers') => {
     if (kind === 'equipment') {
       window.DOC_MODEL.saveEqArchive(i, null);
@@ -1385,6 +1446,8 @@
     }
     const wr = e.target.closest('[data-wdoc]'); if (wr && !e.target.closest('button, a, input, label')) { wOpen(+wr.dataset.wi, wr.dataset.wdoc, wr.dataset.wk || 'workers'); return; }
     const cg = e.target.closest('[data-chg]'); if (cg) { e.stopPropagation(); if (pop && pop.dataset.for === cg.dataset.chg) closePop(); else { openPop(cg); pop.dataset.for = cg.dataset.chg; } return; }
+    const we = e.target.closest('[data-wk-edit]'); if (we) { editWorker(+we.dataset.wkEdit); return; }
+    const wx = e.target.closest('[data-wk-cancel]'); if (wx) { renderWorker(+wx.dataset.wkCancel); return; }
     const sw = e.target.closest('[data-archive]');
     if (sw) { const i = +sw.dataset.archive, k = sw.dataset.archiveK || 'workers'; if (sw.getAttribute('aria-checked') === 'true') unarchive(i, k); else askArchive(i, k); return; }
     const ua = e.target.closest('[data-unarchive]'); if (ua) { unarchive(+ua.dataset.unarchive, ua.dataset.archiveK || 'workers'); return; }
