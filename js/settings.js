@@ -100,16 +100,32 @@
   $('#signout-all').addEventListener('click', (e) => { document.querySelectorAll('[data-signout]').forEach((b) => b.closest('li').remove()); e.currentTarget.disabled = true; e.currentTarget.textContent = 'Signed out everywhere else'; });
   let lang = 'en'; try { lang = localStorage.getItem('cm-lang') || 'en'; } catch (e) {}
   $('#r-lang').value = lang;
+  // ---- document reminders: before a document expires, as many as they like (Never send clears the
+  // rest, and with none left it's Never send again); once expired, how often to repeat it until it's
+  // renewed, one of them (data-rem-one). Kept for the tab.
+  const REM_KEY = 'cm-reminders-v2', REM_DEF = { expiring: ['15', '1'], expired: ['5'] };
+  const remSaved = () => { try { return Object.assign({}, REM_DEF, JSON.parse(sessionStorage.getItem(REM_KEY) || 'null') || {}); } catch (e) { return REM_DEF; } };
+  const remPaint = (box, on) => box.querySelectorAll('.set-pick').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === 'never' ? !on.length : on.includes(b.dataset.v))));
+  const remOn = (box) => [...box.querySelectorAll('.set-pick[aria-pressed="true"]')].map((b) => b.dataset.v).filter((v) => v !== 'never');
+  document.querySelectorAll('[data-rem]').forEach((box) => {
+    remPaint(box, remSaved()[box.dataset.rem] || []);
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('.set-pick'); if (!b) return;
+      const on = remOn(box), v = b.dataset.v;
+      remPaint(box, v === 'never' ? [] : box.hasAttribute('data-rem-one') ? [v] : on.includes(v) ? on.filter((x) => x !== v) : on.concat(v));
+    });
+  });
   // Consents, notifications, language: changes wait for Save, which only wakes when something differs
   document.querySelectorAll('[data-area]').forEach((area) => {
     const btn = area.querySelector('[data-save]'), note = area.querySelector('.set-saved');
-    const state = () => [...area.querySelectorAll('.co-sw, select')].map((c) => (c.tagName === 'SELECT' ? c.value : c.getAttribute('aria-checked'))).join('|');
+    const state = () => [...area.querySelectorAll('.co-sw, select, .set-pick')].map((c) => (c.tagName === 'SELECT' ? c.value : c.getAttribute(c.classList.contains('set-pick') ? 'aria-pressed' : 'aria-checked'))).join('|');
     let kept = state();
     const sync = () => { btn.disabled = state() === kept; };
-    area.addEventListener('click', (e) => { if (e.target.closest('.co-sw')) setTimeout(sync, 0); });
+    area.addEventListener('click', (e) => { if (e.target.closest('.co-sw, .set-pick')) setTimeout(sync, 0); });
     area.addEventListener('change', sync);
     btn.addEventListener('click', () => {
       if (area.id === 'language') try { localStorage.setItem('cm-lang', $('#r-lang').value); } catch (e) {}
+      if (area.querySelector('[data-rem]')) try { sessionStorage.setItem(REM_KEY, JSON.stringify(Object.fromEntries([...area.querySelectorAll('[data-rem]')].map((b) => [b.dataset.rem, remOn(b)])))); } catch (e) {}
       kept = state(); sync(); flash(note, 'Saved');
     });
   });
