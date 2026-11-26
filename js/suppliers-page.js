@@ -87,8 +87,6 @@
 .sp-risk-v { display: inline-flex; align-items: center; }
 /* Overall sorts: the worst first (as the list comes), a click for the best first and back; as the
    company's documents matrix (css/esg.css .cd-sort) */
-.sp-mx .cd-sort .l { opacity: 1; }
-.sp-mx th:not([aria-sort]) .cd-sort .a { opacity: .35; }
 .sp-mx th[aria-sort] { color: var(--color-ink); }
 /* each colour's dot, as in the matrix: orange and red tags are close, the dots tell them apart */
 .sp-risk-dot { flex: none; width: 0.5rem; height: 0.5rem; margin-right: 0.375rem; border-radius: 50%; }

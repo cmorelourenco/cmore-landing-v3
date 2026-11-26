@@ -169,6 +169,52 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     if (q && rows.length && rows.every((r) => r.hidden)) b.insertAdjacentHTML('beforeend', `<tr class="pjs-nomatch"><td colspan="${t.tHead ? t.tHead.rows[0].cells.length : 1}" class="pjp-none co-tbl-empty">Nothing matches &ldquo;${esc(TQ[t.dataset.tqFor].trim())}&rdquo;.</td></tr>`);
   });
   document.addEventListener('input', (e) => { const i = e.target.closest('[data-tq]'); if (!i) return; TQ[i.dataset.tq] = i.value; applyTQ(); });
+  // sorting, on the same tables: each column's head a button (css/esg.css .cd-sort, as Documents'
+  // matrix), a click for one way and another for the other; kept by table across redraws. A cell sorts
+  // by what it shows: a status the worst first, a dot by its state, a date, "n of m", a number, or its name
+  const SORT = {};
+  const RANKS = { 'needs attention': 0, missing: 0, expired: 0, 'expiring soon': 1, expiring: 1, 'in order': 2, valid: 2, 'nothing shared': 3 };
+  const DOTS = ['is-on', 'is-ok', 'is-notyet', 'is-pend', 'is-offsite', 'is-bad'];
+  const MONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const keyOfCell = (td) => {
+    if (!td) return null;
+    const b = td.querySelector('.co-badge'); if (b && fold(b.textContent.trim()) in RANKS) return RANKS[fold(b.textContent.trim())];
+    const d = td.querySelector('.cd-dot'); if (d) { const k = DOTS.findIndex((c) => d.classList.contains(c)); return k < 0 ? 9 : k; }
+    const n = td.querySelector('.n'), t = (n ? n.textContent : td.textContent).replace(/\s+/g, ' ').trim();
+    if (!t || t === '—' || t === '\u2014') return null;
+    const dm = /(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})/.exec(t); if (dm && MONS.includes(dm[2])) return new Date(+dm[3], MONS.indexOf(dm[2]), +dm[1]).getTime();
+    const of = /^(\d+) of (\d+)$/.exec(t); if (of) return +of[2] ? +of[1] / +of[2] : 0;
+    if (/^\d+(\.\d+)?$/.test(t)) return +t;
+    return fold(t);
+  };
+  const applySort = (root = document) => root.querySelectorAll('table[data-tq-for]').forEach((t) => {
+    const id = t.dataset.tqFor, st = SORT[id], b = t.tBodies[0], hr = t.tHead && t.tHead.rows[0]; if (!b || !hr) return;
+    [...hr.cells].forEach((th, c) => {
+      if (!th.querySelector('[data-sort-col]')) th.innerHTML = `<button type="button" class="cd-sort" data-sort-col="${c}"><span class="l">${th.innerHTML}</span><span class="a" aria-hidden="true"></span></button>`;
+      const on = st && st.c === c, btn = th.querySelector('[data-sort-col]');
+      if (on) th.setAttribute('aria-sort', st.dir > 0 ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort');
+      btn.querySelector('.a').innerHTML = on ? (st.dir > 0 ? '&uarr;' : '&darr;') : '&varr;';
+      btn.title = `Sort by ${btn.querySelector('.l').textContent.trim().toLowerCase()}`;
+    });
+    const rows = [...b.rows].filter((r) => !r.querySelector('.co-tbl-empty'));
+    rows.forEach((r, i) => { if (r.dataset.ord == null) r.dataset.ord = i; });
+    const keyed = rows.map((r) => ({ r, k: st ? keyOfCell(r.cells[st.c]) : null, o: +r.dataset.ord }));
+    keyed.sort((x, y) => {
+      if (!st) return x.o - y.o;
+      if (x.k == null || y.k == null) return x.k == null && y.k == null ? x.o - y.o : x.k == null ? 1 : -1; // nothing to sort by: last
+      const c = typeof x.k === 'number' && typeof y.k === 'number' ? x.k - y.k : String(x.k).localeCompare(String(y.k));
+      return c * st.dir || x.o - y.o;
+    });
+    const tail = [...b.rows].filter((r) => r.querySelector('.co-tbl-empty'));
+    keyed.concat(tail.map((r) => ({ r }))).forEach(({ r }) => b.appendChild(r));
+  });
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-sort-col]'); if (!btn) return;
+    const t = btn.closest('table'), id = t && t.dataset.tqFor; if (!id) return;
+    const c = +btn.dataset.sortCol, st = SORT[id];
+    SORT[id] = { c, dir: st && st.c === c ? -st.dir : 1 };
+    applySort(t.parentElement); btn.focus({ preventScroll: true });
+  });
   const badge = (st, why) => `<span class="co-badge ${ST[st][1]}"${why ? ` title="${esc(why)}"` : ''}>${ST[st][0]}</span>`;
   const byWorst = (a, b) => ORDER.indexOf(a.st) - ORDER.indexOf(b.st);
   const tally = (l) => ORDER.reduce((o, k) => (o[k] = l.filter((x) => x.st === k).length, o), {});
@@ -558,6 +604,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjs-grp { margin: 2rem 0 0.75rem; }
 .pjs-tools { display: flex; margin: 0 0 0.875rem; }
 .pjs-q { flex: 0 1 20rem; }
+/* sortable heads: css/esg.css .cd-sort */
+table[data-tq-for] th.c .cd-sort { justify-content: center; }
 .pjs-wk { min-width: 52rem; }
 .pjs-tbl { min-width: 44rem; table-layout: fixed; }
 .pjp-req-foot { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 1rem; padding: 0.875rem 0; background: var(--color-off-white, #fafafa); border-top: 1px solid var(--color-line); font-size: 0.875rem; }
@@ -638,7 +686,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       ${subs.sort(byWorst).map((x) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(x.id)}" aria-label="Open ${esc(x.name)}"><td><span class="n">${esc(nb(x.name))}</span><span class="d">${esc(x.work)}</span></td><td class="c">${siteDot(x)}</td><td class="c">${esc(x.entry || '—')}</td><td class="c">${esc(x.exit || '—')}</td><td class="c">${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>
       ${SITE_LEGEND}` : ''}</section>`;
     body.innerHTML = matrix + invited + table;
-    applyTQ(body);
+    applySort(body); applyTQ(body);
   };
 
   // ==== one worker on your project (project.html?id=&wk=): who they are, and their documents on it ====
@@ -666,6 +714,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     body.innerHTML = `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Their documents on this project</h2><p class="co-muted">${docs.length ? `What ${esc(p.name)} asks of each worker, the ones to chase first.` : `${esc(p.name)} asks nothing of each worker. Change that in <a class="co-link" href="project.html?id=${encodeURIComponent(p.id)}#required">Documents required</a>.`}</p></div>
       ${docs.length ? `${qTools('wk-docs', 'Search documents')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl" data-tq-for="wk-docs"><thead><tr><th style="width:52%">Document</th><th style="width:24%">Expiration date</th><th style="width:24%">Status</th></tr></thead><tbody>
       ${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td><td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>` : ''}</section>`;
+    applySort(body); applyTQ(body);
   };
 
   // ---- painting ----
@@ -681,7 +730,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
         const changed = [...c].sort().join() !== was; b.disabled = !changed; t.textContent = changed ? `${pl(c.length, 'document')} asked for, from ${REQ.length}. Save to apply it to the project.` : 'No changes yet.';
       } });
     }
-    applyTQ(body);
+    applySort(body); applyTQ(body);
     if (focus) { const b = body.querySelector(focus); if (b) b.focus({ preventScroll: true }); }
   };
   const go = (k, focus) => {

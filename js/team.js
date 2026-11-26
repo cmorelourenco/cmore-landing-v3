@@ -223,7 +223,6 @@
 .tm-rev-f { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem 1rem; font-size: 0.875rem; color: var(--color-ink-muted); }
 .tm-rev.has-bar { margin-bottom: 4.5rem; }
 .tm-lv-sort { display: inline-flex; align-items: center; gap: 0.375rem; border: 0; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; }
-.tm-lv-sort span { opacity: .55; }
 .tm-lv-sort:hover { color: var(--color-ink); }
 .tm-lv-p { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 .tm-lv-p .tm-pic { width: 2rem; height: 2rem; font-size: 0.75rem; }

@@ -183,7 +183,6 @@
 .si-rev tbody tr.is-changed { animation: si-flash 2.4s ease; }
 @keyframes si-flash { 0%, 40% { background: color-mix(in oklab, var(--color-positive, #3d7a2c) 14%, transparent); } }
 .si-sort { display: inline-flex; align-items: center; gap: 0.375rem; border: 0; background: none; padding: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; cursor: pointer; }
-.si-sort span { opacity: .55; }
 .si-sort:hover { color: var(--color-ink); }
 .si-p { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
 .si-pic { flex: none; width: 2rem; height: 2rem; border-radius: 0.5rem; display: grid; place-items: center; background: var(--color-graphite); color: var(--color-off-white); font-size: 0.75rem; font-weight: 600; }
