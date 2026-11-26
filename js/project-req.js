@@ -1,6 +1,6 @@
 /* The documents a project asks of its suppliers: picked when it's started (new-project.html, step 2)
    and changed from inside it (project.html, Documents required). Every area (company, workers,
-   equipment, products & materials), split by its catalog sections, with the documents that apply in
+   equipment, products & materials, and the project's own: contract, site declaration, safety, insurance), split by its catalog sections, with the documents that apply in
    the project's country; what the law asks for (mandatory, or when it applies) ticked to begin with.
    The list drives the project's matrices and every status in it (js/project.js).
    window.CMProjectReq: AREAS, catalog(country), defaults(country), reqOf(project), save(id, codes),
@@ -11,9 +11,9 @@
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const fold = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const en = (x) => (x && typeof x === 'object' ? x.en : x) || '';
-  const AREAS = [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['products', 'Products &amp; materials']];
+  const AREAS = [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['products', 'Products &amp; materials'], ['project', 'Project']];
   const REQ = { mandatory: 'Required by law', if_applicable: 'Required when it applies', optional: 'Optional', on_request: 'On request' };
-  const LEVEL = { company: 'For the company', all_workers: 'For all their workers', per_worker: 'For each worker', per_equipment: 'For each machine', per_product: 'For each product or material' };
+  const LEVEL = { company: 'For the company', all_workers: 'For all their workers', per_worker: 'For each worker', per_equipment: 'For each machine', per_product: 'For each product or material', project: 'For this project' };
   const EU = ['Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czechia', 'Czech Republic', 'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Ireland', 'Italy', 'Latvia', 'Lithuania',
     'Luxembourg', 'Malta', 'Netherlands', 'Poland', 'Portugal', 'Romania', 'Slovakia', 'Slovenia', 'Spain', 'Sweden'];
   const CODE = { Portugal: 'PT', 'United States': 'US', 'United States of America': 'US', Kenya: 'KE', Spain: 'ES', France: 'FR' };
@@ -30,6 +30,16 @@
   const T = (t) => ({ en: t, pt: t });
   const EXTRA = [['ID', 'Identity', 'mandatory'], ['DRV', 'Driving', 'optional'], ['CRM', 'Criminal record', 'optional']].filter(([c]) => W[c])
     .map(([code, sec, req]) => ({ code, category: 'workers', level: 'per_worker', requirement: req, section: T(sec), name: T(W[code].name) }));
+  // what each supplier gives for this project in particular, whatever the country (the safety plan's
+  // adherence is the EU's rule, and good practice elsewhere; the insurance naming the client mostly the US's)
+  const PROJECT = [['PJ-01', 'Contract', 'Subcontract Agreement', 'Contrato de subempreitada'],
+    ['PJ-02', 'On site', 'Site Activity Declaration', 'Declara\u00e7\u00e3o de atividade, calendariza\u00e7\u00e3o e respons\u00e1vel em obra'],
+    ['PJ-03', 'Safety', 'Safety Plan Adherence Declaration', 'Ades\u00e3o ao Plano de Seguran\u00e7a e Sa\u00fade'],
+    ['PJ-04', 'Safety', 'Risk Assessment and Method Statement (RAMS)', 'Avalia\u00e7\u00e3o de riscos e m\u00e9todo de trabalho da obra'],
+    ['PJ-05', 'Contract', 'Subcontractor List', 'Lista dos seus subempreiteiros na obra'],
+    ['PJ-06', 'Insurance', 'Project Insurance Certificate', 'Seguro que nomeia o cliente ou a obra']]
+    .map(([code, sec, en, pt]) => ({ code, category: 'project', level: 'project', requirement: 'if_applicable', section: T(sec), name: { en, pt } }));
+  EXTRA.push(...PROJECT);
   const ALL = EXTRA.slice(0, 1).concat(C.docs, EXTRA.slice(1));
   const cache = {};
   const catalog = (country = 'Portugal') => {

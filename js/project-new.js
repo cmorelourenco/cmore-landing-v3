@@ -37,7 +37,7 @@
   const today = () => new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
   const taken = () => new Set(((window.CMProjects && window.CMProjects.all()) || []).map((p) => fold(p.id)).concat((get(KEY) || []).map((p) => fold(p.id))));
 
-  const f = { step: 1, id: '', name: '', client: '', people: [{ role: 'Project manager', who: me.email || '', name: '', email: '', errs: {} }], country: 'Portugal', district: '', address: '', start: '', end: '', sups: [], errs: {}, q: '', open: false };
+  const f = { step: 1, id: '', name: '', client: '', people: [{ role: 'Project manager', who: me.email || '', name: '', email: '', errs: {} }], country: 'Portugal', district: '', address: '', start: '', end: '', sups: [], pick: [], errs: {}, q: '', open: false };
 
   const css = `
 .np-card { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.75rem; max-width: 52rem; }
@@ -89,6 +89,11 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
 .np-opt .co-badge { flex: none; }
 .np-opt-inv { justify-content: flex-start; gap: 0.625rem; border-top: 1px solid var(--color-mid-beige); border-radius: 0 0 0.5rem 0.5rem; margin-top: 0.25rem; padding-top: 0.625rem; font-size: 0.875rem; font-weight: 500; }
 .np-opt-inv svg { width: 1rem; height: 1rem; flex: none; }
+.np-chk { justify-content: flex-start; gap: 0.75rem; }
+.np-chk > span:first-of-type { flex: 1; min-width: 0; }
+.np-chk input { flex: none; width: 1.0625rem; height: 1.0625rem; margin: 0; accent-color: var(--color-graphite); cursor: pointer; }
+.np-menu-foot { position: sticky; bottom: -0.375rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0.375rem -0.375rem -0.375rem; padding: 0.625rem 0.875rem; border-top: 1px solid var(--color-mid-beige); background: var(--color-surface); font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.np-menu-foot b { color: var(--color-ink); font-weight: 600; }
 .np-none { padding: 0.75rem 0.625rem; font-size: 0.875rem; color: var(--color-ink-subtle); }
 /* each supplier on the project: who, then what and when */
 .np-sups { display: flex; flex-direction: column; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
@@ -195,10 +200,14 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   const menu = () => {
     const { yours, others } = pickable();
     const opt = (attr, n, d, badge) => `<button type="button" class="np-opt" ${attr}><span><span class="n">${esc(n)}</span><span class="d">${esc(d)}</span></span>${badge}</button>`;
-    return (yours.length ? '<div class="np-menu-h">Your suppliers</div>' + yours.slice(0, 8).map((s) => opt(`data-np-add="${esc(s.id)}"`, s.name, [s.city, (s.services || []).join(', ')].filter(Boolean).join(' · '), `<span class="co-badge ${STAT(s)[1]}">${STAT(s)[0]}</span>`)).join('') : '')
+    // your suppliers: a box each, as many as you like, then added together
+    const chk = (s) => `<label class="np-opt np-chk"><input type="checkbox" data-np-tog="${esc(s.id)}" aria-label="${esc(s.name)}"${f.pick.includes(s.id) ? ' checked' : ''}><span><span class="n">${esc(s.name)}</span><span class="d">${esc([s.city, (s.services || []).join(', ')].filter(Boolean).join(' · '))}</span></span><span class="co-badge ${STAT(s)[1]}">${STAT(s)[0]}</span></label>`;
+    const n = f.pick.length;
+    return (yours.length ? '<div class="np-menu-h">Your suppliers</div>' + yours.map(chk).join('') : '')
       + (others.length ? '<div class="np-menu-h">On C&#8209;MORE</div>' + others.slice(0, 6).map((c) => opt(`data-np-inv="${esc(c.country)}:${esc(c.code)}"`, c.name, `${c.city} · ${c.services.join(', ')}`, '<span class="co-badge b-info">Invite</span>')).join('') : '')
       + (!yours.length && !others.length ? '<p class="np-none">No company matches that.</p>' : '')
-      + `<button type="button" class="np-opt np-opt-inv" data-np-inv="">${PLUS}<span>Invite a company that isn&rsquo;t on C&#8209;MORE</span></button>`;
+      + `<button type="button" class="np-opt np-opt-inv" data-np-inv="">${PLUS}<span>Invite a company that isn&rsquo;t on C&#8209;MORE</span></button>`
+      + (mine().some((s) => !f.sups.some((x) => x.id === s.id)) ? `<div class="np-menu-foot"><span>${n ? `<b>${n}</b> selected` : 'Tick the suppliers to add'}</span><button type="button" class="btn btn-primary btn-sm" data-np-addsel${n ? '' : ' disabled'}>${n > 1 ? `Add ${n} suppliers` : 'Add supplier'}</button></div>` : '');
   };
   // the work: its type from the list, and a line under it for the details (needed only for "Other")
   const TYPES = (window.CMProjects && window.CMProjects.WORK_TYPES) || ['Other'];
@@ -215,7 +224,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
       <div class="np-sup-g">${work(x, k, e)}${i('entry', 'Entry date', 'date')}${i('exit', 'Exit date', 'date')}</div></li>`;
   };
   const step2 = () => `<section class="co-card np-card" aria-labelledby="np-h2">
-      <div class="np-card-h"><span class="np-step">Step 3 of 3 &middot; ${esc(f.name)}</span><h2 id="np-h2">Suppliers on the project</h2><p class="co-muted">Pick them from your suppliers or from the companies on C&#8209;MORE, or invite one. Then, for each, the work it does and when it&rsquo;s on site, between ${fmt(f.start)} and ${fmt(f.end)}.</p></div>
+      <div class="np-card-h"><span class="np-step">Step 3 of 3 &middot; ${esc(f.name)}</span><h2 id="np-h2">Suppliers on the project</h2><p class="co-muted">Tick as many of your suppliers as you need and add them together, or invite a company from C&#8209;MORE. Then, for each, the work it does and when it&rsquo;s on site, between ${fmt(f.start)} and ${fmt(f.end)}.</p></div>
       <div class="np-pick"><label class="sr-only" for="np-q">Find a supplier</label><input class="np-in" id="np-q" type="search" placeholder="Search your suppliers and the companies on C&#8209;MORE" value="${esc(f.q)}" autocomplete="off" role="combobox" aria-expanded="${f.open}" aria-controls="np-menu">
         <div class="np-menu" id="np-menu" ${f.open ? '' : 'hidden'}>${f.open ? menu() : ''}</div></div>
       ${f.sups.length ? `<ul class="np-sups" aria-label="Suppliers on the project">${f.sups.map(supRow).join('')}</ul>` : '<p class="np-empty">No suppliers yet. Search above to add the first.</p>'}
@@ -224,7 +233,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     </section>`;
   // step 2: what every supplier on it must have
   const stepDocs = () => `<section class="co-card np-card" aria-labelledby="np-hr">
-      <div class="np-card-h"><span class="np-step">Step 2 of 3 &middot; ${esc(f.name)}</span><h2 id="np-hr">Documents required</h2><p class="co-muted">What every supplier on this project must have, for the company and for the workers, equipment, products and materials they bring. Everything that applies in ${esc(f.country)} is here; what the law asks for is ticked to begin with.</p></div>
+      <div class="np-card-h"><span class="np-step">Step 2 of 3 &middot; ${esc(f.name)}</span><h2 id="np-hr">Documents required</h2><p class="co-muted">What every supplier on this project must have, for the company, for the workers, equipment, products and materials they bring, and for this project itself. Everything that applies in ${esc(f.country)} is here; what the law asks for, and the project&rsquo;s own, is ticked to begin with.</p></div>
       <div id="np-req"></div>
       <div class="np-sep"></div>
       <div class="np-foot"><button type="button" class="link-btn" data-np-back>Back</button><div class="np-foot-r"><a class="link-btn" href="projects.html">Cancel</a><button type="button" class="btn btn-primary" data-np-next2>Next: suppliers</button></div></div>
@@ -248,7 +257,14 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     if (focus) { const el = box.querySelector(focus); if (el) el.focus({ preventScroll: true }); }
   };
   const paintMenu = () => { const m = box.querySelector('#np-menu'), q = box.querySelector('#np-q'); if (!m) return; m.hidden = !f.open; m.innerHTML = f.open ? menu() : ''; q.setAttribute('aria-expanded', String(f.open)); };
-  const addSup = (s) => { if (f.sups.some((x) => x.id === s.id)) return; f.sups.push({ id: s.id, name: s.name, work: '', detail: '', entry: f.start, exit: f.end }); f.q = ''; f.open = false; paint(`#np-s${f.sups.length - 1}-work`); };
+  const addSup = (s) => addSups([s]);
+  // several at once: on the project in one go, then the work and dates for each, from the first of them
+  const addSups = (list) => {
+    const k = f.sups.length;
+    list.forEach((s) => { if (!f.sups.some((x) => x.id === s.id)) f.sups.push({ id: s.id, name: s.name, work: '', detail: '', entry: f.start, exit: f.end }); });
+    f.pick = f.pick.filter((id) => !f.sups.some((x) => x.id === id)); f.q = ''; f.open = false;
+    paint(f.sups.length > k ? `#np-s${k}-work` : '#np-q');
+  };
   const toTop = () => { const h = document.querySelector('.np-card'); if (h && h.getBoundingClientRect().top < 0) h.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
 
   // invited from here (js/supplier-add.js): on your list, and on the project
@@ -270,6 +286,11 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   });
   box.addEventListener('change', (e) => {
     const t = e.target;
+    if (t.dataset.npTog != null) {
+      const id = t.dataset.npTog; f.pick = t.checked ? f.pick.concat(id) : f.pick.filter((x) => x !== id);
+      const m = box.querySelector('#np-menu'), top = m.scrollTop; paintMenu(); m.scrollTop = top;
+      const b = box.querySelector(`[data-np-tog="${CSS.escape(id)}"]`); if (b) b.focus({ preventScroll: true }); return;
+    }
     if (t.name === 'district') f.district = t.value;
     // the type of work: "Other" makes the details line the work itself, so its placeholder says so
     if (t.dataset.npS != null && t.name === 'work') { const k = +t.dataset.npS, x = f.sups[k]; x.work = t.value; if (x.errs) { delete x.errs.work; delete x.errs.detail; } paint(`#np-s${k}-work`); return; }
@@ -281,12 +302,13 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   document.addEventListener('click', (e) => { if (f.open && !e.target.closest('.np-pick')) { f.open = false; paintMenu(); } });
   box.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && f.open) { f.open = false; paintMenu(); box.querySelector('#np-q').focus(); return; }
-    if (e.key === 'ArrowDown' && e.target.id === 'np-q') { e.preventDefault(); f.open = true; paintMenu(); const o = box.querySelector('.np-opt'); if (o) o.focus(); return; }
+    if (e.key === 'ArrowDown' && e.target.id === 'np-q') { e.preventDefault(); f.open = true; paintMenu(); const o = box.querySelector('[data-np-tog], button.np-opt'); if (o) o.focus(); return; }
     if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.closest('.np-menu')) {
-      e.preventDefault(); const os = [...box.querySelectorAll('.np-opt')], i = os.indexOf(document.activeElement);
+      e.preventDefault(); const os = [...box.querySelectorAll('[data-np-tog], button.np-opt, [data-np-addsel]:not(:disabled)')], i = os.indexOf(document.activeElement);
       if (e.key === 'ArrowUp' && i <= 0) { box.querySelector('#np-q').focus(); return; }
       os[Math.min(os.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1))].focus();
     }
+    if (e.key === 'Enter' && e.target.dataset.npTog != null) { e.preventDefault(); e.target.click(); return; }
     if (e.key === 'Enter' && e.target.matches('input.np-in:not(#np-q)') && f.step === 1) { e.preventDefault(); box.querySelector('[data-np-next]').click(); }
   });
   box.addEventListener('click', (e) => {
@@ -298,7 +320,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     if (e.target.closest('[data-np-padd]')) { f.people.push({ role: f.people.some((x) => x.role === 'Site manager') ? ROLES[2] : 'Site manager', who: '', name: '', email: '', errs: {} }); paint(`#np-p${f.people.length - 1}-role`); return; }
     const pr = e.target.closest('[data-np-prm]'); if (pr) { f.people.splice(+pr.dataset.npPrm, 1); paint('[data-np-padd]'); return; }
     if (e.target.closest('[data-np-back]')) { f.step -= 1; paint(f.step === 1 ? '#np-id' : '[data-np-next2]'); toTop(); return; }
-    const a = e.target.closest('[data-np-add]'); if (a) { const s = mine().find((x) => x.id === a.dataset.npAdd); if (s) addSup(s); return; }
+    if (e.target.closest('[data-np-addsel]')) { addSups(f.pick.map((id) => mine().find((x) => x.id === id)).filter(Boolean)); return; }
     const v = e.target.closest('[data-np-inv]'); if (v) { const [country, code] = v.dataset.npInv.split(':'); invite(code ? { country, code } : null); return; }
     const r = e.target.closest('[data-np-rm]'); if (r) { f.sups.splice(+r.dataset.npRm, 1); paint('#np-q'); return; }
     if (e.target.closest('[data-np-save]')) {

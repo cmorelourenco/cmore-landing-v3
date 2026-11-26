@@ -322,6 +322,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${issues.length ? `<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl" data-paged="pjo-attention"><thead><tr><th style="width:30%">Name</th><th style="width:14%">Type</th><th style="width:22%">Supplier</th><th style="width:34%">Status</th></tr></thead><tbody>
             ${issues.map((i) => `<tr class="is-link" tabindex="0" role="link" ${i.k === 'suppliers' ? `data-sup-id="${esc(i.id)}" aria-label="Open ${esc(i.name)}"` : `data-open-tab="${i.k}" data-open-sup="${esc(i.sup)}" aria-label="${esc(i.name)}: see it in ${KIND[i.k][0]}"`}><td><span class="n">${esc(nb(i.name))}</span><span class="d">${esc(sub(i) || '')}</span></td><td>${KIND[i.k][3]}</td><td><span class="n">${esc(nb(i.k === 'suppliers' ? (i.by || 'You') : i.sup))}</span>${i.k === 'suppliers' ? `<span class="d">${i.by ? 'Brought them in' : 'Your supplier'}</span>` : ''}</td><td>${badge(i.st)}<span class="d">${esc(i.why)}</span></td></tr>`).join('')}
           </tbody></table></div>` : ''}</section>
+        ${projMatrix(M.sups.slice().sort(byWorst))}
         <section class="pjo-sec"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Your company</h3></div>
           <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Your documents for this project</h2><p class="co-muted">What the project asks of ${ME} itself.</p></div>
           <div class="pjp-card"><div class="pjd-stats">${stat('', x.asked, 'Asked for')}${stat(' is-ok', x.ok, 'Valid')}${stat(' is-pend', x.look, 'Needs a look')}${stat(' is-bad', x.miss, 'Not compliant')}</div>
@@ -340,7 +341,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     equipment: () => listPanel(M.equipment, 'Equipment', 'Machine', (m) => `<span class="n">${esc(m.name)}</span><span class="d">${esc(m.ref)}</span>`, 'machines'),
     materials: () => listPanel(M.materials, 'Materials', 'Material', (m) => `<span class="n">${esc(m.name)}</span><span class="d">${esc(m.ref)}</span>`, 'materials'),
     // what every supplier on it must have: changed here, every status on the project follows
-    required: () => `<p class="pjp-note">${EYE}<span>What every supplier on this project must have, for the company and for the workers, equipment, products and materials they bring. Change it and the matrices and every status on the project follow.</span></p>
+    required: () => `<p class="pjp-note">${EYE}<span>What every supplier on this project must have, for the company, for the workers, equipment, products and materials they bring, and for this project itself. Change it and the matrices and every status on the project follow.</span></p>
       <div id="pjp-req"></div>
       <div class="pjp-req-foot"><span class="co-muted" data-req-said>No changes yet.</span><button type="button" class="btn btn-primary btn-sm" data-req-save disabled>Save changes</button></div>`,
     exports: () => {
@@ -406,16 +407,16 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   // a matrix of their documents on this project (and of the suppliers they brought in) by area,
   // then the documents themselves. Made up from the project's model, so it agrees with its tabs.
   const supId = new URLSearchParams(location.search).get('sup');
-  const AREAS = [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['materials', 'Products &amp; Materials']];
+  const AREAS = [['company', 'Company'], ['workers', 'Workers'], ['equipment', 'Equipment'], ['materials', 'Products &amp; Materials'], ['project', 'Project']];
   // ---- what the project asks of its suppliers (js/project-req.js), and what that makes of each one ----
   const RQ = window.CMProjectReq;
   const CAT = Object.fromEntries(((window.DOC_CATALOG || {}).docs || []).concat(RQ ? RQ.EXTRA : []).map((d) => [d.code, d]));
   const docName = (c) => (CAT[c] ? CAT[c].name.en : c);
-  const CAT_OF = { company: 'company', workers: 'workers', equipment: 'equipment', materials: 'products' };
+  const CAT_OF = { company: 'company', workers: 'workers', equipment: 'equipment', materials: 'products', project: 'project' };
   const PER = { workers: 'per_worker', equipment: 'per_equipment', materials: 'per_product' };
   let REQ = [];
   // the codes asked for: of the supplier itself (its company's, and those for all its workers), or of each thing it brings
-  const reqOf = (area, each) => REQ.filter((c) => CAT[c] && CAT[c].category === CAT_OF[area] && (area === 'company' ? true : each ? CAT[c].level === PER[area] : CAT[c].level !== PER[area]));
+  const reqOf = (area, each) => REQ.filter((c) => CAT[c] && CAT[c].category === CAT_OF[area] && (area === 'company' || area === 'project' ? true : each ? CAT[c].level === PER[area] : CAT[c].level !== PER[area]));
   const reqIn = (area) => REQ.filter((c) => CAT[c] && CAT[c].category === CAT_OF[area]);
   // the document a status's reason names (ownerModel's WHY), when the project asks for it; else one of what it asks
   const NAMED = [[/tax clearance/i, 'CO-06'], [/social security clearance/i, 'CO-07'], [/civil liability/i, 'CO-10'], [/work accident/i, 'CO-08'], [/medical fitness/i, 'WK-11'], [/safety training/i, 'WK-14'], [/social security registration/i, 'WK-02'],
@@ -424,13 +425,17 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   const dateIn = (t) => { const m = /(\d{1,2} [A-Z][a-z]{2} \d{4})$/.exec(t || ''); return m ? m[1] : null; };
   // one thing's documents (the company itself, a worker, a machine, a material): what the project asks
   // of it, valid but for the one its status (as the model made it) is about
+  // the project's own papers that don't run out (all but its insurance): no date, and never 'expiring'
+  const NO_EXP = ['PJ-01', 'PJ-02', 'PJ-03', 'PJ-04', 'PJ-05'];
   const docsFor = (area, codes, x, key) => {
-    const bad = codes.length && (x.st === 'miss' || x.st === 'soon') ? named(codes, x.why, key) : null;
+    const can = x.st === 'soon' ? codes.filter((c) => !NO_EXP.includes(c)) : codes;
+    const bad = can.length && (x.st === 'miss' || x.st === 'soon') ? named(can, x.why, key) : null;
     return codes.map((c) => {
       const h = hash(`${p.id}:${key}:${c}`), d = { area, code: c, name: docName(c), of: x.of, ofSub: x.ofSub, status: 'valid', exp: fmt(new Date(Date.now() + (45 + (h % 640)) * 864e5)) };
+      if (NO_EXP.includes(c)) d.exp = '';
       if (x.fresh) return Object.assign(d, { status: 'missing', exp: '' });
       if (c === bad && x.st === 'soon') Object.assign(d, { status: 'expiring', exp: dateIn(x.why) || fmt(new Date(Date.now() + (5 + (h % 25)) * 864e5)) });
-      if (c === bad && x.st === 'miss') Object.assign(d, /expired/i.test(x.why) ? { status: 'expired', exp: fmt(new Date(Date.now() - (3 + (h % 40)) * 864e5)) } : { status: 'missing', exp: '' });
+      if (c === bad && x.st === 'miss') Object.assign(d, /expired/i.test(x.why) && !NO_EXP.includes(c) ? { status: 'expired', exp: fmt(new Date(Date.now() - (3 + (h % 40)) * 864e5)) } : { status: 'missing', exp: '' });
       return d;
     });
   };
@@ -456,7 +461,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       Object.assign(x, verdict(x.docs, codes.length ? 'Nothing on file yet' : 'Nothing asked for'));
     }));
     M.sups.forEach((s) => {
-      const own = AREAS.flatMap(([area]) => reqOf(area, false).length ? docsFor(area, reqOf(area, false), { st: s.st, why: s.why, fresh: s.fresh, of: area === 'company' ? 'The company' : 'All their workers', ofSub: s.work }, `${s.id}:${area}`) : []);
+      const own = AREAS.flatMap(([area]) => reqOf(area, false).length ? docsFor(area, reqOf(area, false), { st: s.st, why: s.why, fresh: s.fresh, of: area === 'company' ? 'The company' : area === 'project' ? 'This project' : 'All their workers', ofSub: s.work }, `${s.id}:${area}`) : []);
       const items = KINDS.flatMap(([, list]) => list.filter((x) => x.sup === s.name));
       s.docs = own.concat(items.flatMap((x) => x.docs));
       const v = verdict(own, s.fresh ? 'No documents on it yet' : 'Nothing asked of the company');
@@ -468,10 +473,27 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     });
   };
   const supDocs = (s) => s.docs || [];
+  // the project's own documents (Documents required, Project), a column each: where every supplier stands on them
+  const PJ_SHORT = { 'PJ-01': 'Subcontract', 'PJ-02': 'Site declaration', 'PJ-03': 'Safety plan', 'PJ-04': 'RAMS', 'PJ-05': 'Subcontractors', 'PJ-06': 'Insurance' };
+  const projMatrix = (l) => {
+    const codes = reqOf('project', false);
+    if (!codes.length || !M.sups.length) return '';
+    const cell = (x, c) => {
+      const d = supDocs(x).find((y) => y.area === 'project' && y.code === c);
+      if (!d) return '<td class="c"><span class="cd-dash">&mdash;</span></td>';
+      const say = `${docName(c)}: ${DOC_ST[d.status][0]}${d.exp ? `, expires ${d.exp}` : ''}`;
+      return `<td class="c"><span class="cd-dot is-${DOC_TONE[DOC_RANK[d.status]]}" title="${esc(say)}" aria-hidden="true"></span><span class="d">${DOC_ST[d.status][0]}</span><span class="sr-only">${esc(say)}</span></td>`;
+    };
+    const rows = l.map((x) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(x.id)}" aria-label="Open ${esc(x.name)}"><td><span class="n">${esc(nb(x.name))}</span><span class="d">${x.by ? `Brought in by ${esc(nb(x.by))}` : esc(x.work)}</span></td>${codes.map((c) => cell(x, c)).join('')}</tr>`).join('');
+    const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['bad', 'Missing or expired']].map(([c, t]) => `<span><span class="cd-dot is-${c}"></span>${t}</span>`).join('');
+    return `<section class="pjo-sec pjs-pj"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Your suppliers</h3></div><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project documents</h2><p class="co-muted">What each supplier has given for ${esc(p.name)} itself: ${pl(codes.length, 'document')} asked for in <button type="button" class="link-btn" data-tab="required">Documents required</button>.</p></div>
+      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjs-mx"><thead><tr><th>Supplier</th>${codes.map((c) => `<th class="c" title="${esc(docName(c))}">${PJ_SHORT[c] || esc(docName(c))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="cd-legend">${legend}</p></section>`;
+  };
   const DOC_RANK = { valid: 0, expiring: 1, missing: 2, expired: 2 };
   const DOC_TONE = ['ok', 'pend', 'bad'];
   const DOC_ST = { valid: ['Valid', 'b-ok'], expiring: ['Expiring', 'b-pend'], missing: ['Missing', 'b-over'], expired: ['Expired', 'b-over'] };
-  const AREA_NONE = { company: '', workers: 'No workers', equipment: 'No equipment', materials: 'No products or materials' };
+  const AREA_NONE = { company: '', project: '', workers: 'No workers', equipment: 'No equipment', materials: 'No products or materials' };
   // where one supplier's documents in an area stand, as a matrix cell: the worst status's dot
   // and how many need a look under it
   const areaCell = (x, a) => {
@@ -505,6 +527,9 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjs-tbl { min-width: 44rem; table-layout: fixed; }
 .pjp-req-foot { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 1rem; padding: 0.875rem 0; background: var(--color-off-white, #fafafa); border-top: 1px solid var(--color-line); font-size: 0.875rem; }
 .pjs-sups th.c, .pjs-sups td.c { text-align: center; }
+.pjs-pj .pjs-mx th.c, .pjs-pj .pjs-mx td.c { width: auto; }
+.pjs-pj .pjs-mx th:first-child { width: 26%; }
+.pjs-pj .co-muted .link-btn { font: inherit; vertical-align: baseline; }
 /* on site: green for yes, red for no */
 .cd-dot.is-on { background: var(--color-ok-deep, #8ccb86); }
 .cd-dot.is-offsite { background: var(--color-critical); }`;
