@@ -155,7 +155,21 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   // ---- where something stands ------------------------------------------------------------------
   const ST = { ok: ['In order', 'b-ok'], soon: ['Expiring soon', 'b-pend'], miss: ['Needs attention', 'b-over'] };
   const ORDER = ['miss', 'soon', 'ok'];
-  const badge = (st) => `<span class="co-badge ${ST[st][1]}">${ST[st][0]}</span>`;
+  // a search for one table (co-search, as in Documents): kept by name across redraws; the rows that
+  // don't match are hidden (the pager leaves them out), and a line says when nothing does
+  const TQ = {};
+  const QI = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  const qBox = (id, ph) => `<label class="co-search pjs-q">${QI}<input type="search" data-tq="${id}" placeholder="${ph}" aria-label="${ph}" value="${esc(TQ[id] || '')}" autocomplete="off"></label>`;
+  const qTools = (id, ph) => `<div class="pjs-tools">${qBox(id, ph)}</div>`;
+  const applyTQ = (root = document) => root.querySelectorAll('table[data-tq-for]').forEach((t) => {
+    const q = fold((TQ[t.dataset.tqFor] || '').trim()), b = t.tBodies[0]; if (!b) return;
+    b.querySelectorAll('tr.pjs-nomatch').forEach((r) => r.remove());
+    const rows = [...b.rows].filter((r) => !r.querySelector('.co-tbl-empty'));
+    rows.forEach((r) => { r.hidden = !!q && !fold(r.textContent).includes(q); });
+    if (q && rows.length && rows.every((r) => r.hidden)) b.insertAdjacentHTML('beforeend', `<tr class="pjs-nomatch"><td colspan="${t.tHead ? t.tHead.rows[0].cells.length : 1}" class="pjp-none co-tbl-empty">Nothing matches &ldquo;${esc(TQ[t.dataset.tqFor].trim())}&rdquo;.</td></tr>`);
+  });
+  document.addEventListener('input', (e) => { const i = e.target.closest('[data-tq]'); if (!i) return; TQ[i.dataset.tq] = i.value; applyTQ(); });
+  const badge = (st, why) => `<span class="co-badge ${ST[st][1]}"${why ? ` title="${esc(why)}"` : ''}>${ST[st][0]}</span>`;
   const byWorst = (a, b) => ORDER.indexOf(a.st) - ORDER.indexOf(b.st);
   const tally = (l) => ORDER.reduce((o, k) => (o[k] = l.filter((x) => x.st === k).length, o), {});
 
@@ -319,8 +333,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
         <div class="pjo-kpis" role="list">${parts.map(card).join('')}</div>
         <section class="pjo-sec"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Needs attention</h3></div>
           <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">What&rsquo;s holding the project up</h2><p class="co-muted">${issues.length ? `${pl(issues.length, 'supplier, worker, machine or material', 'suppliers, workers, machines and materials')} not in order yet, the most urgent first.` : 'Every supplier, worker, machine and material on this project is in order.'}</p></div>
-          ${issues.length ? `<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl" data-paged="pjo-attention"><thead><tr><th style="width:30%">Name</th><th style="width:14%">Type</th><th style="width:22%">Supplier</th><th style="width:34%">Status</th></tr></thead><tbody>
-            ${issues.map((i) => `<tr class="is-link" tabindex="0" role="link" ${i.k === 'suppliers' ? `data-sup-id="${esc(i.id)}" aria-label="Open ${esc(i.name)}"` : `data-open-tab="${i.k}" data-open-sup="${esc(i.sup)}" aria-label="${esc(i.name)}: see it in ${KIND[i.k][0]}"`}><td><span class="n">${esc(nb(i.name))}</span><span class="d">${esc(sub(i) || '')}</span></td><td>${KIND[i.k][3]}</td><td><span class="n">${esc(nb(i.k === 'suppliers' ? (i.by || 'You') : i.sup))}</span>${i.k === 'suppliers' ? `<span class="d">${i.by ? 'Brought them in' : 'Your supplier'}</span>` : ''}</td><td>${badge(i.st)}<span class="d">${esc(i.why)}</span></td></tr>`).join('')}
+          ${issues.length ? `${qTools('ov-issues', 'Search by name or supplier')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl" data-paged="pjo-attention" data-tq-for="ov-issues"><thead><tr><th style="width:30%">Name</th><th style="width:14%">Type</th><th style="width:22%">Supplier</th><th style="width:34%">Status</th></tr></thead><tbody>
+            ${issues.map((i) => `<tr class="is-link" tabindex="0" role="link" ${i.k === 'suppliers' ? `data-sup-id="${esc(i.id)}" aria-label="Open ${esc(i.name)}"` : i.k === 'workers' ? `data-wk-id="${M.workers.findIndex((w) => w.name === i.name && w.sup === i.sup)}" aria-label="Open ${esc(i.name)}"` : `data-open-tab="${i.k}" data-open-sup="${esc(i.sup)}" aria-label="${esc(i.name)}: see it in ${KIND[i.k][0]}"`}><td><span class="n">${esc(nb(i.name))}</span><span class="d">${esc(sub(i) || '')}</span></td><td>${KIND[i.k][3]}</td><td><span class="n">${esc(nb(i.k === 'suppliers' ? (i.by || 'You') : i.sup))}</span>${i.k === 'suppliers' ? `<span class="d">${i.by ? 'Brought them in' : 'Your supplier'}</span>` : ''}</td><td>${badge(i.st, i.why)}</td></tr>`).join('')}
           </tbody></table></div>` : ''}</section>
         ${projMatrix(M.sups.slice().sort(byWorst))}
         <section class="pjo-sec"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Your company</h3></div>
@@ -330,12 +344,11 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     },
     suppliers: () => {
       const l = M.sups.filter(keep).sort(byWorst);
-      const dot = (c, say) => `<span class="cd-dot is-${c}" title="${esc(say)}"></span><span class="sr-only">${esc(say)}</span>`;
-      return `<div class="pjp-tools"><div class="pjp-tools-l">${filterOf(M.sups, 'Suppliers by status')}</div></div>
-        <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjs-sups"><thead><tr><th style="width:30%">Supplier</th><th style="width:22%">Brought in by</th><th class="c" style="width:12%">Workers</th><th class="c" style="width:14%">On site</th><th class="c" style="width:22%">Status</th></tr></thead><tbody>
-        ${l.length ? l.map((s) => { const on = onSite(s); return `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(s.id)}" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(nb(s.name))}</span><span class="d">${esc(s.work)}</span></td><td>${s.by ? `<span class="n">${byLink(s.by)}</span><span class="d">Their supplier</span>` : '<span class="n">You</span><span class="d">Your supplier</span>'}</td><td class="c">${M.workers.filter((w) => w.sup === s.name).length}</td><td class="c">${dot(on ? 'on' : 'offsite', `${on ? 'On site now' : 'Not on site now'}: ${s.entry || '—'} to ${s.exit || '—'}`)}</td><td class="c">${badge(s.st)}<span class="d">${esc(s.why)}</span></td></tr>`; }).join('')
+      return `<div class="pjp-tools"><div class="pjp-tools-l">${qBox('tab-sups', 'Search by name or work')}${filterOf(M.sups, 'Suppliers by status')}</div></div>
+        <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjs-sups" data-tq-for="tab-sups"><thead><tr><th style="width:30%">Supplier</th><th style="width:22%">Brought in by</th><th class="c" style="width:12%">Workers</th><th class="c" style="width:14%">On site</th><th class="c" style="width:22%">Status</th></tr></thead><tbody>
+        ${l.length ? l.map((s) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(s.id)}" aria-label="Open ${esc(s.name)}"><td><span class="n">${esc(nb(s.name))}</span><span class="d">${esc(s.work)}</span></td><td>${s.by ? `<span class="n">${byLink(s.by)}</span><span class="d">Their supplier</span>` : '<span class="n">You</span><span class="d">Your supplier</span>'}</td><td class="c">${M.workers.filter((w) => w.sup === s.name).length}</td><td class="c">${siteDotOf(s)}</td><td class="c">${badge(s.st, s.why)}</td></tr>`).join('')
           : `<tr><td colspan="5" class="pjp-none co-tbl-empty">${M.sups.length ? 'No supplier with that status.' : '<b>No suppliers on this project yet.</b>'}</td></tr>`}</tbody></table></div>
-        <p class="cd-legend"><span><span class="cd-dot is-on"></span>On site today</span><span><span class="cd-dot is-offsite"></span>Not on site</span></p>`;
+        ${SITE_LEGEND}`;
     },
     workers: () => listPanel(M.workers, 'Workers', 'Worker', (w) => `<span class="n">${esc(w.name)}</span><span class="d">${esc(w.role)}</span>`, 'workers'),
     equipment: () => listPanel(M.equipment, 'Equipment', 'Machine', (m) => `<span class="n">${esc(m.name)}</span><span class="d">${esc(m.ref)}</span>`, 'machines'),
@@ -354,11 +367,11 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     },
   };
   const listPanel = (all, label, col, cell, noun) => {
-    const l = all.filter(keep).sort(byWorst);
-    return `<div class="pjp-tools"><div class="pjp-tools-l">${filterOf(all, `${label} by status`)}${all.length ? supSelect(all) : ''}</div></div>
-      <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl"><thead><tr><th style="width:34%">${col}</th><th style="width:30%">Supplier</th><th style="width:36%">Status</th></tr></thead><tbody>
-      ${l.length ? l.map((x) => `<tr><td>${cell(x)}</td><td><span class="n">${esc(nb(x.sup))}</span></td><td>${badge(x.st)}<span class="d">${esc(x.why)}</span></td></tr>`).join('')
-        : `<tr><td colspan="3" class="pjp-none co-tbl-empty">${all.length ? `No ${noun} match that.` : `<b>No ${noun} on this project yet.</b>Your suppliers add theirs and choose which of their documents you see.`}</td></tr>`}</tbody></table></div>`;
+    const l = all.filter(keep).sort(byWorst), kind = noun === 'workers' ? null : noun === 'machines' ? 'equipment' : 'materials';
+    return `<div class="pjp-tools"><div class="pjp-tools-l">${all.length ? qBox(`tab-${noun}`, `Search by name or ${noun === 'workers' ? 'role' : noun === 'machines' ? 'serial number' : 'batch'}`) : ''}${filterOf(all, `${label} by status`)}${all.length ? supSelect(all) : ''}</div></div>
+      <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl" data-tq-for="tab-${noun}"><thead><tr><th style="width:30%">${col}</th><th style="width:26%">Supplier</th><th class="c" style="width:12%">On site</th><th style="width:32%">Status</th></tr></thead><tbody>
+      ${l.length ? l.map((x) => `<tr${noun === 'workers' ? ` class="is-link" tabindex="0" role="link" data-wk-id="${all.indexOf(x)}" aria-label="Open ${esc(x.name)}"` : ''}><td>${cell(x)}</td><td><span class="n">${esc(nb(x.sup))}</span></td><td class="c">${siteDotOf(wkSite(x, kind), kind === 'materials')}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')
+        : `<tr><td colspan="4" class="pjp-none co-tbl-empty">${all.length ? `No ${noun} match that.` : `<b>No ${noun} on this project yet.</b>Your suppliers add theirs and choose which of their documents you see.`}</td></tr>`}</tbody></table></div>${all.length ? legendOf(kind === 'materials') : ''}`;
   };
 
   // ==== a client's project: your part of it ======================================================
@@ -399,7 +412,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl"><thead><tr><th style="width:32%">${T.one.charAt(0).toUpperCase() + T.one.slice(1)}</th><th style="width:26%">Documents shared</th><th style="width:30%">Status of what you share</th><th style="width:12%" aria-label="Remove"></th></tr></thead><tbody>
       ${l.length ? l.map((x, k) => {
         const [n, sub] = nameOf(T.kind, x.i), { all, on } = sharedOf(T.kind, x), st = on.length ? stOf(on) : null;
-        return `<tr><td><span class="n">${n}</span><span class="d">${sub}</span></td><td><span class="n">${on.length} of ${all.length}</span><button type="button" class="link-btn" data-share="${T.key}:${k}">Choose</button></td><td>${st ? `${badge(st)}<span class="d">${esc(whyOf(on))}</span>` : '<span class="co-badge b-neu">Nothing shared</span>'}</td><td class="pjp-x"><button type="button" class="link-btn" data-rm="${T.key}:${k}">Remove</button></td></tr>`;
+        return `<tr><td><span class="n">${n}</span><span class="d">${sub}</span></td><td><span class="n">${on.length} of ${all.length}</span><button type="button" class="link-btn" data-share="${T.key}:${k}">Choose</button></td><td>${st ? `${badge(st, whyOf(on))}` : '<span class="co-badge b-neu">Nothing shared</span>'}</td><td class="pjp-x"><button type="button" class="link-btn" data-rm="${T.key}:${k}">Remove</button></td></tr>`;
       }).join('') : `<tr><td colspan="4" class="pjp-none co-tbl-empty"><b>No ${T.many} on it yet.</b>Add the ${T.many} you&rsquo;re bringing and choose what ${esc(nb(p.client))} sees of each.</td></tr>`}</tbody></table></div>`;
   };
 
@@ -426,7 +439,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   // one thing's documents (the company itself, a worker, a machine, a material): what the project asks
   // of it, valid but for the one its status (as the model made it) is about
   // the project's own papers that don't run out (all but its insurance): no date, and never 'expiring'
-  const NO_EXP = ['PJ-01', 'PJ-02', 'PJ-03', 'PJ-04', 'PJ-05'];
+  const NO_EXP = ['PJ-01', 'PJ-02', 'PJ-03', 'PJ-04'];
   const docsFor = (area, codes, x, key) => {
     const can = x.st === 'soon' ? codes.filter((c) => !NO_EXP.includes(c)) : codes;
     const bad = can.length && (x.st === 'miss' || x.st === 'soon') ? named(can, x.why, key) : null;
@@ -461,7 +474,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       Object.assign(x, verdict(x.docs, codes.length ? 'Nothing on file yet' : 'Nothing asked for'));
     }));
     M.sups.forEach((s) => {
-      const own = AREAS.flatMap(([area]) => reqOf(area, false).length ? docsFor(area, reqOf(area, false), { st: s.st, why: s.why, fresh: s.fresh, of: area === 'company' ? 'The company' : area === 'project' ? 'This project' : 'All their workers', ofSub: s.work }, `${s.id}:${area}`) : []);
+      const own = AREAS.flatMap(([area]) => reqOf(area, false).length ? docsFor(area, reqOf(area, false), { st: s.st, why: s.why, fresh: s.fresh, of: ({ company: 'The company', project: 'This project', workers: 'All their workers', equipment: 'All their equipment', materials: 'All their products and materials' })[area], ofSub: s.work }, `${s.id}:${area}`) : []);
       const items = KINDS.flatMap(([, list]) => list.filter((x) => x.sup === s.name));
       s.docs = own.concat(items.flatMap((x) => x.docs));
       const v = verdict(own, s.fresh ? 'No documents on it yet' : 'Nothing asked of the company');
@@ -474,7 +487,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   };
   const supDocs = (s) => s.docs || [];
   // the project's own documents (Documents required, Project), a column each: where every supplier stands on them
-  const PJ_SHORT = { 'PJ-01': 'Subcontract', 'PJ-02': 'Site declaration', 'PJ-03': 'Safety plan', 'PJ-04': 'RAMS', 'PJ-05': 'Subcontractors', 'PJ-06': 'Insurance' };
+  const PJ_SHORT = { 'PJ-01': 'Subcontract', 'PJ-02': 'Site declaration', 'PJ-03': 'Safety plan', 'PJ-04': 'RAMS', 'PJ-06': 'Insurance' };
   const projMatrix = (l) => {
     const codes = reqOf('project', false);
     if (!codes.length || !M.sups.length) return '';
@@ -487,7 +500,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const rows = l.map((x) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(x.id)}" aria-label="Open ${esc(x.name)}"><td><span class="n">${esc(nb(x.name))}</span><span class="d">${x.by ? `Brought in by ${esc(nb(x.by))}` : esc(x.work)}</span></td>${codes.map((c) => cell(x, c)).join('')}</tr>`).join('');
     const legend = [['ok', 'Valid'], ['pend', 'Expiring'], ['bad', 'Missing or expired']].map(([c, t]) => `<span><span class="cd-dot is-${c}"></span>${t}</span>`).join('');
     return `<section class="pjo-sec pjs-pj"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Your suppliers</h3></div><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Project documents</h2><p class="co-muted">What each supplier has given for ${esc(p.name)} itself: ${pl(codes.length, 'document')} asked for in <button type="button" class="link-btn" data-tab="required">Documents required</button>.</p></div>
-      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjs-mx"><thead><tr><th>Supplier</th>${codes.map((c) => `<th class="c" title="${esc(docName(c))}">${PJ_SHORT[c] || esc(docName(c))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+      ${qTools('ov-pj', 'Search by supplier')}<div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjs-mx" data-tq-for="ov-pj"><thead><tr><th>Supplier</th>${codes.map((c) => `<th class="c" title="${esc(docName(c))}">${PJ_SHORT[c] || esc(docName(c))}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}</p></section>`;
   };
   const DOC_RANK = { valid: 0, expiring: 1, missing: 2, expired: 2 };
@@ -505,8 +518,26 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   };
   // on site today: between their entry and exit dates
   const dayOf = (t) => { const m = /^(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})$/.exec(String(t || '').trim()); return m && MON.includes(m[2]) ? new Date(+m[3], MON.indexOf(m[2]), +m[1]).getTime() : NaN; };
+  // a worker's own days on site: within their supplier's, some starting later or leaving earlier;
+  // yours, the project's (the same on the worker's page and in the supplier's list)
+  // the same for a machine or a product or material (keyed by its serial or batch as well)
+  const wkSite = (w, kind) => {
+    const sup = M.sups.find((x) => x.name === w.sup), h = hash(kind ? `${p.id}:${kind}:${w.name}:${w.ref || ''}` : `${p.id}:wk:${w.name}`);
+    if (!sup) return { entry: p.start || '', exit: p.deadline || '' };
+    const a = dayOf(sup.entry), b = dayOf(sup.exit);
+    if (Number.isNaN(a) || Number.isNaN(b)) return { entry: sup.entry, exit: sup.exit };
+    const span = Math.max(0, (b - a) / 864e5), late = h % 3 ? 0 : Math.round(span * ((h >> 3) % 40) / 100), early = (h >> 5) % 4 ? 0 : Math.round(span * ((h >> 7) % 30) / 100);
+    return { entry: fmt(new Date(a + late * 864e5)), exit: fmt(new Date(b - early * 864e5)) };
+  };
+  // where someone stands on site today: on it, not entered yet (dark grey), or gone (red)
+  const ONSITE = { on: 'On site today', notyet: 'Not entered yet', offsite: 'Left the site' };
+  // no entry date (yours, on a project without a start): on it until its end
+  const siteOf = (d, stays) => { if (stays) { const a = dayOf(d.entry); return !Number.isNaN(a) && Date.now() < a ? 'notyet' : 'on'; }
+     const a = dayOf(d.entry), b = dayOf(d.exit), now = Date.now(); if (!Number.isNaN(a) && now < a) return 'notyet'; if (Number.isNaN(a)) return Number.isNaN(b) || now < b + 864e5 ? 'on' : 'offsite'; return onSite(d) ? 'on' : 'offsite'; };
+  const siteDotOf = (d, stays) => { const k = siteOf(d, stays), say = stays ? (k === 'on' ? `On site${d.entry ? ` since ${d.entry}` : ''}` : `Not entered yet: arrives ${d.entry}`) : `${ONSITE[k]}: ${d.entry ? `${d.entry} to ${d.exit || '—'}` : d.exit ? `until ${d.exit}` : 'for the whole project'}`; return `<span class="cd-dot is-${k}" title="${esc(say)}"></span><span class="sr-only">${esc(say)}</span>`; };
+  const legendOf = (stays) => `<p class="cd-legend">${Object.entries(ONSITE).filter(([k]) => !stays || k !== 'offsite').map(([k, l]) => `<span><span class="cd-dot is-${k}"></span>${l}</span>`).join('')}</p>`;
+  const SITE_LEGEND = legendOf(false);
   const onSite = (s) => { const a = dayOf(s.entry), b = dayOf(s.exit), now = Date.now(); return !Number.isNaN(a) && a <= now && (Number.isNaN(b) || now < b + 864e5); };
-  let sArea = 'all';
 
   const supCss = () => {
     const st = document.createElement('style');
@@ -524,6 +555,10 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjs-mx td.c .d { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--color-ink-subtle); }
 .pjs-mx .is-cur .n::after { content: 'This supplier'; margin-left: 0.5rem; padding: 0.0625rem 0.5rem; border-radius: 9999px; background: var(--color-light-beige); font-size: 0.6875rem; font-weight: 500; color: var(--color-ink-subtle); vertical-align: 0.125rem; }
 .pjs-all { margin-top: 0.75rem; font-size: 0.875rem; }
+.pjs-grp { margin: 2rem 0 0.75rem; }
+.pjs-tools { display: flex; margin: 0 0 0.875rem; }
+.pjs-q { flex: 0 1 20rem; }
+.pjs-wk { min-width: 52rem; }
 .pjs-tbl { min-width: 44rem; table-layout: fixed; }
 .pjp-req-foot { position: sticky; bottom: 0; z-index: 2; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; margin-top: 1rem; padding: 0.875rem 0; background: var(--color-off-white, #fafafa); border-top: 1px solid var(--color-line); font-size: 0.875rem; }
 .pjs-sups th.c, .pjs-sups td.c { text-align: center; }
@@ -532,7 +567,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjs-pj .co-muted .link-btn { font: inherit; vertical-align: baseline; }
 /* on site: green for yes, red for no */
 .cd-dot.is-on { background: var(--color-ok-deep, #8ccb86); }
-.cd-dot.is-offsite { background: var(--color-critical); }`;
+.cd-dot.is-offsite { background: var(--color-critical); }
+.cd-dot.is-notyet { background: var(--color-graphite); }`;
     document.head.appendChild(st);
   };
 
@@ -567,21 +603,69 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjs-mx" data-unpaged><thead><tr><th>Supplier</th>${AREAS.map(([, l]) => `<th class="c">${l}</th>`).join('')}<th class="o">Overall</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="cd-legend">${legend}<span><span class="cd-dash">&mdash;</span>Not asked for, or none on this project</span></p></section>`;
 
-    // the documents, the worst first, by area
-    const list = docs.filter((d) => sArea === 'all' || d.area === sArea).sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status] || AREAS.findIndex(([k]) => k === a.area) - AREAS.findIndex(([k]) => k === b.area));
-    const opts = [['all', 'All', docs.length]].concat(AREAS.map(([k, l]) => [k, l, docs.filter((d) => d.area === k).length]).filter(([, , n]) => n));
-    const seg = docs.length ? `<div class="pjp-tools"><div class="pjp-tools-l"><div class="pjp-seg is-sm" role="radiogroup" aria-label="Documents by area">${opts.map(([k, l, n]) => `<button type="button" role="radio" aria-checked="${sArea === k}" data-area="${k}">${l} <span>${n}</span></button>`).join('')}</div></div></div>` : '';
-    const areaOf = (a) => AREAS.find(([k]) => k === a)[1];
-    const table = `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Documents</h2><p class="co-muted">${docs.length ? `${pl(docs.length, 'document')} for this project, the ones to chase first.` : 'Nothing for this project yet.'}</p></div>
-      ${seg}${docs.length ? `<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl"><thead><tr><th style="width:34%">Document</th><th style="width:30%">For</th><th style="width:18%">Expiration date</th><th style="width:18%">Status</th></tr></thead><tbody>
-      ${list.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)} &middot; ${areaOf(d.area)}</span></td><td><span class="n">${esc(d.of)}</span><span class="d">${esc(d.ofSub || '')}</span></td><td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>` : ''}</section>`;
+    // their documents, a section per area: the company's and the project's as documents; workers,
+    // equipment and products & materials a row each (a worker to their page on this project), then
+    // what's asked of all of them at once
+    const docRows = (l, of, id) => `${qTools(id, 'Search documents')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl" data-tq-for="${id}"><thead><tr><th style="width:${of ? 34 : 52}%">Document</th>${of ? '<th style="width:30%">For</th>' : ''}<th style="width:${of ? 18 : 24}%">Expiration date</th><th style="width:${of ? 18 : 24}%">Status</th></tr></thead><tbody>
+      ${l.slice().sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status]).map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td>${of ? `<td><span class="n">${esc(d.of)}</span><span class="d">${esc(d.ofSub || '')}</span></td>` : ''}<td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>`;
+    const sec = (h, lead, inner) => `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">${h}</h2><p class="co-muted">${lead}</p></div>${inner}</section>`;
+    const none = (t) => `<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl"><tbody><tr><td class="pjp-none co-tbl-empty">${t}</td></tr></tbody></table></div>`;
+    const valid = (x) => { const l = x.docs || []; return l.length ? `${l.filter((d) => !DOC_RANK[d.status]).length} of ${l.length}` : '&mdash;'; };
+    const ofArea = (a) => docs.filter((d) => d.area === a);
+    const ITEMS = [['workers', 'Workers', M.workers, 'Worker', (w) => w.role, 'worker', 'workers'], ['equipment', 'Equipment', M.equipment, 'Machine', (m) => m.ref, 'machine', 'machines'], ['materials', 'Products &amp; materials', M.materials, 'Product or material', (m) => m.ref, 'product or material', 'products or materials']];
+    const itemSec = ([a, h, all, col, sub, one, many]) => {
+      if (!reqIn(a).length) return '';
+      const l = all.map((x, k) => ({ x, k })).filter(({ x }) => x.sup === s.name).sort((u, v) => byWorst(u.x, v.x));
+      const group = ofArea(a).filter((d) => /^All their /.test(d.of));
+      const link = a === 'workers', kind = a === 'workers' ? null : a;
+      // workers: on site today (as the suppliers' dots), and their entry and exit dates
+      const stays = a === 'materials';
+      const site = (x) => { const d = wkSite(x, kind); return `<td class="c">${siteDotOf(d, stays)}</td><td>${esc(d.entry || '—')}</td>${stays ? '' : `<td>${esc(d.exit || '—')}</td>`}`; };
+      const head = stays ? `<th style="width:30%">${col}</th><th class="c" style="width:12%">On site</th><th style="width:16%">Entry date</th><th style="width:14%">Documents valid</th><th style="width:28%">Status</th>`
+        : `<th style="width:24%">${col}</th><th class="c" style="width:10%">On site</th><th style="width:13%">Entry date</th><th style="width:13%">Exit date</th><th style="width:12%">Documents valid</th><th style="width:28%">Status</th>`;
+      const rows = l.length ? `${qTools(`sp-${a}`, `Search by name or ${a === 'workers' ? 'role' : a === 'equipment' ? 'serial number' : 'batch'}`)}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl pjs-wk" data-tq-for="sp-${a}"><thead><tr>${head}</tr></thead><tbody>
+        ${l.map(({ x, k }) => `<tr${link ? ` class="is-link" tabindex="0" role="link" data-wk-id="${k}" aria-label="Open ${esc(x.name)}"` : ''}><td><span class="n">${esc(x.name)}</span><span class="d">${esc(sub(x) || '')}</span></td>${site(x)}<td>${valid(x)}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>${legendOf(stays)}`
+        : none(`${esc(nb(s.name))} has no ${many} on this project.`);
+      const lead = l.length ? `${pl(l.length, one, many)} on ${esc(p.name)}, the ones to chase first.` : `None on ${esc(p.name)} yet.`;
+      return sec(h, lead, rows + (group.length ? `<div class="co-sub-head pjs-grp"><h3 class="eyebrow">For all their ${a === 'materials' ? 'products and materials' : a}</h3></div>${docRows(group, false, `sp-${a}-all`)}` : ''));
+    };
+    const docSec = (a, h, of) => { const l = ofArea(a); return reqIn(a).length ? sec(h, l.length ? `${pl(l.length, 'document')} for ${esc(p.name)}, the ones to chase first.` : 'Nothing on file yet.', l.length ? docRows(l, false, `sp-${a}`) : none('Nothing on file yet.')) : ''; };
+    const table = docSec('company', 'Company documents') + ITEMS.map(itemSec).join('') + docSec('project', 'Project documents');
     // the suppliers they brought in to this project: each to its own page on it
-    const siteDot = (x) => { const on = onSite(x), say = `${on ? 'On site today' : 'Not on site'}: ${x.entry || '—'} to ${x.exit || '—'}`; return `<span class="cd-dot is-${on ? 'on' : 'offsite'}" title="${esc(say)}"></span><span class="sr-only">${esc(say)}</span>`; };
+    const siteDot = siteDotOf;
     const invited = `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Suppliers they brought in</h2><p class="co-muted">${subs.length ? `${pl(subs.length, 'supplier')} ${esc(nb(s.name))} brought in to ${esc(p.name)}.` : `${esc(nb(s.name))} hasn&rsquo;t brought in any suppliers to this project.`}</p></div>
-      ${subs.length ? `<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-sups"><thead><tr><th style="width:40%">Supplier</th><th class="c" style="width:25%">On site</th><th class="c" style="width:35%">Status</th></tr></thead><tbody>
-      ${subs.sort(byWorst).map((x) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(x.id)}" aria-label="Open ${esc(x.name)}"><td><span class="n">${esc(nb(x.name))}</span><span class="d">${esc(x.work)}</span></td><td class="c">${siteDot(x)}</td><td class="c">${badge(x.st)}<span class="d">${esc(x.why)}</span></td></tr>`).join('')}</tbody></table></div>
-      <p class="cd-legend"><span><span class="cd-dot is-on"></span>On site today</span><span><span class="cd-dot is-offsite"></span>Not on site</span></p>` : ''}</section>`;
+      ${subs.length ? `${qTools('sp-subs', 'Search by name or work')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-sups" data-tq-for="sp-subs"><thead><tr><th style="width:32%">Supplier</th><th class="c" style="width:12%">On site</th><th class="c" style="width:16%">Entry date</th><th class="c" style="width:16%">Exit date</th><th class="c" style="width:24%">Status</th></tr></thead><tbody>
+      ${subs.sort(byWorst).map((x) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(x.id)}" aria-label="Open ${esc(x.name)}"><td><span class="n">${esc(nb(x.name))}</span><span class="d">${esc(x.work)}</span></td><td class="c">${siteDot(x)}</td><td class="c">${esc(x.entry || '—')}</td><td class="c">${esc(x.exit || '—')}</td><td class="c">${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>
+      ${SITE_LEGEND}` : ''}</section>`;
     body.innerHTML = matrix + invited + table;
+    applyTQ(body);
+  };
+
+  // ==== one worker on your project (project.html?id=&wk=): who they are, and their documents on it ====
+  // the crumbs as the supplier page's, with the supplier they work for (and whoever brought it in) a step each
+  const wkId = new URLSearchParams(location.search).get('wk');
+  const paintWorker = (w) => {
+    const sup = M.sups.find((x) => x.name === w.sup);
+    const chain = []; for (let x = sup; x && chain.length < 6;) { if (chain.includes(x)) break; chain.unshift(x); x = x.by ? M.sups.find((y) => y.name === x.by) : null; }
+    document.title = `${w.name} · ${p.name} · C-MORE`;
+    const SEP = '<span aria-hidden="true">/</span>';
+    const trail = document.getElementById('pjp-crumb'); if (trail && trail.parentElement) trail.parentElement.innerHTML = `<a href="my-company.html?filled">My company</a>${SEP}<a href="projects.html">Projects</a>${SEP}<a href="project.html?id=${encodeURIComponent(p.id)}#workers">${esc(p.name)}</a>${chain.map((x) => `${SEP}<a href="${supHref(x.id)}">${esc(nb(x.name))}</a>`).join('')}${SEP}<span aria-current="page">${esc(w.name)}</span>`;
+    const back = document.querySelector('.eco-crumbs-back'); if (back) { back.href = sup ? supHref(sup.id) : `project.html?id=${encodeURIComponent(p.id)}#workers`; back.setAttribute('aria-label', `Back to ${sup ? sup.name : p.name}`); }
+    const docs = (w.docs || []).slice().sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status]);
+    const nOk = docs.filter((d) => !DOC_RANK[d.status]).length;
+    const fact = (t, v, sm) => `<div><dt>${t}</dt><dd>${v}${sm ? `<small>${sm}</small>` : ''}</dd></div>`;
+    head.classList.add('pjh');
+    head.innerHTML = `<span class="eyebrow">Worker on ${esc(p.name)}</span>
+      <div class="pjh-id"><h1 class="co-name">${esc(w.name)}</h1><p class="co-subtle">${esc(w.role)}${w.own ? ` &middot; <a class="co-link" href="company-details.html?area=workers&amp;worker=${w.i}">See their full profile</a>` : ''}</p></div>
+      <dl class="pjh-facts">
+        ${fact('Status', badge(w.st), esc(w.why))}
+        ${fact('Works for', sup ? `<a class="co-link" href="${supHref(sup.id)}">${esc(nb(sup.name))}</a>` : 'You', sup ? (sup.by ? `Brought in by ${esc(nb(sup.by))}` : 'Your supplier') : esc(ME))}
+        ${(() => { const d = wkSite(w); return sup ? fact('On site', esc(d.entry || '—'), `to ${esc(d.exit || '—')}`) : fact('On site', p.deadline ? `Until ${esc(p.deadline)}` : '—', 'The whole project'); })()}
+        ${fact('Documents', docs.length ? `${nOk} of ${docs.length}` : '—', docs.length ? 'Valid' : 'None asked for')}
+      </dl>`;
+    body.innerHTML = `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Their documents on this project</h2><p class="co-muted">${docs.length ? `What ${esc(p.name)} asks of each worker, the ones to chase first.` : `${esc(p.name)} asks nothing of each worker. Change that in <a class="co-link" href="project.html?id=${encodeURIComponent(p.id)}#required">Documents required</a>.`}</p></div>
+      ${docs.length ? `${qTools('wk-docs', 'Search documents')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl" data-tq-for="wk-docs"><thead><tr><th style="width:52%">Document</th><th style="width:24%">Expiration date</th><th style="width:24%">Status</th></tr></thead><tbody>
+      ${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td><td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>` : ''}</section>`;
   };
 
   // ---- painting ----
@@ -597,6 +681,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
         const changed = [...c].sort().join() !== was; b.disabled = !changed; t.textContent = changed ? `${pl(c.length, 'document')} asked for, from ${REQ.length}. Save to apply it to the project.` : 'No changes yet.';
       } });
     }
+    applyTQ(body);
     if (focus) { const b = body.querySelector(focus); if (b) b.focus({ preventScroll: true }); }
   };
   const go = (k, focus) => {
@@ -668,6 +753,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   // the supplier who brought one in, a link to their page on this project
   const byLink = (name) => { const x = M && M.sups.find((y) => y.name === name); return x ? `<a class="co-link" href="${supHref(x.id)}">${esc(nb(name))}</a>` : esc(nb(name)); };
   // a supplier's row: its page on this project
+  const wkHref = (k) => `project.html?id=${encodeURIComponent(p.id)}&wk=${k}`;
   const supHref = (sid) => `project.html?id=${encodeURIComponent(p.id)}&sup=${encodeURIComponent(sid)}`;
   // ---- wiring ----
   body.addEventListener('click', (e) => {
@@ -675,7 +761,6 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       RQ.save(p.id, reqPick.get()); M = ownerModel(); applyReq(); paint('[data-tab="required"][role="tab"]');
       toast('Documents required saved. The project’s statuses follow them now.'); return;
     }
-    const ar = e.target.closest('[data-area]'); if (ar && curSup) { sArea = ar.dataset.area; paintSupplier(curSup); const b = body.querySelector(`[data-area="${sArea}"]`); if (b) b.focus({ preventScroll: true }); return; }
     const t = e.target.closest('[data-tab]'); if (t) { go(t.dataset.tab, `[data-tab="${t.dataset.tab}"][role="tab"]`); if (t.closest('#pjp-panel')) scrollTo({ top: 0, behavior: 'smooth' }); return; }
     const s = e.target.closest('[data-st]'); if (s) { f.st = s.dataset.st; paint(`[data-st="${f.st}"]`); return; }
     const a = e.target.closest('[data-add]'); if (a) { openPick(a.dataset.add); return; }
@@ -687,6 +772,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       team[key].splice(+k, 1); save(); paint('.pj-add'); toast(`${nb(name)} is off this project.`); return;
     }
     const ot = e.target.closest('tr[data-open-tab]'); if (ot) { openTab(ot); return; }
+    const wr = e.target.closest('tr[data-wk-id]'); if (wr && !e.target.closest('a, button, input')) { location.href = wkHref(wr.dataset.wkId); return; }
     const row = e.target.closest('tr[data-sup-id]'); if (row && !e.target.closest('a, button, input')) location.href = supHref(row.dataset.supId);
   });
   body.addEventListener('keydown', (e) => {
@@ -696,6 +782,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       e.preventDefault(); const k = keys[(i + keys.length) % keys.length]; go(k, `[data-tab="${k}"][role="tab"]`); return;
     }
     const ot = e.target.closest('tr[data-open-tab]'); if (ot && (e.key === 'Enter' || e.key === ' ') && e.target === ot) { e.preventDefault(); openTab(ot); return; }
+    const wr = e.target.closest('tr[data-wk-id]'); if (wr && (e.key === 'Enter' || e.key === ' ') && e.target === wr) { e.preventDefault(); location.href = wkHref(wr.dataset.wkId); return; }
     const row = e.target.closest('tr[data-sup-id]'); if (row && (e.key === 'Enter' || e.key === ' ') && e.target === row) { e.preventDefault(); location.href = supHref(row.dataset.supId); }
   });
   body.addEventListener('change', (e) => {
@@ -730,12 +817,15 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       save(); close(); paint(); toast(`Sharing ${on.length} of ${all.length} documents for this one.`);
     }
   });
-  addEventListener('hashchange', () => { if (!curSup && tabFromHash() !== tab) go(tabFromHash()); });
+  addEventListener('hashchange', () => { if (!curSup && !curWk && tabFromHash() !== tab) go(tabFromHash()); });
 
   if (own) { M = ownerModel(); applyReq(); supCss(); }
   // one of your suppliers on it: their page on this project
   const curSup = own && supId ? M.sups.find((x) => x.id === supId) : null;
   if (curSup) { paintSupplier(curSup); return; }
+  // one of the workers on it: their page on this project
+  const curWk = own && wkId != null && /^\d+$/.test(wkId) ? M.workers[+wkId] : null;
+  if (curWk) { paintWorker(curWk); return; }
   paintHead();
   go(tabFromHash());
   // back from new-project.html: what was started

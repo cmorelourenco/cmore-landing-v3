@@ -36,7 +36,6 @@
     ['PJ-02', 'On site', 'Site Activity Declaration', 'Declara\u00e7\u00e3o de atividade, calendariza\u00e7\u00e3o e respons\u00e1vel em obra'],
     ['PJ-03', 'Safety', 'Safety Plan Adherence Declaration', 'Ades\u00e3o ao Plano de Seguran\u00e7a e Sa\u00fade'],
     ['PJ-04', 'Safety', 'Risk Assessment and Method Statement (RAMS)', 'Avalia\u00e7\u00e3o de riscos e m\u00e9todo de trabalho da obra'],
-    ['PJ-05', 'Contract', 'Subcontractor List', 'Lista dos seus subempreiteiros na obra'],
     ['PJ-06', 'Insurance', 'Project Insurance Certificate', 'Seguro que nomeia o cliente ou a obra']]
     .map(([code, sec, en, pt]) => ({ code, category: 'project', level: 'project', requirement: 'if_applicable', section: T(sec), name: { en, pt } }));
   EXTRA.push(...PROJECT);
