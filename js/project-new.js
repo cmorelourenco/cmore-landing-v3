@@ -1,7 +1,9 @@
-/* New project (new-project.html, from Projects' New project): a form in two steps.
+/* New project (new-project.html, from Projects' New project): a form in three steps.
    1. The project: its ID, its name, the people on it, each with their role (project manager, site manager…): someone in the company, or someone invited to join it (js/access.js's team, as on Team); whoever starts it is the project manager to begin with, the client, the region (a
       district in Portugal, a state or region anywhere else, with the country) and the address, the start and end dates.
-   2. The suppliers on it: picked from My suppliers, or from the companies on C-MORE (invited to your
+   2. The documents it asks of its suppliers: every area and section that applies in its country,
+      what the law asks ticked to begin with (js/project-req.js); they drive its matrices and statuses.
+   3. The suppliers on it: picked from My suppliers, or from the companies on C-MORE (invited to your
       list, js/supplier-add.js, and on the project straight away), or invited to join C-MORE. For
       each one, the work it does and when it's on site (entry and exit, within the project's dates).
    Create project keeps it for the tab, per company ('cm-pj-added…', read by js/projects.js), and
@@ -133,7 +135,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     const m = t.members.find((y) => y.email === x.who) || me; return { role: x.role, name: m.name, email: m.email };
   };
   const step1 = () => `<section class="co-card np-card" aria-labelledby="np-h1">
-      <div class="np-card-h"><span class="np-step">Step 1 of 2</span><h2 id="np-h1">The project</h2><p class="co-muted">What it is, for whom, where and when.</p></div>
+      <div class="np-card-h"><span class="np-step">Step 1 of 3</span><h2 id="np-h1">The project</h2><p class="co-muted">What it is, for whom, where and when.</p></div>
       <div class="np-grid">
         ${fld('id', 'Project ID', inp('id', 'e.g. FC-2026-070'))}
         ${fld('name', 'Project name', inp('name', 'e.g. Braga clinic renovation'))}
@@ -149,7 +151,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
       <div class="np-sep"></div>
       ${peopleBlock()}
       <div class="np-sep"></div>
-      <div class="np-foot"><div class="np-foot-r"><a class="link-btn" href="projects.html">Cancel</a><button type="button" class="btn btn-primary" data-np-next>Next: suppliers</button></div></div>
+      <div class="np-foot"><div class="np-foot-r"><a class="link-btn" href="projects.html">Cancel</a><button type="button" class="btn btn-primary" data-np-next>Next: documents required</button></div></div>
     </section>`;
   const check1 = () => {
     const e = {};
@@ -213,12 +215,19 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
       <div class="np-sup-g">${work(x, k, e)}${i('entry', 'Entry date', 'date')}${i('exit', 'Exit date', 'date')}</div></li>`;
   };
   const step2 = () => `<section class="co-card np-card" aria-labelledby="np-h2">
-      <div class="np-card-h"><span class="np-step">Step 2 of 2 &middot; ${esc(f.name)}</span><h2 id="np-h2">Suppliers on the project</h2><p class="co-muted">Pick them from your suppliers or from the companies on C&#8209;MORE, or invite one. Then, for each, the work it does and when it&rsquo;s on site, between ${fmt(f.start)} and ${fmt(f.end)}.</p></div>
+      <div class="np-card-h"><span class="np-step">Step 3 of 3 &middot; ${esc(f.name)}</span><h2 id="np-h2">Suppliers on the project</h2><p class="co-muted">Pick them from your suppliers or from the companies on C&#8209;MORE, or invite one. Then, for each, the work it does and when it&rsquo;s on site, between ${fmt(f.start)} and ${fmt(f.end)}.</p></div>
       <div class="np-pick"><label class="sr-only" for="np-q">Find a supplier</label><input class="np-in" id="np-q" type="search" placeholder="Search your suppliers and the companies on C&#8209;MORE" value="${esc(f.q)}" autocomplete="off" role="combobox" aria-expanded="${f.open}" aria-controls="np-menu">
         <div class="np-menu" id="np-menu" ${f.open ? '' : 'hidden'}>${f.open ? menu() : ''}</div></div>
       ${f.sups.length ? `<ul class="np-sups" aria-label="Suppliers on the project">${f.sups.map(supRow).join('')}</ul>` : '<p class="np-empty">No suppliers yet. Search above to add the first.</p>'}
       <div class="np-sep"></div>
       <div class="np-foot"><button type="button" class="link-btn" data-np-back>Back</button><div class="np-foot-r"><a class="link-btn" href="projects.html">Cancel</a><button type="button" class="btn btn-primary" data-np-save>Create project</button></div></div>
+    </section>`;
+  // step 2: what every supplier on it must have
+  const stepDocs = () => `<section class="co-card np-card" aria-labelledby="np-hr">
+      <div class="np-card-h"><span class="np-step">Step 2 of 3 &middot; ${esc(f.name)}</span><h2 id="np-hr">Documents required</h2><p class="co-muted">What every supplier on this project must have, for the company and for the workers, equipment, products and materials they bring. Everything that applies in ${esc(f.country)} is here; what the law asks for is ticked to begin with.</p></div>
+      <div id="np-req"></div>
+      <div class="np-sep"></div>
+      <div class="np-foot"><button type="button" class="link-btn" data-np-back>Back</button><div class="np-foot-r"><a class="link-btn" href="projects.html">Cancel</a><button type="button" class="btn btn-primary" data-np-next2>Next: suppliers</button></div></div>
     </section>`;
   const check2 = () => {
     let ok = true;
@@ -233,7 +242,9 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   };
 
   const paint = (focus) => {
-    box.innerHTML = f.step === 1 ? step1() : step2();
+    box.innerHTML = f.step === 1 ? step1() : f.step === 2 ? stepDocs() : step2();
+    // the documents: the picker draws itself, and keeps what's ticked as it changes
+    if (f.step === 2 && window.CMProjectReq) window.CMProjectReq.picker(box.querySelector('#np-req'), { country: f.country, selected: f.req, onChange: (c) => { f.req = c; } });
     if (focus) { const el = box.querySelector(focus); if (el) el.focus({ preventScroll: true }); }
   };
   const paintMenu = () => { const m = box.querySelector('#np-menu'), q = box.querySelector('#np-q'); if (!m) return; m.hidden = !f.open; m.innerHTML = f.open ? menu() : ''; q.setAttribute('aria-expanded', String(f.open)); };
@@ -246,7 +257,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   document.addEventListener('cm-suppliers', () => {
     if (!before) return;
     const s = mine().find((x) => !before.has(x.id)); before = null;
-    if (s && f.step === 2) addSup(s);
+    if (s && f.step === 3) addSup(s);
   });
 
   box.addEventListener('input', (e) => {
@@ -264,7 +275,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     if (t.dataset.npS != null && t.name === 'work') { const k = +t.dataset.npS, x = f.sups[k]; x.work = t.value; if (x.errs) { delete x.errs.work; delete x.errs.detail; } paint(`#np-s${k}-work`); return; }
     if (t.dataset.npP != null && t.tagName === 'SELECT') { const i = +t.dataset.npP, x = f.people[i]; x[t.name] = t.value; x.errs = {}; paint(t.name === 'who' && x.who === 'new' ? `#np-p${i}-name` : `#${t.id}`); }
     // another country: its regions aren't Portugal's districts, so the region is asked again
-    if (t.name === 'country') { const was = f.country === 'Portugal'; f.country = t.value; if (was !== (f.country === 'Portugal')) { f.district = ''; delete f.errs.district; paint('#np-country'); } }
+    if (t.name === 'country') { const was = f.country === 'Portugal'; f.country = t.value; f.req = null; if (was !== (f.country === 'Portugal')) { f.district = ''; delete f.errs.district; paint('#np-country'); } }
   });
   box.addEventListener('focusin', (e) => { if (e.target.id === 'np-q' && !f.open) { f.open = true; paintMenu(); } });
   document.addEventListener('click', (e) => { if (f.open && !e.target.closest('.np-pick')) { f.open = false; paintMenu(); } });
@@ -281,17 +292,18 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
   box.addEventListener('click', (e) => {
     if (e.target.closest('[data-np-next]')) {
       if (!check1()) { paint(); const bad = box.querySelector('.is-bad'); if (bad) bad.focus(); return; }
-      f.step = 2; paint(); toTop(); box.querySelector('#np-h2').setAttribute('tabindex', '-1'); box.querySelector('#np-h2').focus({ preventScroll: true }); return;
+      f.step = 2; paint(); toTop(); box.querySelector('#np-hr').setAttribute('tabindex', '-1'); box.querySelector('#np-hr').focus({ preventScroll: true }); return;
     }
+    if (e.target.closest('[data-np-next2]')) { f.step = 3; paint(); toTop(); box.querySelector('#np-h2').setAttribute('tabindex', '-1'); box.querySelector('#np-h2').focus({ preventScroll: true }); return; }
     if (e.target.closest('[data-np-padd]')) { f.people.push({ role: f.people.some((x) => x.role === 'Site manager') ? ROLES[2] : 'Site manager', who: '', name: '', email: '', errs: {} }); paint(`#np-p${f.people.length - 1}-role`); return; }
     const pr = e.target.closest('[data-np-prm]'); if (pr) { f.people.splice(+pr.dataset.npPrm, 1); paint('[data-np-padd]'); return; }
-    if (e.target.closest('[data-np-back]')) { f.step = 1; paint('#np-id'); toTop(); return; }
+    if (e.target.closest('[data-np-back]')) { f.step -= 1; paint(f.step === 1 ? '#np-id' : '[data-np-next2]'); toTop(); return; }
     const a = e.target.closest('[data-np-add]'); if (a) { const s = mine().find((x) => x.id === a.dataset.npAdd); if (s) addSup(s); return; }
     const v = e.target.closest('[data-np-inv]'); if (v) { const [country, code] = v.dataset.npInv.split(':'); invite(code ? { country, code } : null); return; }
     const r = e.target.closest('[data-np-rm]'); if (r) { f.sups.splice(+r.dataset.npRm, 1); paint('#np-q'); return; }
     if (e.target.closest('[data-np-save]')) {
       if (!check2()) { paint(); const bad = box.querySelector('.is-bad'); if (bad) bad.focus(); return; }
-      const p = { id: f.id.trim(), name: f.name.trim(), client: f.client.trim(), country: f.country, district: f.district.trim(), address: f.address.trim(), start: fmt(f.start), deadline: fmt(f.end),
+      const p = { id: f.id.trim(), name: f.name.trim(), client: f.client.trim(), country: f.country, district: f.district.trim(), address: f.address.trim(), start: fmt(f.start), deadline: fmt(f.end), req: f.req || (window.CMProjectReq ? window.CMProjectReq.defaults(f.country) : []),
         owner, people: f.people.map(whoOf), on: fmt(new Date().toISOString().slice(0, 10)), sups: f.sups.map((x) => ({ id: x.id, name: x.name, work: x.work, detail: x.detail.trim(), entry: fmt(x.entry), exit: fmt(x.exit) })) };
       try {
         // people invited here: each invite waits on Team, as one sent from there (once, whatever their roles)

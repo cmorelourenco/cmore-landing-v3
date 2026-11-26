@@ -1000,12 +1000,10 @@ body { transition: background-color .9s ease; }
 /* document reminders: pills to switch on and off, several at once; Never send clears the rest */
 .set-rem { display: flex; flex-direction: column; gap: 1.25rem; }
 .set-rem-row { display: flex; flex-direction: column; gap: 0.625rem; }
-.set-picks { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.set-pick { display: inline-flex; align-items: center; gap: 0.375rem; height: 2.25rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 9999px; background: var(--color-surface); font: inherit; font-size: 0.875rem; font-weight: 500; color: var(--color-ink-muted); cursor: pointer; transition: border-color .14s ease, background-color .14s ease, color .14s ease; }
-.set-pick:hover { border-color: var(--color-sand-400); color: var(--color-ink); }
-.set-pick[aria-pressed="true"] { border-color: var(--color-graphite); background: var(--color-graphite); color: var(--color-off-white); }
-.set-pick[aria-pressed="true"]::before { content: ""; width: 0.75rem; height: 0.75rem; background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M16.7 4.15a.75.75 0 0 1 .15 1.05l-8 10.5a.75.75 0 0 1-1.13.08l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.9 3.89 7.48-9.82a.75.75 0 0 1 1.04-.14Z'/%3E%3C/svg%3E") center / contain no-repeat; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M16.7 4.15a.75.75 0 0 1 .15 1.05l-8 10.5a.75.75 0 0 1-1.13.08l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.9 3.89 7.48-9.82a.75.75 0 0 1 1.04-.14Z'/%3E%3C/svg%3E") center / contain no-repeat; }
-.set-pick:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: 2px; }
+.set-checks { display: flex; flex-direction: column; gap: 0.625rem; margin: 0; padding: 0; border: 0; }
+.set-check { display: inline-flex; align-items: center; gap: 0.625rem; width: max-content; font-size: 0.9375rem; color: var(--color-ink); cursor: pointer; }
+/* the boxes as on the other pickers: graphite, not the browser's blue */
+.set-check input { flex: none; width: 1.0625rem; height: 1.0625rem; margin: 0; accent-color: var(--color-graphite); cursor: pointer; }
 .set-photo { display: flex; align-items: center; gap: 1.25rem; }
 .set-pic { flex: none; display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 50%; overflow: hidden; background: var(--color-graphite); color: var(--color-off-white); font-size: 1.5rem; font-weight: 600; }
 .set-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1240,10 +1238,10 @@ body { transition: background-color .9s ease; }
         <!-- Document reminders: when to email about a document running out, and one that has; as many as they like -->
         <h3 class="set-sub">Document reminders</h3>
         <div class="set-rem">
-          <div class="set-rem-row"><div class="co-row-t"><span class="co-row-n" id="rem-l-expiring">Expiring documents</span><span class="co-subtle">An email before a document runs out. Pick as many as you like.</span></div>
-            <div class="set-picks" role="group" aria-labelledby="rem-l-expiring" data-rem="expiring"><button type="button" class="set-pick" aria-pressed="false" data-v="never">Never send</button><button type="button" class="set-pick" aria-pressed="false" data-v="1">1 day before</button><button type="button" class="set-pick" aria-pressed="false" data-v="5">5 days before</button><button type="button" class="set-pick" aria-pressed="false" data-v="15">15 days before</button></div></div>
-          <div class="set-rem-row"><div class="co-row-t"><span class="co-row-n" id="rem-l-expired">Expired documents</span><span class="co-subtle">An email once a document has run out, repeated until it&rsquo;s renewed. How often?</span></div>
-            <div class="set-picks" role="group" aria-labelledby="rem-l-expired" data-rem="expired" data-rem-one><button type="button" class="set-pick" aria-pressed="false" data-v="never">Never send</button><button type="button" class="set-pick" aria-pressed="false" data-v="1">Every day</button><button type="button" class="set-pick" aria-pressed="false" data-v="5">Every 5 days</button><button type="button" class="set-pick" aria-pressed="false" data-v="15">Every 15 days</button></div></div>
+          <div class="set-rem-row"><div class="co-row-t"><span class="co-row-n" id="rem-l-expiring">Expiring documents</span><span class="co-subtle">An email before a document runs out. Tick as many as you like.</span></div>
+            <div class="set-checks" role="group" aria-labelledby="rem-l-expiring" data-rem="expiring"><label class="set-check"><input type="checkbox" value="never">Never send</label><label class="set-check"><input type="checkbox" value="1">1 day before</label><label class="set-check"><input type="checkbox" value="5">5 days before</label><label class="set-check"><input type="checkbox" value="15">15 days before</label></div></div>
+          <div class="set-rem-row"><div class="co-row-t"><span class="co-row-n" id="rem-l-expired">Expired documents</span><span class="co-subtle">An email once a document has run out, repeated until it&rsquo;s renewed. Choose how often.</span></div>
+            <div class="set-checks" role="radiogroup" aria-labelledby="rem-l-expired" data-rem="expired" data-rem-one><label class="set-check"><input type="radio" name="rem-expired" value="never">Never send</label><label class="set-check"><input type="radio" name="rem-expired" value="1">Every day</label><label class="set-check"><input type="radio" name="rem-expired" value="5">Every 5 days</label><label class="set-check"><input type="radio" name="rem-expired" value="15">Every 15 days</label></div></div>
         </div>
         <div class="set-sep"></div>
         <h3 class="set-sub">Other emails</h3>

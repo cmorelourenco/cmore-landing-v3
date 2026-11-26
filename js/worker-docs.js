@@ -51,6 +51,21 @@
   C.docs.splice(at, 0, ...ADD.filter(([code]) => !C.docs.some((d) => d.code === code)).map(([code, sec, name, desc, scope, sectors, countries, titles, by, expiry, fields]) => Object.assign({}, base, {
     code, section: SEC[sec], name: T(name), description: T(desc), scope, sectors, titles, usuallyIssuedBy: by, expiryRule: expiry, fields: f(fields) }, countries ? { countries } : {})));
 
+  // coverage (the Coverage column of the workers' matrix, js/company-details.js): the month's payment of
+  // social security contributions, for all workers, and a new hire's admission notice, which covers
+  // them in the month they start, before their first monthly declaration names them
+  const COVER = [
+    Object.assign({}, base, { code: 'WD-12', section: T('Social security'), name: T('Social Security Payment Proof'), description: T('Proof that the month’s social security contributions were paid.'),
+      scope: EU, sectors: 'any', countries: ['PT'], level: 'all_workers', requirement: 'if_applicable', condition: 'has_employees', appliesWhen: 'If the company has employees with an employment contract',
+      renewal: 'Monthly', expiryRule: 'End of following month', checks: 'Month consistent with WK-02; amount paid', sharing: 'standard', titles: 'Comprovativo de pagamento; Documento de pagamento da Segurança Social',
+      usuallyIssuedBy: 'Segurança Social', fields: f(['Reference month', 'Employer social security number', 'Amount paid', 'Payment date (issue date)']) }),
+    Object.assign({}, base, { code: 'WD-13', section: T('Coverage'), name: T('Social Security Admission Notice'), description: T('Notice to social security that the worker was hired, sent before they start. It covers them in the month they start, until a monthly declaration names them.'),
+      scope: EU, sectors: 'any', countries: ['PT'], appliesWhen: 'For a worker hired this month', titles: 'Comunicação de admissão; Admissão de trabalhador', usuallyIssuedBy: 'Segurança Social',
+      expiryRule: 'No expiry', fields: f(['Worker name', 'Social security number', 'Admission date', 'Contract type']) }),
+  ];
+  const at2 = C.docs.reduce((n, d, k) => (d.category === 'workers' ? k : n), C.docs.length - 1) + 1;
+  C.docs.splice(at2, 0, ...COVER.filter((x) => !C.docs.some((d) => d.code === x.code)));
+
   // the three the upload files itself, with the list's fields (js/doc-upload.js, js/company-details.js)
   window.CM_WORKER_DOCS = {
     ID: { name: 'Identity document', kinds: ['National Identity Card', 'Passport'], fields: f(['Full name*', 'Document number*', 'Nationality*', 'Date of birth*', 'Social security number', 'Tax number', 'Issuing country', 'Issue date', 'Expiry date']) },

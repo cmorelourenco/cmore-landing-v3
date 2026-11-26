@@ -543,7 +543,7 @@
 
   // Workers, Equipment and Products, everyone at once: one row per record, one column per
   // per-record document asked of any of them, a dot for its status (a dash where it isn't)
-  const SHORT = { 'WK-11': 'Fitness', 'WK-12': 'Special risk', 'WK-13': 'Operator', 'WK-14': 'Training', 'WK-15': 'Delivery record', 'WK-16': 'Residence permit', 'WK-17': 'A1', 'WD-01': 'AIMA application', 'WD-02': 'Work permit', 'WD-03': 'Contract', 'WD-04': 'SS number', 'WD-05': 'Tax number', 'WD-06': 'OSHA card', 'WD-07': 'Trade licence', 'WD-08': 'Welder (ISO 9606)', 'WD-09': 'First aid', 'WD-10': 'NCA (Kenya)', 'WD-11': 'Driver CPC',
+  const SHORT = { 'WK-01': 'Compensation payroll', 'WK-02': 'SS declaration', 'WD-12': 'SS payment', 'WD-13': 'Admission notice', 'WK-11': 'Fitness', 'WK-12': 'Special risk', 'WK-13': 'Operator', 'WK-14': 'Training', 'WK-15': 'Delivery record', 'WK-16': 'Residence permit', 'WK-17': 'A1', 'WD-01': 'AIMA application', 'WD-02': 'Work permit', 'WD-03': 'Contract', 'WD-04': 'SS number', 'WD-05': 'Tax number', 'WD-06': 'OSHA card', 'WD-07': 'Trade licence', 'WD-08': 'Welder (ISO 9606)', 'WD-09': 'First aid', 'WD-10': 'NCA (Kenya)', 'WD-11': 'Driver CPC',
     'EQ-01': 'EC conformity', 'EQ-02': 'Pre&#8209;1995 cert.', 'EQ-03': 'Inspection', 'EQ-04': 'Maintenance', 'EQ-05': 'Manual', 'EQ-06': 'Calibration', 'EQ-07': 'Insurance', 'EQ-21': 'Technical sheet', 'EQ-22': 'Lifting exam', 'EQ-23': 'Pressure inspection', 'EQ-24': 'Electrical test', 'EQ-25': 'Fall arrest', 'EQ-26': 'ATEX', 'EQ-27': 'Scaffold', 'EQ-28': 'Registration', 'EQ-29': 'Road inspection', 'EQ-30': 'Motor insurance',
     'PR-01': 'DoP', 'PR-02': 'Constancy', 'PR-03': 'Technical sheet', 'PR-04': 'Safety data sheet', 'PR-05': 'EU DoC', 'PR-06': 'EPD', 'PR-07': 'REACH / RoHS', 'PR-08': 'Certification', 'UN-29': 'UL', 'UN-30': 'Prop 65',
     'PD-01': 'Food specification', 'PD-02': 'PPE type exam', 'PD-03': 'ECE 22.06', 'PD-04': 'Conformity of production', 'PD-05': 'DOT FMVSS 218', 'PD-06': 'GPSR file', 'PD-07': 'Lab test', 'PD-08': 'OEKO&#8209;TEX', 'PD-09': 'Flammability', 'PD-10': 'National approval',
@@ -552,8 +552,8 @@
   // a worker's documents, by what they're for: the columns of the matrix and the sections of their
   // page, in this order. Identity is their ID document (not in the catalog: ALMA files it from an
   // upload); anything the catalog adds later goes to Other until it's given one
-  const WK_CATS = [['identity', 'Identity'], ['right', 'Right to work'], ['health', 'Health'], ['training', 'Training and qualifications'], ['ppe', 'Personal protective equipment', 'PPE'], ['driving', 'Driving'], ['other', 'Other']];
-  const WK_CAT = { ID: 'identity', DRV: 'driving', CRM: 'other', 'WK-16': 'right', 'WK-17': 'right', 'WK-11': 'health', 'WK-12': 'training', 'WK-13': 'training', 'WK-14': 'training', 'WK-15': 'ppe' };
+  const WK_CATS = [['identity', 'Identity'], ['right', 'Right to work'], ['coverage', 'Coverage'], ['health', 'Health'], ['training', 'Training and qualifications'], ['ppe', 'Personal protective equipment', 'PPE'], ['driving', 'Driving'], ['other', 'Other']];
+  const WK_CAT = { ID: 'identity', DRV: 'driving', CRM: 'other', 'WD-13': 'coverage', 'WK-16': 'right', 'WK-17': 'right', 'WK-11': 'health', 'WK-12': 'training', 'WK-13': 'training', 'WK-14': 'training', 'WK-15': 'ppe' };
   // by its code, else by its section in the list (js/worker-docs.js), else its name
   const SEC_CAT = { 'Identity': 'identity', 'Right to work': 'right', 'Health': 'health', 'Training and qualifications': 'training', 'Personal protective equipment': 'ppe', 'Driving': 'driving', 'Other': 'other' };
   const catOf = (d) => WK_CAT[d.code] || SEC_CAT[d.section || (d.cat && d.cat.section && d.cat.section.en)] || (DOCS.find((x) => x.code === d.code) && SEC_CAT[DOCS.find((x) => x.code === d.code).section]) || (/driv/i.test(d.name || '') ? 'driving' : 'other');
@@ -592,6 +592,25 @@
     const status = !has ? 'notuploaded' : !Number.isNaN(t) && t < Date.now() ? 'expired' : !Number.isNaN(t) && t - Date.now() < 30 * 864e5 ? 'expiring' : 'valid';
     return { code, name: EXTRA[code][0], req: has ? `Optional &middot; uploaded ${esc(f.on || '')}` : 'Optional &middot; upload it if they have one', plain: true, status, exp: has ? esc(f.valid || '—') : '—', spec: PERSON[i].archived || !M.saveExtra ? '' : `rec:${code}:${i}` };
   };
+  // a worker's coverage: covered when every coverage document that applies in the country (PT: the
+  // monthly social security declaration, the workers' compensation payroll and the payment of the
+  // contributions) is on file for the latest period and valid, and the declaration and the payroll
+  // name them; or when their admission notice says they started this month (it covers them until
+  // the next declaration does)
+  const COVER_CODES = ['WK-01', 'WK-02', 'WD-12'], NAMES_THEM = ['WK-01', 'WK-02'];
+  const COVER_DOCS = () => DOCS.filter((d) => COVER_CODES.includes(d.code) && !d.kind && !['na', 'notrequested', 'archived'].includes(d.status));
+  const coverOf = (i) => {
+    const docs = COVER_DOCS(); if (!docs.length) return null;
+    const adm = M.admissionOf ? M.admissionOf(i) : null, t = adm ? Date.parse(adm) : NaN, now = new Date();
+    if (!Number.isNaN(t) && new Date(t).getMonth() === now.getMonth() && new Date(t).getFullYear() === now.getFullYear()) return { st: 'valid', spec: `who:workers:${i}`, tip: `Admission notice: started ${esc(adm)}` };
+    const parts = docs.map((d) => {
+      // one ALMA is still reading counts by the one it replaces, which covered the period before
+      const st = NO_FILE.includes(d.status) ? (d.status === 'filemissing' ? 'filemissing' : 'missing') : d.status === 'processing' ? 'valid' : d.status;
+      const off = !NO_FILE.includes(d.status) && NAMES_THEM.includes(d.code) && M.listedOn && !M.listedOn(d.code, i);
+      return [d, off ? 'attention' : st, off];
+    });
+    return { st: worstOf(parts.map(([, x]) => x)), spec: `who:workers:${i}`, tip: parts.map(([d, x, off]) => `${SHORT[d.code] || d.name}: ${off ? 'not on it' : d.status === 'processing' ? 'being read, the last one is valid' : STATUS[x][0]}`).join(' &middot; ') };
+  };
   const TONE = { notuploaded: 'neu', valid: 'ok', na: 'neu', processing: 'neu', expiring: 'pend', filemissing: 'warn', attention: 'warn', missing: 'bad', expired: 'bad', rejected: 'bad' };
   // the matrices' Overall column sorts (as the Team list's headers do): the worst first, the best
   // first, then back to the list's order; kept per area while the page is open
@@ -604,11 +623,14 @@
     const wk = key === 'workers' || key === 'equipment' || key === 'products', people = key === 'workers', ID_COL = { code: 'ID', name: 'Identity document', isId: true };
     const XCOLS = M.saveExtra ? Object.keys(EXTRA).map((code) => ({ code, name: EXTRA[code][0], isX: true })) : [];
     // workers: one column per category, its dot the worst of the documents in it asked of them
-    const CAT_COL = { identity: 'Identity', right: 'Right to work', health: 'Health', training: 'Training and qualifications', ppe: 'PPE', driving: 'Driving license', other: 'Other' };
-    if (people) cols = byCat([ID_COL, ...cols, ...XCOLS]).map(([k, , list]) => ({ cat: k, name: CAT_COL[k], docs: list }));
+    const CAT_COL = { identity: 'Identity', right: 'Right to work', coverage: 'Coverage', health: 'Health', training: 'Training', ppe: 'PPE', driving: 'Driving' };
+    // (Other, the optional criminal record, stays on their page but isn't a column; Coverage is,
+    // when a coverage document applies: see coverOf)
+    if (people) cols = byCat([ID_COL, ...cols, ...XCOLS]).filter(([k]) => k !== 'other' && (k !== 'coverage' || COVER_DOCS().length)).map(([k, , list]) => ({ cat: k, name: CAT_COL[k], docs: list }));
     else if (wk) cols = byCat(cols, key).map(([k, l, list]) => ({ cat: k, name: l, docs: list })).filter((c) => key !== 'products' || c.docs.length);
     const docSt = (d, i) => { if (d.isId) return idRow(i).status; if (d.isX) return extraRow(d.code, i).status; const r = d.roster.find((x) => x.i === i); return r ? r.status : null; };
     const catCell = (c, i) => {
+      if (people && c.cat === 'coverage') return coverOf(i);
       const asked = c.docs.map((d) => [d, docSt(d, i)]).filter(([, st]) => st);
       if (!asked.length) return null;
       const real = asked.filter(([, st]) => st !== 'notuploaded');

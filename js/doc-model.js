@@ -434,6 +434,7 @@ window.DOC_MODEL = (() => {
         'WK-02': ['processing', '14 Oct 2026', '30 Nov 2026', 'September &middot; I&rsquo;m reading it now.'],
         'WK-03': ['valid', '15 Feb 2026', 'No expiry', '4 for first aid, 3 for firefighting and evacuation.', { by: 'CCER Constru&ccedil;&otilde;es' }],
         'WK-04': ['valid', '20 Jan 2026', 'No expiry', '', { by: 'CCER Constru&ccedil;&otilde;es' }],
+        'WD-12': ['valid', '19 Nov 2026', '31 Dec 2026', 'October &middot; contributions paid.', { by: 'Seguran&ccedil;a Social' }],
       },
       perRecord: {
         'WK-11': { def: ['valid', (k) => ['12 Mar 2027', '4 Jun 2027', '20 Jan 2027'][k % 3]], over: { 5: ['expired', '30 Sep 2026'], 14: ['expiring', '2 Nov 2026'] } },
@@ -802,6 +803,9 @@ window.DOC_MODEL = (() => {
   const saveNa = () => { try { sessionStorage.setItem(NA_KEY, JSON.stringify(naMarks)); } catch (e) {} };
   const me = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || 'You'; } catch (e) { return 'You'; } })();
   const today = () => { const n = new Date(); return `${n.getDate()} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`; };
+  // when a worker was admitted, by their admission notice (WD-13): the date it gives, or, uploaded in
+  // this session, today (a notice is sent when they're hired)
+  const admissionOf = (i) => { const u = updates[`WD-13#${i}`]; if (u && !['missing', 'notuploaded', 'na'].includes(u.status)) return u.adm || u.on || today(); return ((D.perRecord['WD-13'] || {}).adm || {})[i] || null; };
   // suggested reasons, from the condition behind each document's 'Applies when'
   const NA_REASONS = {
     has_employees: ['We have no employees with an employment contract', 'Everyone working with us is self-employed or a partner'],
@@ -941,5 +945,5 @@ window.DOC_MODEL = (() => {
     if (/\d{4}/.test(t)) return `<span class="cm-exp"><b>${esc(t)}</b></span>`;
     return `<span class="cm-exp is-note">${esc(t)}</span>`;
   };
-  return { saveEqArchive, savePrArchive, saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
+  return { admissionOf, saveEqArchive, savePrArchive, saveProducts, PR_BASE, PRODUCT, prRegister, savePrRegister, saveMachines, EQ_BASE, eqRegister, saveEqRegister, saveId, idOf, saveExtra, extraOf, saveList, listedOn, DESIGNATED, register, saveRegister, saveLater, CREW_BASE, versionsOf, allVersionsOf, seenBy, expHtml, ORG, profileOf, companyOptional, saveDoc, saveRecord, saveCrew, crew, needing, URGENCY, CAT, R, LBL, en, esc, byCode, MONTHS, PERSONA, WORKERS, EQUIPMENT, PRODUCTS, NONEU, SPECIAL_RISK, OPERATORS, STREETS, SITES, nif, PERSON, RENTALS, MACHINE, DEMO, D, PROFILE, STATUS, STATUSES, RANK, counted, worstOf, AREA_META, LEVEL_OF, NOUN, BY_LEVEL, recordName, recordSub, recordTag, issuerOf, refOf, shown, DOCS, AREAS, AREA_TITLE, TAIL, GROUPS_OF, isOk, isPend, isBad, fold, textOf, NA_KEY, naMarks, saveNa, me, corrected: () => `Corrected by ${me === "You" ? "you" : esc(me)}`, today, NA_REASONS, reasonsFor, canNa, markNa, undoNa, DATA };
 })();
