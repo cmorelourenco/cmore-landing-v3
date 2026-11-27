@@ -151,6 +151,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjh-id .co-subtle { font-size: 0.9375rem; }
 /* who has each role on your project (set when it was created) */
 .pjh-people { margin-top: 1.5rem; }
+.pjh-people[data-sup-ppl] { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.pjh-none { margin: 0; font-size: 0.875rem; color: var(--color-ink-subtle); }
 .pje-l { font-size: 0.8125rem; font-weight: 600; }
 .pje-people ul { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
 .pje-people li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 5rem; align-items: center; gap: 0.75rem; }
@@ -399,6 +401,32 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 
   const PJ_ME = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || ''; } catch (e) { return ''; } })();
   const initials = (n) => String(n || '?').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+  const pplCards = (people) => people.map((y) => {
+    const isMe = !!PJ_ME && y.name === PJ_ME;
+    return `<li><span class="pjh-av" aria-hidden="true">${esc(initials(y.name))}</span><span class="t"><span class="d">${esc(y.role)}</span><span class="n">${esc(y.name)}${isMe ? ' <span class="pjh-you">(you)</span>' : ''}${y.invited ? ' <span class="co-badge b-info pj-role">Invited</span>' : ''}</span></span></li>`;
+  }).join('');
+  // a client's project: your people on it (the project's details are your client's), with a role each
+  const supPeople = () => {
+    const l = (team && team.people) || [];
+    return `<div class="pjh-people" data-sup-ppl aria-label="Your people on this project">${l.length ? `<ul>${pplCards(l)}</ul>` : `<p class="pjh-none">No one from ${esc(ME)} is assigned to it yet.</p>`}
+      <button type="button" class="btn co-btn-light btn-sm wk-edit-b" data-pj-ppl><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 3.5 3 3L7 16H4v-3l9.5-9.5Z"/></svg>${l.length ? 'Edit people' : 'Assign people'}</button></div>`;
+  };
+  const editSupPeople = () => {
+    const box = head.querySelector('[data-sup-ppl]'); if (!box) return;
+    pplStart(((team && team.people) || []).filter((y) => y.name));
+    box.outerHTML = `<form class="wk-form pjh-form pjh-form-ppl" novalidate>${pplEditor()}
+      <div class="wk-foot"><button type="button" class="link-btn" data-pje-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save people</button></div></form>`;
+    const form = head.querySelector('.pjh-form-ppl'), w = form.querySelector('[data-pp-who]'); if (w) w.focus();
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      head.querySelectorAll('.wk-in').forEach((x) => x.classList.remove('is-bad'));
+      const errs = [], people = pplCheck(errs);
+      if (errs.length) { errs[0].focus(); return; }
+      team.people = people; save(); paintHead();
+      toast(`Saved. ${pl(people.length, 'person', 'people')} from ${ME} on ${p.name}.`);
+      const b = head.querySelector('[data-pj-ppl]'); if (b) b.focus({ preventScroll: true });
+    });
+  };
   const paintHead = () => {
     const fact = (t, v, sm) => `<div><dt>${t}</dt><dd>${v}${sm ? `<small>${sm}</small>` : ''}</dd></div>`;
     const dates = () => fact('Dates', p.start ? esc(p.start) : '&mdash;', p.deadline ? `to ${esc(p.deadline)}` : 'No end date set');
@@ -417,10 +445,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${fact('Status', PJ.statusHtml(p), stNote())}
           ${fact('Owner', ME, p.isNew ? `Started by ${esc(p.owner || 'you')}${p.on ? ` on ${esc(p.on)}` : ''}` : 'You run the site')}
         </dl>
-        ${people.length ? `<div class="pjh-people" aria-label="People on this project"><ul>${people.map((y) => {
-          const isMe = !!PJ_ME && y.name === PJ_ME;
-          return `<li><span class="pjh-av" aria-hidden="true">${esc(initials(y.name))}</span><span class="t"><span class="d">${esc(y.role)}</span><span class="n">${esc(y.name)}${isMe ? ' <span class="pjh-you">(you)</span>' : ''}${y.invited ? ' <span class="co-badge b-info pj-role">Invited</span>' : ''}</span></span></li>`;
-        }).join('')}</ul></div>` : ''}`;
+        ${people.length ? `<div class="pjh-people" aria-label="People on this project"><ul>${pplCards(people)}</ul></div>` : ''}`;
     } else {
       head.innerHTML = `<span class="eyebrow">You supply ${esc(nb(p.client))}</span>
         <div class="pjh-id"><h1 class="co-name">${esc(p.name)}</h1></div>
@@ -431,7 +456,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${dates()}
           ${fact('Status', PJ.statusHtml(p), PJ.statusOf(p) === 'hold' ? `${esc(nb(p.client))} put it on hold` : '')}
           ${fact('Invited by', esc(nb(p.client)), 'Your client on it')}
-        </dl>`;
+        </dl>
+        ${supPeople()}`;
     }
   };
 
@@ -457,18 +483,28 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       ${eppl.length > 1 ? `<button type="button" class="link-btn" data-pp-rm="${k}">Remove</button>` : '<span></span>'}</li>`).join('');
   };
   const pplSync = () => { head.querySelectorAll('[data-pp-role]').forEach((x) => { eppl[+x.dataset.ppRole].role = x.value; }); head.querySelectorAll('[data-pp-who]').forEach((x) => { eppl[+x.dataset.ppWho].v = x.value; }); };
+  // the rows' checks (someone for each role, nobody twice in one) and the people they make
+  const pplCheck = (errs) => {
+    pplSync();
+    const pe = head.querySelector('#pje-people-e'), noOne = eppl.findIndex((y) => !y.v), twice = eppl.findIndex((y, k) => eppl.findIndex((z) => z.role === y.role && z.v === y.v) !== k);
+    if (noOne >= 0) { pe.textContent = `Choose who is ${eppl[noOne].role.toLowerCase()}.`; const x = head.querySelector(`[data-pp-who="${noOne}"]`); x.classList.add('is-bad'); errs.push(x); }
+    else if (twice >= 0) { pe.textContent = 'Someone is in the same role twice. Remove one.'; const x = head.querySelector(`[data-pp-who="${twice}"]`); x.classList.add('is-bad'); errs.push(x); }
+    return eppl.map((y) => { const o = eList.find((x) => x.v === y.v) || {}; return Object.assign({ role: y.role, name: o.name || '', email: o.email || '' }, o.invited ? { invited: true } : {}); });
+  };
+  const youV = () => { const m = teamOfCo().members.find((x) => x.you); return m ? m.email : ''; };
+  const pplEditor = () => `<div class="wk-f full pje-people"><span class="pje-l" id="pje-people-l">People on this project</span><ul data-pje-people aria-labelledby="pje-people-l">${pplRows()}</ul>
+    <button type="button" class="link-btn pje-add" data-pje-add>Add a person</button><span class="wk-err" id="pje-people-e"></span></div>`;
+  const pplStart = (ppl) => { eList = whoList(ppl); eppl = ppl.map((y) => ({ role: y.role, v: whoOf(y, eList) })); if (!eppl.length) eppl = [{ role: 'Project manager', v: youV() }]; };
   const pplPaint = () => { const ul = head.querySelector('[data-pje-people]'); if (ul) ul.innerHTML = pplRows(); const pe = head.querySelector('#pje-people-e'); if (pe) pe.textContent = ''; };
   const editHead = () => {
-    eList = whoList(PJ.peopleOf(p)); eppl = PJ.peopleOf(p).map((y) => ({ role: y.role, v: whoOf(y, eList) }));
-    if (!eppl.length) eppl = [{ role: 'Project manager', v: '' }];
+    pplStart(PJ.peopleOf(p).filter((y) => y.name));
     const F = [['name', 'Project name', 'full', p.name], ['client', 'Client', '', p.client], p.isNew ? null : ['sector', 'Sector', '', p.sector || ''],
       p.isNew ? ['address', 'Address', p.isNew ? '' : 'full', p.address || ''] : ['city', 'City', '', p.city || ''], ['district', 'District', '', p.district || ''],
       ['start', 'Start date', '', toIso(p.start), 'date'], ['deadline', 'End date', '', toIso(p.deadline), 'date']].filter(Boolean);
     const field = ([k, l, cls, v, type]) => `<div class="wk-f${cls ? ' ' + cls : ''}"><label for="pje-${k}">${l}</label><input class="wk-in" id="pje-${k}" data-pje="${k}" type="${type || 'text'}" value="${esc(v)}" autocomplete="off">${k === 'deadline' ? '<span class="wk-hint">Leave it empty if there&rsquo;s no end date yet.</span>' : ''}<span class="wk-err" id="pje-${k}-e"></span></div>`;
     head.innerHTML = `<span class="eyebrow">Your project &middot; ${esc(p.id)}</span>
       <form class="wk-form pjh-form" novalidate>${F.map(field).join('')}
-        <div class="wk-f full pje-people"><span class="pje-l" id="pje-people-l">People on this project</span><ul data-pje-people aria-labelledby="pje-people-l">${pplRows()}</ul>
-          <button type="button" class="link-btn pje-add" data-pje-add>Add a person</button><span class="wk-err" id="pje-people-e"></span></div>
+        ${pplEditor()}
         <div class="wk-foot"><button type="button" class="link-btn" data-pje-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save changes</button></div></form>`;
     head.querySelector('#pje-name').focus();
     head.querySelector('form').addEventListener('submit', (e) => {
@@ -482,14 +518,10 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       if (!nv.start) errs.push(bad('start', 'Choose the day the works start.'));
       if (nv.start && nv.deadline && nv.deadline < nv.start) errs.push(bad('deadline', 'It ends before it starts. Choose a later day.'));
       // the people: someone for each role, and nobody twice in the same role
-      pplSync();
-      const pe = head.querySelector('#pje-people-e'), noOne = eppl.findIndex((y) => !y.v), twice = eppl.findIndex((y, k) => eppl.findIndex((z) => z.role === y.role && z.v === y.v) !== k);
-      if (noOne >= 0) { pe.textContent = `Choose who is ${eppl[noOne].role.toLowerCase()}.`; const x = head.querySelector(`[data-pp-who="${noOne}"]`); x.classList.add('is-bad'); errs.push(x); }
-      else if (twice >= 0) { pe.textContent = 'Someone is in the same role twice. Remove one.'; const x = head.querySelector(`[data-pp-who="${twice}"]`); x.classList.add('is-bad'); errs.push(x); }
+      const people = pplCheck(errs);
       if (errs.length) { errs[0].focus(); return; }
       const patch = { name: nv.name, client: nv.client, start: fromIso(nv.start), deadline: fromIso(nv.deadline) };
       ['sector', 'city', 'district', 'address'].forEach((k) => { if (k in nv) patch[k] = nv[k]; });
-      const people = eppl.map((y) => { const o = eList.find((x) => x.v === y.v) || {}; return Object.assign({ role: y.role, name: o.name || '', email: o.email || '' }, o.invited ? { invited: true } : {}); });
       const changed = Object.keys(patch).filter((k) => String(patch[k] || '') !== String(p[k] || ''));
       if (JSON.stringify(people.map((y) => [y.role, y.name])) !== JSON.stringify(PJ.peopleOf(p).map((y) => [y.role, y.name]))) { patch.people = people; changed.push('people'); }
       if (!changed.length) { paintHead(); return; }
@@ -500,9 +532,10 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   };
   head.addEventListener('click', (e) => {
     if (e.target.closest('[data-pj-edit]')) { editHead(); return; }
+    if (e.target.closest('[data-pj-ppl]')) { editSupPeople(); return; }
     if (e.target.closest('[data-pje-add]')) { pplSync(); const used = new Set(eppl.map((y) => y.role)); eppl.push({ role: PROLES.find((r) => !used.has(r)) || PROLES[0], v: '' }); pplPaint(); const w = head.querySelector(`[data-pp-who="${eppl.length - 1}"]`); if (w) w.focus(); return; }
     const rmP = e.target.closest('[data-pp-rm]'); if (rmP) { pplSync(); eppl.splice(+rmP.dataset.ppRm, 1); pplPaint(); const a = head.querySelector('[data-pje-add]'); if (a) a.focus(); return; }
-    if (e.target.closest('[data-pje-cancel]')) { paintHead(); const b = head.querySelector('[data-pj-edit]'); if (b) b.focus({ preventScroll: true }); return; }
+    if (e.target.closest('[data-pje-cancel]')) { paintHead(); const b = head.querySelector('[data-pj-edit], [data-pj-ppl]'); if (b) b.focus({ preventScroll: true }); return; }
     const b = e.target.closest('[data-hold]'); if (!b) return;
     const on = b.dataset.hold === 'on'; PJ.setHold(p.id, on); paintHead();
     const again = head.querySelector('[data-hold]'); if (again) again.focus({ preventScroll: true });
