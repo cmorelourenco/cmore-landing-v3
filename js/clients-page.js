@@ -152,6 +152,8 @@
 .cl-c-sw { width: 5.5rem; }
 .sp-tbl .cl-sw-c { text-align: right; padding-right: 1.25rem; white-space: nowrap; }
 .sp-tbl tr.is-off .n { color: var(--color-ink-muted); }
+.sp-tbl tr.cl-doc { cursor: pointer; }
+.sp-tbl tr.cl-doc:hover, .sp-tbl tr.cl-doc:focus-visible { background: var(--color-light-beige); }
 .cl-swall { display: inline-flex; align-items: center; gap: 0.625rem; font-size: 0.8125rem; font-weight: 500; color: var(--color-ink-muted); white-space: nowrap; }
 /* on is green: shared */
 .sp-tbl .co-sw[aria-checked="true"] { background: var(--color-ok, #a6d8a0); }
@@ -259,15 +261,33 @@
   const keptOf = (d) => (d.kept ? { st: d.kept.current ? tag(d) : V.stateOf(d.kept) === 'expired' ? '<span class="co-badge b-over">Expired</span>' : '<span class="co-badge b-neu">Replaced</span>', valid: d.kept.valid, say: d.kept.current ? 'The current version' : `${esc(d.kept.label)}` } : null);
   // a switch to share it or not, one document at a time, under a consent you've given
   const sw = (k, d) => `<td class="cl-sw-c"><button class="co-sw" type="button" role="switch" aria-checked="${!d.off}" data-sw-doc="${esc(k.id)}|${esc(d.code)}" aria-label="Share ${esc(d.name)} with them"><i></i></button></td>`;
+  // a document opens in the drawer (js/doc-drawer.js), as everywhere else: Previous / Next walk its consent's table
+  const clTr = (k, d) => ` tabindex="0" role="button" data-cldoc="${esc(k.id)}|${esc(d.code)}" aria-label="Open ${esc(d.name)}"`;
+  const openClDoc = (tr) => {
+    if (!window.CMDocDrawer) return;
+    const all = C.list().flatMap((c) => c.consents.map((k) => ({ c, k }))), me = window.CMOrgs && window.CMOrgs.current ? window.CMOrgs.current() || {} : {};
+    const rows = [...tr.closest('tbody').querySelectorAll('tr[data-cldoc]')];
+    const list = rows.map((r) => {
+      const [cid, code] = r.dataset.cldoc.split('|'), x = all.find((y) => y.k.id === cid); if (!x) return null;
+      const d = x.k.docs.find((y) => y.code === code); if (!d) return null;
+      const state = x.k.state === 'given' ? (d.off ? `Not shared since ${d.off}` : 'They see it, and every renewal') : x.k.state === 'pending' ? 'They&rsquo;re waiting for your answer' : x.k.state === 'stopped' ? 'They keep the version they saw' : 'You declined';
+      return { name: d.name, code: d.code, own: true, status: d.status, tag: tag(d), valid: d.valid, section: d.section, requirement: d.requirement,
+        holder: { name: me.name || 'Your company', id: 'me', nipc: me.nipc, city: me.city }, bar: `Your document, for ${x.c.name}`,
+        factsTitle: 'With this client', facts: [['Client', esc(x.c.name)], ['Consent', esc(x.k.title)], ['For', x.k.project ? esc(x.k.project) : 'All your work with them'], ['What they see', state]],
+        link: { href: `company-details.html?open=${encodeURIComponent(d.code)}`, text: 'Open it in Documents' } };
+    });
+    const k = rows.indexOf(tr), keep = list.filter(Boolean);
+    window.CMDocDrawer.open(keep, Math.max(0, keep.indexOf(list[k])));
+  };
   const rowsOf = (k, exp = true) => k.docs.map((d) => {
     if (k.state === 'given' && d.off) {
       const kp = keptOf(d);
-      return `<tr class="is-off"><td><span class="n">${esc(d.name)}</span><span class="d">Not shared since ${esc(d.off)}${kp ? ` &middot; they keep: ${kp.say.replace(/^The/, 'the')}` : ''}</span>${vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td><span class="co-badge b-neu">Not shared</span>${exp ? `<span class="cl-exp-s">&mdash;</span>` : ''}</td>${exp ? '<td class="c cl-exp-c">&mdash;</td>' : ''}${sw(k, d)}</tr>${vRow(k, d)}`;
+      return `<tr class="is-off cl-doc"${clTr(k, d)}><td><span class="n">${esc(d.name)}</span><span class="d">Not shared since ${esc(d.off)}${kp ? ` &middot; they keep: ${kp.say.replace(/^The/, 'the')}` : ''}</span>${vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td><span class="co-badge b-neu">Not shared</span>${exp ? `<span class="cl-exp-s">&mdash;</span>` : ''}</td>${exp ? '<td class="c cl-exp-c">&mdash;</td>' : ''}${sw(k, d)}</tr>${vRow(k, d)}`;
     }
     const kp = k.state === 'stopped' ? keptOf(d) : null, gone = k.state === 'stopped' || k.state === 'declined';
     const st = gone ? (kp ? kp.st : '<span class="co-badge b-neu">Not shared</span>') : tag(d), valid = gone ? (kp ? kp.valid : '—') : d.valid;
     const sub = gone ? (kp ? `They keep: ${kp.say}` : 'They never saw it') : `${esc(d.code)} &middot; ${esc(d.section)}${d.tone === 'bad' ? ' &middot; <a class="cl-fix" href="company-details.html">Fix in Documents</a>' : ''}`;
-    return `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${sub}</span>${k.state === 'pending' || k.state === 'declined' ? '' : vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td>${st}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}${k.state === 'given' ? sw(k, d) : ''}</tr>${k.state === 'pending' || k.state === 'declined' ? '' : vRow(k, d)}`;
+    return `<tr class="cl-doc"${clTr(k, d)}><td><span class="n">${esc(d.name)}</span><span class="d">${sub}</span>${k.state === 'pending' || k.state === 'declined' ? '' : vBtn(k, d)}</td><td class="hide-s">${esc(d.requirement || '')}</td><td>${st}${exp ? `<span class="cl-exp-s">${window.DOC_MODEL.expHtml(valid)}</span>` : ''}</td>${exp ? `<td class="c cl-exp-c">${window.DOC_MODEL.expHtml(valid)}</td>` : ''}${k.state === 'given' ? sw(k, d) : ''}</tr>${k.state === 'pending' || k.state === 'declined' ? '' : vRow(k, d)}`;
   }).join('');
   // an earlier version they asked for, by year: what you have from that year, and your answer to it —
   // share it, decline it, or say you don't have one from that year
@@ -373,6 +393,7 @@
     const vb = e.target.closest('[data-vers]');
     if (vb) { const key = vb.dataset.vers; vOpen.has(key) ? vOpen.delete(key) : vOpen.add(key); const y = scrollY; paint(); scrollTo(0, y); const b = box.querySelector(`[data-vers="${CSS.escape(key)}"]`); if (b) b.focus({ preventScroll: true }); return; }
     const r = e.target.closest('[data-cl]'); if (r) { go(r); return; }
+    const dr = e.target.closest('tr[data-cldoc]'); if (dr && !e.target.closest('a, button, input, label')) { openClDoc(dr); return; }
     const s = e.target.closest('[data-stop]'); if (s) { ask(s.dataset.stop); return; }
     // the switches: no question first, since one more click puts it back
     const sd = e.target.closest('[data-sw-doc]'), sa = e.target.closest('[data-sw-all]');
@@ -403,5 +424,5 @@
     const d = e.target.closest('[data-decline]');
     if (d) { const k = C.list().flatMap((c) => c.consents).find((x) => x.id === d.dataset.decline), c = C.setState(k.id, 'declined'); paint(); toast(`You declined ${esc(c.name)}&rsquo;s request for ${esc(k.title)}.`); }
   });
-  box.addEventListener('keydown', (e) => { const r = e.target.closest('[data-cl]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(r); } });
+  box.addEventListener('keydown', (e) => { const r = e.target.closest('[data-cl]'); if (r && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); go(r); return; } const dr = e.target.closest('tr[data-cldoc]'); if (dr && e.target === dr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openClDoc(dr); } });
 })();

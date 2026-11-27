@@ -620,6 +620,25 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     document.head.appendChild(st);
   };
 
+  // a document in these tables opens in the drawer (js/doc-drawer.js): the file, what ALMA read with
+  // a citation for each value, and what the catalog says; Previous / Next walk the table as it's shown
+  const PJD = {};
+  const drawerDoc = (d, s, w) => {
+    const S = window.CM_SUPPLIERS, full = s && S && S.byId ? S.byId(s.id) || {} : {};
+    const holder = w ? { name: w.name, id: `${p.id}:${w.name}`, employer: s ? s.name : ME } : s ? { name: s.name, id: s.id, nipc: s.nipc || full.nipc, city: s.city || full.city } : { name: ME, id: 'me' };
+    return { name: d.name, code: d.code, own: w ? !!w.own : !s, status: d.status, tag: `<span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span>`, valid: d.exp || '', note: d.status === 'missing' ? 'ALMA has asked them for it.' : '',
+      holder, bar: s ? `Shared with you by ${nb(s.name)}` : `${ME}, on ${p.name}`, factsTitle: 'On this project',
+      facts: [['Project', esc(p.name)], ['For', esc(w ? w.name : d.of || '')], w && s ? ['Works for', esc(nb(s.name))] : null].filter(Boolean),
+      link: w && w.own ? { href: `company-details.html?area=workers&worker=${w.i}`, text: 'Open it in Documents' } : null };
+  };
+  const docTr = (id, k, d) => ` class="is-link" tabindex="0" role="button" data-pjdoc="${id}:${k}" aria-label="Open ${esc(d.name)}"`;
+  const openPjDoc = (tr) => {
+    const id = tr.dataset.pjdoc.slice(0, tr.dataset.pjdoc.lastIndexOf(':')), all = PJD[id]; if (!all || !window.CMDocDrawer) return;
+    // the rows as they're shown (sorted, searched): the drawer walks those
+    const rows = [...tr.closest('tbody').querySelectorAll('tr[data-pjdoc]')].filter((r) => !r.hidden);
+    const list = rows.map((r) => all[+r.dataset.pjdoc.split(':').pop()]);
+    window.CMDocDrawer.open(list, Math.max(0, rows.indexOf(tr)), { nav: (i, n) => `${i + 1} of ${n}` });
+  };
   const paintSupplier = (s) => {
     const subs = M.sups.filter((x) => x.by === s.name);
     const docs = supDocs(s);
@@ -654,8 +673,8 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     // their documents, a section per area: the company's and the project's as documents; workers,
     // equipment and products & materials a row each (a worker to their page on this project), then
     // what's asked of all of them at once
-    const docRows = (l, of, id) => `${qTools(id, 'Search documents')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl" data-tq-for="${id}"><thead><tr><th style="width:${of ? 34 : 52}%">Document</th>${of ? '<th style="width:30%">For</th>' : ''}<th style="width:${of ? 18 : 24}%">Expiration date</th><th style="width:${of ? 18 : 24}%">Status</th></tr></thead><tbody>
-      ${l.slice().sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status]).map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td>${of ? `<td><span class="n">${esc(d.of)}</span><span class="d">${esc(d.ofSub || '')}</span></td>` : ''}<td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>`;
+    const docRows = (l0, of, id) => { const l = l0.slice().sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status]); PJD[id] = l.map((d) => drawerDoc(d, s)); return `${qTools(id, 'Search documents')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl" data-tq-for="${id}"><thead><tr><th style="width:${of ? 34 : 52}%">Document</th>${of ? '<th style="width:30%">For</th>' : ''}<th style="width:${of ? 18 : 24}%">Expiration date</th><th style="width:${of ? 18 : 24}%">Status</th></tr></thead><tbody>
+      ${l.map((d, k) => `<tr${docTr(id, k, d)}><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td>${of ? `<td><span class="n">${esc(d.of)}</span><span class="d">${esc(d.ofSub || '')}</span></td>` : ''}<td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>`; };
     const sec = (h, lead, inner) => `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">${h}</h2><p class="co-muted">${lead}</p></div>${inner}</section>`;
     const none = (t) => `<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl"><tbody><tr><td class="pjp-none co-tbl-empty">${t}</td></tr></tbody></table></div>`;
     const valid = (x) => { const l = x.docs || []; return l.length ? `${l.filter((d) => !DOC_RANK[d.status]).length} of ${l.length}` : '&mdash;'; };
@@ -700,6 +719,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     const trail = document.getElementById('pjp-crumb'); if (trail && trail.parentElement) trail.parentElement.innerHTML = `<a href="my-company.html?filled">My company</a>${SEP}<a href="projects.html">Projects</a>${SEP}<a href="project.html?id=${encodeURIComponent(p.id)}#workers">${esc(p.name)}</a>${chain.map((x) => `${SEP}<a href="${supHref(x.id)}">${esc(nb(x.name))}</a>`).join('')}${SEP}<span aria-current="page">${esc(w.name)}</span>`;
     const back = document.querySelector('.eco-crumbs-back'); if (back) { back.href = sup ? supHref(sup.id) : `project.html?id=${encodeURIComponent(p.id)}#workers`; back.setAttribute('aria-label', `Back to ${sup ? sup.name : p.name}`); }
     const docs = (w.docs || []).slice().sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status]);
+    PJD['wk-docs'] = docs.map((d) => drawerDoc(d, sup, w));
     const nOk = docs.filter((d) => !DOC_RANK[d.status]).length;
     const fact = (t, v, sm) => `<div><dt>${t}</dt><dd>${v}${sm ? `<small>${sm}</small>` : ''}</dd></div>`;
     head.classList.add('pjh');
@@ -713,7 +733,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
       </dl>`;
     body.innerHTML = `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Their documents on this project</h2><p class="co-muted">${docs.length ? `What ${esc(p.name)} asks of each worker, the ones to chase first.` : `${esc(p.name)} asks nothing of each worker. Change that in <a class="co-link" href="project.html?id=${encodeURIComponent(p.id)}#required">Documents required</a>.`}</p></div>
       ${docs.length ? `${qTools('wk-docs', 'Search documents')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl" data-tq-for="wk-docs"><thead><tr><th style="width:52%">Document</th><th style="width:24%">Expiration date</th><th style="width:24%">Status</th></tr></thead><tbody>
-      ${docs.map((d) => `<tr><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td><td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>` : ''}</section>`;
+      ${docs.map((d, k) => `<tr${docTr('wk-docs', k, d)}><td><span class="n">${esc(d.name)}</span><span class="d">${esc(d.code)}</span></td><td>${d.exp ? (DM ? DM.expHtml(d.exp) : esc(d.exp)) : '<span class="cd-dash">&mdash;</span>'}</td><td><span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span></td></tr>`).join('')}</tbody></table></div>` : ''}</section>`;
     applySort(body); applyTQ(body);
   };
 
@@ -820,6 +840,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
       const name = key === 'subs' ? x.name : plain(nameOf(Object.values(TEAM).find((T) => T.key === key).kind, x.i)[0]);
       team[key].splice(+k, 1); save(); paint('.pj-add'); toast(`${nb(name)} is off this project.`); return;
     }
+    const pd = e.target.closest('tr[data-pjdoc]'); if (pd && !e.target.closest('a, button, input')) { openPjDoc(pd); return; }
     const ot = e.target.closest('tr[data-open-tab]'); if (ot) { openTab(ot); return; }
     const wr = e.target.closest('tr[data-wk-id]'); if (wr && !e.target.closest('a, button, input')) { location.href = wkHref(wr.dataset.wkId); return; }
     const row = e.target.closest('tr[data-sup-id]'); if (row && !e.target.closest('a, button, input')) location.href = supHref(row.dataset.supId);
@@ -830,6 +851,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
       const keys = TABS().map((x) => x[0]), i = keys.indexOf(tab) + (e.key === 'ArrowRight' ? 1 : -1);
       e.preventDefault(); const k = keys[(i + keys.length) % keys.length]; go(k, `[data-tab="${k}"][role="tab"]`); return;
     }
+    const pd = e.target.closest('tr[data-pjdoc]'); if (pd && (e.key === 'Enter' || e.key === ' ') && e.target === pd) { e.preventDefault(); openPjDoc(pd); return; }
     const ot = e.target.closest('tr[data-open-tab]'); if (ot && (e.key === 'Enter' || e.key === ' ') && e.target === ot) { e.preventDefault(); openTab(ot); return; }
     const wr = e.target.closest('tr[data-wk-id]'); if (wr && (e.key === 'Enter' || e.key === ' ') && e.target === wr) { e.preventDefault(); location.href = wkHref(wr.dataset.wkId); return; }
     const row = e.target.closest('tr[data-sup-id]'); if (row && (e.key === 'Enter' || e.key === ' ') && e.target === row) { e.preventDefault(); location.href = supHref(row.dataset.supId); }

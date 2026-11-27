@@ -573,7 +573,9 @@
   // a record's documents, as the company's: one table per category (its name and how many), the
   // same columns (expiration date, ALMA's confidence, status) and Upload or Replace on each row
   const catRow = (d, i, kind) => { const [l, c] = d.tag || STATUS[d.status], has = !NO_FILE.includes(d.status) && d.status !== 'na', wk = kind === 'workers' && i != null && !d.plain || kind === 'workers' && ['ID', 'DRV', 'CRM'].includes(d.code) || kind === 'equipment' && i != null || kind === 'products' && i != null && M.PERSONA !== 'beatriz';
-    return `<tr class="cd-row${wk ? ' is-rosterable' : ''}"${d.spec ? ` data-drop="${d.spec}"` : ''}${wk ? ` data-wdoc="${d.code}" data-wi="${i}" data-wk="${kind}" tabindex="0" role="button" aria-label="Open ${esc(decode(d.name))}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
+    // a company document that names this worker (or machine, or product): the company's own drawer
+    const co = !wk && d.open != null;
+    return `<tr class="cd-row${wk || co ? ' is-rosterable' : ''}"${d.spec ? ` data-drop="${d.spec}"` : ''}${wk ? ` data-wdoc="${d.code}" data-wi="${i}" data-wk="${kind}" tabindex="0" role="button" aria-label="Open ${esc(decode(d.name))}"` : co ? ` data-open="${d.open}" tabindex="0" role="button" aria-label="Open ${esc(decode(d.name))}"` : ''}><td><span class="n">${esc(d.name)}</span><span class="d">${d.plain ? d.req : `${d.code} &middot; ${d.req}`}</span></td><td>${!has || !d.exp || d.exp === '—' ? dash : M.expHtml(d.exp)}</td><td>${has ? confCell(78 + (hash(d.code + i) % 21)) : dash}</td><td><span class="co-badge ${c}">${l}</span></td><td class="cd-ed"><span class="cd-ed-in">${d.spec ? UPB(d.spec, has, d.name) : ''}</span></td></tr>`; };
   const catTable = (rows, i, kind) => `<div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-doc-tbl" data-unpaged>${DOC_THEAD}<tbody>${rows.map((d) => catRow(d, i, kind)).join('')}</tbody></table></div>`;
   const catGroups = (per, kind, i) => byCat(per, kind).filter(([, , list]) => list.length).map(([k, l, list]) => `<div class="cd-group" data-cat="${k}"><div class="co-sub-head cd-group-k"><h3 class="eyebrow">${l}</h3><span class="co-muted">${list.length} document${list.length === 1 ? '' : 's'}</span></div>${catTable(list, i, kind)}</div>`).join('');
   // their identity document: its status by the date it's valid until, once there's a file of it;
@@ -815,7 +817,9 @@
         : e.ev === 'archived' ? [`${W[0]} archived`, `Off the ${W[1]} and every site`, dash]
         : e.ev === 'edited' ? ['Profile edited', esc(e.what || ''), dash]
         : [`${W[0]} unarchived`, `Back on the ${W[1]}`, dash];
-      return `<tr><td><span class="n">${doc}</span>${sub ? `<span class="d">${sub}</span>` : ''}</td><td>${dOf(e.t)}</td><td>${st}</td><td>${who(e.by)}</td></tr>`;
+      // an entry about one of their documents opens it in the drawer, as its row above does
+      const op = e.code && ['upload', 'status', 'asked', 'rejected'].includes(e.ev) && (kind !== 'products' || M.PERSONA !== 'beatriz') ? ` class="cd-row is-rosterable" data-wlog="${esc(e.code)}" data-wi="${i}" data-wk="${kind}" tabindex="0" role="button" aria-label="Open ${doc}"` : '';
+      return `<tr${op}><td><span class="n">${doc}</span>${sub ? `<span class="d">${sub}</span>` : ''}</td><td>${dOf(e.t)}</td><td>${st}</td><td>${who(e.by)}</td></tr>`;
     };
     return `<div class="cd-group" data-wk-log><div class="co-sub-head cd-group-k"><h3 class="eyebrow">Log</h3><span class="co-muted">${L.length} entr${L.length === 1 ? 'y' : 'ies'} &middot; every status change of ${eq ? `this ${RK[kind].one}` : esc(first)}&rsquo;s documents, newest first</span></div>
       <div class="co-card co-tbl-card"><table class="co-tbl cd-tbl cd-log-tbl" data-paged="${eq ? RK[kind].pg : 'wk'}-log-${i}"><thead><tr><th>Document</th><th>Date</th><th>Status change</th><th>By</th></tr></thead><tbody>${L.map(row).join('')}</tbody></table></div></div>`;
@@ -1016,7 +1020,7 @@
       'WK-03': [() => `Designated for ${M.DESIGNATED[i] || 'emergencies'}`, 'Not designated for an emergency role.', ['Not designated', 'b-neu']],
     };
     const month = DOCS.filter((d) => d.level === 'all_workers' && d.req !== 'optional' && d.status !== 'archived').map((d) => {
-      const row = { code: d.code, name: d.name, req: 'Covers every worker', status: d.status, exp: d.valid, spec: d.status === 'na' || gone ? '' : `doc:${d.id}` };
+      const row = { code: d.code, name: d.name, req: 'Covers every worker', status: d.status, exp: d.valid, spec: d.status === 'na' || gone ? '' : `doc:${d.id}`, open: d.id };
       const say = SAYS[d.code];
       if (!say || NO_FILE.includes(d.status) || !M.listedOn) return row;
       if (M.listedOn(d.code, i)) return Object.assign(row, { req: `${d.code} &middot; ${say[0](d)}`, plain: true });
@@ -1467,6 +1471,7 @@ select.wk-in { appearance: none; padding-right: 2.25rem; cursor: pointer; backgr
       return;
     }
     const wr = e.target.closest('[data-wdoc]'); if (wr && !e.target.closest('button, a, input, label')) { wOpen(+wr.dataset.wi, wr.dataset.wdoc, wr.dataset.wk || 'workers'); return; }
+    const wl = e.target.closest('[data-wlog]'); if (wl) { if (groupsEl.querySelector(`[data-wdoc="${CSS.escape(wl.dataset.wlog)}"]`)) wOpen(+wl.dataset.wi, wl.dataset.wlog, wl.dataset.wk); return; }
     const cg = e.target.closest('[data-chg]'); if (cg) { e.stopPropagation(); if (pop && pop.dataset.for === cg.dataset.chg) closePop(); else { openPop(cg); pop.dataset.for = cg.dataset.chg; } return; }
     const we = e.target.closest('[data-wk-edit]'); if (we) { editWorker(+we.dataset.wkEdit); return; }
     const wx = e.target.closest('[data-wk-cancel]'); if (wx) { renderWorker(+wx.dataset.wkCancel); return; }
@@ -1514,7 +1519,7 @@ select.wk-in { appearance: none; padding-right: 2.25rem; cursor: pointer; backgr
     }
   });
   groupsEl.addEventListener('keydown', (e) => {
-    const t = e.target.closest('[data-worker], [data-machine], [data-product], [data-detail], [data-open], [data-version], [data-wdoc]');
+    const t = e.target.closest('[data-worker], [data-machine], [data-product], [data-detail], [data-open], [data-version], [data-wdoc], [data-wlog]');
     if (t && e.target === t && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); t.click(); }
   });
   groupsEl.addEventListener('input', (e) => {
