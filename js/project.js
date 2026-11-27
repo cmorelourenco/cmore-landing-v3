@@ -210,11 +210,13 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   // matrix), a click for one way and another for the other; kept by table across redraws. A cell sorts
   // by what it shows: a status the worst first, a dot by its state, a date, "n of m", a number, or its name
   const SORT = {};
-  const RANKS = { 'needs attention': 0, missing: 0, expired: 0, 'expiring soon': 1, expiring: 1, 'in order': 2, valid: 2, 'nothing shared': 3 };
+  const RANKS = { 'needs attention': 0, missing: 0, expired: 0, 'expiring soon': 1, expiring: 1, 'in order': 2, valid: 2, 'nothing shared': 3, 'off site': 4 };
   const DOTS = ['is-on', 'is-ok', 'is-notyet', 'is-pend', 'is-offsite', 'is-bad'];
   const MONS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const keyOfCell = (td) => {
     if (!td) return null;
+    // a cell can say what it sorts by (the workers' Share and Download: how many)
+    if (td.dataset.sort != null) return td.dataset.sort === '' ? null : +td.dataset.sort;
     const b = td.querySelector('.co-badge'); if (b && fold(b.textContent.trim()) in RANKS) return RANKS[fold(b.textContent.trim())];
     const d = td.querySelector('.cd-dot'); if (d) { const k = DOTS.findIndex((c) => d.classList.contains(c)); return k < 0 ? 9 : k; }
     const n = td.querySelector('.n'), t = (n ? n.textContent : td.textContent).replace(/\s+/g, ' ').trim();
@@ -227,6 +229,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   const applySort = (root = document) => root.querySelectorAll('table[data-tq-for]').forEach((t) => {
     const id = t.dataset.tqFor, st = SORT[id], b = t.tBodies[0], hr = t.tHead && t.tHead.rows[0]; if (!b || !hr) return;
     [...hr.cells].forEach((th, c) => {
+      if (!th.textContent.trim() && !th.querySelector('[data-sort-col]')) return; // a column with no head (its actions): nothing to sort by
       if (!th.querySelector('[data-sort-col]')) th.innerHTML = `<button type="button" class="cd-sort" data-sort-col="${c}"><span class="l">${th.innerHTML}</span><span class="a" aria-hidden="true"></span></button>`;
       const on = st && st.c === c, btn = th.querySelector('[data-sort-col]');
       if (on) th.setAttribute('aria-sort', st.dir > 0 ? 'ascending' : 'descending'); else th.removeAttribute('aria-sort');
@@ -507,7 +510,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const set = k === 'share' ? (x.share || [...file]) : (x.dl || []), n = codes.filter((c) => set.includes(c) && file.has(c)).length;
     if (!codes.length) return '<td class="c"><span class="cd-dash" title="Nothing asked of each worker">&mdash;</span></td>';
     const tone = !n ? 'is-none' : n === codes.length ? 'is-ok' : 'is-pend';
-    return `<td class="c"><span class="cd-dot ${tone}" aria-hidden="true"></span><span class="d">${n} of ${codes.length}</span></td>`;
+    return `<td class="c" data-sort="${n}"><span class="cd-dot ${tone}" aria-hidden="true"></span><span class="d">${n} of ${codes.length}</span></td>`;
   };
   const CONSENT_LEGEND = '<p class="cd-legend"><span><span class="cd-dot is-ok"></span>All asked for</span><span><span class="cd-dot is-pend"></span>Some</span><span><span class="cd-dot is-none"></span>None</span></p>';
   const teamPanel = (T) => {
@@ -515,7 +518,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     if (T.key === 'workers') {
       return `<p class="pjp-note">${EYE}<span>Seen by ${seenBy}. For each worker, only the documents you consent to share, and to download.</span></p>
       <div class="pjp-tools"><div class="pjp-tools-l"></div><button type="button" class="pj-add" data-add="workers">${PLUS}Add workers</button></div>
-      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjp-wk-tbl"><thead><tr><th style="width:21%">Worker</th><th style="width:11%">Entry date</th><th style="width:11%">Exit date</th><th class="c" style="width:11%">Share</th><th class="c" style="width:11%">Download</th><th style="width:19%">Status of what you share</th><th style="width:16%" aria-label="On site"></th></tr></thead><tbody>
+      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjp-wk-tbl" data-tq-for="tm-workers"><thead><tr><th style="width:21%">Worker</th><th style="width:11%">Entry date</th><th style="width:11%">Exit date</th><th class="c" style="width:11%">Share</th><th class="c" style="width:11%">Download</th><th style="width:19%">Status of what you share</th><th style="width:16%" aria-label="On site"></th></tr></thead><tbody>
       ${l.length ? l.map((x, k) => {
         const [n, sub] = nameOf(T.kind, x.i), { on } = sharedOf(T.kind, x), st = on.length ? stOf(on) : null;
         // off site: kept, for the project's history, with the day they left as their exit date
