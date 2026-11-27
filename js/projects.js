@@ -89,9 +89,14 @@
   };
   const saveTeam = (id, t) => { try { sessionStorage.setItem(TEAM_KEY(id), JSON.stringify(t)); } catch (e) {} };
 
-  const all = added().map((p) => Object.assign({}, p, { h: hash(p.id), own: 'owner', isNew: true, docs: { asked: 0, ok: 0, look: 0, miss: 0 }, ongoing: !p.deadline, region: where(p), role: 'Owner',
+  // a project's details as you edited them on its page (project.html, Edit project): kept for the tab
+  const EDIT_KEY = 'cm-pj-edit';
+  const edits = () => { try { return JSON.parse(ss(EDIT_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const saveEdit = (id, patch) => { const e = edits(); e[id] = Object.assign(e[id] || {}, patch); try { sessionStorage.setItem(EDIT_KEY, JSON.stringify(e)); } catch (err) {} };
+  const E0 = edits(), ed = (p) => Object.assign({}, p, E0[p.id] || {});
+  const all = added().map(ed).map((p) => Object.assign({}, p, { h: hash(p.id), own: 'owner', isNew: true, docs: { asked: 0, ok: 0, look: 0, miss: 0 }, ongoing: !p.deadline, region: where(p), role: 'Owner',
     suppliers: (p.sups || []).length, workers: 0, text: fold([p.id, p.name, p.client, ...peopleOf(p).map((x) => x.name), p.city, p.district, p.country].concat((p.sups || []).map((x) => x.name)).join(' ')) }))
-    .concat((hasProjects() ? PROJECTS : []).map((p) => {
+    .concat((hasProjects() ? PROJECTS : []).map(ed).map((p) => {
     const h = hash(p.id), miss = p.miss, look = (h % 3 === 0 ? 1 : 0) + (miss && h % 2 ? 1 : 0), asked = 9 + (h % 9);
     const docs = { asked, ok: asked - miss - look, look, miss };
     // a client's project: the Team column counts what you put on it (you don't see the rest of the team)
@@ -453,5 +458,5 @@ html[data-theme="dark"] .pj-tbl .pj-role.is-owner { background: #66508c; color: 
     'Electrical installations', 'Plumbing and drainage', 'HVAC', 'Fire protection', 'Lifts and escalators', 'Telecoms and security systems',
     'Scaffolding', 'Crane and lifting services', 'Landscaping', 'Site cleaning', 'Site security', 'Waste management', 'Transport and logistics', 'Other'];
   const workText = (x) => { const t = (x && x.work) || '', d = ((x && x.detail) || '').trim(); return t === 'Other' ? d || 'Other' : [t, d].filter(Boolean).join(' · '); };
-  window.CMProjects = { statusOf, statusHtml, setHold, STATUS, WORK_TYPES, workText, all: () => all.slice(), open: (id) => { const p = all.find((x) => x.id === id); if (p) open(p); }, teamOf, saveTeam, NOTIFIED, where, peopleOf, itemsOf, hasProjects, pl };
+  window.CMProjects = { saveEdit, statusOf, statusHtml, setHold, STATUS, WORK_TYPES, workText, all: () => all.slice(), open: (id) => { const p = all.find((x) => x.id === id); if (p) open(p); }, teamOf, saveTeam, NOTIFIED, where, peopleOf, itemsOf, hasProjects, pl };
 })();

@@ -146,6 +146,23 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjh-id { display: flex; flex-direction: column; gap: 0.625rem; margin-top: 1rem; }
 .pjh-id .co-name { margin: 0; font-size: clamp(2.25rem, 3.4vw, 3.25rem); }
 .pjh-id .co-subtle { font-size: 0.9375rem; }
+.pjh-id-ed { flex-direction: row; align-items: center; justify-content: space-between; gap: 1rem; }
+.wk-edit-b { display: inline-flex; align-items: center; gap: 0.375rem; flex: none; }
+.wk-edit-b svg { width: 0.9375rem; height: 0.9375rem; }
+.wk-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+.wk-form .full { grid-column: 1 / -1; }
+.pjh-form { margin-top: 1.25rem; max-width: 52rem; }
+.wk-f { display: flex; flex-direction: column; gap: 0.375rem; min-width: 0; }
+.wk-f label { font-size: 0.8125rem; font-weight: 600; }
+.wk-in { width: 100%; height: 2.75rem; padding: 0 0.875rem; border: 1px solid var(--color-line); border-radius: 0.625rem; background: var(--color-off-white); font: inherit; font-size: 0.9375rem; color: var(--color-ink); outline: none; }
+.wk-in:hover { border-color: var(--color-sand-400); }
+.wk-in:focus { border-color: var(--color-graphite); background: var(--color-surface); }
+.wk-in.is-bad { border-color: var(--color-critical); }
+.wk-hint { font-size: 0.75rem; color: var(--color-ink-subtle); }
+.wk-err { font-size: 0.8125rem; color: var(--color-critical); }
+.wk-err:empty { display: none; }
+.wk-foot { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 1rem; padding-top: 0.5rem; border-top: 1px solid var(--color-mid-beige); }
+@media (max-width: 40rem) { .wk-form { grid-template-columns: minmax(0, 1fr); } .pjh-id-ed { flex-direction: column; align-items: flex-start; } }
 .pjh-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 1.25rem 2rem; margin: 1.75rem 0 0; padding: 1.25rem 0 0; border-top: 1px solid var(--color-line); }
 .pjh-facts > div { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
 .pjh-facts dt { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-ink-subtle); }
@@ -371,7 +388,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     if (own) {
       const people = p.isNew ? PJ.peopleOf(p) : [];
       head.innerHTML = `<span class="eyebrow">Your project</span>
-        <div class="pjh-id"><h1 class="co-name">${esc(p.name)}</h1></div>
+        <div class="pjh-id pjh-id-ed"><h1 class="co-name">${esc(p.name)}</h1><button type="button" class="btn co-btn-light btn-sm wk-edit-b" data-pj-edit><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 3.5 3 3L7 16H4v-3l9.5-9.5Z"/></svg>Edit project</button></div>
         <dl class="pjh-facts">
           ${fact('Project ID', esc(p.id))}
           ${fact('Client', esc(nb(p.client)), esc(p.sector || ''))}
@@ -395,7 +412,42 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     }
   };
 
+  // ---- editing the project (yours): the header turns into its form, as a worker's profile does on
+  // Documents; Save keeps it for the tab (CMProjects.saveEdit) and shows the project again ----
+  const toIso = (t) => { const v = dayOf(t); if (Number.isNaN(v)) return ''; const d = new Date(v); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+  const fromIso = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? fmt(new Date(+m[1], +m[2] - 1, +m[3])) : ''; };
+  const editHead = () => {
+    const F = [['name', 'Project name', 'full', p.name], ['client', 'Client', '', p.client], p.isNew ? null : ['sector', 'Sector', '', p.sector || ''],
+      p.isNew ? ['address', 'Address', p.isNew ? '' : 'full', p.address || ''] : ['city', 'City', '', p.city || ''], ['district', 'District', '', p.district || ''],
+      ['start', 'Start date', '', toIso(p.start), 'date'], ['deadline', 'End date', '', toIso(p.deadline), 'date']].filter(Boolean);
+    const field = ([k, l, cls, v, type]) => `<div class="wk-f${cls ? ' ' + cls : ''}"><label for="pje-${k}">${l}</label><input class="wk-in" id="pje-${k}" data-pje="${k}" type="${type || 'text'}" value="${esc(v)}" autocomplete="off">${k === 'deadline' ? '<span class="wk-hint">Leave it empty if there&rsquo;s no end date yet.</span>' : ''}<span class="wk-err" id="pje-${k}-e"></span></div>`;
+    head.innerHTML = `<span class="eyebrow">Your project &middot; ${esc(p.id)}</span>
+      <form class="wk-form pjh-form" novalidate>${F.map(field).join('')}
+        <div class="wk-foot"><button type="button" class="link-btn" data-pje-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save changes</button></div></form>`;
+    head.querySelector('#pje-name').focus();
+    head.querySelector('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nv = {}; head.querySelectorAll('[data-pje]').forEach((x) => { nv[x.dataset.pje] = x.value.trim(); });
+      head.querySelectorAll('.wk-in').forEach((x) => x.classList.remove('is-bad')); head.querySelectorAll('.wk-err').forEach((x) => { x.textContent = ''; });
+      const bad = (k, t) => { const x = head.querySelector(`#pje-${k}`); x.classList.add('is-bad'); head.querySelector(`#pje-${k}-e`).textContent = t; return x; };
+      const errs = [];
+      if (!nv.name) errs.push(bad('name', 'Give the project a name.'));
+      if (!nv.client) errs.push(bad('client', 'Say who the client is.'));
+      if (!nv.start) errs.push(bad('start', 'Choose the day the works start.'));
+      if (nv.start && nv.deadline && nv.deadline < nv.start) errs.push(bad('deadline', 'It ends before it starts. Choose a later day.'));
+      if (errs.length) { errs[0].focus(); return; }
+      const patch = { name: nv.name, client: nv.client, start: fromIso(nv.start), deadline: fromIso(nv.deadline) };
+      ['sector', 'city', 'district', 'address'].forEach((k) => { if (k in nv) patch[k] = nv[k]; });
+      const changed = Object.keys(patch).filter((k) => String(patch[k] || '') !== String(p[k] || ''));
+      if (!changed.length) { paintHead(); return; }
+      PJ.saveEdit(p.id, patch);
+      try { sessionStorage.setItem('cm-pj-toast', `${nv.name} is saved.`); } catch (err) {}
+      location.reload();
+    });
+  };
   head.addEventListener('click', (e) => {
+    if (e.target.closest('[data-pj-edit]')) { editHead(); return; }
+    if (e.target.closest('[data-pje-cancel]')) { paintHead(); const b = head.querySelector('[data-pj-edit]'); if (b) b.focus({ preventScroll: true }); return; }
     const b = e.target.closest('[data-hold]'); if (!b) return;
     const on = b.dataset.hold === 'on'; PJ.setHold(p.id, on); paintHead();
     const again = head.querySelector('[data-hold]'); if (again) again.focus({ preventScroll: true });
