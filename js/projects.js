@@ -70,7 +70,17 @@
   // a new project's region, with its country when it isn't in Portugal
   const where = (p) => (p.country && p.country !== 'Portugal' ? `${p.district}, ${p.country}` : p.district);
   // the people on a new project, each with a role (an earlier one kept just its project manager, or its owner)
-  const peopleOf = (p) => p.people || [{ role: 'Project manager', name: (p.pm && p.pm.name) || p.pm || p.owner || '', invited: !!(p.pm && p.pm.invited) }];
+  // the people on a project you own: who has each role (new-project.html's step 1). The demo's own
+  // projects: you or Helena running it, Helena or you on site, and Nuno for health and safety (Team's crew)
+  const meName = () => { try { return (JSON.parse(ss('cm-person') || 'null') || {}).name || 'You'; } catch (e) { return 'You'; } };
+  const peopleOf = (p) => {
+    if (p.people) return p.people;
+    if (p.pm || p.owner) return [{ role: 'Project manager', name: (p.pm && p.pm.name) || p.pm || p.owner || '', invited: !!(p.pm && p.pm.invited) }];
+    if (p.own !== 'owner') return [];
+    const me = meName(), alt = hash(p.id) % 2;
+    return [{ role: 'Project manager', name: alt ? 'Helena Ferreira' : me, email: alt ? 'helena@ccerconstrucoes.pt' : '' }, { role: 'Site manager', name: alt ? me : 'Helena Ferreira', email: alt ? '' : 'helena@ccerconstrucoes.pt' },
+      { role: 'Health and safety officer', name: 'Nuno Silva', email: 'nuno.silva@ccerconstrucoes.pt' }];
+  };
   // ---- a client's project, as its supplier sees it -------------------------------------------------
   // who the work is for (the project's client) and who added you: the company in the Client column
   const FOR = { 'ME-2026-112': 'Atlântico Data Centres, S.A.', 'ME-2026-131': 'Atlântico Data Centres, S.A.', 'CF-2026-027': 'CUF', 'CF-2026-033': 'CUF', 'SN-2026-064': 'Sonae MC', 'SN-2026-071': 'Sonae MC',

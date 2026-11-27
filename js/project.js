@@ -146,6 +146,17 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjh-id { display: flex; flex-direction: column; gap: 0.625rem; margin-top: 1rem; }
 .pjh-id .co-name { margin: 0; font-size: clamp(2.25rem, 3.4vw, 3.25rem); }
 .pjh-id .co-subtle { font-size: 0.9375rem; }
+/* who has each role on your project (set when it was created) */
+.pjh-people { margin-top: 1.5rem; }
+.pjh-people .eyebrow { margin: 0 0 0.75rem; }
+.pjh-people ul { display: flex; flex-wrap: wrap; gap: 0.625rem; margin: 0; padding: 0; list-style: none; }
+.pjh-people li { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.875rem 0.5rem 0.5rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); }
+.pjh-av { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--color-mid-beige); font-size: 0.75rem; font-weight: 600; color: var(--color-ink); flex: none; }
+.pjh-people .t { display: flex; flex-direction: column; line-height: 1.25; }
+.pjh-people .d { font-size: 0.75rem; color: var(--color-ink-subtle); }
+.pjh-people .n { font-size: 0.875rem; font-weight: 500; }
+.pjh-you { color: var(--color-ink-subtle); font-weight: 400; }
+.pjh-people .pj-role { height: 1.25rem; margin-left: 0.25rem; padding: 0 0.375rem; font-size: 0.6875rem; vertical-align: 1px; }
 .pjh-id-ed { flex-direction: row; align-items: center; justify-content: space-between; gap: 1rem; }
 .wk-edit-b { display: inline-flex; align-items: center; gap: 0.375rem; flex: none; }
 .wk-edit-b svg { width: 0.9375rem; height: 0.9375rem; }
@@ -379,6 +390,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   let tab = '', M = null;
   const f = { st: 'all', sup: '' };
 
+  const PJ_ME = (() => { try { return (JSON.parse(sessionStorage.getItem('cm-person') || 'null') || {}).name || ''; } catch (e) { return ''; } })();
+  const initials = (n) => String(n || '?').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   const paintHead = () => {
     const fact = (t, v, sm) => `<div><dt>${t}</dt><dd>${v}${sm ? `<small>${sm}</small>` : ''}</dd></div>`;
     const dates = () => fact('Dates', p.start ? esc(p.start) : '&mdash;', p.deadline ? `to ${esc(p.deadline)}` : 'No end date set');
@@ -386,7 +399,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const stNote = () => { const st = PJ.statusOf(p); return st === 'finalized' ? 'Its end date has passed' : `<button type="button" class="link-btn pjh-hold" data-hold="${st === 'hold' ? 'off' : 'on'}">${st === 'hold' ? 'Resume the project' : 'Put on hold'}</button>`; };
     head.classList.add('pjh');
     if (own) {
-      const people = p.isNew ? PJ.peopleOf(p) : [];
+      const people = PJ.peopleOf(p).filter((y) => y.name);
       head.innerHTML = `<span class="eyebrow">Your project</span>
         <div class="pjh-id pjh-id-ed"><h1 class="co-name">${esc(p.name)}</h1><button type="button" class="btn co-btn-light btn-sm wk-edit-b" data-pj-edit><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13.5 3.5 3 3L7 16H4v-3l9.5-9.5Z"/></svg>Edit project</button></div>
         <dl class="pjh-facts">
@@ -396,8 +409,11 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${dates()}
           ${fact('Status', PJ.statusHtml(p), stNote())}
           ${fact('Owner', ME, p.isNew ? `Started by ${esc(p.owner || 'you')}${p.on ? ` on ${esc(p.on)}` : ''}` : 'You run the site')}
-          ${people.length ? fact('People', pl(people.length, 'person', 'people'), people.map((y) => `${esc(y.name)}, ${esc(y.role.toLowerCase())}${y.invited ? ' (invited)' : ''}`).join('<br>')) : ''}
-        </dl>`;
+        </dl>
+        ${people.length ? `<div class="pjh-people"><h3 class="eyebrow">People on this project</h3><ul>${people.map((y) => {
+          const isMe = !!PJ_ME && y.name === PJ_ME;
+          return `<li><span class="pjh-av" aria-hidden="true">${esc(initials(y.name))}</span><span class="t"><span class="d">${esc(y.role)}</span><span class="n">${esc(y.name)}${isMe ? ' <span class="pjh-you">(you)</span>' : ''}${y.invited ? ' <span class="co-badge b-info pj-role">Invited</span>' : ''}</span></span></li>`;
+        }).join('')}</ul></div>` : ''}`;
     } else {
       head.innerHTML = `<span class="eyebrow">You supply ${esc(nb(p.client))}</span>
         <div class="pjh-id"><h1 class="co-name">${esc(p.name)}</h1></div>
