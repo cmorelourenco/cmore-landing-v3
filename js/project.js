@@ -121,6 +121,9 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .co-sw.is-mixed i { margin-left: calc(50% - 0.625rem); }
 .pjp-cs .co-sw { justify-self: center; }
 .pjp-cs .pjp-none { padding: 1.25rem 1rem !important; }
+.pjp-tbl td.pjp-dt { white-space: nowrap; }
+.pjp-sd { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1rem; padding: 0.875rem 1rem 1rem; }
+.pjp-cs header:only-child, .pjp-cs header:has(+ .pjp-sd) { grid-template-columns: minmax(0, 1fr); }
 .co-sw { flex: none; width: 2.75rem; height: 1.5rem; border-radius: 0.75rem; border: 0; padding: 2px; display: flex; background: var(--color-graphite); cursor: pointer; transition: background-color .2s var(--ease-brand); }
 .co-sw i { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--color-surface); margin-left: calc(100% - 1.25rem); transition: margin-left .2s var(--ease-brand); }
 .co-sw[aria-checked="false"] { background: var(--color-sand-400); }
@@ -148,7 +151,11 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjh-id .co-subtle { font-size: 0.9375rem; }
 /* who has each role on your project (set when it was created) */
 .pjh-people { margin-top: 1.5rem; }
-.pjh-people .eyebrow { margin: 0 0 0.75rem; }
+.pje-l { font-size: 0.8125rem; font-weight: 600; }
+.pje-people ul { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.pje-people li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 5rem; align-items: center; gap: 0.75rem; }
+.pje-people select.wk-in { appearance: none; padding-right: 2.25rem; cursor: pointer; background: var(--color-off-white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236e6e6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.75rem center / 1rem; }
+.pje-add { align-self: flex-start; margin-top: 0.25rem; }
 .pjh-people ul { display: flex; flex-wrap: wrap; gap: 0.625rem; margin: 0; padding: 0; list-style: none; }
 .pjh-people li { display: flex; align-items: center; gap: 0.625rem; padding: 0.5rem 0.875rem 0.5rem 0.5rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); }
 .pjh-av { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: var(--color-mid-beige); font-size: 0.75rem; font-weight: 600; color: var(--color-ink); flex: none; }
@@ -337,7 +344,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const ownEq = () => team.equipment.filter((t) => DM && DM.EQUIPMENT[t.i]).map((t) => { const d = docsOf('equipment', t.i); return { name: plain(DM.EQUIPMENT[t.i][0]), ref: plain(DM.EQUIPMENT[t.i][1]), sup: `${ME} (you)`, st: stOf(d), why: whyOf(d), own: true, i: t.i, off: t.off }; });
     const ownMat = () => team.products.filter((t) => DM && DM.PRODUCTS[t.i]).map((t) => { const d = docsOf('products', t.i); return { name: plain(DM.PRODUCTS[t.i][0]), ref: plain(DM.PRODUCTS[t.i][1]), sup: `${ME} (you)`, st: stOf(d), why: whyOf(d), own: true, i: t.i, off: t.off }; });
     // the suppliers you add here: notified, nothing from them yet
-    const addedSups = (have) => team.subs.filter((x) => !have.some((y) => y.id === x.id)).map((x) => ({ id: x.id, name: x.name, work: PJ.workText(x) || '—', entry: p.start || '', exit: p.deadline || '', by: null, st: 'miss', why: 'No documents on it yet', fresh: true }));
+    const addedSups = (have) => team.subs.filter((x) => !have.some((y) => y.id === x.id)).map((x) => ({ id: x.id, name: x.name, work: PJ.workText(x) || '—', entry: x.entry || p.start || '', exit: x.exit || p.deadline || '', by: null, st: 'miss', why: 'No documents on it yet', fresh: true }));
     const ownWorkers = () => team.workers.filter((t) => DM && DM.PERSON[t.i]).map((t) => { const x = DM.PERSON[t.i], d = docsOf('workers', t.i); return { name: plain(x.name), role: plain(x.role), sup: `${ME} (you)`, st: stOf(d), why: whyOf(d), own: true, i: t.i, off: t.off }; });
     // a project started here: the suppliers you added, each notified, no documents from them yet
     if (p.isNew) {
@@ -410,7 +417,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${fact('Status', PJ.statusHtml(p), stNote())}
           ${fact('Owner', ME, p.isNew ? `Started by ${esc(p.owner || 'you')}${p.on ? ` on ${esc(p.on)}` : ''}` : 'You run the site')}
         </dl>
-        ${people.length ? `<div class="pjh-people"><h3 class="eyebrow">People on this project</h3><ul>${people.map((y) => {
+        ${people.length ? `<div class="pjh-people" aria-label="People on this project"><ul>${people.map((y) => {
           const isMe = !!PJ_ME && y.name === PJ_ME;
           return `<li><span class="pjh-av" aria-hidden="true">${esc(initials(y.name))}</span><span class="t"><span class="d">${esc(y.role)}</span><span class="n">${esc(y.name)}${isMe ? ' <span class="pjh-you">(you)</span>' : ''}${y.invited ? ' <span class="co-badge b-info pj-role">Invited</span>' : ''}</span></span></li>`;
         }).join('')}</ul></div>` : ''}`;
@@ -432,13 +439,36 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   // Documents; Save keeps it for the tab (CMProjects.saveEdit) and shows the project again ----
   const toIso = (t) => { const v = dayOf(t); if (Number.isNaN(v)) return ''; const d = new Date(v); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   const fromIso = (v) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? fmt(new Date(+m[1], +m[2] - 1, +m[3])) : ''; };
+  const PROLES = ['Project manager', 'Site manager', 'Factory manager', 'Health and safety officer', 'Quality manager', 'Environmental manager'];
+  const A = window.CMAccess, teamOfCo = () => (A ? A.teamOf(A.orgId()) : { members: [], invites: [] });
+  // who can be on it: your company's team (Team), and whoever's invited to it; someone already on it stays a choice
+  const whoList = (ppl) => {
+    const t = teamOfCo(), l = t.members.map((m) => ({ v: m.email, name: m.name, email: m.email, label: m.you ? `${m.name} (you)` : m.name }))
+      .concat((t.invites || []).map((v) => ({ v: v.email, name: v.name || v.email, email: v.email, invited: true, label: `${v.name || v.email} (invited)` })));
+    ppl.forEach((y) => { if (!l.some((o) => o.v === whoOf(y, l))) l.push({ v: 'name:' + y.name, name: y.name, email: y.email || '', invited: y.invited, label: y.invited ? `${y.name} (invited)` : y.name }); });
+    return l;
+  };
+  const whoOf = (y, l) => { const byMail = y.email && l.find((o) => o.email === y.email); if (byMail) return byMail.v; const byName = l.find((o) => o.name === y.name || (o.label.endsWith('(you)') && y.name === PJ_ME)); return byName ? byName.v : 'name:' + y.name; };
+  let eppl = [], eList = [];
+  const pplRows = () => {
+    const l = eList;
+    return eppl.map((y, k) => `<li><select class="wk-in" data-pp-role="${k}" aria-label="Role ${k + 1}">${(y.role && !PROLES.includes(y.role) ? [y.role] : []).concat(PROLES).map((r) => `<option${r === y.role ? ' selected' : ''}>${esc(r)}</option>`).join('')}</select>
+      <select class="wk-in" data-pp-who="${k}" aria-label="Who is ${esc(y.role || 'it')}">${y.v ? '' : '<option value="" selected>Choose someone</option>'}${l.map((o) => `<option value="${esc(o.v)}"${o.v === y.v ? ' selected' : ''}>${esc(o.label)}</option>`).join('')}</select>
+      ${eppl.length > 1 ? `<button type="button" class="link-btn" data-pp-rm="${k}">Remove</button>` : '<span></span>'}</li>`).join('');
+  };
+  const pplSync = () => { head.querySelectorAll('[data-pp-role]').forEach((x) => { eppl[+x.dataset.ppRole].role = x.value; }); head.querySelectorAll('[data-pp-who]').forEach((x) => { eppl[+x.dataset.ppWho].v = x.value; }); };
+  const pplPaint = () => { const ul = head.querySelector('[data-pje-people]'); if (ul) ul.innerHTML = pplRows(); const pe = head.querySelector('#pje-people-e'); if (pe) pe.textContent = ''; };
   const editHead = () => {
+    eList = whoList(PJ.peopleOf(p)); eppl = PJ.peopleOf(p).map((y) => ({ role: y.role, v: whoOf(y, eList) }));
+    if (!eppl.length) eppl = [{ role: 'Project manager', v: '' }];
     const F = [['name', 'Project name', 'full', p.name], ['client', 'Client', '', p.client], p.isNew ? null : ['sector', 'Sector', '', p.sector || ''],
       p.isNew ? ['address', 'Address', p.isNew ? '' : 'full', p.address || ''] : ['city', 'City', '', p.city || ''], ['district', 'District', '', p.district || ''],
       ['start', 'Start date', '', toIso(p.start), 'date'], ['deadline', 'End date', '', toIso(p.deadline), 'date']].filter(Boolean);
     const field = ([k, l, cls, v, type]) => `<div class="wk-f${cls ? ' ' + cls : ''}"><label for="pje-${k}">${l}</label><input class="wk-in" id="pje-${k}" data-pje="${k}" type="${type || 'text'}" value="${esc(v)}" autocomplete="off">${k === 'deadline' ? '<span class="wk-hint">Leave it empty if there&rsquo;s no end date yet.</span>' : ''}<span class="wk-err" id="pje-${k}-e"></span></div>`;
     head.innerHTML = `<span class="eyebrow">Your project &middot; ${esc(p.id)}</span>
       <form class="wk-form pjh-form" novalidate>${F.map(field).join('')}
+        <div class="wk-f full pje-people"><span class="pje-l" id="pje-people-l">People on this project</span><ul data-pje-people aria-labelledby="pje-people-l">${pplRows()}</ul>
+          <button type="button" class="link-btn pje-add" data-pje-add>Add a person</button><span class="wk-err" id="pje-people-e"></span></div>
         <div class="wk-foot"><button type="button" class="link-btn" data-pje-cancel>Cancel</button><button type="submit" class="btn btn-primary btn-sm">Save changes</button></div></form>`;
     head.querySelector('#pje-name').focus();
     head.querySelector('form').addEventListener('submit', (e) => {
@@ -451,10 +481,17 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       if (!nv.client) errs.push(bad('client', 'Say who the client is.'));
       if (!nv.start) errs.push(bad('start', 'Choose the day the works start.'));
       if (nv.start && nv.deadline && nv.deadline < nv.start) errs.push(bad('deadline', 'It ends before it starts. Choose a later day.'));
+      // the people: someone for each role, and nobody twice in the same role
+      pplSync();
+      const pe = head.querySelector('#pje-people-e'), noOne = eppl.findIndex((y) => !y.v), twice = eppl.findIndex((y, k) => eppl.findIndex((z) => z.role === y.role && z.v === y.v) !== k);
+      if (noOne >= 0) { pe.textContent = `Choose who is ${eppl[noOne].role.toLowerCase()}.`; const x = head.querySelector(`[data-pp-who="${noOne}"]`); x.classList.add('is-bad'); errs.push(x); }
+      else if (twice >= 0) { pe.textContent = 'Someone is in the same role twice. Remove one.'; const x = head.querySelector(`[data-pp-who="${twice}"]`); x.classList.add('is-bad'); errs.push(x); }
       if (errs.length) { errs[0].focus(); return; }
       const patch = { name: nv.name, client: nv.client, start: fromIso(nv.start), deadline: fromIso(nv.deadline) };
       ['sector', 'city', 'district', 'address'].forEach((k) => { if (k in nv) patch[k] = nv[k]; });
+      const people = eppl.map((y) => { const o = eList.find((x) => x.v === y.v) || {}; return Object.assign({ role: y.role, name: o.name || '', email: o.email || '' }, o.invited ? { invited: true } : {}); });
       const changed = Object.keys(patch).filter((k) => String(patch[k] || '') !== String(p[k] || ''));
+      if (JSON.stringify(people.map((y) => [y.role, y.name])) !== JSON.stringify(PJ.peopleOf(p).map((y) => [y.role, y.name]))) { patch.people = people; changed.push('people'); }
       if (!changed.length) { paintHead(); return; }
       PJ.saveEdit(p.id, patch);
       try { sessionStorage.setItem('cm-pj-toast', `${nv.name} is saved.`); } catch (err) {}
@@ -463,6 +500,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   };
   head.addEventListener('click', (e) => {
     if (e.target.closest('[data-pj-edit]')) { editHead(); return; }
+    if (e.target.closest('[data-pje-add]')) { pplSync(); const used = new Set(eppl.map((y) => y.role)); eppl.push({ role: PROLES.find((r) => !used.has(r)) || PROLES[0], v: '' }); pplPaint(); const w = head.querySelector(`[data-pp-who="${eppl.length - 1}"]`); if (w) w.focus(); return; }
+    const rmP = e.target.closest('[data-pp-rm]'); if (rmP) { pplSync(); eppl.splice(+rmP.dataset.ppRm, 1); pplPaint(); const a = head.querySelector('[data-pje-add]'); if (a) a.focus(); return; }
     if (e.target.closest('[data-pje-cancel]')) { paintHead(); const b = head.querySelector('[data-pj-edit]'); if (b) b.focus({ preventScroll: true }); return; }
     const b = e.target.closest('[data-hold]'); if (!b) return;
     const on = b.dataset.hold === 'on'; PJ.setHold(p.id, on); paintHead();
@@ -540,7 +579,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
       <div id="pjp-req"></div>
       <div class="pjp-req-foot"><span class="co-muted" data-req-said>No changes yet.</span><button type="button" class="btn btn-primary btn-sm" data-req-save disabled>Save changes</button></div>`,
     exports: () => {
-      const EXP = [['Suppliers on this project', 'Every supplier, who brought them in, their work, entry and exit dates, and where their documents stand. Excel.'],
+      const EXP = [['Suppliers on this project', 'Every supplier, who brought them in, their work, entry and end dates, and where their documents stand. Excel.'],
         ['Workers and their documents', 'Every worker on site, the supplier they come with, and each document’s status and expiry. Excel.'],
         ['Equipment and its certificates', 'Every machine, whose it is, its inspections, conformity and insurance. Excel.'],
         ['Materials and their declarations', 'Every material, who supplies it, its declaration of performance and safety data sheet. Excel.']];
@@ -582,9 +621,9 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     },
     suppliers: () => `<p class="pjp-note">${EYE}<span>Each supplier you add is notified and sees the project&rsquo;s ID and name, the client, the region and that <b>${ME}</b> invited them. What they put on it is seen by you and ${seenBy}.</span></p>
       <div class="pjp-tools"><div class="pjp-tools-l"></div><button type="button" class="pj-add" data-add="suppliers">${PLUS}Add a supplier</button></div>
-      <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl"><thead><tr><th style="width:32%">Supplier</th><th style="width:34%">Their work</th><th style="width:22%">Status</th><th style="width:12%" aria-label="Remove"></th></tr></thead><tbody>
-      ${team.subs.length ? team.subs.map((s, k) => `<tr><td><span class="n">${esc(nb(s.name))}</span><span class="d">${esc(s.city || '')}</span></td><td class="pjp-work"><select class="pjp-in" data-work="${k}" aria-label="${esc(s.name)}: type of work">${s.work ? '' : '<option value="" selected>Choose the type of work</option>'}${PJ.WORK_TYPES.map((t) => `<option${t === s.work ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select><input class="pjp-in" data-detail="${k}" value="${esc(s.detail || '')}" placeholder="${s.work === 'Other' ? 'Say what they’ll do' : 'Add details (optional)'}" aria-label="${esc(s.name)}: details of the work" autocomplete="off"></td><td><span class="co-badge b-info">Notified</span><span class="d">On ${esc(s.on)}</span></td><td class="pjp-x"><button type="button" class="link-btn" data-rm="subs:${k}">Remove</button></td></tr>`).join('')
-        : '<tr><td colspan="4" class="pjp-none co-tbl-empty"><b>None of your suppliers on it yet.</b>Add one and they&rsquo;re notified, with what you need them to do.</td></tr>'}</tbody></table></div>`,
+      <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl"><thead><tr><th style="width:24%">Supplier</th><th style="width:30%">Their work</th><th style="width:12%">Entry date</th><th style="width:12%">End date</th><th style="width:12%">Status</th><th style="width:10%" aria-label="Remove"></th></tr></thead><tbody>
+      ${team.subs.length ? team.subs.map((s, k) => `<tr><td><span class="n">${esc(nb(s.name))}</span><span class="d">${esc(s.city || '')}</span></td><td class="pjp-work"><select class="pjp-in" data-work="${k}" aria-label="${esc(s.name)}: type of work">${s.work ? '' : '<option value="" selected>Choose the type of work</option>'}${PJ.WORK_TYPES.map((t) => `<option${t === s.work ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select><input class="pjp-in" data-detail="${k}" value="${esc(s.detail || '')}" placeholder="${s.work === 'Other' ? 'Say what they’ll do' : 'Add details (optional)'}" aria-label="${esc(s.name)}: details of the work" autocomplete="off"></td><td class="pjp-dt">${esc(s.entry || p.start || '—')}</td><td class="pjp-dt">${esc(s.exit || p.deadline || '—')}</td><td><span class="co-badge b-info">Notified</span><span class="d">On ${esc(s.on)}</span></td><td class="pjp-x"><button type="button" class="link-btn" data-rm="subs:${k}">Remove</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="pjp-none co-tbl-empty"><b>None of your suppliers on it yet.</b>Add one and they&rsquo;re notified, with what you need them to do.</td></tr>'}</tbody></table></div>`,
     workers: () => teamPanel(TEAM.workers),
     equipment: () => teamPanel(TEAM.equipment),
     materials: () => teamPanel(TEAM.materials),
@@ -603,7 +642,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const l = team[T.key], One = T.one.charAt(0).toUpperCase() + T.one.slice(1);
     return `<p class="pjp-note">${EYE}<span>Seen by ${seenBy}. For each ${T.one}, only the documents you consent to share, and to download.</span></p>
       <div class="pjp-tools"><div class="pjp-tools-l"></div><button type="button" class="pj-add" data-add="${T.id}">${PLUS}Add ${T.many}</button></div>
-      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjp-wk-tbl" data-tq-for="tm-${T.id}"><thead><tr><th style="width:21%">${One}</th><th style="width:11%">Entry date</th><th style="width:11%">Exit date</th><th class="c" style="width:11%">Share</th><th class="c" style="width:11%">Download</th><th style="width:19%">Status of what you share</th><th style="width:16%" aria-label="On site"></th></tr></thead><tbody>
+      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjp-wk-tbl" data-tq-for="tm-${T.id}"><thead><tr><th style="width:21%">${One}</th><th style="width:11%">Entry date</th><th style="width:11%">End date</th><th class="c" style="width:11%">Share</th><th class="c" style="width:11%">Download</th><th style="width:19%">Status of what you share</th><th style="width:16%" aria-label="On site"></th></tr></thead><tbody>
       ${l.length ? l.map((x, k) => {
         const [n, sub] = nameOf(T.kind, x.i), { on } = sharedOf(T.kind, x), st = on.length ? stOf(on) : null;
         // off site: kept, for the project's history, with the day it left as its exit date
@@ -711,7 +750,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const say = n ? `${n} of ${l.length} need${n === 1 ? 's' : ''} a look` : `All ${l.length} valid`;
     return `<td class="c"><span class="cd-dot is-${DOC_TONE[w]}" aria-hidden="true"></span><span class="d">${say}</span></td>`;
   };
-  // on site today: between their entry and exit dates
+  // on site today: between their entry and end dates
   const dayOf = (t) => { const m = /^(\d{1,2}) ([A-Z][a-z]{2}) (\d{4})$/.exec(String(t || '').trim()); return m && MON.includes(m[2]) ? new Date(+m[3], MON.indexOf(m[2]), +m[1]).getTime() : NaN; };
   // a worker's own days on site: within their supplier's, some starting later or leaving earlier;
   // yours, the project's (the same on the worker's page and in the supplier's list)
@@ -930,11 +969,11 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
       const l = all.map((x, k) => ({ x, k })).filter(({ x }) => x.sup === s.name).sort((u, v) => byWorst(u.x, v.x));
       const group = ofArea(a).filter((d) => /^All their /.test(d.of));
       const kind = a === 'workers' ? null : a;
-      // workers: on site today (as the suppliers' dots), and their entry and exit dates
+      // workers: on site today (as the suppliers' dots), and their entry and end dates
       const stays = a === 'materials';
       const site = (x) => { const d = wkSite(x, kind); return `<td class="c">${siteDotOf(d, stays)}</td><td>${esc(d.entry || '—')}</td>${stays ? '' : `<td>${esc(d.exit || '—')}</td>`}`; };
       const head = stays ? `<th style="width:30%">${col}</th><th class="c" style="width:12%">On site</th><th style="width:16%">Entry date</th><th style="width:14%">Documents valid</th><th style="width:28%">Status</th>`
-        : `<th style="width:24%">${col}</th><th class="c" style="width:10%">On site</th><th style="width:13%">Entry date</th><th style="width:13%">Exit date</th><th style="width:12%">Documents valid</th><th style="width:28%">Status</th>`;
+        : `<th style="width:24%">${col}</th><th class="c" style="width:10%">On site</th><th style="width:13%">Entry date</th><th style="width:13%">End date</th><th style="width:12%">Documents valid</th><th style="width:28%">Status</th>`;
       const rows = l.length ? `${qTools(`sp-${a}`, `Search by name or ${a === 'workers' ? 'role' : a === 'equipment' ? 'serial number' : 'batch'}`)}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl pjs-wk" data-tq-for="sp-${a}"><thead><tr>${head}</tr></thead><tbody>
         ${l.map(({ x, k }) => `<tr${itemTr(a, k, x)}><td><span class="n">${esc(x.name)}</span><span class="d">${esc(sub(x) || '')}</span></td>${site(x)}<td>${valid(x)}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>${legendOf(stays)}`
         : none(`${esc(nb(s.name))} has no ${many} on this project.`);
@@ -946,7 +985,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     // the suppliers they brought in to this project: each to its own page on it
     const siteDot = siteDotOf;
     const invited = `<section class="pjs-sec"><div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Suppliers they brought in</h2><p class="co-muted">${subs.length ? `${pl(subs.length, 'supplier')} ${esc(nb(s.name))} brought in to ${esc(p.name)}.` : `${esc(nb(s.name))} hasn&rsquo;t brought in any suppliers to this project.`}</p></div>
-      ${subs.length ? `${qTools('sp-subs', 'Search by name or work')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-sups" data-tq-for="sp-subs"><thead><tr><th style="width:32%">Supplier</th><th class="c" style="width:12%">On site</th><th class="c" style="width:16%">Entry date</th><th class="c" style="width:16%">Exit date</th><th class="c" style="width:24%">Status</th></tr></thead><tbody>
+      ${subs.length ? `${qTools('sp-subs', 'Search by name or work')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-sups" data-tq-for="sp-subs"><thead><tr><th style="width:32%">Supplier</th><th class="c" style="width:12%">On site</th><th class="c" style="width:16%">Entry date</th><th class="c" style="width:16%">End date</th><th class="c" style="width:24%">Status</th></tr></thead><tbody>
       ${subs.sort(byWorst).map((x) => `<tr class="is-link" tabindex="0" role="link" data-sup-id="${esc(x.id)}" aria-label="Open ${esc(x.name)}"><td><span class="n">${esc(nb(x.name))}</span><span class="d">${esc(x.work)}</span></td><td class="c">${siteDot(x)}</td><td class="c">${esc(x.entry || '—')}</td><td class="c">${esc(x.exit || '—')}</td><td class="c">${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>
       ${SITE_LEGEND}` : ''}</section>`;
     body.innerHTML = matrix + invited + table;
@@ -1047,7 +1086,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     // the search as every other one (.co-search): the icon, and what it looks through
     const ph = what === 'suppliers' ? 'Search by name or work' : `Search by name or ${what === 'workers' ? 'role' : what === 'equipment' ? 'serial number' : 'reference'}`;
     drawer(title, sub, `${rows ? `<label class="co-search pjp-dq">${QI}<input type="search" class="pjp-q" placeholder="${ph}" aria-label="${ph}" autocomplete="off"></label><ul class="pjp-pick">${rows}</ul><p class="pjp-none" data-pick-none hidden>Nothing matches that.</p>` : '<p class="pjp-none">Nothing to add yet.</p>'}`,
-      `<span data-pick-n>None selected</span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-dx>Cancel</button><button type="button" class="btn btn-primary btn-sm" ${what !== 'suppliers' ? 'data-do-next disabled>Next' : 'data-do-add disabled>Add'}</button></span>`);
+      `<span data-pick-n>None selected</span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-dx>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-do-next disabled>Next</button></span>`);
     // back from Consents: the ones picked, still picked
     if (pre) pre.forEach((k) => { const c = dw.querySelector(`[data-pick="${CSS.escape(k)}"]`); if (c) c.checked = true; });
     count();
@@ -1140,6 +1179,41 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     }
     return false;
   };
+  // step 2 for suppliers: their entry and end dates, within the project's (as on New project); the
+  // matrices' On site follows them
+  let supPicked = null, supWas = {};
+  const supKeep = () => { if (!dw) return; dw.querySelectorAll('[data-sd-in]').forEach((x) => { const [id, k] = x.dataset.sdIn.split('|'); supWas[id] = Object.assign(supWas[id] || {}, { [k]: x.value }); }); };
+  const openSupDates = (picked) => {
+    supPicked = picked; dwKind = 'supdates';
+    const lo = toIso(p.start), hi = toIso(p.deadline);
+    const card = (id) => {
+      const s0 = S && S.byId(id), was = supWas[id] || {}, en = was.entry != null ? was.entry : lo, ex = was.exit != null ? was.exit : hi;
+      const f = (k, l, v) => `<div class="wk-f"><label for="sd-${esc(id)}-${k}">${l}</label><input class="wk-in" type="date" id="sd-${esc(id)}-${k}" data-sd-in="${esc(id)}|${k}" value="${esc(v)}"${lo ? ` min="${lo}"` : ''}${hi ? ` max="${hi}"` : ''}><span class="wk-err" data-sd-err="${esc(id)}|${k}"></span></div>`;
+      return `<section class="pjp-cs"><header><span class="t"><span class="n">${esc(nb(s0 ? s0.name : id))}</span><span class="d">${esc(s0 ? [(s0.services || [])[0], s0.city].filter(Boolean).join(' · ') : '')}</span></span></header><div class="pjp-sd">${f('entry', 'Entry date', en)}${f('exit', 'End date', ex)}</div></section>`;
+    };
+    dw.querySelector('#pjp-dw-t').textContent = 'Entry and end dates';
+    dw.querySelector('.docd-t p').innerHTML = `When each one is on site, within the project&rsquo;s dates: ${esc(p.start || '—')} to ${esc(p.deadline || 'no end date yet')}.`;
+    dw.querySelector('.docd-body').innerHTML = picked.map(card).join('');
+    dw.querySelector('.docd-foot').innerHTML = `<span></span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-sd-back>Back</button><button type="button" class="btn btn-primary btn-sm" data-do-supadd>Add ${pl(picked.length, 'supplier')}</button></span>`;
+    dw.querySelector('.docd-panel').focus({ preventScroll: true });
+    dw.querySelector('.docd-body').scrollTop = 0;
+  };
+  const supAdd = () => {
+    const lo = toIso(p.start), hi = toIso(p.deadline), errs = [];
+    dw.querySelectorAll('[data-sd-err]').forEach((x) => { x.textContent = ''; }); dw.querySelectorAll('[data-sd-in]').forEach((x) => x.classList.remove('is-bad'));
+    const v = (id, k) => dw.querySelector(`[data-sd-in="${CSS.escape(id)}|${k}"]`);
+    const bad = (id, k, t) => { const x = v(id, k); x.classList.add('is-bad'); dw.querySelector(`[data-sd-err="${CSS.escape(id)}|${k}"]`).innerHTML = t; errs.push(x); };
+    supPicked.forEach((id) => {
+      const en = v(id, 'entry').value, ex = v(id, 'exit').value;
+      if (!en) bad(id, 'entry', 'Choose the entry date.'); else if ((lo && en < lo) || (hi && en > hi)) bad(id, 'entry', 'Within the project&rsquo;s dates.');
+      if (!ex) { if (hi) bad(id, 'exit', 'Choose the end date.'); } else if ((lo && ex < lo) || (hi && ex > hi)) bad(id, 'exit', 'Within the project&rsquo;s dates.'); else if (en && ex < en) bad(id, 'exit', 'Before the entry date.');
+    });
+    if (errs.length) { errs[0].focus(); return; }
+    supPicked.forEach((id) => { const s0 = S.byId(id); if (s0) team.subs.push({ id: s0.id, name: s0.name, city: s0.city || '', work: '', on: today(), entry: fromIso(v(id, 'entry').value), exit: fromIso(v(id, 'exit').value) }); });
+    const n = supPicked.length;
+    toast(n === 1 ? `${nb(S.byId(supPicked[0]).name)} is added and notified.` : `${n} suppliers added. Each one is notified.`);
+    supPicked = null; supWas = {}; save(); close(); paint();
+  };
   const openConsents = (picked) => {
     consentOf = picked; consentT = TEAM[dwKind];
     const T = consentT;
@@ -1211,7 +1285,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     }
     const t = e.target.closest('[data-tab]'); if (t) { go(t.dataset.tab, `[data-tab="${t.dataset.tab}"][role="tab"]`); if (t.closest('#pjp-panel')) scrollTo({ top: 0, behavior: 'smooth' }); return; }
     const s = e.target.closest('[data-st]'); if (s) { f.st = s.dataset.st; paint(`[data-st="${f.st}"]`); return; }
-    const a = e.target.closest('[data-add]'); if (a) { consentWas = {}; openPick(a.dataset.add); return; }
+    const a = e.target.closest('[data-add]'); if (a) { consentWas = {}; supWas = {}; openPick(a.dataset.add); return; }
     const sh = e.target.closest('[data-share]'); if (sh) { const [key, k] = sh.dataset.share.split(':'); openShare(key, +k); return; }
     const rm = e.target.closest('[data-rm]');
     if (rm) {
@@ -1264,7 +1338,9 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     if (e.target.closest('[data-all]')) { dw.querySelectorAll('[data-pick]').forEach((c) => { c.checked = true; }); count(); return; }
     const off = e.target.closest('[data-do-next][aria-disabled="true"], [data-do-add][aria-disabled="true"]');
     if (off) { dw.dataset.tried = '1'; count(); return; }
-    if (e.target.closest('[data-do-next]')) { const picked = [...dw.querySelectorAll('[data-pick]:checked:not(:disabled)')].map((c) => c.dataset.pick); if (picked.length) openConsents(picked); return; }
+    if (e.target.closest('[data-do-next]')) { const picked = [...dw.querySelectorAll('[data-pick]:checked:not(:disabled)')].map((c) => c.dataset.pick); if (picked.length) { if (dwKind === 'suppliers') openSupDates(picked); else openConsents(picked); } return; }
+    if (e.target.closest('[data-sd-back]')) { const pre = supPicked; supKeep(); openPick('suppliers', pre); return; }
+    if (e.target.closest('[data-do-supadd]')) { supAdd(); return; }
     // Back: what was switched on is kept, for when they come forward again
     if (e.target.closest('[data-cs-back]')) { const pre = consentOf; pre.forEach((i) => { consentWas[i] = { share: csGot(dw, 'share', i), dl: csGot(dw, 'dl', i) }; }); openPick(consentT.id, pre); return; }
     if (csClick(dw, e)) return;

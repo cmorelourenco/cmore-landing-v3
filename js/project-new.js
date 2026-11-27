@@ -221,7 +221,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
     const i = (n, l, type, ph) => `<div class="np-f"><label for="np-s${k}-${n}">${l}</label><input class="np-in${e[n] ? ' is-bad' : ''}" id="np-s${k}-${n}" type="${type}" data-np-s="${k}" name="${n}" value="${esc(x[n])}"${ph ? ` placeholder="${esc(ph)}"` : ''}${type === 'date' ? ` min="${f.start}" max="${f.end}"` : ''} autocomplete="off"><span class="np-err" id="np-s${k}-${n}-e">${e[n] || ''}</span></div>`;
     return `<li class="np-sup"><div class="np-sup-h"><span><span class="n">${esc(x.name)}</span><span class="d">${esc(s ? [s.city, (s.services || []).join(', ')].filter(Boolean).join(' · ') : '')}</span></span>
         <span class="np-sup-h-r">${bl ? `<span class="co-badge ${bc}">${bl}</span>` : ''}<button type="button" class="link-btn" data-np-rm="${k}" aria-label="Remove ${esc(x.name)} from the project">Remove</button></span></div>
-      <div class="np-sup-g">${work(x, k, e)}${i('entry', 'Entry date', 'date')}${i('exit', 'Exit date', 'date')}</div></li>`;
+      <div class="np-sup-g">${work(x, k, e)}${i('entry', 'Entry date', 'date')}${i('exit', 'End date', 'date')}</div></li>`;
   };
   const step2 = () => `<section class="co-card np-card" aria-labelledby="np-h2">
       <div class="np-card-h"><span class="np-step">Step 3 of 3 &middot; ${esc(f.name)}</span><h2 id="np-h2">Suppliers on the project</h2><p class="co-muted">Tick as many of your suppliers as you need and add them together, or invite a company from C&#8209;MORE. Then, for each, the work it does and when it&rsquo;s on site, between ${fmt(f.start)} and ${fmt(f.end)}.</p></div>
@@ -244,7 +244,7 @@ select.np-in { appearance: none; padding-right: 2.25rem; cursor: pointer;
       const e = {};
       if (!x.work) e.work = 'Choose the type of work.'; else if (x.work === 'Other' && !x.detail.trim()) e.detail = 'Say what they&rsquo;ll do.';
       if (!x.entry) e.entry = 'Choose the entry date.'; else if (x.entry < f.start || x.entry > f.end) e.entry = 'Within the project&rsquo;s dates.';
-      if (!x.exit) e.exit = 'Choose the exit date.'; else if (x.exit < f.start || x.exit > f.end) e.exit = 'Within the project&rsquo;s dates.'; else if (x.entry && x.exit < x.entry) e.exit = 'Before the entry date.';
+      if (!x.exit) e.exit = 'Choose the end date.'; else if (x.exit < f.start || x.exit > f.end) e.exit = 'Within the project&rsquo;s dates.'; else if (x.entry && x.exit < x.entry) e.exit = 'Before the entry date.';
       x.errs = e; if (Object.keys(e).length) ok = false;
     });
     return ok;
