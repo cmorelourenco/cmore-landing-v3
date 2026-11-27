@@ -149,6 +149,9 @@
 .pj-card.is-bad .pj-card-n { color: var(--color-critical); }
 @media (max-width: 52rem) { .pj-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 30rem) { .pj-cards { grid-template-columns: minmax(0, 1fr); } .pj-card-n { font-size: 1.875rem; } }
+.pj-k { font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.pj-k.is-on, .pj-k.is-on:hover { border-color: var(--color-ink-subtle); box-shadow: none; transform: none; }
+.pj-k .co-k-chip.is-neu, .pj-k .co-k-chip.is-zero { background: var(--color-mid-beige); color: var(--color-ink-subtle); }
 .pj-block { min-width: 0; }
 .pj-tbl { table-layout: fixed; min-width: 60rem; }
 .pj-tbl th:nth-child(1) { width: 30%; } .pj-tbl th:nth-child(2) { width: 18%; } .pj-tbl th:nth-child(3) { width: 10%; }
@@ -347,16 +350,22 @@ html[data-theme="dark"] .pj-tbl .pj-role.is-owner { background: #66508c; color: 
     };
     const paintCards = () => {
       if (!cardsEl) return;
-      const c = (key, ico, cls, label, n, sub) => {
+      // as every overview's cards (my-company.html .co-k): the label, the big figure, a line, the chips
+      const chip = (cls, n, t) => `<span class="co-k-chip ${n ? cls : 'is-zero'}"><b>${n}</b> ${t}</span>`;
+      const c = (key, ico, label, n, nl, sub, chips) => {
         const cur = !!key && !f.q && CARD[key].is();
-        return `<button type="button" class="pj-card${cls}${cur ? ' is-on' : ''}" data-pj-card="${key}" role="listitem"${key ? ` aria-pressed="${cur}"` : ''}>
-          <span class="pj-card-h">${SVG(ICO[ico])}<span>${label}</span></span><span class="pj-card-n">${n}</span><span class="pj-card-d">${sub}</span></button>`;
+        return `<button type="button" class="co-k pj-k${n ? '' : ' is-zero'}${cur ? ' is-on' : ''}" data-pj-card="${key}" role="listitem"${key ? ` aria-pressed="${cur}"` : ''}>
+          <span class="co-k-h">${SVG(ICO[ico])}<span>${label}</span></span><span class="co-k-big"><span class="co-k-n">${n}</span><span class="co-k-nl">${nl}</span></span><span class="co-k-d">${sub}</span><span class="co-k-chips">${chips}</span></button>`;
       };
-      const by = (st) => mine.filter((p) => statusOf(p) === st).length, need = mine.filter((p) => p.docs.miss || p.docs.look).length;
-      cardsEl.innerHTML = c('', 'bag', '', 'Total projects', mine.length, 'Every project you own or supply.')
-        + c('ongoing', 'play', ' is-ok', 'Ongoing', by('ongoing'), 'Works under way today.')
-        + c('finished', 'flag', '', 'Finished', by('finalized'), 'Their end date has passed.')
-        + c('attention', 'look', ' is-bad', 'Needs attention', need, 'Documents missing, expired or expiring.');
+      const of = (st) => mine.filter((p) => statusOf(p) === st), bad = (l) => l.filter((p) => p.docs.miss || p.docs.look).length;
+      const on = of('ongoing'), fin = of('finalized'), need = mine.filter((p) => p.docs.miss || p.docs.look);
+      const split = (l) => chip('co-k-exp', bad(l), 'need attention') + chip('co-k-ok', l.length - bad(l), 'in order');
+      cardsEl.innerHTML = c('', 'bag', 'Total projects', mine.length, mine.length === 1 ? 'project' : 'projects', 'Every project you own or supply.',
+        chip('co-k-ok', on.length, 'ongoing') + chip('co-k-miss', of('notstarted').length + of('hold').length, 'not started or on hold') + chip('is-neu', fin.length, 'finished'))
+        + c('ongoing', 'play', 'Ongoing', on.length, 'under way', 'Works under way today.', split(on))
+        + c('finished', 'flag', 'Finished', fin.length, 'finished', 'Their end date has passed.', split(fin))
+        + c('attention', 'look', 'Needs attention', need.length, need.length === 1 ? 'needs your attention' : 'need your attention', 'Documents missing, expired or expiring.',
+          chip('co-k-exp', need.filter((p) => p.docs.miss).length, 'with documents missing') + chip('co-k-miss', need.filter((p) => !p.docs.miss).length, 'expiring'));
     };
     const paint = () => {
       if (!panel) return;
