@@ -213,6 +213,8 @@ html[data-theme="dark"] .pj-tbl .pj-role.is-owner { background: #66508c; color: 
 
   const SVG = (d, vb = '0 0 24 24') => `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   const ICO = {
+    play: '<path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"/>',
+    flag: '<path d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5"/>',
     all: '<path d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>',
     ok: '<path d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>',
     look: '<path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>',
@@ -331,20 +333,25 @@ html[data-theme="dark"] .pj-tbl .pj-role.is-owner { background: #66508c; color: 
     const shown = () => sorted(list.filter((p) => keep(p)), sort);
     let page = 1, panel = null, btn = null;
 
-    // the cards, as on Documents: on only when its filter is the only one, with no search
+    // the cards: how many projects, ongoing, finished, and needing attention; each filters the table
+    // (on only when its filter is the only one, with no search); Total projects clears everything
+    const CARD = {
+      ongoing: { set: () => f.when.add(STATUS.ongoing[0]), is: () => nOn() === 1 && f.when.has(STATUS.ongoing[0]) },
+      finished: { set: () => f.when.add(STATUS.finalized[0]), is: () => nOn() === 1 && f.when.has(STATUS.finalized[0]) },
+      attention: { set: () => { f.docs.add(DOCST.look); f.docs.add(DOCST.miss); }, is: () => nOn() === 2 && f.docs.has(DOCST.look) && f.docs.has(DOCST.miss) },
+    };
     const paintCards = () => {
       if (!cardsEl) return;
-      const sum = (k) => mine.reduce((n, p) => n + p.docs[k], 0);
-      const on = f.docs.size === 1 && nOn() === 1 && !f.q ? [...f.docs][0] : null;
-      const c = (key, cls, label, n, sub) => {
-        const v = key === 'all' ? '' : DOCST[key], cur = !!v && v === on;
-        return `<button type="button" class="pj-card${cls}${cur ? ' is-on' : ''}" data-pj-card="${v}" role="listitem"${v ? ` aria-pressed="${cur}"` : ''}>
-          <span class="pj-card-h">${SVG(ICO[key])}<span>${label}</span></span><span class="pj-card-n">${n}</span><span class="pj-card-d">${sub}</span></button>`;
+      const c = (key, ico, cls, label, n, sub) => {
+        const cur = !!key && !f.q && CARD[key].is();
+        return `<button type="button" class="pj-card${cls}${cur ? ' is-on' : ''}" data-pj-card="${key}" role="listitem"${key ? ` aria-pressed="${cur}"` : ''}>
+          <span class="pj-card-h">${SVG(ICO[ico])}<span>${label}</span></span><span class="pj-card-n">${n}</span><span class="pj-card-d">${sub}</span></button>`;
       };
-      cardsEl.innerHTML = c('all', '', 'Asked for', sum('asked'), 'Every document asked of you, across your projects.')
-        + c('ok', ' is-ok', 'Valid', sum('ok'), 'Valid, or marked not applicable with a reason.')
-        + c('look', ' is-pend', 'Needs a look', sum('look'), 'Expiring, being read, or waiting on you.')
-        + c('miss', ' is-bad', 'Not compliant', sum('miss'), 'Missing, expired or rejected.');
+      const by = (st) => mine.filter((p) => statusOf(p) === st).length, need = mine.filter((p) => p.docs.miss || p.docs.look).length;
+      cardsEl.innerHTML = c('', 'bag', '', 'Total projects', mine.length, 'Every project you own or supply.')
+        + c('ongoing', 'play', ' is-ok', 'Ongoing', by('ongoing'), 'Works under way today.')
+        + c('finished', 'flag', '', 'Finished', by('finalized'), 'Their end date has passed.')
+        + c('attention', 'look', ' is-bad', 'Needs attention', need, 'Documents missing, expired or expiring.');
     };
     const paint = () => {
       if (!panel) return;
@@ -412,11 +419,11 @@ html[data-theme="dark"] .pj-tbl .pj-role.is-owner { background: #66508c; color: 
       f[p.dataset.k].delete(p.dataset.v); go(1); if (panel && !panel.hidden) paint();
       const next = pills.querySelector('.co-pill'); (next || btn).focus();
     });
-    // a card filters the table to the projects concerned, again to clear it; Asked for clears everything
+    // a card filters the table to the projects concerned, again to clear it; Total projects clears everything
     if (cardsEl) cardsEl.addEventListener('click', (e) => {
       const c = e.target.closest('[data-pj-card]'); if (!c) return;
       const v = c.dataset.pjCard, was = c.classList.contains('is-on');
-      clear(); if (v && !was) { f.docs.add(v); go(1); }
+      clear(); if (v && !was && CARD[v]) { CARD[v].set(); go(1); }
       if (panel && !panel.hidden) paint();
       const again = cardsEl.querySelector(`[data-pj-card="${v}"]`); if (again) again.focus({ preventScroll: true });
     });

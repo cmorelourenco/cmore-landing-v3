@@ -7,6 +7,7 @@
               valid (the expiry date as shown, or ''), note, section, requirement,
               holder: { name, id, nipc, city, employer }, bar (the line under the title),
               facts: [[label, html], …] (a card of its own, e.g. "On this project"), link: { href, text },
+              desc, legal (for a document the catalog doesn't have: its About this document),
               sharing: () => ({ title, rows: [[label, html], …], btn, open }) (a card of its own: who it's shared with,
                 and a button that opens a panel beside, as the file's preview: open(api) calls api.side(…)) }]
      opts.nav(i, n): the line between Previous and Next.
@@ -103,12 +104,12 @@ window.CMDocDrawer = (() => {
       : has && !src.length ? `<section class="cdd-card"><h4 class="eyebrow">What ALMA read</h4><p class="cdd-desc">ALMA checked it against the catalog. What&rsquo;s on it is personal data, so it stays with ${esc(h.employer || h.name || 'them')}: you see its status and dates.</p></section>` : '';
     if (window.CMFiles) window.CMFiles.closePeek(dw);
     const kv = (k, v) => (v ? `<div class="pd-kv"><dt>${k}</dt><dd>${v}</dd></div>` : '');
-    const desc = en(cat.description);
+    const desc = en(cat.description) || d.desc || '', legal = cat.legalBasis || d.legal || '';
     dq('body').innerHTML = fileHtml + read
       + `<section class="cdd-card"><h4 class="eyebrow">This document</h4><dl class="pd-facts cdd-facts">${kv('Status', d.tag)}${kv('Expiry date', esc(!d.valid || d.valid === '—' ? 'Not on file' : d.valid))}${d.note && has ? kv('Note', esc(d.note)) : ''}${kv('Issued by', esc(issuer))}${kv('Section', esc(d.section || en(cat.section)))}</dl></section>`
       + (d.sharing ? (() => { const sh = d.sharing(); return `<section class="cdd-card"><h4 class="eyebrow">${esc(sh.title)}</h4><dl class="pd-facts cdd-facts">${sh.rows.map(([k, v]) => kv(esc(k), v)).join('')}</dl>${sh.open ? `<button type="button" class="btn btn-quiet btn-sm cdd-share-btn" data-cmdd-share>${esc(sh.btn || 'Manage sharing')}</button>` : ''}</section>`; })() : '')
       + (d.facts && d.facts.length ? `<section class="cdd-card"><h4 class="eyebrow">${esc(d.factsTitle || 'Where it applies')}</h4><dl class="pd-facts cdd-facts">${d.facts.map(([k, v]) => kv(esc(k), v)).join('')}</dl></section>` : '')
-      + (desc || cat.renewal || cat.legalBasis ? `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${desc ? `<p class="cdd-desc">${esc(desc)}</p>` : ''}<dl class="pd-facts cdd-facts">${kv('Requirement', esc(d.requirement || ''))}${kv('Renewal', esc(cat.renewal || '—'))}${kv('Expiry', esc(cat.expiryRule || '—'))}${kv('Legal basis', esc(cat.legalBasis || '—'))}</dl></section>` : '')
+      + (desc || cat.renewal || legal ? `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${desc ? `<p class="cdd-desc">${esc(desc)}</p>` : ''}<dl class="pd-facts cdd-facts">${kv('Requirement', esc(d.requirement || ''))}${kv('Renewal', esc(cat.renewal || '—'))}${kv('Expiry', esc(cat.expiryRule || '—'))}${kv('Legal basis', esc(legal || '—'))}</dl></section>` : '')
       + (d.link ? `<p class="cdd-desc"><a class="co-link" href="${esc(d.link.href)}">${esc(d.link.text)}</a></p>` : '');
     dq('n').textContent = at.nav ? at.nav(at.i, at.list.length) : `${at.i + 1} of ${at.list.length}`;
     dw.querySelector('[data-step="-1"]').disabled = at.i === 0;
