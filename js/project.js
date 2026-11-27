@@ -92,6 +92,40 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjp-exp .btn { align-self: flex-start; margin-top: 0.5rem; }
 .pjp-exp .btn:disabled { opacity: .5; cursor: not-allowed; }
 /* the drawers: pick what to add, choose what to share */
+/* the workers you bring to a client's project: their dates, then their consents as the matrices' dots */
+.pjp-wk-tbl { min-width: 52rem; table-layout: fixed; }
+.pjp-wk-tbl td.c .d { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--color-ink-subtle); }
+.pjp-wk-tbl td:nth-child(2), .pjp-wk-tbl td:nth-child(3) { white-space: nowrap; }
+.pjp-wk-tbl tbody tr.is-link { cursor: pointer; }
+.pjp-wk-tbl tbody tr.is-link:hover, .pjp-wk-tbl tbody tr.is-link:focus-visible { background: var(--color-light-beige); }
+/* off site: kept for the history, quieter */
+.pjp-wk-tbl tr.is-off td:not(.pjp-x) { color: var(--color-ink-subtle); }
+.pjp-wk-tbl tr.is-off .cd-dot { opacity: .45; }
+.cdd-share-btn { margin-top: 0.875rem; }
+.pjp-cs li.is-cur { background: var(--color-light-beige); }
+.cmdd-side .docd-body { display: block; }
+.cd-dot.is-none { background: var(--color-sand-400, #c3c0b8); }
+.pjs-mx-wrap { overflow-x: auto; }
+/* Consents: a card per worker, a row per document, its two switches under their heads */
+.pjp-cs { border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); }
+.pjp-cs + .pjp-cs { margin-top: 0.75rem; }
+.pjp-cs header, .pjp-cs li { display: grid; grid-template-columns: minmax(0, 1fr) auto 4.25rem 4.25rem; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; }
+.pjp-cs header { grid-template-columns: minmax(0, 1fr) 4.25rem 4.25rem; border-bottom: 1px solid var(--color-line); }
+.pjp-cs ul { margin: 0; padding: 0; list-style: none; }
+.pjp-cs li + li { border-top: 1px solid var(--color-mid-beige); }
+.pjp-cs .n { display: block; font-size: 0.875rem; font-weight: 500; }
+.pjp-cs header .n { font-weight: 600; }
+.pjp-cs .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
+.pjp-cs-h { display: flex; flex-direction: column; align-items: center; gap: 0.375rem; font-size: 0.75rem; font-weight: 600; color: var(--color-ink-subtle); }
+.co-sw.is-mixed { background: color-mix(in oklab, var(--color-graphite) 50%, var(--color-sand-400)); }
+.co-sw.is-mixed i { margin-left: calc(50% - 0.625rem); }
+.pjp-cs .co-sw { justify-self: center; }
+.pjp-cs .pjp-none { padding: 1.25rem 1rem !important; }
+.co-sw { flex: none; width: 2.75rem; height: 1.5rem; border-radius: 0.75rem; border: 0; padding: 2px; display: flex; background: var(--color-graphite); cursor: pointer; transition: background-color .2s var(--ease-brand); }
+.co-sw i { width: 1.25rem; height: 1.25rem; border-radius: 50%; background: var(--color-surface); margin-left: calc(100% - 1.25rem); transition: margin-left .2s var(--ease-brand); }
+.co-sw[aria-checked="false"] { background: var(--color-sand-400); }
+.co-sw[aria-checked="false"] i { margin-left: 0; }
+.co-sw:disabled { cursor: not-allowed; opacity: .4; }
 .pjp-pick { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
 .pjp-pick label { display: flex; align-items: center; gap: 0.875rem; padding: 0.75rem 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); cursor: pointer; transition: border-color .14s ease; }
 .pjp-pick label:hover { border-color: var(--color-sand-400); }
@@ -101,7 +135,10 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 .pjp-pick .t { flex: 1; min-width: 0; }
 .pjp-pick .n { display: block; font-size: 0.875rem; font-weight: 500; }
 .pjp-pick .d { display: block; font-size: 0.8125rem; color: var(--color-ink-subtle); }
-.pjp-q { width: 100%; height: 2.75rem; padding: 0 1rem; border: 1px solid var(--color-line); border-radius: 0.75rem; background: var(--color-surface); font: inherit; font-size: 0.9375rem; }
+.pjp-dq { margin-bottom: 0.875rem; }
+/* the drawer's footer line when it can't go on (nothing picked): the error red */
+.docd-foot .pjp-err { color: var(--color-critical); font-weight: 500; }
+.docd-foot .btn[aria-disabled="true"] { background: var(--color-mid-beige); border-color: transparent; color: var(--color-sand-500); box-shadow: none; cursor: not-allowed; transform: none; }
 .pjp-all { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: 0.8125rem; color: var(--color-ink-subtle); }
 .pjp-foot-r { display: flex; align-items: center; gap: 0.75rem; }
 /* the head as a hero, as on My company: the project's name big, what it is under it, its facts in a row */
@@ -312,6 +349,9 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
 
   const paintHead = () => {
     const fact = (t, v, sm) => `<div><dt>${t}</dt><dd>${v}${sm ? `<small>${sm}</small>` : ''}</dd></div>`;
+    const dates = () => fact('Dates', p.start ? esc(p.start) : '&mdash;', p.deadline ? `to ${esc(p.deadline)}` : 'No end date set');
+    // on hold: only you put it there, and take it off (a finalized project stays as it ended)
+    const stNote = () => { const st = PJ.statusOf(p); return st === 'finalized' ? 'Its end date has passed' : `<button type="button" class="link-btn pjh-hold" data-hold="${st === 'hold' ? 'off' : 'on'}">${st === 'hold' ? 'Resume the project' : 'Put on hold'}</button>`; };
     head.classList.add('pjh');
     if (own) {
       const people = p.isNew ? PJ.peopleOf(p) : [];
@@ -321,7 +361,8 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${fact('Project ID', esc(p.id))}
           ${fact('Client', esc(nb(p.client)), esc(p.sector || ''))}
           ${fact('Region', esc(p.region), esc(p.isNew ? p.address : p.city))}
-          ${p.isNew ? fact('Dates', esc(p.start), `to ${esc(p.deadline)}`) : fact('Deadline', p.ongoing ? 'Ongoing' : esc(p.deadline))}
+          ${dates()}
+          ${fact('Status', PJ.statusHtml(p), stNote())}
           ${fact('Owner', ME, p.isNew ? `Started by ${esc(p.owner || 'you')}${p.on ? ` on ${esc(p.on)}` : ''}` : 'You run the site')}
           ${people.length ? fact('People', pl(people.length, 'person', 'people'), people.map((y) => `${esc(y.name)}, ${esc(y.role.toLowerCase())}${y.invited ? ' (invited)' : ''}`).join('<br>')) : ''}
         </dl>`;
@@ -332,11 +373,19 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
           ${fact('Project ID', esc(p.id))}
           ${fact('Client', esc(nb(p.forClient)))}
           ${fact('Region', esc(p.region))}
+          ${dates()}
+          ${fact('Status', PJ.statusHtml(p), PJ.statusOf(p) === 'hold' ? `${esc(nb(p.client))} put it on hold` : '')}
           ${fact('Invited by', esc(nb(p.client)), 'Your client on it')}
         </dl>`;
     }
   };
 
+  head.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-hold]'); if (!b) return;
+    const on = b.dataset.hold === 'on'; PJ.setHold(p.id, on); paintHead();
+    const again = head.querySelector('[data-hold]'); if (again) again.focus({ preventScroll: true });
+    toast(on ? `${p.name} is on hold.` : `${p.name} is back on.`);
+  });
   // ---- the tabs ----
   const TABS = () => own
     ? [['overview', 'Overview'], ['suppliers', 'Suppliers', M.sups.length], ['workers', 'Workers', M.workers.length], ['equipment', 'Equipment', M.equipment.length], ['materials', 'Materials', M.materials.length], ['required', 'Documents required', REQ.length], ['exports', 'Exports']]
@@ -380,7 +429,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
         <section class="pjo-sec"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Needs attention</h3></div>
           <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">What&rsquo;s holding the project up</h2><p class="co-muted">${issues.length ? `${pl(issues.length, 'supplier, worker, machine or material', 'suppliers, workers, machines and materials')} not in order yet, the most urgent first.` : 'Every supplier, worker, machine and material on this project is in order.'}</p></div>
           ${issues.length ? `${qTools('ov-issues', 'Search by name or supplier')}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl" data-paged="pjo-attention" data-tq-for="ov-issues"><thead><tr><th style="width:30%">Name</th><th style="width:14%">Type</th><th style="width:22%">Supplier</th><th style="width:34%">Status</th></tr></thead><tbody>
-            ${issues.map((i) => `<tr class="is-link" tabindex="0" role="link" ${i.k === 'suppliers' ? `data-sup-id="${esc(i.id)}" aria-label="Open ${esc(i.name)}"` : i.k === 'workers' ? `data-wk-id="${M.workers.findIndex((w) => w.name === i.name && w.sup === i.sup)}" aria-label="Open ${esc(i.name)}"` : `data-open-tab="${i.k}" data-open-sup="${esc(i.sup)}" aria-label="${esc(i.name)}: see it in ${KIND[i.k][0]}"`}><td><span class="n">${esc(nb(i.name))}</span><span class="d">${esc(sub(i) || '')}</span></td><td>${KIND[i.k][3]}</td><td><span class="n">${esc(nb(i.k === 'suppliers' ? (i.by || 'You') : i.sup))}</span>${i.k === 'suppliers' ? `<span class="d">${i.by ? 'Brought them in' : 'Your supplier'}</span>` : ''}</td><td>${badge(i.st, i.why)}</td></tr>`).join('')}
+            ${issues.map((i) => `<tr class="is-link" tabindex="0" role="link" ${i.k === 'suppliers' ? `data-sup-id="${esc(i.id)}" aria-label="Open ${esc(i.name)}"` : (() => { const k = M[i.k].findIndex((x) => x.name === i.name && x.sup === i.sup); return k >= 0 && (M[i.k][k].docs || []).length ? `data-pjit="${i.k}:${k}" aria-label="Open ${esc(i.name)}&rsquo;s documents"` : `data-open-tab="${i.k}" data-open-sup="${esc(i.sup)}" aria-label="${esc(i.name)}: see it in ${KIND[i.k][0]}"`; })()}><td><span class="n">${esc(nb(i.name))}</span><span class="d">${esc(sub(i) || '')}</span></td><td>${KIND[i.k][3]}</td><td><span class="n">${esc(nb(i.k === 'suppliers' ? (i.by || 'You') : i.sup))}</span>${i.k === 'suppliers' ? `<span class="d">${i.by ? 'Brought them in' : 'Your supplier'}</span>` : ''}</td><td>${badge(i.st, i.why)}</td></tr>`).join('')}
           </tbody></table></div>` : ''}</section>
         ${projMatrix(M.sups.slice().sort(byWorst))}
         <section class="pjo-sec"><div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">Your company</h3></div>
@@ -416,7 +465,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     const l = all.filter(keep).sort(byWorst), kind = noun === 'workers' ? null : noun === 'machines' ? 'equipment' : 'materials';
     return `<div class="pjp-tools"><div class="pjp-tools-l">${all.length ? qBox(`tab-${noun}`, `Search by name or ${noun === 'workers' ? 'role' : noun === 'machines' ? 'serial number' : 'batch'}`) : ''}${filterOf(all, `${label} by status`)}${all.length ? supSelect(all) : ''}</div></div>
       <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl" data-tq-for="tab-${noun}"><thead><tr><th style="width:30%">${col}</th><th style="width:26%">Supplier</th><th class="c" style="width:12%">On site</th><th style="width:32%">Status</th></tr></thead><tbody>
-      ${l.length ? l.map((x) => `<tr${noun === 'workers' ? ` class="is-link" tabindex="0" role="link" data-wk-id="${all.indexOf(x)}" aria-label="Open ${esc(x.name)}"` : ''}><td>${cell(x)}</td><td><span class="n">${esc(nb(x.sup))}</span></td><td class="c">${siteDotOf(wkSite(x, kind), kind === 'materials')}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')
+      ${l.length ? l.map((x) => `<tr${itemTr(kind || 'workers', all.indexOf(x), x)}><td>${cell(x)}</td><td><span class="n">${esc(nb(x.sup))}</span></td><td class="c">${siteDotOf(wkSite(x, kind), kind === 'materials')}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')
         : `<tr><td colspan="4" class="pjp-none co-tbl-empty">${all.length ? `No ${noun} match that.` : `<b>No ${noun} on this project yet.</b>Your suppliers add theirs and choose which of their documents you see.`}</td></tr>`}</tbody></table></div>${all.length ? legendOf(kind === 'materials') : ''}`;
   };
 
@@ -451,8 +500,28 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
     equipment: () => teamPanel(TEAM.equipment),
     materials: () => teamPanel(TEAM.materials),
   };
+  // a worker's consents, as the matrices: of what the project asks of each worker, how many shared and
+  // how many downloadable (all green, some amber, none grey); the old picks (share: null) are all on file
+  const consentCell = (x, k) => {
+    const codes = reqOf('workers', true), file = new Set(docsOf('workers', x.i).map((d) => d.code));
+    const set = k === 'share' ? (x.share || [...file]) : (x.dl || []), n = codes.filter((c) => set.includes(c) && file.has(c)).length;
+    if (!codes.length) return '<td class="c"><span class="cd-dash" title="Nothing asked of each worker">&mdash;</span></td>';
+    const tone = !n ? 'is-none' : n === codes.length ? 'is-ok' : 'is-pend';
+    return `<td class="c"><span class="cd-dot ${tone}" aria-hidden="true"></span><span class="d">${n} of ${codes.length}</span></td>`;
+  };
+  const CONSENT_LEGEND = '<p class="cd-legend"><span><span class="cd-dot is-ok"></span>All asked for</span><span><span class="cd-dot is-pend"></span>Some</span><span><span class="cd-dot is-none"></span>None</span></p>';
   const teamPanel = (T) => {
     const l = team[T.key];
+    if (T.key === 'workers') {
+      return `<p class="pjp-note">${EYE}<span>Seen by ${seenBy}. For each worker, only the documents you consent to share, and to download.</span></p>
+      <div class="pjp-tools"><div class="pjp-tools-l"></div><button type="button" class="pj-add" data-add="workers">${PLUS}Add workers</button></div>
+      <div class="co-card co-tbl-card pjs-mx-wrap"><table class="co-tbl pjp-tbl pjp-wk-tbl"><thead><tr><th style="width:21%">Worker</th><th style="width:11%">Entry date</th><th style="width:11%">Exit date</th><th class="c" style="width:11%">Share</th><th class="c" style="width:11%">Download</th><th style="width:19%">Status of what you share</th><th style="width:16%" aria-label="On site"></th></tr></thead><tbody>
+      ${l.length ? l.map((x, k) => {
+        const [n, sub] = nameOf(T.kind, x.i), { on } = sharedOf(T.kind, x), st = on.length ? stOf(on) : null;
+        // off site: kept, for the project's history, with the day they left as their exit date
+        return `<tr class="is-link${x.off ? ' is-off' : ''}" tabindex="0" role="button" data-tmwk="${k}" aria-label="Open ${esc(plain(n))}&rsquo;s documents"><td><span class="n">${n}</span><span class="d">${x.off ? `Off site since ${esc(x.off)}` : sub}</span></td><td>${esc(x.entry || p.start || '—')}</td><td>${esc(x.exit || p.deadline || '—')}</td>${consentCell(x, 'share')}${consentCell(x, 'dl')}<td>${x.off ? '<span class="co-badge b-neu">Off site</span>' : st ? `${badge(st, whyOf(on))}` : '<span class="co-badge b-neu">Nothing shared</span>'}</td><td class="pjp-x"><button type="button" class="link-btn" data-wkoff="${k}">${x.off ? 'Back on site' : 'Mark as off site'}</button></td></tr>`;
+      }).join('') : `<tr><td colspan="7" class="pjp-none co-tbl-empty"><b>No workers on it yet.</b>Add the workers you&rsquo;re bringing and choose what ${esc(nb(p.client))} sees of each.</td></tr>`}</tbody></table></div>${l.length ? CONSENT_LEGEND : ''}`;
+    }
     return `<p class="pjp-note">${EYE}<span>Seen by ${seenBy}. For each ${T.one}, only the documents you choose.</span></p>
       <div class="pjp-tools"><div class="pjp-tools-l"></div><button type="button" class="pj-add" data-add="${T === TEAM.materials ? 'materials' : T.key}">${PLUS}Add ${T.many}</button></div>
       <div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl"><thead><tr><th style="width:32%">${T.one.charAt(0).toUpperCase() + T.one.slice(1)}</th><th style="width:26%">Documents shared</th><th style="width:30%">Status of what you share</th><th style="width:12%" aria-label="Remove"></th></tr></thead><tbody>
@@ -473,7 +542,7 @@ select.pjp-in { appearance: none; padding-right: 2rem; cursor: pointer;
   const docName = (c) => (CAT[c] ? CAT[c].name.en : c);
   const CAT_OF = { company: 'company', workers: 'workers', equipment: 'equipment', materials: 'products', project: 'project' };
   const PER = { workers: 'per_worker', equipment: 'per_equipment', materials: 'per_product' };
-  let REQ = [];
+  let REQ = RQ ? RQ.reqOf(p) : [];
   // the codes asked for: of the supplier itself (its company's, and those for all its workers), or of each thing it brings
   const reqOf = (area, each) => REQ.filter((c) => CAT[c] && CAT[c].category === CAT_OF[area] && (area === 'company' || area === 'project' ? true : each ? CAT[c].level === PER[area] : CAT[c].level !== PER[area]));
   const reqIn = (area) => REQ.filter((c) => CAT[c] && CAT[c].category === CAT_OF[area]);
@@ -623,13 +692,25 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
   // a document in these tables opens in the drawer (js/doc-drawer.js): the file, what ALMA read with
   // a citation for each value, and what the catalog says; Previous / Next walk the table as it's shown
   const PJD = {};
-  const drawerDoc = (d, s, w) => {
+  // w: the worker, machine or product it's for (kind: 'workers' | 'equipment' | 'materials'); a worker's
+  // papers are personal, so a supplier's show no values (js/doc-drawer.js: holder.employer)
+  const OPEN_IN = { workers: 'worker', equipment: 'machine', materials: 'product' };
+  const drawerDoc = (d, s, w, kind = 'workers') => {
     const S = window.CM_SUPPLIERS, full = s && S && S.byId ? S.byId(s.id) || {} : {};
-    const holder = w ? { name: w.name, id: `${p.id}:${w.name}`, employer: s ? s.name : ME } : s ? { name: s.name, id: s.id, nipc: s.nipc || full.nipc, city: s.city || full.city } : { name: ME, id: 'me' };
+    const holder = w ? Object.assign({ name: w.name, id: `${p.id}:${kind}:${w.name}` }, kind === 'workers' ? { employer: s ? s.name : ME } : {}) : s ? { name: s.name, id: s.id, nipc: s.nipc || full.nipc, city: s.city || full.city } : { name: ME, id: 'me' };
     return { name: d.name, code: d.code, own: w ? !!w.own : !s, status: d.status, tag: `<span class="co-badge ${DOC_ST[d.status][1]}">${DOC_ST[d.status][0]}</span>`, valid: d.exp || '', note: d.status === 'missing' ? 'ALMA has asked them for it.' : '',
       holder, bar: s ? `Shared with you by ${nb(s.name)}` : `${ME}, on ${p.name}`, factsTitle: 'On this project',
-      facts: [['Project', esc(p.name)], ['For', esc(w ? w.name : d.of || '')], w && s ? ['Works for', esc(nb(s.name))] : null].filter(Boolean),
-      link: w && w.own ? { href: `company-details.html?area=workers&worker=${w.i}`, text: 'Open it in Documents' } : null };
+      facts: [['Project', esc(p.name)], ['For', esc(w ? w.name : d.of || '')], w && s ? [kind === 'workers' ? 'Works for' : 'Supplier', esc(nb(s.name))] : null].filter(Boolean),
+      link: w && w.own ? { href: `company-details.html?${OPEN_IN[kind]}=${w.i}`, text: 'Open it in Documents' } : null };
+  };
+  // a worker's, machine's or product's row: its documents in the drawer, the worst first, Previous / Next
+  // walking them (none on file: nothing to open)
+  const itemTr = (kind, k, x) => ((x.docs || []).length ? ` class="is-link" tabindex="0" role="button" data-pjit="${kind}:${k}" aria-label="Open ${esc(x.name)}&rsquo;s documents"` : '');
+  const openItem = (tr) => {
+    const [kind, k] = tr.dataset.pjit.split(':'), x = M[kind][+k]; if (!x || !window.CMDocDrawer) return;
+    const s = M.sups.find((y) => y.name === x.sup);
+    const docs = (x.docs || []).slice().sort((a, b) => DOC_RANK[b.status] - DOC_RANK[a.status]);
+    if (docs.length) window.CMDocDrawer.open(docs.map((d) => drawerDoc(d, s, x, kind)), 0, { nav: (i, n) => `${x.name} · ${i + 1} of ${n}` });
   };
   const docTr = (id, k, d) => ` class="is-link" tabindex="0" role="button" data-pjdoc="${id}:${k}" aria-label="Open ${esc(d.name)}"`;
   const openPjDoc = (tr) => {
@@ -684,14 +765,14 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
       if (!reqIn(a).length) return '';
       const l = all.map((x, k) => ({ x, k })).filter(({ x }) => x.sup === s.name).sort((u, v) => byWorst(u.x, v.x));
       const group = ofArea(a).filter((d) => /^All their /.test(d.of));
-      const link = a === 'workers', kind = a === 'workers' ? null : a;
+      const kind = a === 'workers' ? null : a;
       // workers: on site today (as the suppliers' dots), and their entry and exit dates
       const stays = a === 'materials';
       const site = (x) => { const d = wkSite(x, kind); return `<td class="c">${siteDotOf(d, stays)}</td><td>${esc(d.entry || '—')}</td>${stays ? '' : `<td>${esc(d.exit || '—')}</td>`}`; };
       const head = stays ? `<th style="width:30%">${col}</th><th class="c" style="width:12%">On site</th><th style="width:16%">Entry date</th><th style="width:14%">Documents valid</th><th style="width:28%">Status</th>`
         : `<th style="width:24%">${col}</th><th class="c" style="width:10%">On site</th><th style="width:13%">Entry date</th><th style="width:13%">Exit date</th><th style="width:12%">Documents valid</th><th style="width:28%">Status</th>`;
       const rows = l.length ? `${qTools(`sp-${a}`, `Search by name or ${a === 'workers' ? 'role' : a === 'equipment' ? 'serial number' : 'batch'}`)}<div class="co-card co-tbl-card"><table class="co-tbl pjp-tbl pjs-tbl pjs-wk" data-tq-for="sp-${a}"><thead><tr>${head}</tr></thead><tbody>
-        ${l.map(({ x, k }) => `<tr${link ? ` class="is-link" tabindex="0" role="link" data-wk-id="${k}" aria-label="Open ${esc(x.name)}"` : ''}><td><span class="n">${esc(x.name)}</span><span class="d">${esc(sub(x) || '')}</span></td>${site(x)}<td>${valid(x)}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>${legendOf(stays)}`
+        ${l.map(({ x, k }) => `<tr${itemTr(a, k, x)}><td><span class="n">${esc(x.name)}</span><span class="d">${esc(sub(x) || '')}</span></td>${site(x)}<td>${valid(x)}</td><td>${badge(x.st, x.why)}</td></tr>`).join('')}</tbody></table></div>${legendOf(stays)}`
         : none(`${esc(nb(s.name))} has no ${many} on this project.`);
       const lead = l.length ? `${pl(l.length, one, many)} on ${esc(p.name)}, the ones to chase first.` : `None on ${esc(p.name)} yet.`;
       return sec(h, lead, rows + (group.length ? `<div class="co-sub-head pjs-grp"><h3 class="eyebrow">For all their ${a === 'materials' ? 'products and materials' : a}</h3></div>${docRows(group, false, `sp-${a}-all`)}` : ''));
@@ -787,8 +868,8 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     if (back && back.isConnected) back.focus({ preventScroll: true });
   };
   const pickRow = (key, x, on, dis, sub) => `<li><label class="${on ? 'is-on' : ''}${dis ? ' is-dis' : ''}" data-text="${esc(fold(x.name + ' ' + (x.sub || '')))}"><input type="checkbox" data-pick="${esc(key)}"${on ? ' checked' : ''}${dis ? ' disabled' : ''}><span class="t"><span class="n">${esc(nb(x.name))}</span><span class="d">${esc(sub)}</span></span>${x.badge || ''}</label></li>`;
-  const openPick = (what) => {
-    dwKind = what;
+  const openPick = (what, pre) => {
+    dwKind = what; if (dw) delete dw.dataset.tried;
     let rows, title, sub;
     if (what === 'suppliers') {
       const on = new Set(team.subs.map((s) => s.id));
@@ -797,10 +878,123 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     } else {
       const T = TEAM[what], on = new Set(team[T.key].map((x) => x.i));
       rows = T.list().map((x) => { const d = docsOf(T.kind, x.i); return pickRow(String(x.i), Object.assign({ badge: d.length ? badge(stOf(d)) : '' }, x), on.has(x.i), on.has(x.i), on.has(x.i) ? 'On this project already' : x.sub); }).join('');
-      title = `Add ${T.many}`; sub = `${esc(nb(p.client))} sees them, with the documents you choose. All on file are shared to start with.`;
+      title = `Add ${T.many}`; sub = what === 'workers' ? `Pick them, then choose what ${esc(nb(p.client))} can see and download of each.` : `${esc(nb(p.client))} sees them, with the documents you choose. All on file are shared to start with.`;
     }
-    drawer(title, sub, `<input type="search" class="pjp-q" placeholder="Search" aria-label="Search">${rows ? `<ul class="pjp-pick">${rows}</ul>` : '<p class="pjp-none">Nothing to add yet.</p>'}`,
-      `<span data-pick-n>None selected</span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-dx>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-do-add disabled>Add</button></span>`);
+    // the search as every other one (.co-search): the icon, and what it looks through
+    const ph = what === 'suppliers' ? 'Search by name or work' : `Search by name or ${what === 'workers' ? 'role' : what === 'equipment' ? 'serial number' : 'reference'}`;
+    drawer(title, sub, `${rows ? `<label class="co-search pjp-dq">${QI}<input type="search" class="pjp-q" placeholder="${ph}" aria-label="${ph}" autocomplete="off"></label><ul class="pjp-pick">${rows}</ul><p class="pjp-none" data-pick-none hidden>Nothing matches that.</p>` : '<p class="pjp-none">Nothing to add yet.</p>'}`,
+      `<span data-pick-n>None selected</span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-dx>Cancel</button><button type="button" class="btn btn-primary btn-sm" ${what === 'workers' ? 'data-do-next disabled>Next' : 'data-do-add disabled>Add'}</button></span>`);
+    // back from Consents: the ones picked, still picked
+    if (pre) pre.forEach((k) => { const c = dw.querySelector(`[data-pick="${CSS.escape(k)}"]`); if (c) c.checked = true; });
+    count();
+  };
+  // step 2, Consents: for each worker picked, the documents this project asks of each worker (set when
+  // it was created), and two switches each: share it with the client, let them download it. All off to
+  // start with; downloading needs sharing (Download on turns Share on, Share off turns Download off)
+  let consentOf = null, consentWas = {};
+  // ---- one of your workers on a client's project: the documents it asks of each worker, in the drawer,
+  // each with what the client may see and download of it; Manage sharing opens the panel beside ----
+  const DM_ST = (st) => ({ valid: 'valid', expiring: 'expiring', expired: 'expired' })[st] || (DM && DM.RANK[st] > 1 ? 'missing' : DM && DM.RANK[st] === 1 ? 'expiring' : 'valid');
+  const onFile = (x) => docsOf('workers', x.i).map((d) => d.code);
+  const consentOn = (x) => ({ share: x.share || onFile(x), dl: x.dl || [] });
+  const openTeamWorker = (k, at) => {
+    const x = team.workers[k]; if (!x || !window.CMDocDrawer) return;
+    const [n0, sub0] = nameOf('workers', x.i), n = plain(n0), file = Object.fromEntries(docsOf('workers', x.i).map((d) => [d.code, d]));
+    const codes = reqOf('workers', true).length ? reqOf('workers', true) : Object.keys(file);
+    if (!codes.length) { toast(`${p.client} asks nothing of each worker on this project.`); return; }
+    const cl = nb(p.client);
+    const list = codes.map((c) => {
+      const d = file[c], status = d ? DM_ST(d.status) : 'missing';
+      return { name: plain(d ? d.name : docName(c)), code: c, own: true, status, tag: `<span class="co-badge ${DOC_ST[status][1]}">${DOC_ST[status][0]}</span>`, valid: d && d.exp && d.exp !== '—' ? plain(d.exp) : '',
+        note: d ? '' : 'It isn’t in Documents yet. Upload it there and it can be shared here.', holder: { name: n, id: `me:${x.i}` }, bar: `Your worker, on ${p.name}`,
+        factsTitle: 'On this project', facts: [['Project', esc(p.name)], ['Client', esc(cl)], ['On site', `${esc(x.entry || p.start || '—')} to ${esc(x.exit || p.deadline || '—')}${x.off ? ' (off site)' : ''}`]],
+        link: { href: `company-details.html?worker=${x.i}`, text: 'Open it in Documents' },
+        sharing: () => {
+          const on = consentOn(team.workers[k]), yes = (v) => (v ? '<span class="co-badge b-ok">Yes</span>' : '<span class="co-badge b-neu">No</span>');
+          return { title: `Sharing with ${cl}`, rows: d ? [['They can see it', yes(on.share.includes(c))], ['They can download it', yes(on.dl.includes(c))]] : [['They can see it', 'Not until it&rsquo;s on file']], btn: 'Manage sharing', open: () => openSharing(k, c) };
+        } };
+    });
+    window.CMDocDrawer.open(list, Math.max(0, at ? codes.indexOf(at) : 0), { nav: (i, m) => `${n} · ${i + 1} of ${m}` });
+  };
+  const openSharing = (k, cur) => {
+    const x = team.workers[k], n = plain(nameOf('workers', x.i)[0]);
+    window.CMDocDrawer.side({
+      title: 'Sharing', sub: `${esc(n)} &middot; with ${esc(nb(p.client))}`, bar: 'What they can see and download of this worker&rsquo;s documents',
+      body: csBlock(x.i, consentOn(x), cur),
+      foot: '<span data-cs-n></span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-sd-x>Cancel</button><button type="button" class="btn btn-primary btn-sm" data-sd-save>Save</button></span>',
+      wire: (el) => {
+        csCount(el);
+        el.addEventListener('click', (e) => {
+          if (csClick(el, e)) return;
+          if (!e.target.closest('[data-sd-save]')) return;
+          x.share = csGot(el, 'share', x.i); x.dl = csGot(el, 'dl', x.i); save(); paint();
+          window.CMDocDrawer.sideClose(); window.CMDocDrawer.redraw();
+          toast(`Saved. ${nb(p.client)} can see ${x.share.length} and download ${x.dl.length} of ${n}’s documents.`);
+        });
+      },
+    });
+  };
+  // a worker's consents card (Consents, and the Sharing panel beside a document): of what the project
+  // asks of each worker, a Share and a Download switch each, and the card's own all-switches. on: { share: [codes], dl: [codes] }
+  const csBlock = (i, on = { share: [], dl: [] }, cur) => {
+    const codes = reqOf('workers', true);
+    const sw = (kind, c, name, dis) => `<button type="button" class="co-sw" role="switch" aria-checked="${!dis && on[kind].includes(c)}" data-cs="${kind}" data-cs-w="${i}" data-cs-c="${esc(c)}" aria-label="${kind === 'share' ? 'Share' : 'Allow downloading'} ${esc(name)}"${dis ? ' disabled' : ''}><i></i></button>`;
+    {
+      const [n, sub] = nameOf('workers', +i), file = Object.fromEntries(docsOf('workers', +i).map((d) => [d.code, d]));
+      const rows = codes.map((c) => {
+        const d = file[c], name = plain(d ? d.name : docName(c));
+        const st = d ? `<span class="co-badge ${DM.STATUS[d.status][1]}">${DM.STATUS[d.status][0]}</span>` : '<span class="co-badge b-neu">Not on file</span>';
+        return `<li${c === cur ? ' class="is-cur"' : ''}><span class="t"><span class="n">${esc(name)}</span><span class="d">${d && d.exp && d.exp !== '—' ? (/^\d/.test(plain(d.exp)) ? `Valid until ${plain(d.exp)}` : plain(d.exp)) : d ? 'No expiry' : 'Upload it in Documents to share it'}</span></span>${st}${sw('share', c, name, !d)}${sw('dl', c, name, !d)}</li>`;
+      }).join('');
+      // the card's own switches: every document of theirs at once (off when none is on file)
+      const none = !codes.some((c) => file[c]);
+      const all = (kind) => `<span class="pjp-cs-h"><span>${kind === 'share' ? 'Share' : 'Download'}</span><button type="button" class="co-sw" role="switch" aria-checked="false" data-cs-all="${kind}" data-cs-w="${i}" aria-label="${kind === 'share' ? 'Share all' : 'Allow downloading all'} of ${esc(plain(n))}&rsquo;s documents"${none ? ' disabled' : ''}><i></i></button></span>`;
+      return `<section class="pjp-cs"><header><span class="t"><span class="n">${n}</span><span class="d">${sub}</span></span>${all('share')}${all('dl')}</header>${codes.length ? `<ul>${rows}</ul>` : '<p class="pjp-none">This project asks nothing of each worker.</p>'}</section>`;
+    }
+  };
+  // what's switched on in a card, for a worker
+  const csGot = (root, k, i) => [...root.querySelectorAll(`[data-cs="${k}"][data-cs-w="${i}"][aria-checked="true"]`)].map((b) => b.dataset.csC);
+  // a switch pressed in root (Consents, or the Sharing panel): true when it was one of ours
+  const csClick = (root, e) => {
+    const ca = e.target.closest('[data-cs-all]');
+    if (ca && !ca.disabled) {
+      // all on unless they're all on already; Download all on shares them all, Share all off stops downloads too
+      const k = ca.dataset.csAll, w = ca.dataset.csW, to = ca.getAttribute('aria-checked') !== 'true';
+      const set = (kind, v) => root.querySelectorAll(`[data-cs="${kind}"][data-cs-w="${w}"]:not(:disabled)`).forEach((b) => b.setAttribute('aria-checked', String(v)));
+      set(k, to);
+      if (k === 'dl' && to) set('share', true);
+      if (k === 'share' && !to) set('dl', false);
+      csCount(root); return true;
+    }
+    const cs = e.target.closest('[data-cs]');
+    if (cs && !cs.disabled) {
+      const on = cs.getAttribute('aria-checked') !== 'true', pair = (k) => root.querySelector(`[data-cs="${k}"][data-cs-w="${cs.dataset.csW}"][data-cs-c="${CSS.escape(cs.dataset.csC)}"]`);
+      cs.setAttribute('aria-checked', String(on));
+      if (cs.dataset.cs === 'dl' && on) pair('share').setAttribute('aria-checked', 'true');
+      if (cs.dataset.cs === 'share' && !on) pair('dl').setAttribute('aria-checked', 'false');
+      csCount(root); return true;
+    }
+    return false;
+  };
+  const openConsents = (picked) => {
+    consentOf = picked;
+    dwKind = 'consents';
+    dw.querySelector('#pjp-dw-t').textContent = 'Consents';
+    dw.querySelector('.docd-t p').innerHTML = `What ${esc(nb(p.client))} can see and download of the documents this project asks of each worker. All off to start with.`;
+    dw.querySelector('.docd-body').innerHTML = picked.map((i) => csBlock(i, consentWas[i])).join('');
+    dw.querySelector('.docd-foot').innerHTML = `<span data-cs-n></span><span class="pjp-foot-r"><button type="button" class="btn btn-quiet btn-sm" data-cs-back>Back</button><button type="button" class="btn btn-primary btn-sm" data-do-consent>Add ${pl(picked.length, 'worker')}</button></span>`;
+    csCount(dw);
+    dw.querySelector('.docd-panel').focus({ preventScroll: true });
+    dw.querySelector('.docd-body').scrollTop = 0;
+  };
+  const csCount = (root) => {
+    // each card's all-switches: on, off, or in between
+    root.querySelectorAll('[data-cs-all]').forEach((a) => {
+      const l = [...root.querySelectorAll(`[data-cs="${a.dataset.csAll}"][data-cs-w="${a.dataset.csW}"]:not(:disabled)`)], k = l.filter((b) => b.getAttribute('aria-checked') === 'true').length;
+      a.setAttribute('aria-checked', !k ? 'false' : k === l.length ? 'true' : 'mixed'); a.classList.toggle('is-mixed', !!k && k < l.length);
+    });
+    const on = (k) => root.querySelectorAll(`[data-cs="${k}"][aria-checked="true"]`).length, n = root.querySelector('[data-cs-n]');
+    if (n) n.textContent = `Sharing ${on('share')}, downloadable ${on('dl')}`;
   };
   const openShare = (key, k) => {
     const T = Object.values(TEAM).find((t) => t.key === key), x = team[key][k], { all, on } = sharedOf(T.kind, x), set = new Set(on.map((d) => d.code));
@@ -813,8 +1007,16 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
   };
   const count = () => {
     if (!dw) return;
-    const n = dw.querySelectorAll('[data-pick]:checked:not(:disabled)').length, el = dw.querySelector('[data-pick-n]'), add = dw.querySelector('[data-do-add]');
-    if (add) { add.disabled = !n; el.textContent = n ? `${n} selected` : 'None selected'; }
+    const n = dw.querySelectorAll('[data-pick]:checked:not(:disabled)').length, el = dw.querySelector('[data-pick-n]'), add = dw.querySelector('[data-do-add], [data-do-next]');
+    if (add) {
+      // nothing picked: Next / Add look off (aria-disabled, so a click still reaches us); pressed anyway,
+      // it says why, in the error red
+      const one = dwKind === 'suppliers' ? 'supplier' : TEAM[dwKind].one, many = dwKind === 'suppliers' ? 'suppliers' : TEAM[dwKind].many;
+      const left = dw.querySelectorAll('[data-pick]:not(:disabled)').length, tried = !n && dw.dataset.tried === '1';
+      add.disabled = false; add.setAttribute('aria-disabled', String(!n));
+      el.classList.toggle('pjp-err', tried);
+      el.textContent = n ? `${n} selected` : !dw.querySelector('[data-pick]') ? `No ${many} to add yet` : !left ? `Every one of your ${many} is on this project already` : tried ? `No ${one} selected` : '';
+    }
     else if (el) { const all = dw.querySelectorAll('[data-pick]').length; el.textContent = `Sharing ${n} of ${all}`; }
     dw.querySelectorAll('.pjp-pick label').forEach((l) => l.classList.toggle('is-on', l.querySelector('input').checked));
   };
@@ -822,7 +1024,6 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
   // the supplier who brought one in, a link to their page on this project
   const byLink = (name) => { const x = M && M.sups.find((y) => y.name === name); return x ? `<a class="co-link" href="${supHref(x.id)}">${esc(nb(name))}</a>` : esc(nb(name)); };
   // a supplier's row: its page on this project
-  const wkHref = (k) => `project.html?id=${encodeURIComponent(p.id)}&wk=${k}`;
   const supHref = (sid) => `project.html?id=${encodeURIComponent(p.id)}&sup=${encodeURIComponent(sid)}`;
   // ---- wiring ----
   body.addEventListener('click', (e) => {
@@ -832,7 +1033,7 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     }
     const t = e.target.closest('[data-tab]'); if (t) { go(t.dataset.tab, `[data-tab="${t.dataset.tab}"][role="tab"]`); if (t.closest('#pjp-panel')) scrollTo({ top: 0, behavior: 'smooth' }); return; }
     const s = e.target.closest('[data-st]'); if (s) { f.st = s.dataset.st; paint(`[data-st="${f.st}"]`); return; }
-    const a = e.target.closest('[data-add]'); if (a) { openPick(a.dataset.add); return; }
+    const a = e.target.closest('[data-add]'); if (a) { consentWas = {}; openPick(a.dataset.add); return; }
     const sh = e.target.closest('[data-share]'); if (sh) { const [key, k] = sh.dataset.share.split(':'); openShare(key, +k); return; }
     const rm = e.target.closest('[data-rm]');
     if (rm) {
@@ -840,9 +1041,17 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
       const name = key === 'subs' ? x.name : plain(nameOf(Object.values(TEAM).find((T) => T.key === key).kind, x.i)[0]);
       team[key].splice(+k, 1); save(); paint('.pj-add'); toast(`${nb(name)} is off this project.`); return;
     }
+    const wo = e.target.closest('[data-wkoff]');
+    if (wo) {
+      const x = team.workers[+wo.dataset.wkoff], n = plain(nameOf('workers', x.i)[0]);
+      if (x.off) { x.exit = x.exitWas || ''; delete x.exitWas; delete x.off; toast(`${n} is back on site.`); }
+      else { x.off = today(); x.exitWas = x.exit || p.deadline || ''; x.exit = x.off; toast(`${n} is off site from today. They stay on the project, for its history.`); }
+      save(); paint(`[data-wkoff="${wo.dataset.wkoff}"]`); return;
+    }
+    const tw = e.target.closest('tr[data-tmwk]'); if (tw && !e.target.closest('a, button, input')) { openTeamWorker(+tw.dataset.tmwk); return; }
     const pd = e.target.closest('tr[data-pjdoc]'); if (pd && !e.target.closest('a, button, input')) { openPjDoc(pd); return; }
+    const it = e.target.closest('tr[data-pjit]'); if (it && !e.target.closest('a, button, input')) { openItem(it); return; }
     const ot = e.target.closest('tr[data-open-tab]'); if (ot) { openTab(ot); return; }
-    const wr = e.target.closest('tr[data-wk-id]'); if (wr && !e.target.closest('a, button, input')) { location.href = wkHref(wr.dataset.wkId); return; }
     const row = e.target.closest('tr[data-sup-id]'); if (row && !e.target.closest('a, button, input')) location.href = supHref(row.dataset.supId);
   });
   body.addEventListener('keydown', (e) => {
@@ -853,7 +1062,8 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
     }
     const pd = e.target.closest('tr[data-pjdoc]'); if (pd && (e.key === 'Enter' || e.key === ' ') && e.target === pd) { e.preventDefault(); openPjDoc(pd); return; }
     const ot = e.target.closest('tr[data-open-tab]'); if (ot && (e.key === 'Enter' || e.key === ' ') && e.target === ot) { e.preventDefault(); openTab(ot); return; }
-    const wr = e.target.closest('tr[data-wk-id]'); if (wr && (e.key === 'Enter' || e.key === ' ') && e.target === wr) { e.preventDefault(); location.href = wkHref(wr.dataset.wkId); return; }
+    const it = e.target.closest('tr[data-pjit]'); if (it && (e.key === 'Enter' || e.key === ' ') && e.target === it) { e.preventDefault(); openItem(it); return; }
+    const tw = e.target.closest('tr[data-tmwk]'); if (tw && (e.key === 'Enter' || e.key === ' ') && e.target === tw) { e.preventDefault(); openTeamWorker(+tw.dataset.tmwk); return; }
     const row = e.target.closest('tr[data-sup-id]'); if (row && (e.key === 'Enter' || e.key === ' ') && e.target === row) { e.preventDefault(); location.href = supHref(row.dataset.supId); }
   });
   body.addEventListener('change', (e) => {
@@ -865,11 +1075,26 @@ table[data-tq-for] th.c .cd-sort { justify-content: center; }
   document.addEventListener('input', (e) => {
     if (!dw || !e.target.matches('.pjp-q')) return;
     const q = fold(e.target.value.trim());
-    dw.querySelectorAll('.pjp-pick li').forEach((li) => { li.hidden = !!q && !li.firstElementChild.dataset.text.includes(q); });
+    const lis = [...dw.querySelectorAll('.pjp-pick li')];
+    lis.forEach((li) => { li.hidden = !!q && !li.firstElementChild.dataset.text.includes(q); });
+    const none = dw.querySelector('[data-pick-none]'); if (none) none.hidden = lis.some((li) => !li.hidden);
   });
   document.addEventListener('click', (e) => {
     if (!dw || !dw.contains(e.target)) return;
     if (e.target.closest('[data-all]')) { dw.querySelectorAll('[data-pick]').forEach((c) => { c.checked = true; }); count(); return; }
+    const off = e.target.closest('[data-do-next][aria-disabled="true"], [data-do-add][aria-disabled="true"]');
+    if (off) { dw.dataset.tried = '1'; count(); return; }
+    if (e.target.closest('[data-do-next]')) { const picked = [...dw.querySelectorAll('[data-pick]:checked:not(:disabled)')].map((c) => c.dataset.pick); if (picked.length) openConsents(picked); return; }
+    // Back: what was switched on is kept, for when they come forward again
+    if (e.target.closest('[data-cs-back]')) { const pre = consentOf; pre.forEach((i) => { consentWas[i] = { share: csGot(dw, 'share', i), dl: csGot(dw, 'dl', i) }; }); openPick('workers', pre); return; }
+    if (csClick(dw, e)) return;
+    if (e.target.closest('[data-do-consent]')) {
+      const got = (k, i) => csGot(dw, k, i);
+      consentOf.forEach((i) => team.workers.push({ i: +i, share: got('share', i), dl: got('dl', i), entry: p.start || '', exit: p.deadline || '' }));
+      const n = consentOf.length, shared = consentOf.reduce((a, i) => a + got('share', i).length, 0);
+      toast(`${pl(n, 'worker')} added. ${shared ? `${nb(p.client)} can see ${shared === 1 ? '1 of their documents' : `${shared} of their documents`}.` : 'None of their documents are shared yet.'}`);
+      consentOf = null; save(); close(); paint(); return;
+    }
     if (e.target.closest('[data-do-add]')) {
       const picked = [...dw.querySelectorAll('[data-pick]:checked:not(:disabled)')].map((c) => c.dataset.pick);
       if (dwKind === 'suppliers') {

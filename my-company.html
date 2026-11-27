@@ -1938,11 +1938,24 @@ body { transition: background-color .9s ease; }
       <div class="co-sub-head co-sub-head-top"><h3 class="eyebrow">My projects</h3></div>
     <div class="co-sec-head co-sec-head-stack"><h2 class="co-h-l">Projects needing attention</h2><p class="co-muted"><span data-pj-need>Projects with documents missing, expired or expiring</span>. Open one to see what it&rsquo;s missing; every project is in <a class="co-link" href="projects.html">Projects</a>.</p></div>
     <div class="pj-block">
+      <!-- search, Filter, the column heads' sorting and ten to a page, as on Projects (js/projects.js) -->
+      <div class="co-tools" data-pj-tools>
+        <label class="co-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" placeholder="Search by ID, project, client or region" aria-label="Search projects needing attention" data-q></label>
+        <div class="co-tools-r">
+          <button type="button" class="link-btn co-tools-clear" hidden>Clear filters</button>
+          <div class="co-filt">
+            <button type="button" class="co-filt-btn" aria-haspopup="menu" aria-expanded="false" data-filt-btn><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.25"/><circle cx="9" cy="17" r="2.25"/></svg>Filter<span class="co-filt-n" data-filt-n hidden></span><svg class="co-filt-chev" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg></button>
+            <div class="co-filt-panel" role="menu" aria-label="Filter projects" data-filt-panel hidden></div>
+          </div>
+        </div>
+      </div>
+      <div class="co-pills" data-pj-pills hidden aria-label="Applied filters"></div>
       <div class="co-card co-tbl-card">
         <!-- drawn by js/projects.js: only the projects that need attention, the worst first -->
-        <table class="co-tbl pj-tbl" data-pj-table data-pj-mode="attention" data-paged="pj-attention"></table>
+        <table class="co-tbl pj-tbl" data-pj-table data-pj-mode="attention" data-unpaged></table>
       </div>
       <div class="co-pager-row">
+        <nav class="co-pager" aria-label="Projects needing attention pages" data-pj-pager></nav>
         <a href="projects.html" class="co-link co-pager-all">View all projects</a>
       </div>
     </div>

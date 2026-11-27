@@ -6,8 +6,11 @@
      list: [{ name, code, own (yours: every field ALMA read), status ('valid'|'expiring'|'expired'|'missing'|…), tag (its badge's HTML),
               valid (the expiry date as shown, or ''), note, section, requirement,
               holder: { name, id, nipc, city, employer }, bar (the line under the title),
-              facts: [[label, html], …] (a card of its own, e.g. "On this project"), link: { href, text } }]
-     opts.nav(i, n): the line between Previous and Next. */
+              facts: [[label, html], …] (a card of its own, e.g. "On this project"), link: { href, text },
+              sharing: () => ({ title, rows: [[label, html], …], btn, open }) (a card of its own: who it's shared with,
+                and a button that opens a panel beside, as the file's preview: open(api) calls api.side(…)) }]
+     opts.nav(i, n): the line between Previous and Next.
+   window.CMDocDrawer.side({ title, sub, bar, body, foot, wire(aside) }): the panel beside; sideClose(); redraw(). */
 window.CMDocDrawer = (() => {
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const en = (x) => (x && typeof x === 'object' ? x.en || '' : x || '');
@@ -43,17 +46,19 @@ window.CMDocDrawer = (() => {
     dw.addEventListener('click', (e) => {
       if (!at) return;
       if (e.target.closest('[data-x]')) { close(); return; }
-      if (e.target.closest('[data-cmf-peek]')) { if (at.pv) window.CMFiles.openPeek(dw, at.pv); return; }
+      if (e.target.closest('[data-cmf-peek]')) { if (at.pv) { sideClose(); window.CMFiles.openPeek(dw, at.pv); } return; }
+      if (e.target.closest('[data-cmdd-share]')) { const sh = at.list[at.i].sharing; if (sh) sh().open(); return; }
       // a citation: opened in place; Show on the page opens the preview beside, at that value
       const cb = e.target.closest('[data-cite]');
       if (cb) { const row = dw.querySelector('#cmdd-cite-' + cb.dataset.cite), open = row.hidden; row.hidden = !open; cb.setAttribute('aria-expanded', String(open)); cb.textContent = open ? 'Hide citation' : 'View citation'; return; }
       const sh = e.target.closest('[data-cite-show]'); if (sh) { if (at.pv) window.CMFiles.openPeek(dw, at.pv, +sh.dataset.citeShow); return; }
-      const st = e.target.closest('[data-step]'); if (st && !st.disabled) { at.i += +st.dataset.step; draw(); }
+      const st = e.target.closest('[data-step]'); if (st && !st.disabled) { at.i += +st.dataset.step; sideClose(); draw(); }
     });
     document.addEventListener('keydown', (e) => {
       if (!at) return;
       if (e.key === 'Escape') { e.stopPropagation(); close(); }
       else if (e.target.closest && e.target.closest('input, textarea')) return;
+      else if (side && !side.hidden) return;
       else if (e.key === 'ArrowLeft' && at.i > 0) { at.i -= 1; draw(); }
       else if (e.key === 'ArrowRight' && at.i < at.list.length - 1) { at.i += 1; draw(); }
     });
@@ -101,6 +106,7 @@ window.CMDocDrawer = (() => {
     const desc = en(cat.description);
     dq('body').innerHTML = fileHtml + read
       + `<section class="cdd-card"><h4 class="eyebrow">This document</h4><dl class="pd-facts cdd-facts">${kv('Status', d.tag)}${kv('Expiry date', esc(!d.valid || d.valid === '—' ? 'Not on file' : d.valid))}${d.note && has ? kv('Note', esc(d.note)) : ''}${kv('Issued by', esc(issuer))}${kv('Section', esc(d.section || en(cat.section)))}</dl></section>`
+      + (d.sharing ? (() => { const sh = d.sharing(); return `<section class="cdd-card"><h4 class="eyebrow">${esc(sh.title)}</h4><dl class="pd-facts cdd-facts">${sh.rows.map(([k, v]) => kv(esc(k), v)).join('')}</dl>${sh.open ? `<button type="button" class="btn btn-quiet btn-sm cdd-share-btn" data-cmdd-share>${esc(sh.btn || 'Manage sharing')}</button>` : ''}</section>`; })() : '')
       + (d.facts && d.facts.length ? `<section class="cdd-card"><h4 class="eyebrow">${esc(d.factsTitle || 'Where it applies')}</h4><dl class="pd-facts cdd-facts">${d.facts.map(([k, v]) => kv(esc(k), v)).join('')}</dl></section>` : '')
       + (desc || cat.renewal || cat.legalBasis ? `<section class="cdd-card"><h4 class="eyebrow">About this document</h4>${desc ? `<p class="cdd-desc">${esc(desc)}</p>` : ''}<dl class="pd-facts cdd-facts">${kv('Requirement', esc(d.requirement || ''))}${kv('Renewal', esc(cat.renewal || '—'))}${kv('Expiry', esc(cat.expiryRule || '—'))}${kv('Legal basis', esc(cat.legalBasis || '—'))}</dl></section>` : '')
       + (d.link ? `<p class="cdd-desc"><a class="co-link" href="${esc(d.link.href)}">${esc(d.link.text)}</a></p>` : '');
@@ -109,6 +115,38 @@ window.CMDocDrawer = (() => {
     dw.querySelector('[data-step="1"]').disabled = at.i === at.list.length - 1;
     dq('body').scrollTop = 0;
   };
+  // the panel beside the drawer (as the file's preview, js/doc-files.js .cmf-peek): built afresh each time
+  let side = null;
+  const sideOf = () => {
+    if (side) return side;
+    side = document.createElement('div'); side.className = 'cmf-peek cmdd-side'; side.hidden = true;
+    dw.appendChild(side);
+    // Escape closes the panel first, the drawer after
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && !side.hidden && side.classList.contains('is-open')) { e.stopImmediatePropagation(); e.stopPropagation(); sideClose(); } }, true);
+    return side;
+  };
+  const sideOpen = (o) => {
+    if (!dw) return;
+    const el = sideOf(), was = el.classList.contains('is-open');
+    if (window.CMFiles) window.CMFiles.closePeek(dw);
+    el.innerHTML = `<aside class="docd-panel" role="dialog" aria-labelledby="cmdd-sd-t" tabindex="-1">
+        <header class="docd-head"><span class="docd-ico" aria-hidden="true">${DOCI}</span><div class="docd-t"><h3 id="cmdd-sd-t">${esc(o.title || '')}</h3><p>${o.sub || ''}</p></div>
+          <button type="button" class="dlg-x" data-sd-x aria-label="Close">${XS}</button></header>
+        ${o.bar ? `<div class="docd-bar"><span>${o.bar}</span><span></span></div>` : ''}
+        <div class="docd-body">${o.body || ''}</div>${o.foot ? `<footer class="docd-foot">${o.foot}</footer>` : ''}</aside>`;
+    const aside = el.firstElementChild;
+    aside.addEventListener('click', (e) => { if (e.target.closest('[data-sd-x]')) sideClose(); });
+    if (o.wire) o.wire(aside);
+    el.hidden = false; void el.offsetWidth; el.classList.add('is-open');
+    setTimeout(() => aside.focus({ preventScroll: true }), was ? 0 : 320);
+  };
+  const sideClose = () => {
+    if (!side || side.hidden) return;
+    side.classList.remove('is-open');
+    setTimeout(() => { if (!side.classList.contains('is-open')) side.hidden = true; }, 300);
+    const b = dw.querySelector('[data-cmdd-share]'); if (b) b.focus({ preventScroll: true });
+  };
+  const XS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   const open = (list, i = 0, opts = {}) => {
     if (!list || !list.length) return;
     if (!dw) build();
@@ -121,10 +159,11 @@ window.CMDocDrawer = (() => {
   const close = () => {
     if (!dw) return;
     if (window.CMFiles) window.CMFiles.closePeek(dw);
+    sideClose();
     dw.classList.remove('is-open'); document.documentElement.style.overflow = '';
     setTimeout(() => { if (!at) dw.hidden = true; }, 280);
     if (back && back.isConnected) back.focus({ preventScroll: true });
     at = null;
   };
-  return { open, close, isOpen: () => !!at };
+  return { open, close, isOpen: () => !!at, side: sideOpen, sideClose, redraw: () => { if (at) draw(); } };
 })();

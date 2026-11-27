@@ -11,29 +11,29 @@
    alerts it had. */
 (() => {
   const PROJECTS = [
-    {id: 'FC-2026-031', name: 'São João Hospital, east wing', own: 'owner', client: 'ULS São João', sector: 'Hospital', city: 'Porto', district: 'Porto', suppliers: 6, workers: 42, deadline: '18 Dec 2026', miss: 2},
-    {id: 'FC-2026-018', name: 'EN13 resurfacing, Vila do Conde', own: 'owner', client: 'Infraestruturas de Portugal', sector: 'Roads & Bridges', city: 'Vila do Conde', district: 'Porto', suppliers: 4, workers: 28, deadline: '', miss: 0},
-    {id: 'FC-2025-047', name: 'Garcia de Orta secondary school renovation', own: 'owner', client: 'Parque Escolar', sector: 'Education', city: 'Porto', district: 'Porto', suppliers: 3, workers: 19, deadline: '15 Jan 2027', miss: 1},
-    {id: 'FC-2026-052', name: 'Quinta da Boavista apartments', own: 'owner', client: 'Boavista Living, S.A.', sector: 'Residential', city: 'Porto', district: 'Porto', suppliers: 5, workers: 33, deadline: '', miss: 0},
-    {id: 'ME-2026-112', name: 'Data centre shell, Building B', own: 'supplier', client: 'Mota‑Engil', sector: 'General contractor', city: 'Matosinhos', district: 'Porto', suppliers: 9, workers: 12, deadline: '30 Nov 2026', miss: 1},
-    {id: 'CF-2026-027', name: 'Clinic fit-out, level 3', own: 'supplier', client: 'CUF', sector: 'Healthcare', city: 'Porto', district: 'Porto', suppliers: 7, workers: 8, deadline: '', miss: 0},
-    {id: 'SN-2026-064', name: 'Warehouse expansion', own: 'supplier', client: 'Sonae MC', sector: 'Logistics', city: 'Maia', district: 'Porto', suppliers: 11, workers: 6, deadline: '28 Feb 2027', miss: 2},
-    {id: 'FC-2026-044', name: 'NorteShopping parking deck', own: 'owner', client: 'Sonae Sierra', sector: 'Retail', city: 'Matosinhos', district: 'Porto', suppliers: 7, workers: 51, deadline: '30 Jun 2027', miss: 1},
-    {id: 'FC-2026-009', name: 'Riverside office fit-out', own: 'owner', client: 'Douro Riverside Development', sector: 'Commercial', city: 'Vila Nova de Gaia', district: 'Porto', suppliers: 4, workers: 22, deadline: '15 Nov 2026', miss: 0},
-    {id: 'ME-2026-131', name: 'Data centre shell, Building C', own: 'supplier', client: 'Mota‑Engil', sector: 'General contractor', city: 'Matosinhos', district: 'Porto', suppliers: 10, workers: 14, deadline: '', miss: 0},
-    {id: 'FC-2025-061', name: 'Maia fire station no. 2', own: 'owner', client: 'Câmara Municipal da Maia', sector: 'Public safety', city: 'Maia', district: 'Porto', suppliers: 5, workers: 26, deadline: '20 Dec 2026', miss: 2},
-    {id: 'FC-2026-023', name: 'Almeida Garrett library expansion', own: 'owner', client: 'Câmara Municipal do Porto', sector: 'Civic', city: 'Porto', district: 'Porto', suppliers: 4, workers: 18, deadline: '31 Mar 2027', miss: 0},
-    {id: 'CS-2026-008', name: 'Lever water treatment upgrade', own: 'supplier', client: 'Casais', sector: 'General contractor', city: 'Vila Nova de Gaia', district: 'Porto', suppliers: 12, workers: 9, deadline: '14 May 2027', miss: 1},
-    {id: 'FC-2026-058', name: 'Gondomar medical offices', own: 'owner', client: 'Lusíadas Saúde', sector: 'Healthcare', city: 'Gondomar', district: 'Porto', suppliers: 6, workers: 30, deadline: '', miss: 0},
-    {id: 'CF-2026-033', name: 'Imaging suite, ground floor', own: 'supplier', client: 'CUF', sector: 'Healthcare', city: 'Porto', district: 'Porto', suppliers: 5, workers: 7, deadline: '12 Dec 2026', miss: 0},
-    {id: 'FC-2026-036', name: 'Campanhã station canopy', own: 'owner', client: 'Metro do Porto', sector: 'Transport', city: 'Porto', district: 'Porto', suppliers: 3, workers: 15, deadline: '28 Feb 2027', miss: 1},
-    {id: 'AB-2026-090', name: 'School gym, Braga', own: 'supplier', client: 'ABB – Alexandre Barbosa Borges', sector: 'General contractor', city: 'Braga', district: 'Braga', suppliers: 8, workers: 10, deadline: '30 Aug 2027', miss: 0},
-    {id: 'FC-2025-052', name: 'Valongo community centre', own: 'owner', client: 'Câmara Municipal de Valongo', sector: 'Civic', city: 'Valongo', district: 'Porto', suppliers: 4, workers: 17, deadline: '10 Nov 2026', miss: 0},
-    {id: 'SN-2026-071', name: 'Cold storage annex', own: 'supplier', client: 'Sonae MC', sector: 'Logistics', city: 'Maia', district: 'Porto', suppliers: 9, workers: 5, deadline: '', miss: 1},
-    {id: 'FC-2026-061', name: 'Póvoa seafront boardwalk repairs', own: 'owner', client: 'Câmara Municipal da Póvoa de Varzim', sector: 'Civic', city: 'Póvoa de Varzim', district: 'Porto', suppliers: 3, workers: 12, deadline: '15 May 2027', miss: 0},
-    {id: 'TD-2026-014', name: 'Leixões cruise terminal works', own: 'supplier', client: 'Teixeira Duarte', sector: 'General contractor', city: 'Matosinhos', district: 'Porto', suppliers: 14, workers: 11, deadline: '30 Sep 2027', miss: 0},
-    {id: 'FC-2026-064', name: 'Valongo logistics platform slab', own: 'owner', client: 'Plataforma Logística de Valongo', sector: 'Logistics', city: 'Valongo', district: 'Porto', suppliers: 2, workers: 9, deadline: '', miss: 0},
-    {id: 'FC-2026-067', name: 'Braga clinic renovation', own: 'owner', client: 'Hospital de Braga', sector: 'Healthcare', city: 'Braga', district: 'Braga', suppliers: 5, workers: 20, deadline: '31 Jan 2027', miss: 1},
+    {id: 'FC-2026-031', name: 'São João Hospital, east wing', own: 'owner', client: 'ULS São João', sector: 'Hospital', city: 'Porto', district: 'Porto', suppliers: 6, workers: 42, start: '12 Jan 2026', deadline: '18 Dec 2026', miss: 2},
+    {id: 'FC-2026-018', name: 'EN13 resurfacing, Vila do Conde', own: 'owner', client: 'Infraestruturas de Portugal', sector: 'Roads & Bridges', city: 'Vila do Conde', district: 'Porto', suppliers: 4, workers: 28, start: '3 Mar 2026', deadline: '', miss: 0},
+    {id: 'FC-2025-047', name: 'Garcia de Orta secondary school renovation', own: 'owner', client: 'Parque Escolar', sector: 'Education', city: 'Porto', district: 'Porto', suppliers: 3, workers: 19, start: '8 Sep 2025', deadline: '15 Jan 2027', miss: 1},
+    {id: 'FC-2026-052', name: 'Quinta da Boavista apartments', own: 'owner', client: 'Boavista Living, S.A.', sector: 'Residential', city: 'Porto', district: 'Porto', suppliers: 5, workers: 33, start: '20 Apr 2026', deadline: '', miss: 0},
+    {id: 'ME-2026-112', name: 'Data centre shell, Building B', own: 'supplier', client: 'Mota‑Engil', sector: 'General contractor', city: 'Matosinhos', district: 'Porto', suppliers: 9, workers: 12, start: '2 Feb 2026', deadline: '30 Nov 2026', miss: 1},
+    {id: 'CF-2026-027', name: 'Clinic fit-out, level 3', own: 'supplier', client: 'CUF', sector: 'Healthcare', city: 'Porto', district: 'Porto', suppliers: 7, workers: 8, start: '15 Jun 2026', deadline: '', miss: 0},
+    {id: 'SN-2026-064', name: 'Warehouse expansion', own: 'supplier', client: 'Sonae MC', sector: 'Logistics', city: 'Maia', district: 'Porto', suppliers: 11, workers: 6, start: '7 Jan 2027', deadline: '28 Feb 2027', miss: 2},
+    {id: 'FC-2026-044', name: 'NorteShopping parking deck', own: 'owner', client: 'Sonae Sierra', sector: 'Retail', city: 'Matosinhos', district: 'Porto', suppliers: 7, workers: 51, start: '1 Sep 2026', deadline: '30 Jun 2027', miss: 1},
+    {id: 'FC-2026-009', name: 'Riverside office fit-out', own: 'owner', client: 'Douro Riverside Development', sector: 'Commercial', city: 'Vila Nova de Gaia', district: 'Porto', suppliers: 4, workers: 22, start: '5 Jan 2026', deadline: '15 Nov 2026', miss: 0},
+    {id: 'ME-2026-131', name: 'Data centre shell, Building C', own: 'supplier', client: 'Mota‑Engil', sector: 'General contractor', city: 'Matosinhos', district: 'Porto', suppliers: 10, workers: 14, start: '11 Jan 2027', deadline: '', miss: 0},
+    {id: 'FC-2025-061', name: 'Maia fire station no. 2', own: 'owner', client: 'Câmara Municipal da Maia', sector: 'Public safety', city: 'Maia', district: 'Porto', suppliers: 5, workers: 26, start: '10 Nov 2025', deadline: '20 Dec 2026', miss: 2},
+    {id: 'FC-2026-023', name: 'Almeida Garrett library expansion', own: 'owner', client: 'Câmara Municipal do Porto', sector: 'Civic', city: 'Porto', district: 'Porto', suppliers: 4, workers: 18, start: '18 May 2026', deadline: '31 Mar 2027', miss: 0},
+    {id: 'CS-2026-008', name: 'Lever water treatment upgrade', own: 'supplier', client: 'Casais', sector: 'General contractor', city: 'Vila Nova de Gaia', district: 'Porto', suppliers: 12, workers: 9, start: '9 Mar 2026', deadline: '14 May 2027', miss: 1},
+    {id: 'FC-2026-058', name: 'Gondomar medical offices', own: 'owner', client: 'Lusíadas Saúde', sector: 'Healthcare', city: 'Gondomar', district: 'Porto', suppliers: 6, workers: 30, start: '4 Jan 2027', deadline: '', miss: 0},
+    {id: 'CF-2026-033', name: 'Imaging suite, ground floor', own: 'supplier', client: 'CUF', sector: 'Healthcare', city: 'Porto', district: 'Porto', suppliers: 5, workers: 7, start: '1 Jul 2026', deadline: '12 Dec 2026', miss: 0},
+    {id: 'FC-2026-036', name: 'Campanhã station canopy', own: 'owner', client: 'Metro do Porto', sector: 'Transport', city: 'Porto', district: 'Porto', suppliers: 3, workers: 15, start: '14 Sep 2026', deadline: '28 Feb 2027', miss: 1},
+    {id: 'AB-2026-090', name: 'School gym, Braga', own: 'supplier', client: 'ABB – Alexandre Barbosa Borges', sector: 'General contractor', city: 'Braga', district: 'Braga', suppliers: 8, workers: 10, start: '1 Feb 2027', deadline: '30 Aug 2027', miss: 0},
+    {id: 'FC-2025-052', name: 'Valongo community centre', own: 'owner', client: 'Câmara Municipal de Valongo', sector: 'Civic', city: 'Valongo', district: 'Porto', suppliers: 4, workers: 17, start: '6 Oct 2025', deadline: '10 Nov 2026', miss: 0},
+    {id: 'SN-2026-071', name: 'Cold storage annex', own: 'supplier', client: 'Sonae MC', sector: 'Logistics', city: 'Maia', district: 'Porto', suppliers: 9, workers: 5, start: '18 Jan 2027', deadline: '', miss: 1},
+    {id: 'FC-2026-061', name: 'Póvoa seafront boardwalk repairs', own: 'owner', client: 'Câmara Municipal da Póvoa de Varzim', sector: 'Civic', city: 'Póvoa de Varzim', district: 'Porto', suppliers: 3, workers: 12, start: '1 Mar 2026', deadline: '15 May 2027', miss: 0},
+    {id: 'TD-2026-014', name: 'Leixões cruise terminal works', own: 'supplier', client: 'Teixeira Duarte', sector: 'General contractor', city: 'Matosinhos', district: 'Porto', suppliers: 14, workers: 11, start: '2 Feb 2026', deadline: '30 Sep 2027', miss: 0},
+    {id: 'FC-2026-064', name: 'Valongo logistics platform slab', own: 'owner', client: 'Plataforma Logística de Valongo', sector: 'Logistics', city: 'Valongo', district: 'Porto', suppliers: 2, workers: 9, start: '25 Aug 2026', deadline: '', miss: 0},
+    {id: 'FC-2026-067', name: 'Braga clinic renovation', own: 'owner', client: 'Hospital de Braga', sector: 'Healthcare', city: 'Braga', district: 'Braga', suppliers: 5, workers: 20, start: '13 Oct 2025', deadline: '31 Jan 2027', miss: 1},
   ];
   const PER = 10;
   const esc = (s) => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -110,6 +110,20 @@
     }
     return out;
   };
+  // where a project is: not started, ongoing or finalized, by its dates; on hold when you say so on its page
+  const HOLD_KEY = 'cm-pj-hold';
+  const holds = () => { try { return JSON.parse(ss(HOLD_KEY) || '{}') || {}; } catch (e) { return {}; } };
+  const setHold = (id, on) => { const h = holds(); if (on) h[id] = Date.now(); else delete h[id]; try { sessionStorage.setItem(HOLD_KEY, JSON.stringify(h)); } catch (e) {} };
+  const STATUS = { notstarted: ['Not started', 'is-notyet'], ongoing: ['Ongoing', 'is-ok'], hold: ['On hold', 'is-hold'], finalized: ['Finalized', 'is-done'] };
+  const statusOf = (p) => {
+    const day = new Date(); day.setHours(0, 0, 0, 0);
+    const s = Date.parse(p.start), e = Date.parse(p.deadline);
+    if (!Number.isNaN(e) && e < day) return 'finalized';
+    if (holds()[p.id]) return 'hold';
+    return !Number.isNaN(s) && s > day ? 'notstarted' : 'ongoing';
+  };
+  // the table: the dot alone (its name on hover, and for screen readers); the project's page: the dot and its name
+  const statusHtml = (p, dotOnly) => { const [l, c] = STATUS[statusOf(p)]; return dotOnly ? `<span class="cd-dot ${c}" title="${l}" aria-hidden="true"></span><span class="sr-only">${l}</span>` : `<span class="pj-st"><span class="cd-dot ${c}" aria-hidden="true"></span>${l}</span>`; };
   // the worst first: the most missing, then the most to look at, then the nearest deadline
   const worst = (a, b) => b.docs.miss - a.docs.miss || b.docs.look - a.docs.look || (Date.parse(a.deadline) || 9e15) - (Date.parse(b.deadline) || 9e15);
 
@@ -131,14 +145,27 @@
 @media (max-width: 52rem) { .pj-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 30rem) { .pj-cards { grid-template-columns: minmax(0, 1fr); } .pj-card-n { font-size: 1.875rem; } }
 .pj-block { min-width: 0; }
-/* the overview: its page numbers (js/table-pager.js) and View all projects on one row, as before */
-@media (min-width: 48rem) { .pj-block > .pg-nav:not([hidden]) + .co-pager-row { margin-top: -1.8rem; } }
-.pj-tbl { table-layout: fixed; min-width: 52rem; }
-.pj-tbl th:nth-child(1) { width: 30%; } .pj-tbl th:nth-child(2) { width: 19%; } .pj-tbl th:nth-child(3) { width: 14%; }
-.pj-tbl th:nth-child(4) { width: 12%; } .pj-tbl th:nth-child(5) { width: 11%; } .pj-tbl th:nth-child(6) { width: 14%; }
+.pj-tbl { table-layout: fixed; min-width: 60rem; }
+.pj-tbl th:nth-child(1) { width: 30%; } .pj-tbl th:nth-child(2) { width: 18%; } .pj-tbl th:nth-child(3) { width: 10%; }
+.pj-tbl th:nth-child(4) { width: 10%; } .pj-tbl th:nth-child(5) { width: 11%; } .pj-tbl th:nth-child(6) { width: 8%; } .pj-tbl th:nth-child(7) { width: 13%; }
+.pj-legend { margin: 0.75rem 0 0; }
+.pj-tbl td:nth-child(3), .pj-tbl td:nth-child(4), .pj-tbl td:nth-child(6) { white-space: nowrap; }
+/* a project's status, as the matrices' dots; on hold a pause button */
+.pj-st { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.cd-dot.is-notyet { background: var(--color-graphite); }
+.cd-dot.is-done { background: var(--color-sand-400, #c3c0b8); }
+.cd-dot.is-hold { background: linear-gradient(#fff, #fff) 3px 50% / 2px 6px no-repeat, linear-gradient(#fff, #fff) calc(100% - 3px) 50% / 2px 6px no-repeat, #e7b04a; }
 .pj-tbl th:last-child, .pj-tbl td:last-child { white-space: nowrap; }
 .pj-tbl .n, .pj-tbl .d { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pj-tbl td:nth-child(5) { white-space: nowrap; }
+/* Owner or Supplier, beside the project's ID: a small tag */
+.pj-tbl .pj-role { height: 1.25rem; margin-left: 0.375rem; padding: 0 0.375rem; font-size: 0.6875rem; line-height: 1.25rem; vertical-align: 1px; }
+/* your own projects in a soft lilac, a client's in the grey: as light as each other, and no status's colour */
+html .pj-tbl .pj-role.is-owner { background: #ebe4f3; color: #5b3f86; }
+/* a new project (added recently, or you were just added to it): a coral edge down the row's left */
+.pj-tbl tbody tr.is-new td:first-child { box-shadow: inset 3px 0 0 var(--color-coral); }
+html[data-theme="dark"] .pj-tbl .pj-role.is-owner { background: #66508c; color: #f4efff; }
+/* every column head sorts the table, as the project page's tables (.cd-sort, css/esg.css) */
+.pj-tbl th .cd-sort { white-space: nowrap; }
 .pj-tbl tbody tr.pj-row { cursor: pointer; transition: background-color .14s ease; }
 .pj-tbl tbody tr.pj-row:hover, .pj-tbl tbody tr.pj-row:focus-visible { background: var(--color-light-beige); }
 .pj-tbl tbody tr.pj-row:focus-visible { outline: 2px solid var(--color-graphite); outline-offset: -2px; }
@@ -197,14 +224,45 @@
 
   // the Documents column, as the Documents tables' Status: the worst first, and the chevron
   const badgeOf = (x) => (!x.asked ? '<span class="co-badge b-neu">None asked yet</span>' : x.miss ? `<span class="co-badge b-over">${x.miss} missing</span>` : x.look ? `<span class="co-badge b-pend">${x.look} to look at</span>` : '<span class="co-badge b-ok">All valid</span>');
-  const rowOf = (p) => `<tr class="pj-row" tabindex="0" role="link" data-pj="${esc(p.id)}" aria-label="${esc(p.name)}, ${esc(p.id)}: open the project">`
-    + `<td><span class="n">${esc(p.name)}${p.isNew || p.isNotified ? ` <span class="co-badge b-info cd-new" title="${p.isNotified ? 'You were just added to it' : 'Added recently'}">New</span>` : ''}</span><span class="d">${esc(p.id)} &middot; ${p.role}</span></td>`
+  const rowOf = (p) => `<tr class="pj-row${p.isNew || p.isNotified ? ' is-new' : ''}" tabindex="0" role="link" data-pj="${esc(p.id)}" aria-label="${esc(p.name)}, ${esc(p.id)}${p.isNew || p.isNotified ? ', new' : ''}: open the project">`
+    + `<td${p.isNew || p.isNotified ? ` title="${p.isNotified ? 'New: you were just added to it' : 'New: added recently'}"` : ''}><span class="n">${esc(p.name)}${p.isNew || p.isNotified ? '<span class="sr-only"> (new)</span>' : ''}</span><span class="d">${esc(p.id)}<span class="co-badge pj-role ${p.role === 'Owner' ? 'is-owner' : 'b-neu'}">${p.role}</span></span></td>`
     + `<td><span class="n">${esc(p.client)}</span><span class="d">${esc(p.sector || '')}</span></td>`
-    + (p.isNew ? `<td><span class="n">${esc(where(p))}</span><span class="d">${esc(p.address)}</span></td>` : `<td><span class="n">${esc(p.city)}</span><span class="d">${esc(p.district)}</span></td>`)
+    + `<td>${p.start ? esc(p.start) : '<span class="cd-dash">&mdash;</span>'}</td>`
+    + `<td>${p.deadline ? esc(p.deadline) : '<span class="cd-dash" title="No end date set">&mdash;</span>'}</td>`
     + `<td><span class="n">${pl(p.suppliers, 'supplier')}</span><span class="d">${pl(p.workers, 'worker')}</span></td>`
-    + `<td>${p.ongoing ? '<span class="co-badge b-info">Ongoing</span>' : esc(p.deadline)}</td>`
+    + `<td>${statusHtml(p, true)}</td>`
     + `<td>${badgeOf(p.docs)}</td></tr>`;
-  const HEAD = '<thead><tr><th>Project</th><th>Client</th><th>Region</th><th>Team</th><th>Deadline</th><th>Documents</th></tr></thead>';
+  // the columns, and what each sorts by (nothing to sort by goes last, either way)
+  const day = (t) => { const v = Date.parse(t); return Number.isNaN(v) ? null : v; };
+  const COLS = [
+    // the project: the newest first (the ones you just started, the newest of them first; then the ones
+    // you were just added to; then by the year and number in its ID), again the oldest first
+    ['project', 'Project', (p) => {
+      if (p.isNew) return -2e9 + all.indexOf(p);
+      const m = /(\d{4})-(\d+)\s*$/.exec(p.id), n = m ? +m[1] * 1e4 + +m[2] : 0;
+      return (p.isNotified ? -1e9 : 0) - n;
+    }],
+    ['client', 'Client', (p) => fold(p.client)],
+    ['start', 'Start date', (p) => day(p.start)],
+    ['end', 'End date', (p) => day(p.deadline)],
+    ['team', 'Team', (p) => p.suppliers * 1e5 + p.workers],
+    ['status', 'Status', (p) => Object.keys(STATUS).indexOf(statusOf(p))],
+    // the worst first: not compliant, then to look at, then valid, then nothing asked
+    ['docs', 'Documents', (p) => (p.docs.miss ? 0 : p.docs.look ? 1 : p.docs.asked ? 2 : 3) * 1e6 - p.docs.miss * 1e3 - p.docs.look],
+  ];
+  const head = (sort) => '<thead><tr>' + COLS.map(([k, l]) => {
+    const on = sort && sort.k === k;
+    return `<th${on ? ` aria-sort="${sort.dir > 0 ? 'ascending' : 'descending'}"` : ''}><button type="button" class="cd-sort" data-pj-sort="${k}" title="${k === 'project' ? (on && sort.dir > 0 ? 'Sort by project: the oldest first' : 'Sort by project: the newest first') : `Sort by ${l.toLowerCase()}`}"><span class="l">${l}</span><span class="a" aria-hidden="true"></span></button></th>`;
+  }).join('') + '</tr></thead>';
+  const sorted = (l, sort) => {
+    if (!sort) return l;
+    const fn = COLS.find(([k]) => k === sort.k)[2];
+    return l.map((p, i) => ({ p, i, v: fn(p) })).sort((x, y) => {
+      if (x.v == null || y.v == null) return x.v == null && y.v == null ? x.i - y.i : x.v == null ? 1 : -1;
+      const c = typeof x.v === 'number' ? x.v - y.v : String(x.v).localeCompare(String(y.v));
+      return c * sort.dir || x.i - y.i;
+    }).map((x) => x.p);
+  };
 
   // ---- a project opens its own page (project.html): the owner's view, or a supplier's ----
   const open = (p) => { location.href = `project.html?id=${encodeURIComponent(p.id)}`; };
@@ -237,33 +295,40 @@
       card.innerHTML = `<div class="pj-empty"><span class="docd-ico" aria-hidden="true">${SVG(ICO.bag)}</span><h3>No projects yet</h3><p>When a client adds your company to one of their projects, or you start one of your own, it shows here with the documents it asks of you.</p><a class="pj-add" href="new-project.html"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>New project</a></div>`;
       return;
     }
-    table.innerHTML = HEAD + '<tbody></tbody>';
+    table.innerHTML = head(null) + '<tbody></tbody>';
+    // what the Status dots mean, under the table as under the matrices
+    if (card && !card.parentElement.querySelector('.pj-legend')) card.insertAdjacentHTML('afterend', `<p class="cd-legend pj-legend">${Object.values(STATUS).map(([l, c]) => `<span><span class="cd-dot ${c}" aria-hidden="true"></span>${l}</span>`).join('')}</p>`);
     const body = table.tBodies[0];
 
+    // the company overview: only what needs attention, the worst first; then the same search, Filter,
+    // sorting and pages as Projects
+    let list = mine;
     if (attention) {
-      // the company overview: only what needs attention, the worst first
-      const need = mine.filter((p) => p.docs.miss || p.docs.look).sort(worst);
-      body.innerHTML = need.length ? need.map(rowOf).join('') : '<tr><td colspan="6" class="pj-none">Every project&rsquo;s documents are in order.</td></tr>';
-      const n = document.querySelector('[data-pj-need]'); if (n) n.textContent = need.length ? `${pl(need.length, 'project')} of ${mine.length} need${need.length === 1 ? 's' : ''} attention` : `All ${mine.length} projects are in order`;
-      wireRows(body);
-      return;
+      list = mine.filter((p) => p.docs.miss || p.docs.look).sort(worst);
+      const n = document.querySelector('[data-pj-need]'); if (n) n.textContent = list.length ? `${pl(list.length, 'project')} of ${mine.length} need${list.length === 1 ? 's' : ''} attention` : `All ${mine.length} projects are in order`;
+      if (!list.length) {
+        const t = document.querySelector('[data-pj-tools]'); if (t) t.hidden = true;
+        body.innerHTML = '<tr><td colspan="7" class="pj-none">Every project&rsquo;s documents are in order.</td></tr>';
+        return;
+      }
     }
 
-    // ---- Projects: cards, search, Filter, ten to a page ----
+    // ---- cards (Projects only), search, Filter, sorting, ten to a page ----
     const cardsEl = document.querySelector('[data-pj-cards]'), tools = document.querySelector('[data-pj-tools]');
     const pills = document.querySelector('[data-pj-pills]'), nav = document.querySelector('[data-pj-pager]');
     // options in a group widen (any of them), groups narrow (all of them)
     const GROUPS = [
       ['Ownership', 'own', (p) => p.role],
       ['Region', 'region', (p) => p.region],
-      ['Deadline', 'when', (p) => (p.ongoing ? 'Ongoing' : 'With a deadline')],
+      ['Status', 'when', (p) => STATUS[statusOf(p)][0]],
       ['Documents', 'docs', (p) => (p.docs.miss || p.docs.look ? [p.docs.look && DOCST.look, p.docs.miss && DOCST.miss].filter(Boolean) : [DOCST.ok])],
     ];
     const f = { q: '', own: new Set(), region: new Set(), when: new Set(), docs: new Set() };
     const vals = (p, fn) => [].concat(fn(p));
     const keep = (p, skip) => (!f.q || p.text.includes(f.q)) && GROUPS.every(([, k, fn]) => k === skip || !f[k].size || vals(p, fn).some((v) => f[k].has(v)));
     const nOn = () => GROUPS.reduce((n, [, k]) => n + f[k].size, 0);
-    const shown = () => mine.filter((p) => keep(p));
+    let sort = null;
+    const shown = () => sorted(list.filter((p) => keep(p)), sort);
     let page = 1, panel = null, btn = null;
 
     // the cards, as on Documents: on only when its filter is the only one, with no search
@@ -284,9 +349,9 @@
     const paint = () => {
       if (!panel) return;
       panel.innerHTML = '<div class="co-filt-list">' + GROUPS.map(([label, k, fn], gi) => {
-        const opts = [...new Set(mine.flatMap((p) => vals(p, fn)))].sort();
+        const opts = [...new Set(list.flatMap((p) => vals(p, fn)))].sort();
         return (gi ? '<div class="co-menu-sep" role="separator"></div>' : '') + `<div class="co-menu-h">${label}</div>` + opts.map((v) => {
-          const n = mine.filter((p) => keep(p, k) && vals(p, fn).includes(v)).length;
+          const n = list.filter((p) => keep(p, k) && vals(p, fn).includes(v)).length;
           return `<button type="button" class="co-menu-i" role="menuitemcheckbox" aria-checked="${f[k].has(v)}" data-k="${k}" data-v="${esc(v)}"><span class="co-menu-c">${TICK}</span>${esc(v)}<small>${n}</small></button>`;
         }).join('');
       }).join('') + `<div class="co-menu-sep" role="separator"></div><button type="button" class="co-menu-i" role="menuitem" data-clear${nOn() ? '' : ' disabled'}><span class="co-menu-c">${XS}</span>Clear filters</button></div>`;
@@ -295,7 +360,7 @@
       const l = shown(), pages = Math.max(1, Math.ceil(l.length / PER));
       page = Math.min(pages, Math.max(1, n));
       body.innerHTML = l.length ? l.slice((page - 1) * PER, page * PER).map(rowOf).join('')
-        : '<tr><td colspan="6" class="co-tbl-none">No project matches that. <button type="button" class="link-btn" data-clear>Clear the search and filters</button></td></tr>';
+        : '<tr><td colspan="7" class="co-tbl-none">No project matches that. <button type="button" class="link-btn" data-clear>Clear the search and filters</button></td></tr>';
       paintCards();
       if (pills) {
         const on = GROUPS.flatMap(([label, k]) => [...f[k]].map((v) => [label, k, v]));
@@ -335,6 +400,13 @@
       tools.addEventListener('click', (e) => { if (e.target.closest('.co-tools-clear')) clear(); });
     }
     body.addEventListener('click', (e) => { if (e.target.closest('[data-clear]')) clear(); });
+    // a column head sorts by it; again, the other way
+    table.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pj-sort]'); if (!b) return;
+      const k = b.dataset.pjSort; sort = { k, dir: sort && sort.k === k ? -sort.dir : 1 };
+      table.tHead.remove(); table.insertAdjacentHTML('afterbegin', head(sort)); go(1);
+      table.querySelector(`[data-pj-sort="${k}"]`).focus();
+    });
     if (pills) pills.addEventListener('click', (e) => {
       const p = e.target.closest('.co-pill'); if (!p) return;
       f[p.dataset.k].delete(p.dataset.v); go(1); if (panel && !panel.hidden) paint();
@@ -357,9 +429,10 @@
     });
     wireRows(body);
     // arriving with a filter (the overview's "View all"): ?docs=Not compliant
-    const want = new URLSearchParams(location.search).get('docs');
+    const want = !attention && new URLSearchParams(location.search).get('docs');
     if (want && Object.values(DOCST).includes(want)) f.docs.add(want);
     go(1);
+    if (attention) return;
     // back from new-project.html: what was started
     try { const t = sessionStorage.getItem('cm-pj-toast'); if (t) { sessionStorage.removeItem('cm-pj-toast'); const el = Object.assign(document.createElement('div'), { className: 'pj-toast', textContent: t }); el.setAttribute('role', 'status'); document.body.appendChild(el); setTimeout(() => el.remove(), 4200); } } catch (e) {}
     // an older link to one project (?project=FC-2026-031): its page
@@ -373,5 +446,5 @@
     'Electrical installations', 'Plumbing and drainage', 'HVAC', 'Fire protection', 'Lifts and escalators', 'Telecoms and security systems',
     'Scaffolding', 'Crane and lifting services', 'Landscaping', 'Site cleaning', 'Site security', 'Waste management', 'Transport and logistics', 'Other'];
   const workText = (x) => { const t = (x && x.work) || '', d = ((x && x.detail) || '').trim(); return t === 'Other' ? d || 'Other' : [t, d].filter(Boolean).join(' · '); };
-  window.CMProjects = { WORK_TYPES, workText, all: () => all.slice(), open: (id) => { const p = all.find((x) => x.id === id); if (p) open(p); }, teamOf, saveTeam, NOTIFIED, where, peopleOf, itemsOf, hasProjects, pl };
+  window.CMProjects = { statusOf, statusHtml, setHold, STATUS, WORK_TYPES, workText, all: () => all.slice(), open: (id) => { const p = all.find((x) => x.id === id); if (p) open(p); }, teamOf, saveTeam, NOTIFIED, where, peopleOf, itemsOf, hasProjects, pl };
 })();
